@@ -5,11 +5,11 @@ using System.Collections.Generic;
 
 namespace MarkdownScanner
 {
-    public class Scanner
+    public class BrokenLinkScanner
     {
         public ScannerOptions Options { get; private set;}
 
-        public Scanner(ScannerOptions options)
+        public BrokenLinkScanner(ScannerOptions options)
         {
             this.Options = options;
         }

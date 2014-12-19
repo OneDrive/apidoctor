@@ -13,7 +13,7 @@ namespace MarkdownScanner
 				return;
 			}
 
-			var scanner = new Scanner(options);
+			var scanner = new BrokenLinkScanner(options);
 			scanner.Scan();
 		}
 	}
