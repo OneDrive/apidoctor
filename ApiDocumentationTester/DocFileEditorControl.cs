@@ -28,7 +28,7 @@ namespace ApiDocumentationTester
             CurrentFile = file;
             comboBoxFileType.SelectedIndex = (int)file.Type;
 
-            ScanFile();
+//            ScanFile();
 
         }
 

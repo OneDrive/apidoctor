@@ -21,6 +21,8 @@ namespace ApiDocumentationTester
         private MarkdownDeep.Block[] Blocks { get; set; }
 
         private List<MarkdownDeep.Block> m_CodeBlocks = new List<MarkdownDeep.Block>();
+        private Dictionary<string, Resource> m_Resources = new Dictionary<string, Resource>();
+        private List<RequestResponse> m_Requests = new List<RequestResponse>();
 
         public DocFile(string basePath, string relativePath)
         {
@@ -60,11 +62,64 @@ namespace ApiDocumentationTester
                         break;
                 }
             }
+
+            for (int i = 0; i < m_CodeBlocks.Count; i += 2)
+            {
+                var htmlComment = m_CodeBlocks[i];
+                var codeBlock = m_CodeBlocks[i + 1];
+
+                try 
+                {
+                    ParseCodeBlock(htmlComment, codeBlock);
+                } 
+                catch (Exception)
+                {
+                    Console.WriteLine("Warning: file has an invalid format.");
+                }
+            }
+
+        }
+
+        public void ParseCodeBlock(MarkdownDeep.Block metadata, MarkdownDeep.Block code)
+        {
+            if (metadata.BlockType != MarkdownDeep.BlockType.html)
+                throw new ArgumentException("metadata block does not appear to be metadata");
+            if (code.BlockType != MarkdownDeep.BlockType.codeblock)
+                throw new ArgumentException("code block does not appear to be code");
+
+            var metadataJsonString = metadata.Content.Substring(4, metadata.Content.Length - 8);
+            var metadataObject = Newtonsoft.Json.JsonConvert.DeserializeObject(metadataJsonString);
+
+            var resourceType = (string)((Newtonsoft.Json.Linq.JContainer)metadataObject)["@odata.type"];
+            var blockType = (string)((Newtonsoft.Json.Linq.JContainer)metadataObject)["blockType"];
+
+            if (blockType == "resource")
+            {
+                m_Resources.Add(resourceType, new Resource { OdataType = resourceType, JsonFormat = code.Content });
+            }
+            else if (blockType == "request")
+            {
+                m_Requests.Add(new RequestResponse { Request = code.Content });
+            }
+            else if (blockType == "response")
+            {
+                m_Requests.Last().Response = code.Content;
+            }
         }
 
         public MarkdownDeep.Block[] CodeBlocks
         {
             get { return m_CodeBlocks.ToArray(); }
+        }
+
+        public IReadOnlyDictionary<string, Resource> Resources
+        {
+            get { return m_Resources; }
+        }
+
+        public RequestResponse[] Requests
+        {
+            get { return m_Requests.ToArray(); }
         }
     }
 
@@ -72,7 +127,6 @@ namespace ApiDocumentationTester
     {
         Unknown = 0,
         Resource,
-        Method,
-        Facet
+        MethodRequest
     }
 }

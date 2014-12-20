@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
+# Visual Studio 2012
 VisualStudioVersion = 12.0.30723.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MarkdownScanner", "MarkdownScanner\MarkdownScanner.csproj", "{1132B343-0084-4997-8CF0-7553800453DD}"
@@ -52,10 +52,10 @@ Global
 		{53A12F19-7C03-4E61-A34E-ADC5C211DE6E}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{53A12F19-7C03-4E61-A34E-ADC5C211DE6E}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
+	GlobalSection(MonoDevelopProperties) = preSolution
+		StartupItem = ApiDocumentationTester\ApiDocumentationTester.csproj
+	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(MonoDevelopProperties) = preSolution
-		StartupItem = MarkdownScanner.csproj
 	EndGlobalSection
 EndGlobal
