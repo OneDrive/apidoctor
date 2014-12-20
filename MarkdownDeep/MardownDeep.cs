@@ -71,6 +71,7 @@ namespace MarkdownDeep
 		{
 			// Build blocks
 			var blocks = ProcessBlocks(str);
+            m_Blocks = blocks.ToArray();
 
 			// Sort abbreviations by length, longest to shortest
 			if (m_AbbreviationMap != null)
@@ -330,6 +331,11 @@ namespace MarkdownDeep
         public LinkInfo[] FoundLinks
         {
             get { return m_FoundLinks.ToArray(); }
+        }
+
+        public Block[] Blocks
+        {
+            get { return m_Blocks; }
         }
 
 
@@ -1006,6 +1012,7 @@ namespace MarkdownDeep
 		List<Abbreviation> m_AbbreviationList;
 
         public List<LinkInfo> m_FoundLinks;
+        private Block[] m_Blocks;
 	
 	}
 

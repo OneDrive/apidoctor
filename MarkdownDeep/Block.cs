@@ -21,7 +21,7 @@ namespace MarkdownDeep
 {
 	// Some block types are only used during block parsing, some
 	// are only used during rendering and some are used during both
-	internal enum BlockType
+	public enum BlockType
 	{
 		Blank,			// blank line (parse only)
 		h1,				// headings (render and parse)
@@ -57,7 +57,7 @@ namespace MarkdownDeep
 		p_footnote,		// paragraph with footnote return link append.  Return link string is in `data`.
 	}
 
-	class Block
+	public class Block
 	{
 		internal Block()
 		{
@@ -488,5 +488,11 @@ namespace MarkdownDeep
 		internal int lineLen;
 		internal object data;			// content depends on block type
 		internal List<Block> children;
-	}
+
+
+        public BlockType BlockType { get { return blockType; } }
+        public Block[] Children { get { return children.ToArray(); } }
+
+        public string CodeLanguage { get; set; }
+    }
 }
