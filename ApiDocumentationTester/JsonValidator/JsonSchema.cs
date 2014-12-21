@@ -26,12 +26,19 @@ namespace ApiDocumentationTester
         /// <param name="json">Input json to validate against schema</param>
         /// <param name="errors">Array of errors if the validation fails</param>
         /// <returns>True if validation was successful, otherwise false.</returns>
-        public bool ValidateJson(string json, out ValidationError[] errors, Dictionary<string, JsonSchema> otherSchemas)
+        public bool ValidateJson(string json, out ValidationError[] errors, Dictionary<string, JsonSchema> otherSchemas, bool isCollection = false)
         {
             JContainer obj = (JContainer)JsonConvert.DeserializeObject(json);
 
             List<ValidationError> detectedErrors = new List<ValidationError>();
             List<string> missingProperties = new List<string>(Schema.Keys);
+
+            if (isCollection)
+            {
+                // We only care about validating the members of the "value" property now
+                var returnedObject = obj["value"].First();
+                obj = (JContainer)returnedObject;
+            }
 
             foreach (JToken token in obj)
             {
@@ -40,6 +47,8 @@ namespace ApiDocumentationTester
                 var validationResponse = ValidateProperty(inputProperty, otherSchemas, detectedErrors);
                 Console.WriteLine("validating {0} = {1}", inputProperty.Name, validationResponse);
             }
+
+            
 
             if (missingProperties.Count > 0)
             {
@@ -135,60 +144,72 @@ namespace ApiDocumentationTester
             Schema = schema;
         }
 
+        private static JsonProperty ParseProperty(string name, JToken value)
+        {
+            switch (value.Type)
+            {
+                case JTokenType.Boolean:
+                    return new JsonProperty { Name = name, Type = JsonDataType.Boolean, OriginalValue = value.ToString() };
+
+                case JTokenType.Float:
+                case JTokenType.Integer:
+                    return new JsonProperty { Name = name, Type = JsonDataType.Number, OriginalValue = value.ToString() };
+
+                case JTokenType.String:
+                    return new JsonProperty { Name = name, Type = JsonDataType.String, OriginalValue = value.ToString() };
+
+                case JTokenType.Object:
+                    Console.WriteLine("Ouch");
+                    var objectSchema = ObjectToSchema((JObject)value);
+                    if (objectSchema.ContainsKey("@odata.type"))
+                    {
+                        return new JsonProperty { Name = name, Type = JsonDataType.ODataType, ODataTypeName = objectSchema["@odata.type"].OriginalValue };
+                    }
+                    else
+                    {
+                        return new JsonProperty { Name = name, Type = JsonDataType.Custom, CustomMembers = ObjectToSchema((JObject)value) };
+                    }
+                    break;
+
+                case JTokenType.Array:
+                    // Array
+                    return new JsonProperty { Name = name, Type = JsonDataType.Array, OriginalValue = value.ToString(), CustomMembers = ObjectToSchema((JObject)value.First()) };
+                    break;
+
+                default:
+                    Console.WriteLine("Unhandled token type: " + value.Type);
+                    break;
+            }
+
+            return null;
+        }
 
         private static JsonProperty ParseProperty(JToken token)
         {
             JsonProperty propertyInfo = null;
             if (token.Type == JTokenType.Property)
             {
-                string name = ((JProperty)token).Name;
-                var firstValue = token.Values().First();
-                var propertyType = firstValue.Type;
-                string propertyValue = null;
-
-                switch (propertyType)
-                {
-                    case JTokenType.Boolean:
-                        propertyInfo = new JsonProperty { Name = name, Type = JsonDataType.Boolean, OriginalValue = firstValue.ToString() };
-                        break;
-
-                    case JTokenType.Float:
-                    case JTokenType.Integer:
-                        propertyInfo = new JsonProperty { Name = name, Type = JsonDataType.Number, OriginalValue = firstValue.ToString() };
-                        break;
-
-                    case JTokenType.String:
-                        propertyInfo = new JsonProperty { Name = name, Type = JsonDataType.String, OriginalValue = firstValue.ToString() };
-                        break;
-
-                    case JTokenType.Property:
-                        // Object
-                        var info = ParseProperty(firstValue);
-                        if (info.Name == "@odata.type")
-                        {
-                            propertyInfo = new JsonProperty { Name = name, Type = JsonDataType.ODataType, ODataTypeName = info.OriginalValue };
-                        }
-                        else
-                        {
-                            propertyInfo = new JsonProperty { Name = name, Type = JsonDataType.Custom, CustomMembers = TokenToSchema(token) };
-                        }
-                        break;
-
-                    //case JTokenType.Array:
-                    //    // Array
-                    //    break;
-
-                    default:
-                        Console.WriteLine("Unhandled token type: " + propertyType);
-                        break;
-                }
-
-                Console.WriteLine(" '{0}' = '{1}' ({2})", name, propertyValue, propertyType);
+                JProperty tokenProperty = (JProperty)token;
+                propertyInfo = ParseProperty(tokenProperty.Name, tokenProperty.Value);
             }
-            else if (token.Type == JTokenType.Object)
-            {
-                propertyInfo = new JsonProperty { Name = token.Path.Split('.').Last(), Type = JsonDataType.Custom, CustomMembers = TokenToSchema(token) };
-            }
+            //else if (token.Type == JTokenType.Object)
+            //{
+            //    JObject jsonObj = (JObject)token;
+            //    foreach (var property in jsonObj)
+            //    {
+            //        Console.WriteLine(property.Key);
+            //    }
+
+            //    var info = ParseProperty(token.Values().First());
+            //    if (info.Name == "@odata.type")
+            //    {
+            //        propertyInfo = new JsonProperty { Name = token.Path, Type = JsonDataType.ODataType, ODataTypeName = info.OriginalValue };
+            //    }
+            //    else
+            //    {
+            //        propertyInfo = new JsonProperty { Name = token.Path, Type = JsonDataType.Custom, CustomMembers = TokenToSchema(token) };
+            //    }
+            //}
             else
             {
                 Console.WriteLine("Unhandled token type: " + token.Type);
@@ -196,13 +217,27 @@ namespace ApiDocumentationTester
             return propertyInfo;
         }
 
-        static Dictionary<string, JsonProperty> TokenToSchema(JToken obj)
+        //static Dictionary<string, JsonProperty> TokenToSchema(JToken obj)
+        //{
+        //    Dictionary<string, JsonProperty> schema = new Dictionary<string, JsonProperty>();
+        //    foreach (JToken token in obj.Values())
+        //    {
+        //        JsonProperty propertyInfo = ParseProperty(token);
+        //        schema[propertyInfo.Name] = propertyInfo;
+        //    }
+        //    return schema;
+        //}
+
+        static Dictionary<string, JsonProperty> ObjectToSchema(JObject obj)
         {
             Dictionary<string, JsonProperty> schema = new Dictionary<string, JsonProperty>();
-            foreach (JToken token in obj.Values())
+            foreach (var prop in obj)
             {
-                JsonProperty propertyInfo = ParseProperty(token);
+                string name = prop.Key;
+                JToken value = prop.Value;
+                JsonProperty propertyInfo = ParseProperty(name, value);
                 schema[propertyInfo.Name] = propertyInfo;
+                
             }
             return schema;
         }

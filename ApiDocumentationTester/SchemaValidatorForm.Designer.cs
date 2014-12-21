@@ -30,7 +30,7 @@
         {
             this.label1 = new System.Windows.Forms.Label();
             this.comboBoxSchema = new System.Windows.Forms.ComboBox();
-            this.checkBox1 = new System.Windows.Forms.CheckBox();
+            this.checkBoxCollection = new System.Windows.Forms.CheckBox();
             this.textBoxJsonToValidate = new System.Windows.Forms.TextBox();
             this.buttonValidate = new System.Windows.Forms.Button();
             this.SuspendLayout();
@@ -53,15 +53,15 @@
             this.comboBoxSchema.Size = new System.Drawing.Size(268, 21);
             this.comboBoxSchema.TabIndex = 1;
             // 
-            // checkBox1
+            // checkBoxCollection
             // 
-            this.checkBox1.AutoSize = true;
-            this.checkBox1.Location = new System.Drawing.Point(396, 14);
-            this.checkBox1.Name = "checkBox1";
-            this.checkBox1.Size = new System.Drawing.Size(127, 17);
-            this.checkBox1.TabIndex = 2;
-            this.checkBox1.Text = "Validate as Collection";
-            this.checkBox1.UseVisualStyleBackColor = true;
+            this.checkBoxCollection.AutoSize = true;
+            this.checkBoxCollection.Location = new System.Drawing.Point(396, 14);
+            this.checkBoxCollection.Name = "checkBoxCollection";
+            this.checkBoxCollection.Size = new System.Drawing.Size(127, 17);
+            this.checkBoxCollection.TabIndex = 2;
+            this.checkBoxCollection.Text = "Validate as Collection";
+            this.checkBoxCollection.UseVisualStyleBackColor = true;
             // 
             // textBoxJsonToValidate
             // 
@@ -84,17 +84,17 @@
             this.buttonValidate.UseVisualStyleBackColor = true;
             this.buttonValidate.Click += new System.EventHandler(this.buttonValidate_Click);
             // 
-            // SchemaValidator
+            // SchemaValidatorForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(665, 419);
             this.Controls.Add(this.buttonValidate);
             this.Controls.Add(this.textBoxJsonToValidate);
-            this.Controls.Add(this.checkBox1);
+            this.Controls.Add(this.checkBoxCollection);
             this.Controls.Add(this.comboBoxSchema);
             this.Controls.Add(this.label1);
-            this.Name = "SchemaValidator";
+            this.Name = "SchemaValidatorForm";
             this.Text = "Schema Validator";
             this.Load += new System.EventHandler(this.SchemaValidator_Load);
             this.ResumeLayout(false);
@@ -106,7 +106,7 @@
 
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.ComboBox comboBoxSchema;
-        private System.Windows.Forms.CheckBox checkBox1;
+        private System.Windows.Forms.CheckBox checkBoxCollection;
         private System.Windows.Forms.TextBox textBoxJsonToValidate;
         private System.Windows.Forms.Button buttonValidate;
     }

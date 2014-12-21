@@ -34,6 +34,11 @@
             this.openLastFolderToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripSeparator();
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.accountToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.signInToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.baseUrlToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripTextBoxAPIRoot = new System.Windows.Forms.ToolStripTextBox();
+            this.validateJsonToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.listBoxDocuments = new System.Windows.Forms.ListBox();
             this.label1 = new System.Windows.Forms.Label();
             this.textBoxResponseExpected = new System.Windows.Forms.TextBox();
@@ -42,16 +47,12 @@
             this.label3 = new System.Windows.Forms.Label();
             this.listBoxMethods = new System.Windows.Forms.ListBox();
             this.buttonMakeRequest = new System.Windows.Forms.Button();
-            this.accountToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.signInToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.textBoxRequest = new System.Windows.Forms.TextBox();
             this.labelRequestTitle = new System.Windows.Forms.Label();
             this.labelExpectedResposne = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
             this.textBoxResponseActual = new System.Windows.Forms.TextBox();
-            this.baseUrlToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripTextBoxAPIRoot = new System.Windows.Forms.ToolStripTextBox();
-            this.validateJsonToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.buttonValidate = new System.Windows.Forms.Button();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -104,6 +105,43 @@
             this.exitToolStripMenuItem.Size = new System.Drawing.Size(163, 22);
             this.exitToolStripMenuItem.Text = "E&xit";
             this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
+            // 
+            // accountToolStripMenuItem
+            // 
+            this.accountToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.signInToolStripMenuItem});
+            this.accountToolStripMenuItem.Name = "accountToolStripMenuItem";
+            this.accountToolStripMenuItem.Size = new System.Drawing.Size(64, 20);
+            this.accountToolStripMenuItem.Text = "Account";
+            // 
+            // signInToolStripMenuItem
+            // 
+            this.signInToolStripMenuItem.Name = "signInToolStripMenuItem";
+            this.signInToolStripMenuItem.Size = new System.Drawing.Size(119, 22);
+            this.signInToolStripMenuItem.Text = "Sign In...";
+            this.signInToolStripMenuItem.Click += new System.EventHandler(this.signInToolStripMenuItem_Click);
+            // 
+            // baseUrlToolStripMenuItem
+            // 
+            this.baseUrlToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.toolStripTextBoxAPIRoot});
+            this.baseUrlToolStripMenuItem.Name = "baseUrlToolStripMenuItem";
+            this.baseUrlToolStripMenuItem.Size = new System.Drawing.Size(61, 20);
+            this.baseUrlToolStripMenuItem.Text = "Base Url";
+            // 
+            // toolStripTextBoxAPIRoot
+            // 
+            this.toolStripTextBoxAPIRoot.Name = "toolStripTextBoxAPIRoot";
+            this.toolStripTextBoxAPIRoot.Size = new System.Drawing.Size(100, 23);
+            this.toolStripTextBoxAPIRoot.Text = "https://df.api.onedrive.com/v1.0";
+            this.toolStripTextBoxAPIRoot.TextChanged += new System.EventHandler(this.toolStripTextBoxAPIRoot_TextChanged);
+            // 
+            // validateJsonToolStripMenuItem
+            // 
+            this.validateJsonToolStripMenuItem.Name = "validateJsonToolStripMenuItem";
+            this.validateJsonToolStripMenuItem.Size = new System.Drawing.Size(87, 20);
+            this.validateJsonToolStripMenuItem.Text = "Validate Json";
+            this.validateJsonToolStripMenuItem.Click += new System.EventHandler(this.validateJsonToolStripMenuItem_Click);
             // 
             // listBoxDocuments
             // 
@@ -189,21 +227,6 @@
             this.buttonMakeRequest.UseVisualStyleBackColor = true;
             this.buttonMakeRequest.Click += new System.EventHandler(this.buttonMakeRequest_Click);
             // 
-            // accountToolStripMenuItem
-            // 
-            this.accountToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.signInToolStripMenuItem});
-            this.accountToolStripMenuItem.Name = "accountToolStripMenuItem";
-            this.accountToolStripMenuItem.Size = new System.Drawing.Size(64, 20);
-            this.accountToolStripMenuItem.Text = "Account";
-            // 
-            // signInToolStripMenuItem
-            // 
-            this.signInToolStripMenuItem.Name = "signInToolStripMenuItem";
-            this.signInToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
-            this.signInToolStripMenuItem.Text = "Sign In...";
-            this.signInToolStripMenuItem.Click += new System.EventHandler(this.signInToolStripMenuItem_Click);
-            // 
             // textBoxRequest
             // 
             this.textBoxRequest.Location = new System.Drawing.Point(555, 76);
@@ -251,33 +274,22 @@
             this.textBoxResponseActual.TabIndex = 12;
             this.textBoxResponseActual.WordWrap = false;
             // 
-            // baseUrlToolStripMenuItem
+            // buttonValidate
             // 
-            this.baseUrlToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.toolStripTextBoxAPIRoot});
-            this.baseUrlToolStripMenuItem.Name = "baseUrlToolStripMenuItem";
-            this.baseUrlToolStripMenuItem.Size = new System.Drawing.Size(61, 20);
-            this.baseUrlToolStripMenuItem.Text = "Base Url";
-            // 
-            // toolStripTextBoxAPIRoot
-            // 
-            this.toolStripTextBoxAPIRoot.Name = "toolStripTextBoxAPIRoot";
-            this.toolStripTextBoxAPIRoot.Size = new System.Drawing.Size(100, 23);
-            this.toolStripTextBoxAPIRoot.Text = "https://df.api.onedrive.com/v1.0";
-            this.toolStripTextBoxAPIRoot.TextChanged += new System.EventHandler(this.toolStripTextBoxAPIRoot_TextChanged);
-            // 
-            // validateJsonToolStripMenuItem
-            // 
-            this.validateJsonToolStripMenuItem.Name = "validateJsonToolStripMenuItem";
-            this.validateJsonToolStripMenuItem.Size = new System.Drawing.Size(87, 20);
-            this.validateJsonToolStripMenuItem.Text = "Validate Json";
-            this.validateJsonToolStripMenuItem.Click += new System.EventHandler(this.validateJsonToolStripMenuItem_Click);
+            this.buttonValidate.Location = new System.Drawing.Point(1001, 435);
+            this.buttonValidate.Name = "buttonValidate";
+            this.buttonValidate.Size = new System.Drawing.Size(122, 23);
+            this.buttonValidate.TabIndex = 14;
+            this.buttonValidate.Text = "Validate";
+            this.buttonValidate.UseVisualStyleBackColor = true;
+            this.buttonValidate.Click += new System.EventHandler(this.buttonValidate_Click);
             // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1138, 735);
+            this.Controls.Add(this.buttonValidate);
             this.Controls.Add(this.label6);
             this.Controls.Add(this.textBoxResponseActual);
             this.Controls.Add(this.labelExpectedResposne);
@@ -330,6 +342,7 @@
         private System.Windows.Forms.ToolStripMenuItem baseUrlToolStripMenuItem;
         private System.Windows.Forms.ToolStripTextBox toolStripTextBoxAPIRoot;
         private System.Windows.Forms.ToolStripMenuItem validateJsonToolStripMenuItem;
+        private System.Windows.Forms.Button buttonValidate;
     }
 }
 

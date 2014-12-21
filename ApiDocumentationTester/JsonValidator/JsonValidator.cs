@@ -20,15 +20,15 @@ namespace ApiDocumentationTester
 
         public void RegisterJsonResource(string name, string json)
         {
-            try
-            {
+            //try
+            //{
                 var schema = new JsonSchema(json) { ResourceName = name };
                 m_RegisteredSchema[name] = schema;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Failed to register schema for {0}: {1}", name, ex.Message);
-            }
+            //}
+            //catch (Exception ex)
+            //{
+            //    Console.WriteLine("Failed to register schema for {0}: {1}", name, ex.Message);
+            //}
         }
         
         /// <summary>
@@ -37,15 +37,15 @@ namespace ApiDocumentationTester
         /// <param name="expectedJson"></param>
         /// <param name="actualJson"></param>
         /// <returns></returns>
-        public bool ValidateJson(string resourceType, string json, out ValidationError[] errors)
+        public bool ValidateJson(string resourceType, string json, bool jsonIsCollection, out ValidationError[] errors)
         {
             var schema = m_RegisteredSchema[resourceType];
-            return ValidateJson(schema, json, out errors);
+            return ValidateJson(schema, json, jsonIsCollection, out errors);
         }
 
-        public bool ValidateJson(JsonSchema schema, string json, out ValidationError[] errors)
+        public bool ValidateJson(JsonSchema schema, string json, bool jsonIsCollection, out ValidationError[] errors)
         {
-            return schema.ValidateJson(json, out errors, m_RegisteredSchema);
+            return schema.ValidateJson(json, out errors, m_RegisteredSchema, jsonIsCollection);
         }
         
     }

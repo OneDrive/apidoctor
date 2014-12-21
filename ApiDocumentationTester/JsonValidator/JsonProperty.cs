@@ -42,7 +42,8 @@ namespace ApiDocumentationTester
         Number,
         String,
         ODataType,
-        Custom
+        Custom,
+        Array
     }
 
 }

@@ -30,7 +30,7 @@ namespace ApiDocumentationTester
         private void buttonValidate_Click(object sender, EventArgs e)
         {
             ValidationError[] errors;
-            bool result = Validator.ValidateJson(comboBoxSchema.Text, textBoxJsonToValidate.Text, out errors);
+            bool result = Validator.ValidateJson(comboBoxSchema.Text, textBoxJsonToValidate.Text, checkBoxCollection.Checked, out errors);
 
             if (result)
             {

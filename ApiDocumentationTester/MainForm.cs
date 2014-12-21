@@ -107,6 +107,7 @@ namespace ApiDocumentationTester
             labelRequestTitle.Text = "Request"; 
             labelExpectedResposne.Text = string.Format("Expected Response (resource type: {0})", method.ResponseType);
             textBoxRequest.Text = method.Request;
+            textBoxRequest.Tag = method;
             textBoxResponseExpected.Text = method.Response;
             textBoxResponseActual.Clear();
         }
@@ -124,6 +125,7 @@ namespace ApiDocumentationTester
 
             var response = await HttpRequestParser.HttpResponse.ResponseFromHttpWebResponseAsync(request);
             textBoxResponseActual.Text = response.FullResponse;
+            textBoxResponseActual.Tag = response;
         }
 
         private async void signInToolStripMenuItem_Click(object sender, EventArgs e)
@@ -146,6 +148,41 @@ namespace ApiDocumentationTester
         {
             SchemaValidatorForm form = new SchemaValidatorForm { Validator = m_Validator };
             form.Show();
+
+        }
+
+        private void buttonValidate_Click(object sender, EventArgs e)
+        {
+            var response = textBoxResponseActual.Tag as HttpRequestParser.HttpResponse;
+            if (null == response)
+            {
+                MessageBox.Show("No response object available");
+                return;
+            }
+
+            var method = textBoxRequest.Tag as MethodDefinition;
+            if (null == method)
+            {
+                MessageBox.Show("No method definition available");
+                return;
+            }
+
+            if (string.IsNullOrEmpty(response.Body))
+            {
+                MessageBox.Show("No response body to validate");
+                return;
+            }
+
+            var responseResourceType = method.ResponseType;
+            ValidationError[] errors;
+            if (m_Validator.ValidateJson(responseResourceType, response.Body, false, out errors))
+            {
+                MessageBox.Show("API response matches the documentation.");
+            }
+            else
+            {
+                MessageBox.Show("API response is invalid. The following errors were detected:\n" + (from m in errors select m.Message).ComponentsJoinedByString(Environment.NewLine));
+            }
 
         }
     }
