@@ -50,6 +50,12 @@ namespace ApiDocumentationTester
             listBoxBlocks.DisplayMember = "Content";
             listBoxBlocks.DataSource = CurrentFile.CodeBlocks;
 
+            listBoxResources.DisplayMember = "OdataType";
+            var resources = CurrentFile.Resources.Values.ToArray();
+            listBoxResources.DataSource = resources;
+
+            listBoxMethods.DisplayMember = "DisplayName";
+            listBoxMethods.DataSource = CurrentFile.Requests;
         }
 
         private void listBoxBlocks_SelectedIndexChanged(object sender, EventArgs e)
@@ -58,6 +64,19 @@ namespace ApiDocumentationTester
 
             textBoxCode.Text = selectedBlock.Content;
             labelCodeBlockLanguage.Text = selectedBlock.CodeLanguage;
+        }
+
+        private void listBoxResources_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            var selectedResource = (Resource)((ListBox)sender).SelectedValue;
+            textBoxResource.Text = selectedResource.JsonFormat;
+        }
+
+        private void listBoxMethods_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            var selectedMethod = (RequestResponse)((ListBox)sender).SelectedValue;
+            textBoxRequest.Text = selectedMethod.Request;
+            textBoxResponse.Text = selectedMethod.Response;
         }
     }
 }

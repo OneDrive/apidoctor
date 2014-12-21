@@ -51,7 +51,7 @@ namespace ApiDocumentationTester
             m_CodeBlocks.Clear();
             foreach (var block in Blocks)
             {
-                Console.WriteLine("Block: {0}: {1}", block.BlockType, block.Content);    
+                //Console.WriteLine("Block: {0}: {1}", block.BlockType, block.Content);    
                 switch (block.BlockType)
                 {
                     case MarkdownDeep.BlockType.codeblock:
@@ -63,9 +63,15 @@ namespace ApiDocumentationTester
                 }
             }
 
-            for (int i = 0; i < m_CodeBlocks.Count; i += 2)
+            for (int i = 0; i < m_CodeBlocks.Count;)
             {
                 var htmlComment = m_CodeBlocks[i];
+                if (htmlComment.BlockType != MarkdownDeep.BlockType.html)
+                {
+                    i++;
+                    continue;
+                }
+
                 var codeBlock = m_CodeBlocks[i + 1];
 
                 try 
@@ -76,6 +82,7 @@ namespace ApiDocumentationTester
                 {
                     Console.WriteLine("Warning: file has an invalid format.");
                 }
+                i += 2;
             }
 
         }
@@ -87,11 +94,12 @@ namespace ApiDocumentationTester
             if (code.BlockType != MarkdownDeep.BlockType.codeblock)
                 throw new ArgumentException("code block does not appear to be code");
 
-            var metadataJsonString = metadata.Content.Substring(4, metadata.Content.Length - 8);
-            var metadataObject = Newtonsoft.Json.JsonConvert.DeserializeObject(metadataJsonString);
+            var metadataJsonString = metadata.Content.Substring(4, metadata.Content.Length - 9);
+            var metadataObject = (Newtonsoft.Json.Linq.JContainer)Newtonsoft.Json.JsonConvert.DeserializeObject(metadataJsonString);
 
-            var resourceType = (string)((Newtonsoft.Json.Linq.JContainer)metadataObject)["@odata.type"];
-            var blockType = (string)((Newtonsoft.Json.Linq.JContainer)metadataObject)["blockType"];
+            var resourceType = (string)metadataObject["@odata.type"];
+            var blockType = (string)metadataObject["blockType"];
+            
 
             if (blockType == "resource")
             {
@@ -99,11 +107,28 @@ namespace ApiDocumentationTester
             }
             else if (blockType == "request")
             {
-                m_Requests.Add(new RequestResponse { Request = code.Content });
+                // parameters
+                var parameters = metadataObject["parameters"];
+                string[] parameterNames = null;
+                if (null != parameters)
+                {
+                    var query = from p in parameters
+                                select (string)p;
+                    parameterNames = query.ToArray();
+                }
+
+                m_Requests.Add(new RequestResponse {
+                    Request = code.Content, 
+                    DisplayName = string.Format("{1} #{0}", m_Requests.Count, DisplayName),
+                    Parameters = parameterNames
+                });
             }
             else if (blockType == "response")
             {
-                m_Requests.Last().Response = code.Content;
+                var responseType = (string)metadataObject["@odata.type"];
+                var lastRequest = m_Requests.Last();
+                lastRequest.Response = code.Content;
+                lastRequest.ResponseType = responseType;
             }
         }
 
