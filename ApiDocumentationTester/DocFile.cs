@@ -128,7 +128,16 @@ namespace ApiDocumentationTester
                 var responseType = (string)metadataObject["@odata.type"];
                 var lastRequest = m_Requests.Last();
                 lastRequest.Response = code.Content;
-                lastRequest.ResponseType = responseType;
+
+                if (responseType.StartsWith("Collection("))
+                {
+                    lastRequest.ResponseIsCollection = true;
+                    lastRequest.ResponseType = responseType.Substring(11, responseType.Length - 12);
+                }
+                else
+                {
+                    lastRequest.ResponseType = responseType;
+                }
             }
         }
 

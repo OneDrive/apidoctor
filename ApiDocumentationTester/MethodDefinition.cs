@@ -20,6 +20,8 @@ namespace ApiDocumentationTester
 
         public string[] Parameters { get; set; }
 
+        public bool ResponseIsCollection { get; set; }
+
 
         public HttpWebRequest BuildRequest(string baseUrl, string accessToken)
         {

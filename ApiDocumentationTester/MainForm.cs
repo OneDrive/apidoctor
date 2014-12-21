@@ -175,7 +175,7 @@ namespace ApiDocumentationTester
 
             var responseResourceType = method.ResponseType;
             ValidationError[] errors;
-            if (m_Validator.ValidateJson(responseResourceType, response.Body, false, out errors))
+            if (m_Validator.ValidateJson(responseResourceType, response.Body, method.ResponseIsCollection, out errors))
             {
                 MessageBox.Show("API response matches the documentation.");
             }
