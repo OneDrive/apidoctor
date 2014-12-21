@@ -52,7 +52,8 @@
             this.labelExpectedResposne = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
             this.textBoxResponseActual = new System.Windows.Forms.TextBox();
-            this.buttonValidate = new System.Windows.Forms.Button();
+            this.buttonValidateActualResponse = new System.Windows.Forms.Button();
+            this.buttonValidateExpectedResponse = new System.Windows.Forms.Button();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -274,22 +275,33 @@
             this.textBoxResponseActual.TabIndex = 12;
             this.textBoxResponseActual.WordWrap = false;
             // 
-            // buttonValidate
+            // buttonValidateActualResponse
             // 
-            this.buttonValidate.Location = new System.Drawing.Point(1001, 435);
-            this.buttonValidate.Name = "buttonValidate";
-            this.buttonValidate.Size = new System.Drawing.Size(122, 23);
-            this.buttonValidate.TabIndex = 14;
-            this.buttonValidate.Text = "Validate";
-            this.buttonValidate.UseVisualStyleBackColor = true;
-            this.buttonValidate.Click += new System.EventHandler(this.buttonValidate_Click);
+            this.buttonValidateActualResponse.Location = new System.Drawing.Point(1001, 435);
+            this.buttonValidateActualResponse.Name = "buttonValidateActualResponse";
+            this.buttonValidateActualResponse.Size = new System.Drawing.Size(122, 23);
+            this.buttonValidateActualResponse.TabIndex = 14;
+            this.buttonValidateActualResponse.Text = "Validate";
+            this.buttonValidateActualResponse.UseVisualStyleBackColor = true;
+            this.buttonValidateActualResponse.Click += new System.EventHandler(this.buttonValidate_Click);
+            // 
+            // buttonValidateExpectedResponse
+            // 
+            this.buttonValidateExpectedResponse.Location = new System.Drawing.Point(1004, 231);
+            this.buttonValidateExpectedResponse.Name = "buttonValidateExpectedResponse";
+            this.buttonValidateExpectedResponse.Size = new System.Drawing.Size(122, 23);
+            this.buttonValidateExpectedResponse.TabIndex = 15;
+            this.buttonValidateExpectedResponse.Text = "Validate";
+            this.buttonValidateExpectedResponse.UseVisualStyleBackColor = true;
+            this.buttonValidateExpectedResponse.Click += new System.EventHandler(this.buttonValidateExpectedResponse_Click);
             // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1138, 735);
-            this.Controls.Add(this.buttonValidate);
+            this.Controls.Add(this.buttonValidateExpectedResponse);
+            this.Controls.Add(this.buttonValidateActualResponse);
             this.Controls.Add(this.label6);
             this.Controls.Add(this.textBoxResponseActual);
             this.Controls.Add(this.labelExpectedResposne);
@@ -342,7 +354,8 @@
         private System.Windows.Forms.ToolStripMenuItem baseUrlToolStripMenuItem;
         private System.Windows.Forms.ToolStripTextBox toolStripTextBoxAPIRoot;
         private System.Windows.Forms.ToolStripMenuItem validateJsonToolStripMenuItem;
-        private System.Windows.Forms.Button buttonValidate;
+        private System.Windows.Forms.Button buttonValidateActualResponse;
+        private System.Windows.Forms.Button buttonValidateExpectedResponse;
     }
 }
 

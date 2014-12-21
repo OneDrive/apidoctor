@@ -59,7 +59,7 @@ namespace ApiDocumentationTester
                     m_Resources.AddRange(file.Resources.Values);
                     foreach (var resource in file.Resources.Values)
                     {
-                        m_Validator.RegisterJsonResource(resource.OdataType, resource.JsonFormat);
+                        m_Validator.RegisterJsonResource(resource);
                     }
                 }
                 if (file.Requests.Length > 0)
@@ -153,14 +153,20 @@ namespace ApiDocumentationTester
 
         private void buttonValidate_Click(object sender, EventArgs e)
         {
+            var expectedResponse = textBoxResponseExpected.Tag as HttpRequestParser.HttpResponse;
             var response = textBoxResponseActual.Tag as HttpRequestParser.HttpResponse;
+            ValidateHttpResponse(textBoxRequest.Tag as MethodDefinition, response, expectedResponse);
+
+        }
+
+        private void ValidateHttpResponse(MethodDefinition method, HttpRequestParser.HttpResponse response, HttpRequestParser.HttpResponse expectedResponse = null)
+        {
             if (null == response)
             {
                 MessageBox.Show("No response object available");
                 return;
             }
 
-            var method = textBoxRequest.Tag as MethodDefinition;
             if (null == method)
             {
                 MessageBox.Show("No method definition available");
@@ -173,6 +179,13 @@ namespace ApiDocumentationTester
                 return;
             }
 
+            if (null != expectedResponse)
+            {
+                // TODO: verify that the HTTP portion of the response is correct (Status code, message, etc)
+            }
+
+
+            // Verify the JSON portion of the response is correct
             var responseResourceType = method.ResponseType;
             ValidationError[] errors;
             if (m_Validator.ValidateJson(responseResourceType, response.Body, method.ResponseIsCollection, out errors))
@@ -183,7 +196,13 @@ namespace ApiDocumentationTester
             {
                 MessageBox.Show("API response is invalid. The following errors were detected:\n" + (from m in errors select m.Message).ComponentsJoinedByString(Environment.NewLine));
             }
+        }
 
+        private void buttonValidateExpectedResponse_Click(object sender, EventArgs e)
+        {
+            var parser = new HttpRequestParser.HttpParser();
+            var response = parser.ParseHttpResponse(textBoxResponseExpected.Text);
+            ValidateHttpResponse(textBoxRequest.Tag as MethodDefinition, response);
         }
     }
 }

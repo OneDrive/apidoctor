@@ -13,6 +13,10 @@ namespace ApiDocumentationTester
     {
         public string ResourceName { get; set; }
 
+        public bool IgnoreMissingProperties { get; set; }
+
+        public string[] OptionalProperties { get; set; }
+
         protected Dictionary<string, JsonProperty> Schema { get; private set; }
 
         public JsonSchema(string json)
@@ -28,7 +32,17 @@ namespace ApiDocumentationTester
         /// <returns>True if validation was successful, otherwise false.</returns>
         public bool ValidateJson(string json, out ValidationError[] errors, Dictionary<string, JsonSchema> otherSchemas, bool isCollection = false)
         {
-            JContainer obj = (JContainer)JsonConvert.DeserializeObject(json);
+            
+            JContainer obj = null;
+            try
+            {
+                obj = (JContainer)JsonConvert.DeserializeObject(json);
+            }
+            catch (Exception ex)
+            {
+                errors = new ValidationError[] { new ValidationError { Message = string.Format("Failed to parse Json: {0}", ex.Message) } };
+                return false;
+            }
 
             List<ValidationError> detectedErrors = new List<ValidationError>();
             List<string> missingProperties = new List<string>(Schema.Keys);
@@ -48,9 +62,15 @@ namespace ApiDocumentationTester
                 Console.WriteLine("validating {0} = {1}", inputProperty.Name, validationResponse);
             }
 
-            
+            if (null != OptionalProperties)
+            {
+                foreach (var optionalProp in OptionalProperties)
+                {
+                    missingProperties.Remove(optionalProp);
+                }
+            }
 
-            if (missingProperties.Count > 0)
+            if (!IgnoreMissingProperties && missingProperties.Count > 0)
             {
                 detectedErrors.Add(new ValidationError { Message = string.Format("JSON was missing these properties: {0}", missingProperties.ComponentsJoinedByString(",")) });
             }
@@ -59,6 +79,13 @@ namespace ApiDocumentationTester
             return detectedErrors.Count == 0;
         }
 
+        /// <summary>
+        /// Verify that a property from the json-to-validate matches something in our schema
+        /// </summary>
+        /// <param name="inputProperty"></param>
+        /// <param name="otherSchemas"></param>
+        /// <param name="detectedErrors"></param>
+        /// <returns></returns>
         private PropertyValidationOutcome ValidateProperty(JsonProperty inputProperty, Dictionary<string, JsonSchema> otherSchemas, List<ValidationError> detectedErrors)
         {
             if (Schema.ContainsKey(inputProperty.Name))
@@ -119,7 +146,15 @@ namespace ApiDocumentationTester
                 ValidateProperty(inputProperty, otherSchemas, detectedErrors);
             }
 
-            if (missingProperties.Count > 0)
+            if (null != OptionalProperties)
+            {
+                foreach (var optionalProp in OptionalProperties)
+                {
+                    missingProperties.Remove(optionalProp);
+                }
+            }
+
+            if (!IgnoreMissingProperties && missingProperties.Count > 0)
             {
                 detectedErrors.Add(new ValidationError { Message = string.Format("Missing properties: {0}", missingProperties.ComponentsJoinedByString(",")) });
             }
@@ -127,9 +162,6 @@ namespace ApiDocumentationTester
             errors = detectedErrors.ToArray();
             return detectedErrors.Count == 0;
         }
-
-        
-
 
         private void BuildSchemaFromJson(string json)
         {
@@ -156,6 +188,9 @@ namespace ApiDocumentationTester
                     return new JsonProperty { Name = name, Type = JsonDataType.Number, OriginalValue = value.ToString() };
 
                 case JTokenType.String:
+                    return new JsonProperty { Name = name, Type = JsonDataType.String, OriginalValue = value.ToString() };
+
+                case JTokenType.Date:
                     return new JsonProperty { Name = name, Type = JsonDataType.String, OriginalValue = value.ToString() };
 
                 case JTokenType.Object:
@@ -249,5 +284,7 @@ namespace ApiDocumentationTester
             MissingFromSchema,
             MissingResourceType
         }
+
+        
     }
 }

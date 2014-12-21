@@ -18,12 +18,17 @@ namespace ApiDocumentationTester
             get { return m_RegisteredSchema.Values.ToArray(); }
         }
 
-        public void RegisterJsonResource(string name, string json)
+        public void RegisterJsonResource(ResourceDefinition resource)
         {
             //try
             //{
-                var schema = new JsonSchema(json) { ResourceName = name };
-                m_RegisteredSchema[name] = schema;
+                var schema = new JsonSchema(resource.JsonFormat) { ResourceName = resource.OdataType, IgnoreMissingProperties = resource.IgnoreMissingProperties };
+                schema.IgnoreMissingProperties = resource.IgnoreMissingProperties;
+                if (!string.IsNullOrEmpty(resource.OptionalProperties))
+                {
+                    schema.OptionalProperties = resource.OptionalProperties.Split(',');
+                }
+                m_RegisteredSchema[resource.OdataType] = schema;
             //}
             //catch (Exception ex)
             //{

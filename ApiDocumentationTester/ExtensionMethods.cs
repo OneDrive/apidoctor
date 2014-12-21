@@ -20,5 +20,37 @@ namespace ApiDocumentationTester
             }
             return sb.ToString();
         }
+
+        public static bool TryGetPropertyValue<T>(this Newtonsoft.Json.Linq.JContainer container, string propertyName, out T value )
+        {
+            try
+            {
+                Newtonsoft.Json.Linq.JValue storedValue = (Newtonsoft.Json.Linq.JValue)container[propertyName];
+                if (storedValue == null)
+                {
+                    value = default(T);
+                    return false;
+                }
+                else
+                {
+                    value = (T)storedValue.Value;
+                    return true;
+                }
+            }
+            catch 
+            {
+                value = default(T);
+                return false;
+            }
+        }
+
+        public static T PropertyValue<T>(this Newtonsoft.Json.Linq.JContainer container, string propertyName, T defaultValue)
+        {
+            T storedValue;
+            if (container.TryGetPropertyValue(propertyName, out storedValue))
+                return storedValue;
+            else
+                return defaultValue;
+        }
     }
 }

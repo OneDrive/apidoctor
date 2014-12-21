@@ -99,11 +99,20 @@ namespace ApiDocumentationTester
 
             var resourceType = (string)metadataObject["@odata.type"];
             var blockType = (string)metadataObject["blockType"];
+            bool ignoreMissingProps = false;
+            try
+            {
+                ignoreMissingProps = (bool)metadataObject["ignoreMissingProperties"];
+            }
+            catch { }
             
 
             if (blockType == "resource")
             {
-                m_Resources.Add(resourceType, new ResourceDefinition { OdataType = resourceType, JsonFormat = code.Content });
+                var resourceDef = new ResourceDefinition { OdataType = resourceType, JsonFormat = code.Content };
+                resourceDef.IgnoreMissingProperties = metadataObject.PropertyValue<bool>("ignoreMissingProperties", false);
+                resourceDef.OptionalProperties = metadataObject.PropertyValue<string>("optionalProperties", string.Empty);
+                m_Resources.Add(resourceDef.OdataType, resourceDef);
             }
             else if (blockType == "request")
             {
