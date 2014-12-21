@@ -2,9 +2,9 @@
 
 namespace ApiDocumentationTester
 {
-    public class Resource
+    public class ResourceDefinition
     {
-        public Resource()
+        public ResourceDefinition()
         {
         }
 

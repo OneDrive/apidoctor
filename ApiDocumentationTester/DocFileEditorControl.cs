@@ -68,13 +68,13 @@ namespace ApiDocumentationTester
 
         private void listBoxResources_SelectedIndexChanged(object sender, EventArgs e)
         {
-            var selectedResource = (Resource)((ListBox)sender).SelectedValue;
+            var selectedResource = (ResourceDefinition)((ListBox)sender).SelectedValue;
             textBoxResource.Text = selectedResource.JsonFormat;
         }
 
         private void listBoxMethods_SelectedIndexChanged(object sender, EventArgs e)
         {
-            var selectedMethod = (RequestResponse)((ListBox)sender).SelectedValue;
+            var selectedMethod = (MethodDefinition)((ListBox)sender).SelectedValue;
             textBoxRequest.Text = selectedMethod.Request;
             textBoxResponse.Text = selectedMethod.Response;
         }

@@ -5,5 +5,8 @@
     <Setting Name="LastOpenedPath" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
     </Setting>
+    <Setting Name="ApiBaseRoot" Type="System.String" Scope="User">
+      <Value Profile="(Default)">https://df.api.onedrive.com/v1.0</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

@@ -34,5 +34,17 @@ namespace ApiDocumentationTester.Properties {
                 this["LastOpenedPath"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("https://df.api.onedrive.com/v1.0")]
+        public string ApiBaseRoot {
+            get {
+                return ((string)(this["ApiBaseRoot"]));
+            }
+            set {
+                this["ApiBaseRoot"] = value;
+            }
+        }
     }
 }

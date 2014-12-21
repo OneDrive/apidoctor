@@ -21,8 +21,8 @@ namespace ApiDocumentationTester
         private MarkdownDeep.Block[] Blocks { get; set; }
 
         private List<MarkdownDeep.Block> m_CodeBlocks = new List<MarkdownDeep.Block>();
-        private Dictionary<string, Resource> m_Resources = new Dictionary<string, Resource>();
-        private List<RequestResponse> m_Requests = new List<RequestResponse>();
+        private Dictionary<string, ResourceDefinition> m_Resources = new Dictionary<string, ResourceDefinition>();
+        private List<MethodDefinition> m_Requests = new List<MethodDefinition>();
 
         public DocFile(string basePath, string relativePath)
         {
@@ -103,7 +103,7 @@ namespace ApiDocumentationTester
 
             if (blockType == "resource")
             {
-                m_Resources.Add(resourceType, new Resource { OdataType = resourceType, JsonFormat = code.Content });
+                m_Resources.Add(resourceType, new ResourceDefinition { OdataType = resourceType, JsonFormat = code.Content });
             }
             else if (blockType == "request")
             {
@@ -117,7 +117,7 @@ namespace ApiDocumentationTester
                     parameterNames = query.ToArray();
                 }
 
-                m_Requests.Add(new RequestResponse {
+                m_Requests.Add(new MethodDefinition {
                     Request = code.Content, 
                     DisplayName = string.Format("{1} #{0}", m_Requests.Count, DisplayName),
                     Parameters = parameterNames
@@ -137,12 +137,12 @@ namespace ApiDocumentationTester
             get { return m_CodeBlocks.ToArray(); }
         }
 
-        public IReadOnlyDictionary<string, Resource> Resources
+        public IReadOnlyDictionary<string, ResourceDefinition> Resources
         {
             get { return m_Resources; }
         }
 
-        public RequestResponse[] Requests
+        public MethodDefinition[] Requests
         {
             get { return m_Requests.ToArray(); }
         }
