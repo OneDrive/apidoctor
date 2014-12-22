@@ -100,9 +100,11 @@
 
             // Check to see that expected headers were found in the response
             List<string> otherResponseHeaderKeys = new List<string>(otherResponse.Headers.AllKeys);
+
+            var comparer = new HeaderNameComparer();
             foreach(var expectedHeader in Headers.AllKeys)
             {
-                if (!otherResponseHeaderKeys.Contains(expectedHeader))
+                if (!otherResponseHeaderKeys.Contains(expectedHeader, comparer))
                 {
                     errorList.Add(new ValidationError { Message = string.Format("Response is missing header '{0}'.", expectedHeader) });
                 }
@@ -110,6 +112,21 @@
 
             errors = errorList.ToArray();
             return errors.Length == 0;
+        }
+
+        class HeaderNameComparer : IEqualityComparer<string>
+        {
+
+            public bool Equals(string x, string y)
+            {
+                return String.Equals(x, y, StringComparison.OrdinalIgnoreCase);
+            }
+
+            public int GetHashCode(string obj)
+            {
+                if (null != obj) return obj.GetHashCode();
+                return 0;
+            }
         }
 
     }

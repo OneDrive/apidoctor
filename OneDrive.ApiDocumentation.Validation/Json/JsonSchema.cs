@@ -37,7 +37,7 @@
         /// <param name="json">Input json to validate against schema</param>
         /// <param name="errors">Array of errors if the validation fails</param>
         /// <returns>True if validation was successful, otherwise false.</returns>
-        public bool ValidateJson(string json, out ValidationError[] errors, Dictionary<string, JsonSchema> otherSchemas, bool isCollection = false)
+        public bool ValidateJson(string json, out ValidationError[] errors, Dictionary<string, JsonSchema> otherSchemas, bool isCollection = false, string collectionPropertyName = "value")
         {
             JContainer obj = null;
             try
@@ -46,7 +46,7 @@
             }
             catch (Exception ex)
             {
-                errors = new ValidationError[] { new ValidationError { Message = string.Format("Failed to parse Json: {0}", ex.Message) } };
+                errors = new ValidationError[] { new ValidationError(null, "Failed to parse json string: {0}", ex.Message) };
                 return false;
             }
 
@@ -56,7 +56,7 @@
             if (isCollection)
             {
                 // We only care about validating the members of the "value" property now
-                var returnedObject = obj["value"].First();
+                var returnedObject = obj[collectionPropertyName].First();
                 obj = (JContainer)returnedObject;
             }
 
@@ -65,7 +65,6 @@
                 JsonProperty inputProperty = ParseProperty(token);
                 missingProperties.Remove(inputProperty.Name);
                 var validationResponse = ValidateProperty(inputProperty, otherSchemas, detectedErrors);
-                Console.WriteLine("validating {0} = {1}", inputProperty.Name, validationResponse);
             }
 
             if (null != OptionalProperties)
@@ -78,7 +77,7 @@
 
             if (missingProperties.Count > 0)
             {
-                detectedErrors.Add(new ValidationError { Message = string.Format("JSON was missing these properties: {0}", missingProperties.ComponentsJoinedByString(",")) });
+                detectedErrors.Add(new ValidationError(null, "Missing properties: response was missing these required properties: {0}", missingProperties.ComponentsJoinedByString(",")));
             }
 
             errors = detectedErrors.ToArray();
@@ -107,7 +106,7 @@
                     // Compare the ODataType schema to the custom schema
                     if (!otherSchemas.ContainsKey(schemaPropertyDef.ODataTypeName))
                     {
-                        detectedErrors.Add(new ValidationError { Message = string.Format("Property {1}: Expected OData resource type '{0}' was not found", schemaPropertyDef.ODataTypeName, inputProperty.Name) });
+                        detectedErrors.Add(new ValidationError { Message = string.Format("Missing resource: resource [0] was not found (property name '{1}').", schemaPropertyDef.ODataTypeName, inputProperty.Name) });
                         return PropertyValidationOutcome.MissingResourceType;
                     }
                     else
@@ -116,7 +115,7 @@
                         ValidationError[] odataErrors;
                         if (!odataSchema.ValidateCustomObject(inputProperty.CustomMembers.Values.ToArray(), out odataErrors, otherSchemas))
                         {
-                            var propertyError = new ValidationError(null, "Property '{0}' of type '{1}' has errors:{2}{3}", inputProperty.Name, odataSchema.ResourceName, Environment.NewLine, odataErrors.AllErrors());
+                            var propertyError = new ValidationError(null, "Schema errors detected in property '{0}' ['{1}']:{2}{3}", inputProperty.Name, odataSchema.ResourceName, Environment.NewLine, odataErrors.AllErrors());
                             propertyError.InnerErrors = odataErrors;
                             detectedErrors.Add(propertyError);
 
@@ -128,7 +127,7 @@
                 {
                     detectedErrors.Add(new ValidationError
                     {
-                        Message = string.Format("Property '{0}' of type '{1}' doesn't match schema type of '{2}'",
+                        Message = string.Format("Type mismatch: property '{0}' [{1}] doesn't match expected type [{2}].",
                         inputProperty.Name, inputProperty.Type, schemaPropertyDef.Type)
                     });
                     return PropertyValidationOutcome.InvalidType;
@@ -136,7 +135,7 @@
             }
             else
             {
-                detectedErrors.Add(new ValidationError { Message = string.Format("Property '{0}' of type '{1}' was not part of the schema.", inputProperty.Name, inputProperty.Type) });
+                detectedErrors.Add(new ValidationError { Message = string.Format("Extra property: property '{0}' [{1}] was not expected.", inputProperty.Name, inputProperty.Type) });
                 return PropertyValidationOutcome.MissingFromSchema;
             }
 
