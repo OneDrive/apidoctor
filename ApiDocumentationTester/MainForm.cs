@@ -153,7 +153,8 @@ namespace ApiDocumentationTester
 
         private void buttonValidate_Click(object sender, EventArgs e)
         {
-            var expectedResponse = textBoxResponseExpected.Tag as HttpRequestParser.HttpResponse;
+            HttpRequestParser.HttpParser parser = new HttpRequestParser.HttpParser();
+            var expectedResponse = parser.ParseHttpResponse(textBoxResponseExpected.Text);
             var response = textBoxResponseActual.Tag as HttpRequestParser.HttpResponse;
             ValidateHttpResponse(textBoxRequest.Tag as MethodDefinition, response, expectedResponse);
 
@@ -179,22 +180,34 @@ namespace ApiDocumentationTester
                 return;
             }
 
+            StringBuilder detectedErrors = new StringBuilder();
+
             if (null != expectedResponse)
             {
                 // TODO: verify that the HTTP portion of the response is correct (Status code, message, etc)
+                ValidationError[] httpErrors;
+                if (!expectedResponse.CompareToResponse(response, out httpErrors))
+                {
+                    detectedErrors.AppendLine((from m in httpErrors select m.Message).ComponentsJoinedByString(Environment.NewLine));
+                }
             }
 
 
             // Verify the JSON portion of the response is correct
             var responseResourceType = method.ResponseType;
             ValidationError[] errors;
-            if (m_Validator.ValidateJson(responseResourceType, response.Body, method.ResponseIsCollection, out errors))
+            if (!m_Validator.ValidateJson(responseResourceType, response.Body, method.ResponseIsCollection, out errors))
             {
-                MessageBox.Show("API response matches the documentation.");
+                detectedErrors.AppendLine((from m in errors select m.Message).ComponentsJoinedByString(Environment.NewLine));
+            }
+
+            if (detectedErrors.Length > 0)
+            {
+                MessageBox.Show("API response is incorrect. The following errors were detected:\n\n" + detectedErrors.ToString());
             }
             else
             {
-                MessageBox.Show("API response is invalid. The following errors were detected:\n" + (from m in errors select m.Message).ComponentsJoinedByString(Environment.NewLine));
+                MessageBox.Show("API response matches the documentation.");
             }
         }
 
