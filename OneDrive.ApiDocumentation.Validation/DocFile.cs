@@ -13,9 +13,11 @@
     public class DocFile
     {
         #region Instance Variables
+        private string m_BasePath;
         private List<MarkdownDeep.Block> m_CodeBlocks = new List<MarkdownDeep.Block>();
         private List<ResourceDefinition> m_Resources = new List<ResourceDefinition>();
         private List<MethodDefinition> m_Requests = new List<MethodDefinition>();
+        private List<MarkdownDeep.LinkInfo> m_Links = new List<MarkdownDeep.LinkInfo>();
         #endregion
 
         #region Properties
@@ -44,6 +46,16 @@
             get { return m_Requests.ToArray(); }
         }
 
+        public string[] LinkDestinations
+        {
+            get
+            {
+                var query = from p in m_Links
+                            select p.def.url;
+                return query.ToArray();
+            }
+        }
+
         /// <summary>
         /// Raw Markdown parsed blocks
         /// </summary>
@@ -54,6 +66,7 @@
         #region Constructor
         public DocFile(string basePath, string relativePath)
         {
+            m_BasePath = basePath;
             FullPath = Path.Combine(basePath, relativePath.Substring(1));
             DisplayName = relativePath;
         }
@@ -113,6 +126,7 @@
                 i += 2;
             }
 
+            m_Links.AddRange(md.FoundLinks);
         }
 
         /// <summary>
@@ -164,6 +178,96 @@
         {
             get { return m_CodeBlocks.ToArray(); }
         }
+        #endregion
+
+        #region Link Verification
+
+        /// <summary>
+        /// Checks all links detected in the source document to make sure they are valid.
+        /// </summary>
+        /// <param name="errors">Information about broken links</param>
+        /// <returns>True if all links are valid. Otherwise false</returns>
+        public bool ValidateNoBrokenLinks(out ValidationError[] errors)
+        {
+            var foundErrors = new List<ValidationError>();
+            foreach (var link in m_Links)
+            {
+                var result = VerifyLink(FullPath, link.def.url, m_BasePath);
+                if (result != LinkValidationResult.Valid)
+                {
+                    foundErrors.Add(new ValidationError(this.DisplayName, "Broken link '{1}' to URL '{0}'", link.def.url, link.link_text));
+                }
+            }
+
+            errors = foundErrors.ToArray();
+            return errors.Length == 0;
+        }
+
+        private enum LinkValidationResult
+        {
+            Valid,
+            FileNotFound,
+            UrlFormatInvalid,
+            ExternalSkipped,
+            BookmarkSkipped,
+            ParentAboveDocSetPath
+        }
+
+        private static LinkValidationResult VerifyLink(string docFilePath, string linkUrl, string docSetBasePath)
+        {
+            Uri parsedUri;
+            var validUrl = Uri.TryCreate(linkUrl, UriKind.RelativeOrAbsolute, out parsedUri);
+
+            FileInfo sourceFile = new FileInfo(docFilePath);
+            var sourceFileName = Path.Combine(sourceFile.DirectoryName.Substring(docSetBasePath.Length), 
+                sourceFile.Name);
+
+            if (validUrl)
+            {
+                if (parsedUri.IsAbsoluteUri && (parsedUri.Scheme == "http" || parsedUri.Scheme == "https"))
+                {
+                    // TODO: verify the URL is valid
+                    return LinkValidationResult.ExternalSkipped;
+                }
+                else if (linkUrl.StartsWith("#"))
+                {
+                    // TODO: bookmark link within the same document
+                    return LinkValidationResult.BookmarkSkipped;
+                }
+                else
+                {
+                    var rootPath = sourceFile.DirectoryName;
+                    if (linkUrl.Contains("#"))
+                    {
+                        linkUrl = linkUrl.Substring(0, linkUrl.IndexOf("#"));
+                    }
+                    while (linkUrl.StartsWith(".." + Path.DirectorySeparatorChar))
+                    {
+                        var nextLevelParent = new DirectoryInfo(rootPath).Parent;
+                        rootPath = nextLevelParent.FullName;
+                        linkUrl = linkUrl.Substring(3);
+                    }
+
+                    if (rootPath.Length < docSetBasePath.Length)
+                    {
+                        return LinkValidationResult.ParentAboveDocSetPath;
+                    }
+
+                    var pathToFile = Path.Combine(rootPath, linkUrl);
+                    if (!File.Exists(pathToFile))
+                    {
+                        return LinkValidationResult.FileNotFound;
+                    }
+                }
+            }
+            else
+            {
+                return LinkValidationResult.UrlFormatInvalid;
+            }
+
+            return LinkValidationResult.Valid;
+        }
+
         #endregion
 
     }
