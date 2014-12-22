@@ -1,28 +1,35 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-
-
-namespace ApiDocumentationTester
+﻿namespace OneDrive.ApiDocumentation.Validation.Json
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
+    using Newtonsoft.Json;
+    using Newtonsoft.Json.Linq;
+
     public class JsonSchema
     {
+        #region Properties
         public string ResourceName { get; set; }
-
-        public bool IgnoreMissingProperties { get; set; }
-
-        public string[] OptionalProperties { get; set; }
 
         protected Dictionary<string, JsonProperty> Schema { get; private set; }
 
-        public JsonSchema(string json)
+        protected CodeBlockAnnotation Metadata { get; private set; }
+
+        public string[] OptionalProperties { get { return Metadata.OptionalProperties; } }
+
+        #endregion
+
+        #region Constructor
+        public JsonSchema(string json, CodeBlockAnnotation annotation)
         {
-            BuildSchemaFromJson(json);
+            Metadata = annotation;
+            Schema = BuildSchemaFromJson(json);
         }
+        #endregion
+
+        #region Json Validation Against Schema
 
         /// <summary>
         /// Validate the input json against the defined scehma when the instance was created.
@@ -32,7 +39,6 @@ namespace ApiDocumentationTester
         /// <returns>True if validation was successful, otherwise false.</returns>
         public bool ValidateJson(string json, out ValidationError[] errors, Dictionary<string, JsonSchema> otherSchemas, bool isCollection = false)
         {
-            
             JContainer obj = null;
             try
             {
@@ -70,7 +76,7 @@ namespace ApiDocumentationTester
                 }
             }
 
-            if (!IgnoreMissingProperties && missingProperties.Count > 0)
+            if (missingProperties.Count > 0)
             {
                 detectedErrors.Add(new ValidationError { Message = string.Format("JSON was missing these properties: {0}", missingProperties.ComponentsJoinedByString(",")) });
             }
@@ -154,7 +160,7 @@ namespace ApiDocumentationTester
                 }
             }
 
-            if (!IgnoreMissingProperties && missingProperties.Count > 0)
+            if (missingProperties.Count > 0)
             {
                 detectedErrors.Add(new ValidationError { Message = string.Format("Missing properties: {0}", missingProperties.ComponentsJoinedByString(",")) });
             }
@@ -163,7 +169,10 @@ namespace ApiDocumentationTester
             return detectedErrors.Count == 0;
         }
 
-        private void BuildSchemaFromJson(string json)
+        #endregion
+
+        #region Schema Building
+        private Dictionary<string, JsonProperty> BuildSchemaFromJson(string json)
         {
             Dictionary<string, JsonProperty> schema = new Dictionary<string, JsonProperty>();
 
@@ -173,7 +182,7 @@ namespace ApiDocumentationTester
                 JsonProperty propertyInfo = ParseProperty(token);
                 schema[propertyInfo.Name] = propertyInfo;
             }
-            Schema = schema;
+            return schema;
         }
 
         private static JsonProperty ParseProperty(string name, JToken value)
@@ -194,7 +203,6 @@ namespace ApiDocumentationTester
                     return new JsonProperty { Name = name, Type = JsonDataType.String, OriginalValue = value.ToString() };
 
                 case JTokenType.Object:
-                    Console.WriteLine("Ouch");
                     var objectSchema = ObjectToSchema((JObject)value);
                     if (objectSchema.ContainsKey("@odata.type"))
                     {
@@ -204,12 +212,10 @@ namespace ApiDocumentationTester
                     {
                         return new JsonProperty { Name = name, Type = JsonDataType.Custom, CustomMembers = ObjectToSchema((JObject)value) };
                     }
-                    break;
 
                 case JTokenType.Array:
                     // Array
                     return new JsonProperty { Name = name, Type = JsonDataType.Array, OriginalValue = value.ToString(), CustomMembers = ObjectToSchema((JObject)value.First()) };
-                    break;
 
                 default:
                     Console.WriteLine("Unhandled token type: " + value.Type);
@@ -252,18 +258,7 @@ namespace ApiDocumentationTester
             return propertyInfo;
         }
 
-        //static Dictionary<string, JsonProperty> TokenToSchema(JToken obj)
-        //{
-        //    Dictionary<string, JsonProperty> schema = new Dictionary<string, JsonProperty>();
-        //    foreach (JToken token in obj.Values())
-        //    {
-        //        JsonProperty propertyInfo = ParseProperty(token);
-        //        schema[propertyInfo.Name] = propertyInfo;
-        //    }
-        //    return schema;
-        //}
-
-        static Dictionary<string, JsonProperty> ObjectToSchema(JObject obj)
+        private static Dictionary<string, JsonProperty> ObjectToSchema(JObject obj)
         {
             Dictionary<string, JsonProperty> schema = new Dictionary<string, JsonProperty>();
             foreach (var prop in obj)
@@ -284,7 +279,6 @@ namespace ApiDocumentationTester
             MissingFromSchema,
             MissingResourceType
         }
-
-        
+        #endregion
     }
 }

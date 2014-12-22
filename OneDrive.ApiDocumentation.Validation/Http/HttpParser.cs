@@ -1,14 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Text;
-using System.Threading.Tasks;
-using System.IO;
-
-namespace ApiDocumentationTester.HttpRequestParser
+﻿namespace OneDrive.ApiDocumentation.Validation.Http
 {
-    internal class HttpParser
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Net;
+    using System.Text;
+    using System.Threading.Tasks;
+    using System.IO;
+
+    public class HttpParser
     {
         
         

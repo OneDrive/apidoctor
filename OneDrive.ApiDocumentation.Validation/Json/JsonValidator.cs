@@ -1,13 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-
-namespace ApiDocumentationTester
+﻿namespace OneDrive.ApiDocumentation.Validation.Json
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
+    using Newtonsoft.Json;
+    using Newtonsoft.Json.Linq;
+
     public class JsonValidator
     {
 
@@ -20,20 +20,8 @@ namespace ApiDocumentationTester
 
         public void RegisterJsonResource(ResourceDefinition resource)
         {
-            //try
-            //{
-                var schema = new JsonSchema(resource.JsonFormat) { ResourceName = resource.OdataType, IgnoreMissingProperties = resource.IgnoreMissingProperties };
-                schema.IgnoreMissingProperties = resource.IgnoreMissingProperties;
-                if (!string.IsNullOrEmpty(resource.OptionalProperties))
-                {
-                    schema.OptionalProperties = resource.OptionalProperties.Split(',');
-                }
-                m_RegisteredSchema[resource.OdataType] = schema;
-            //}
-            //catch (Exception ex)
-            //{
-            //    Console.WriteLine("Failed to register schema for {0}: {1}", name, ex.Message);
-            //}
+            var schema = new JsonSchema(resource.JsonExample, resource.Metadata);
+            m_RegisteredSchema[resource.Metadata.ResourceType] = schema;
         }
         
         /// <summary>

@@ -1,13 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Text;
-using System.Threading.Tasks;
-using System.IO;
-
-namespace ApiDocumentationTester.HttpRequestParser
+﻿namespace OneDrive.ApiDocumentation.Validation.Http
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Net;
+    using System.Text;
+    using System.Threading.Tasks;
+    using System.IO;
+
+
     public class HttpResponse
     {
         public string HttpVersion { get; set; }
@@ -64,17 +65,24 @@ namespace ApiDocumentationTester.HttpRequestParser
         {
             get
             {
-                StringBuilder sb = new StringBuilder();
-                sb.AppendFormat("{0} {1} {2}", HttpVersion, StatusCode, StatusMessage);
-                foreach (var key in Headers.AllKeys)
-                {
-                    sb.AppendFormat("{0}: {1}{2}", key, Headers[key], Environment.NewLine);
-                }
-                sb.AppendLine();
-                sb.Append(Body);
-
-                return sb.ToString();
+                return FormatFullResponse(Body);
             }
+        }
+
+        public string FormatFullResponse(string body)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.AppendFormat("{0} {1} {2}", HttpVersion, StatusCode, StatusMessage);
+            sb.AppendLine();
+            foreach (var key in Headers.AllKeys)
+            {
+                sb.AppendFormat("{0}: {1}", key, Headers[key]);
+                sb.AppendLine();
+            }
+            sb.AppendLine();
+            sb.Append(body);
+
+            return sb.ToString();
         }
 
         public bool CompareToResponse(HttpResponse otherResponse, out ValidationError[] errors)

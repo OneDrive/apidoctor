@@ -7,6 +7,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using OneDrive.ApiDocumentation.Validation;
+using OneDrive.ApiDocumentation.Validation.Json;
+using OneDrive.ApiDocumentation.Validation.Http;
 
 namespace ApiDocumentationTester
 {
@@ -16,7 +19,6 @@ namespace ApiDocumentationTester
 
         List<ResourceDefinition> m_Resources = new List<ResourceDefinition>();
         List<MethodDefinition> m_Methods = new List<MethodDefinition>();
-
         JsonValidator m_Validator = new JsonValidator();
 
         string m_AccessToken = null;
@@ -25,7 +27,9 @@ namespace ApiDocumentationTester
         {
             InitializeComponent();
 
-            toolStripTextBoxAPIRoot.Text = Properties.Settings.Default.ApiBaseRoot;
+            textBoxBaseURL.Text = Properties.Settings.Default.ApiBaseRoot;
+            textBoxClientId.Text = Properties.Settings.Default.ClientId;
+            textBoxAuthScopes.Text = Properties.Settings.Default.AuthScopes;
         }
 
         private void openFolderToolStripMenuItem_Click(object sender, EventArgs e)
@@ -54,10 +58,10 @@ namespace ApiDocumentationTester
             {
                 file.Scan();
 
-                if (file.Resources.Count > 0)
+                if (file.Resources.Length > 0)
                 {
-                    m_Resources.AddRange(file.Resources.Values);
-                    foreach (var resource in file.Resources.Values)
+                    m_Resources.AddRange(file.Resources);
+                    foreach (var resource in file.Resources)
                     {
                         m_Validator.RegisterJsonResource(resource);
                     }
@@ -68,7 +72,7 @@ namespace ApiDocumentationTester
                 }
             }
 
-            listBoxResources.DisplayMember = "OdataType";
+            listBoxResources.DisplayMember = "ResourceType";
             listBoxResources.DataSource = m_Resources;
 
             listBoxMethods.DisplayMember = "DisplayName";
@@ -77,7 +81,8 @@ namespace ApiDocumentationTester
 
         private void listBoxDocuments_SelectedIndexChanged(object sender, EventArgs e)
         {
-            //LoadDocumentIntoEditor(((ListBox)sender).SelectedItem as DocFile);
+            var doc = ((ListBox)sender).SelectedItem as DocFile;
+            webBrowserPreview.DocumentText = doc.HtmlContent;
         }
 
         private void LoadDocumentIntoEditor(DocFile docFile)
@@ -97,15 +102,13 @@ namespace ApiDocumentationTester
         private void listBoxResources_SelectedIndexChanged(object sender, EventArgs e)
         {
             var resource = ((ListBox)sender).SelectedItem as ResourceDefinition;
-            textBoxResponseExpected.Text = resource.JsonFormat;
-            labelRequestTitle.Text = "Resource Definition";
+            textBoxResourceData.Text = resource.JsonExample;
         }
 
         private void listBoxMethods_SelectedIndexChanged(object sender, EventArgs e)
         {
             var method = ((ListBox)sender).SelectedItem as MethodDefinition;
-            labelRequestTitle.Text = "Request"; 
-            labelExpectedResposne.Text = string.Format("Expected Response (resource type: {0})", method.ResponseType);
+            labelExpectedResponseType.Text = string.Format("{0} (col: {1})", method.ResponseMetadata.ResourceType, method.ResponseMetadata.IsCollection);
             textBoxRequest.Text = method.Request;
             textBoxRequest.Tag = method;
             textBoxResponseExpected.Text = method.Response;
@@ -121,16 +124,19 @@ namespace ApiDocumentationTester
             }
 
             var method = listBoxMethods.SelectedItem as MethodDefinition;
-            var request = method.BuildRequest(toolStripTextBoxAPIRoot.Text, m_AccessToken);
+            var request = method.BuildRequest(textBoxBaseURL.Text, m_AccessToken);
 
-            var response = await HttpRequestParser.HttpResponse.ResponseFromHttpWebResponseAsync(request);
+            var response = await HttpResponse.ResponseFromHttpWebResponseAsync(request);
             textBoxResponseActual.Text = response.FullResponse;
             textBoxResponseActual.Tag = response;
         }
 
         private async void signInToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            m_AccessToken = await MicrosoftAccountSDK.Windows.FormMicrosoftAccountAuth.GetAuthenticationToken("0000000044128B55", new string[] { "wl.skydrive_update", "wl.contacts_skydrive", "wl.signin" }, MicrosoftAccountSDK.Windows.OAuthFlow.ImplicitGrant, this);
+            var clientId = textBoxClientId.Text;
+            var scopes = textBoxAuthScopes.Text.Split(',');
+
+            m_AccessToken = await MicrosoftAccountSDK.Windows.FormMicrosoftAccountAuth.GetAuthenticationToken(clientId, scopes, MicrosoftAccountSDK.Windows.OAuthFlow.ImplicitGrant, this);
             
         }
 
@@ -153,14 +159,14 @@ namespace ApiDocumentationTester
 
         private void buttonValidate_Click(object sender, EventArgs e)
         {
-            HttpRequestParser.HttpParser parser = new HttpRequestParser.HttpParser();
+            HttpParser parser = new HttpParser();
             var expectedResponse = parser.ParseHttpResponse(textBoxResponseExpected.Text);
-            var response = textBoxResponseActual.Tag as HttpRequestParser.HttpResponse;
+            var response = textBoxResponseActual.Tag as HttpResponse;
             ValidateHttpResponse(textBoxRequest.Tag as MethodDefinition, response, expectedResponse);
 
         }
 
-        private void ValidateHttpResponse(MethodDefinition method, HttpRequestParser.HttpResponse response, HttpRequestParser.HttpResponse expectedResponse = null)
+        private void ValidateHttpResponse(MethodDefinition method, HttpResponse response, HttpResponse expectedResponse = null)
         {
             if (null == response)
             {
@@ -194,9 +200,9 @@ namespace ApiDocumentationTester
 
 
             // Verify the JSON portion of the response is correct
-            var responseResourceType = method.ResponseType;
+            var responseResourceType = method.ResponseMetadata.ResourceType;
             ValidationError[] errors;
-            if (!m_Validator.ValidateJson(responseResourceType, response.Body, method.ResponseIsCollection, out errors))
+            if (!m_Validator.ValidateJson(responseResourceType, response.Body, method.ResponseMetadata.IsCollection, out errors))
             {
                 detectedErrors.AppendLine((from m in errors select m.Message).ComponentsJoinedByString(Environment.NewLine));
             }
@@ -213,9 +219,33 @@ namespace ApiDocumentationTester
 
         private void buttonValidateExpectedResponse_Click(object sender, EventArgs e)
         {
-            var parser = new HttpRequestParser.HttpParser();
+            var parser = new HttpParser();
             var response = parser.ParseHttpResponse(textBoxResponseExpected.Text);
             ValidateHttpResponse(textBoxRequest.Tag as MethodDefinition, response);
+        }
+
+        private void textBoxClientId_TextChanged(object sender, EventArgs e)
+        {
+            Properties.Settings.Default.ClientId = textBoxClientId.Text;
+            Properties.Settings.Default.Save();
+        }
+
+        private void textBoxAuthScopes_TextChanged(object sender, EventArgs e)
+        {
+            Properties.Settings.Default.AuthScopes = textBoxAuthScopes.Text;
+            Properties.Settings.Default.Save();
+
+        }
+
+        private void buttonFormat_Click(object sender, EventArgs e)
+        {
+            var response = textBoxResponseActual.Tag as HttpResponse;
+            var jsonString = response.Body;
+
+            var obj = Newtonsoft.Json.JsonConvert.DeserializeObject(jsonString);
+            var cleanJson = Newtonsoft.Json.JsonConvert.SerializeObject(obj, Newtonsoft.Json.Formatting.Indented);
+
+            textBoxResponseActual.Text = response.FormatFullResponse(cleanJson);
         }
     }
 }

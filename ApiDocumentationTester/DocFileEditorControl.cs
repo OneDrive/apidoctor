@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using OneDrive.ApiDocumentation.Validation;
 
 namespace ApiDocumentationTester
 {
@@ -15,10 +16,6 @@ namespace ApiDocumentationTester
         public DocFileEditorControl()
         {
             InitializeComponent();
-
-            comboBoxFileType.Items.Clear();
-            var values = Enum.GetNames(typeof(DocType));
-            comboBoxFileType.Items.AddRange(values);
         }
 
         public DocFile CurrentFile { get; private set; }
@@ -26,16 +23,10 @@ namespace ApiDocumentationTester
         public void LoadFile(DocFile file)
         {
             CurrentFile = file;
-            comboBoxFileType.SelectedIndex = (int)file.Type;
-
-//            ScanFile();
-
         }
 
         private void comboBoxFileType_SelectedIndexChanged(object sender, EventArgs e)
         {
-            DocType type = (DocType)((ComboBox)sender).SelectedIndex;
-            CurrentFile.Type = type;
         }
 
         private void buttonScanFile_Click(object sender, EventArgs e)
@@ -51,7 +42,7 @@ namespace ApiDocumentationTester
             listBoxBlocks.DataSource = CurrentFile.CodeBlocks;
 
             listBoxResources.DisplayMember = "OdataType";
-            var resources = CurrentFile.Resources.Values.ToArray();
+            var resources = CurrentFile.Resources;
             listBoxResources.DataSource = resources;
 
             listBoxMethods.DisplayMember = "DisplayName";
@@ -69,7 +60,7 @@ namespace ApiDocumentationTester
         private void listBoxResources_SelectedIndexChanged(object sender, EventArgs e)
         {
             var selectedResource = (ResourceDefinition)((ListBox)sender).SelectedValue;
-            textBoxResource.Text = selectedResource.JsonFormat;
+            textBoxResource.Text = selectedResource.JsonExample;
         }
 
         private void listBoxMethods_SelectedIndexChanged(object sender, EventArgs e)

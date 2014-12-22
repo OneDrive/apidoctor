@@ -46,5 +46,29 @@ namespace ApiDocumentationTester.Properties {
                 this["ApiBaseRoot"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0000000044128B55")]
+        public string ClientId {
+            get {
+                return ((string)(this["ClientId"]));
+            }
+            set {
+                this["ClientId"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("wl.skydrive_update,wl.contacts_skydrive,wl.signin")]
+        public string AuthScopes {
+            get {
+                return ((string)(this["AuthScopes"]));
+            }
+            set {
+                this["AuthScopes"] = value;
+            }
+        }
     }
 }
