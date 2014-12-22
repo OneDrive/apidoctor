@@ -11,7 +11,7 @@
     public class JsonSchema
     {
         #region Properties
-        public string ResourceName { get; set; }
+        public string ResourceName { get { return Metadata.ResourceType; } }
 
         protected Dictionary<string, JsonProperty> Schema { get; private set; }
 
@@ -116,9 +116,10 @@
                         ValidationError[] odataErrors;
                         if (!odataSchema.ValidateCustomObject(inputProperty.CustomMembers.Values.ToArray(), out odataErrors, otherSchemas))
                         {
-                            var errorStrings = from m in odataErrors select m.Message;
-                            detectedErrors.Add(new ValidationError { Message = string.Format("Property '{0}' of type '{1}' has errors: {2}", inputProperty.Name, odataSchema.ResourceName, errorStrings.ComponentsJoinedByString(", ")), 
-                                InnerErrors = odataErrors });
+                            var propertyError = new ValidationError(null, "Property '{0}' of type '{1}' has errors:{2}{3}", inputProperty.Name, odataSchema.ResourceName, Environment.NewLine, odataErrors.AllErrors());
+                            propertyError.InnerErrors = odataErrors;
+                            detectedErrors.Add(propertyError);
+
                             return PropertyValidationOutcome.InvalidType;
                         }
                     }
@@ -162,7 +163,7 @@
 
             if (missingProperties.Count > 0)
             {
-                detectedErrors.Add(new ValidationError { Message = string.Format("Missing properties: {0}", missingProperties.ComponentsJoinedByString(",")) });
+                detectedErrors.Add(new ValidationError(null, "missing properties detected: {0}", missingProperties.ComponentsJoinedByString(",")));
             }
 
             errors = detectedErrors.ToArray();

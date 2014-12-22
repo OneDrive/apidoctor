@@ -8,9 +8,8 @@
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
 
-    public class JsonValidator
+    public class JsonResourceCollection
     {
-
         private Dictionary<string, JsonSchema> m_RegisteredSchema = new Dictionary<string,JsonSchema>();
 
         public JsonSchema[] RegisteredSchema
@@ -40,7 +39,19 @@
         {
             return schema.ValidateJson(json, out errors, m_RegisteredSchema, jsonIsCollection);
         }
-        
+
+        internal void RegisterJsonResources(IEnumerable<ResourceDefinition> resources)
+        {
+            foreach (var resource in resources)
+            {
+                RegisterJsonResource(resource);
+            }
+        }
+
+        internal void Clear()
+        {
+            m_RegisteredSchema.Clear();
+        }
     }
 
 

@@ -16,11 +16,6 @@ namespace ApiDocumentationTester
     public partial class MainForm : Form
     {
         DocSet CurrentDocSet { get; set; }
-
-        List<ResourceDefinition> m_Resources = new List<ResourceDefinition>();
-        List<MethodDefinition> m_Methods = new List<MethodDefinition>();
-        JsonValidator m_Validator = new JsonValidator();
-
         string m_AccessToken = null;
 
         public MainForm()
@@ -47,42 +42,34 @@ namespace ApiDocumentationTester
         private void OpenFolder(string path)
         {
             CurrentDocSet = new DocSet(path);
+
             listBoxDocuments.DisplayMember = "DisplayName";
             listBoxDocuments.DataSource = CurrentDocSet.Files;
 
-            m_Resources.Clear();
-            m_Methods.Clear();
-            m_Validator = new JsonValidator();
-
-            foreach (var file in CurrentDocSet.Files)
-            {
-                file.Scan();
-
-                if (file.Resources.Length > 0)
-                {
-                    m_Resources.AddRange(file.Resources);
-                    foreach (var resource in file.Resources)
-                    {
-                        m_Validator.RegisterJsonResource(resource);
-                    }
-                }
-                if (file.Requests.Length > 0)
-                {
-                    m_Methods.AddRange(file.Requests);
-                }
-            }
+            CurrentDocSet.ScanDocumentation();
 
             listBoxResources.DisplayMember = "ResourceType";
-            listBoxResources.DataSource = m_Resources;
+            listBoxResources.DataSource = CurrentDocSet.Resources;
 
             listBoxMethods.DisplayMember = "DisplayName";
-            listBoxMethods.DataSource = m_Methods;
+            listBoxMethods.DataSource = CurrentDocSet.Methods;
+
+            LoadSelectedDocumentPreview();
+         
         }
 
         private void listBoxDocuments_SelectedIndexChanged(object sender, EventArgs e)
         {
-            var doc = ((ListBox)sender).SelectedItem as DocFile;
-            webBrowserPreview.DocumentText = doc.HtmlContent;
+            LoadSelectedDocumentPreview();
+        }
+
+        private void LoadSelectedDocumentPreview()
+        {
+            var doc = listBoxDocuments.SelectedItem as DocFile;
+            if (null != doc && !string.IsNullOrEmpty(doc.HtmlContent))
+            {
+                webBrowserPreview.DocumentText = doc.HtmlContent;
+            }
         }
 
         private void LoadDocumentIntoEditor(DocFile docFile)
@@ -119,8 +106,12 @@ namespace ApiDocumentationTester
         {
             if (string.IsNullOrEmpty(m_AccessToken))
             {
-                MessageBox.Show("Please sign in before executing a method.");
-                return;
+                await SignInAsync();
+
+                if (string.IsNullOrEmpty(m_AccessToken))
+                {
+                    return;
+                }
             }
 
             var method = listBoxMethods.SelectedItem as MethodDefinition;
@@ -133,11 +124,15 @@ namespace ApiDocumentationTester
 
         private async void signInToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            await SignInAsync();
+        }
+
+        private async Task SignInAsync()
+        {
             var clientId = textBoxClientId.Text;
             var scopes = textBoxAuthScopes.Text.Split(',');
 
             m_AccessToken = await MicrosoftAccountSDK.Windows.FormMicrosoftAccountAuth.GetAuthenticationToken(clientId, scopes, MicrosoftAccountSDK.Windows.OAuthFlow.ImplicitGrant, this);
-            
         }
 
         private void toolStripTextBoxAPIRoot_TextChanged(object sender, EventArgs e)
@@ -152,9 +147,8 @@ namespace ApiDocumentationTester
 
         private void validateJsonToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            SchemaValidatorForm form = new SchemaValidatorForm { Validator = m_Validator };
+            SchemaValidatorForm form = new SchemaValidatorForm { ResourceCollection = CurrentDocSet.ResourceCollection };
             form.Show();
-
         }
 
         private void buttonValidate_Click(object sender, EventArgs e)
@@ -168,52 +162,15 @@ namespace ApiDocumentationTester
 
         private void ValidateHttpResponse(MethodDefinition method, HttpResponse response, HttpResponse expectedResponse = null)
         {
-            if (null == response)
-            {
-                MessageBox.Show("No response object available");
-                return;
-            }
 
-            if (null == method)
-            {
-                MessageBox.Show("No method definition available");
-                return;
-            }
-
-            if (string.IsNullOrEmpty(response.Body))
-            {
-                MessageBox.Show("No response body to validate");
-                return;
-            }
-
-            StringBuilder detectedErrors = new StringBuilder();
-
-            if (null != expectedResponse)
-            {
-                // TODO: verify that the HTTP portion of the response is correct (Status code, message, etc)
-                ValidationError[] httpErrors;
-                if (!expectedResponse.CompareToResponse(response, out httpErrors))
-                {
-                    detectedErrors.AppendLine((from m in httpErrors select m.Message).ComponentsJoinedByString(Environment.NewLine));
-                }
-            }
-
-
-            // Verify the JSON portion of the response is correct
-            var responseResourceType = method.ResponseMetadata.ResourceType;
             ValidationError[] errors;
-            if (!m_Validator.ValidateJson(responseResourceType, response.Body, method.ResponseMetadata.IsCollection, out errors))
+            if (!CurrentDocSet.ValidateApiMethod(method, response, expectedResponse, out errors))
             {
-                detectedErrors.AppendLine((from m in errors select m.Message).ComponentsJoinedByString(Environment.NewLine));
-            }
-
-            if (detectedErrors.Length > 0)
-            {
-                MessageBox.Show("API response is incorrect. The following errors were detected:\n\n" + detectedErrors.ToString());
+                ErrorDisplayForm.ShowErrorDialog(errors, this);   
             }
             else
             {
-                MessageBox.Show("API response matches the documentation.");
+                MessageBox.Show("No errors detected.");
             }
         }
 
@@ -246,6 +203,19 @@ namespace ApiDocumentationTester
             var cleanJson = Newtonsoft.Json.JsonConvert.SerializeObject(obj, Newtonsoft.Json.Formatting.Indented);
 
             textBoxResponseActual.Text = response.FormatFullResponse(cleanJson);
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            ValidationError[] errors;
+            if (!CurrentDocSet.ValidateLinks(checkBoxLinkWarnings.Checked, out errors))
+            {
+                textBoxLinkValidation.Text = (from m in errors select string.Format("{0}: {1}", m.Source, m.Message)).ComponentsJoinedByString(Environment.NewLine);
+            }
+            else
+            {
+                textBoxLinkValidation.Text = "No link errors detected";
+            }
         }
     }
 }

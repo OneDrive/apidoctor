@@ -187,15 +187,34 @@
         /// </summary>
         /// <param name="errors">Information about broken links</param>
         /// <returns>True if all links are valid. Otherwise false</returns>
-        public bool ValidateNoBrokenLinks(out ValidationError[] errors)
+        public bool ValidateNoBrokenLinks(bool includeWarnings, out ValidationError[] errors)
         {
             var foundErrors = new List<ValidationError>();
             foreach (var link in m_Links)
             {
                 var result = VerifyLink(FullPath, link.def.url, m_BasePath);
-                if (result != LinkValidationResult.Valid)
+                switch (result)
                 {
-                    foundErrors.Add(new ValidationError(this.DisplayName, "Broken link '{1}' to URL '{0}'", link.def.url, link.link_text));
+                    case LinkValidationResult.BookmarkSkipped:
+                    case LinkValidationResult.ExternalSkipped:
+                        if (includeWarnings)
+                            foundErrors.Add(new ValidationError(this.DisplayName, "Skipped validation of link '{1}' to URL '{0}'", link.def.url, link.link_text));
+                        break;
+                    case LinkValidationResult.FileNotFound:
+                        foundErrors.Add(new ValidationError(this.DisplayName, "Destination missing for link '{1}' to URL '{0}'", link.def.url, link.link_text));
+                        break;
+                    case LinkValidationResult.ParentAboveDocSetPath:
+                        foundErrors.Add(new ValidationError(this.DisplayName, "Destination outside of doc set for link '{1}' to URL '{0}'", link.def.url, link.link_text));
+                        break;
+                    case LinkValidationResult.UrlFormatInvalid:
+                        foundErrors.Add(new ValidationError(this.DisplayName, "Invalid URL format for link '{1}' to URL '{0}'", link.def.url, link.link_text));
+                        break;
+                    case LinkValidationResult.Valid:
+                        break;
+                    default:
+                        foundErrors.Add(new ValidationError(this.DisplayName, "{2}: for link '{1}' to URL '{0}'", link.def.url, link.link_text, result));
+                        break;
+
                 }
             }
 

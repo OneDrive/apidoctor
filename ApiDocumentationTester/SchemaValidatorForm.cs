@@ -15,7 +15,7 @@ namespace ApiDocumentationTester
     public partial class SchemaValidatorForm : Form
     {
 
-        public JsonValidator Validator { get; set; }
+        public JsonResourceCollection ResourceCollection { get; set; }
 
         public SchemaValidatorForm()
         {
@@ -24,15 +24,23 @@ namespace ApiDocumentationTester
 
         private void SchemaValidator_Load(object sender, EventArgs e)
         {
-            comboBoxSchema.DisplayMember = "ResourceName";
-            comboBoxSchema.DataSource = Validator.RegisteredSchema;
 
+            if (null == ResourceCollection)
+            {
+                MessageBox.Show("Resource collection was not initialized.");
+                return;
+            }
+
+            comboBoxSchema.DisplayMember = "ResourceName";
+            comboBoxSchema.DataSource = ResourceCollection.RegisteredSchema;
         }
 
         private void buttonValidate_Click(object sender, EventArgs e)
         {
+            if (null == ResourceCollection) return;
+
             ValidationError[] errors;
-            bool result = Validator.ValidateJson(comboBoxSchema.Text, textBoxJsonToValidate.Text, checkBoxCollection.Checked, out errors);
+            bool result = ResourceCollection.ValidateJson(comboBoxSchema.Text, textBoxJsonToValidate.Text, checkBoxCollection.Checked, out errors);
 
             if (result)
             {

@@ -25,5 +25,29 @@
         public string Source { get; set; }
 
         public ValidationError[] InnerErrors { get; set; }
+
+        public string ErrorText 
+        {
+            get 
+            {
+                StringBuilder sb = new StringBuilder();
+                if (!string.IsNullOrEmpty(Source))
+                {
+                    sb.Append(Source);
+                    sb.Append(": ");
+                }
+                sb.Append(Message);
+                return sb.ToString();
+            }
+        }
+    }
+
+    public static class ValidationErrorExtensions
+    {
+        public static string AllErrors(this IEnumerable<ValidationError> errors)
+        {
+            var messages = from e in errors select e.ErrorText;
+            return messages.ComponentsJoinedByString(Environment.NewLine);
+        }
     }
 }
