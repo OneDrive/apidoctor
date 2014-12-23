@@ -65,36 +65,47 @@
                 }
                 else
                 {
-                    var returnedObject = obj[collectionPropertyName].FirstOrDefault();
-                    obj = (JContainer)returnedObject;
-                }
-            }
-
-            if (null != obj)
-            {
-                foreach (JToken token in obj)
-                {
-                    JsonProperty inputProperty = ParseProperty(token);
-                    missingProperties.Remove(inputProperty.Name);
-                    var validationResponse = ValidateProperty(inputProperty, otherSchemas, detectedErrors, annotation.TruncatedResult);
-                }
-
-                if (null != OptionalProperties)
-                {
-                    foreach (var optionalProp in OptionalProperties)
+                    var collectionMembers = obj[collectionPropertyName];
+                    if (collectionMembers.Count() == 0)
                     {
-                        missingProperties.Remove(optionalProp);
+                        detectedErrors.Add(new ValidationError(null, "Warning: property contained an empty array that was not validated: {0}", collectionPropertyName));
+                    }
+                    foreach (JContainer container in collectionMembers)
+                    {
+                        ValidateJContainer(container, annotation, otherSchemas, detectedErrors, missingProperties);
                     }
                 }
-
-                if ((annotation == null || !annotation.TruncatedResult) && missingProperties.Count > 0)
-                {
-                    detectedErrors.Add(new ValidationError(null, "Missing properties: response was missing these required properties: {0}", missingProperties.ComponentsJoinedByString(",")));
-                }
+            }
+            else if (null != obj)
+            {
+                ValidateJContainer(obj, annotation, otherSchemas, detectedErrors, missingProperties);
             }
 
             errors = detectedErrors.ToArray();
             return detectedErrors.Count == 0;
+        }
+
+        private void ValidateJContainer(JContainer obj, CodeBlockAnnotation annotation, Dictionary<string, JsonSchema> otherSchemas, List<ValidationError> detectedErrors, List<string> missingProperties)
+        {
+            foreach (JToken token in obj)
+            {
+                JsonProperty inputProperty = ParseProperty(token);
+                missingProperties.Remove(inputProperty.Name);
+                var validationResponse = ValidateProperty(inputProperty, otherSchemas, detectedErrors, annotation.TruncatedResult);
+            }
+
+            if (null != OptionalProperties)
+            {
+                foreach (var optionalProp in OptionalProperties)
+                {
+                    missingProperties.Remove(optionalProp);
+                }
+            }
+
+            if ((annotation == null || !annotation.TruncatedResult) && missingProperties.Count > 0)
+            {
+                detectedErrors.Add(new ValidationError(null, "Missing properties: response was missing these required properties: {0}", missingProperties.ComponentsJoinedByString(",")));
+            }
         }
 
         /// <summary>
