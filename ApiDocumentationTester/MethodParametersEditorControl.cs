@@ -10,7 +10,7 @@ using System.Windows.Forms;
 using OneDrive.ApiDocumentation.Validation.Param;
 using OneDrive.ApiDocumentation.Validation;
 
-namespace ApiDocumentationTester
+namespace OneDrive.ApiDocumentation.Windows
 {
     public partial class MethodParametersEditorControl : UserControl
     {

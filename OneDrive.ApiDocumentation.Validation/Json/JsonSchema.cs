@@ -37,7 +37,7 @@
         /// <param name="json">Input json to validate against schema</param>
         /// <param name="errors">Array of errors if the validation fails</param>
         /// <returns>True if validation was successful, otherwise false.</returns>
-        public bool ValidateJson(string json, out ValidationError[] errors, Dictionary<string, JsonSchema> otherSchemas, bool isCollection = false, string collectionPropertyName = "value")
+        public bool ValidateJson(string json, out ValidationError[] errors, Dictionary<string, JsonSchema> otherSchemas, CodeBlockAnnotation annotation =null, string collectionPropertyName = "value")
         {
             JContainer obj = null;
             try
@@ -46,38 +46,51 @@
             }
             catch (Exception ex)
             {
-                errors = new ValidationError[] { new ValidationError(null, "Failed to parse json string: {0}", ex.Message) };
+                errors = new ValidationError[] { new ValidationError(null, "Failed to parse json string: {0}. Json: {1}", ex.Message, json) };
                 return false;
             }
 
             List<ValidationError> detectedErrors = new List<ValidationError>();
             List<string> missingProperties = new List<string>(Schema.Keys);
 
-            if (isCollection)
+            if (null != annotation && annotation.IsCollection)
             {
+                // TODO: also validate additional properties on the collection, like nextDataLink
+
                 // We only care about validating the members of the "value" property now
-                var returnedObject = obj[collectionPropertyName].First();
-                obj = (JContainer)returnedObject;
-            }
-
-            foreach (JToken token in obj)
-            {
-                JsonProperty inputProperty = ParseProperty(token);
-                missingProperties.Remove(inputProperty.Name);
-                var validationResponse = ValidateProperty(inputProperty, otherSchemas, detectedErrors);
-            }
-
-            if (null != OptionalProperties)
-            {
-                foreach (var optionalProp in OptionalProperties)
+                var collection = obj[collectionPropertyName];
+                if (null == collection)
                 {
-                    missingProperties.Remove(optionalProp);
+                    detectedErrors.Add(new ValidationError(null, "Failed to location collection property '{0}' in response.", collectionPropertyName));
+                }
+                else
+                {
+                    var returnedObject = obj[collectionPropertyName].FirstOrDefault();
+                    obj = (JContainer)returnedObject;
                 }
             }
 
-            if (missingProperties.Count > 0)
+            if (null != obj)
             {
-                detectedErrors.Add(new ValidationError(null, "Missing properties: response was missing these required properties: {0}", missingProperties.ComponentsJoinedByString(",")));
+                foreach (JToken token in obj)
+                {
+                    JsonProperty inputProperty = ParseProperty(token);
+                    missingProperties.Remove(inputProperty.Name);
+                    var validationResponse = ValidateProperty(inputProperty, otherSchemas, detectedErrors, annotation.TruncatedResult);
+                }
+
+                if (null != OptionalProperties)
+                {
+                    foreach (var optionalProp in OptionalProperties)
+                    {
+                        missingProperties.Remove(optionalProp);
+                    }
+                }
+
+                if ((annotation == null || !annotation.TruncatedResult) && missingProperties.Count > 0)
+                {
+                    detectedErrors.Add(new ValidationError(null, "Missing properties: response was missing these required properties: {0}", missingProperties.ComponentsJoinedByString(",")));
+                }
             }
 
             errors = detectedErrors.ToArray();
@@ -91,7 +104,7 @@
         /// <param name="otherSchemas"></param>
         /// <param name="detectedErrors"></param>
         /// <returns></returns>
-        private PropertyValidationOutcome ValidateProperty(JsonProperty inputProperty, Dictionary<string, JsonSchema> otherSchemas, List<ValidationError> detectedErrors)
+        private PropertyValidationOutcome ValidateProperty(JsonProperty inputProperty, Dictionary<string, JsonSchema> otherSchemas, List<ValidationError> detectedErrors, bool isTruncated = false)
         {
             if (Schema.ContainsKey(inputProperty.Name))
             {
@@ -113,7 +126,7 @@
                     {
                         var odataSchema = otherSchemas[schemaPropertyDef.ODataTypeName];
                         ValidationError[] odataErrors;
-                        if (!odataSchema.ValidateCustomObject(inputProperty.CustomMembers.Values.ToArray(), out odataErrors, otherSchemas))
+                        if (!odataSchema.ValidateCustomObject(inputProperty.CustomMembers.Values.ToArray(), out odataErrors, otherSchemas, isTruncated))
                         {
                             var propertyError = new ValidationError(null, "Schema errors detected in property '{0}' ['{1}']:{2}{3}", inputProperty.Name, odataSchema.ResourceName, Environment.NewLine, odataErrors.AllErrors());
                             propertyError.InnerErrors = odataErrors;
@@ -142,7 +155,7 @@
             return PropertyValidationOutcome.OK;
         }
 
-        private bool ValidateCustomObject(JsonProperty[] properties, out ValidationError[] errors, Dictionary<string, JsonSchema> otherSchemas)
+        private bool ValidateCustomObject(JsonProperty[] properties, out ValidationError[] errors, Dictionary<string, JsonSchema> otherSchemas, bool ignoreMissingProperties = false)
         {
             List<string> missingProperties = new List<string>(Schema.Keys);
             List<ValidationError> detectedErrors = new List<ValidationError>();
@@ -160,7 +173,7 @@
                 }
             }
 
-            if (missingProperties.Count > 0)
+            if (!ignoreMissingProperties && missingProperties.Count > 0)
             {
                 detectedErrors.Add(new ValidationError(null, "missing properties detected: {0}", missingProperties.ComponentsJoinedByString(",")));
             }

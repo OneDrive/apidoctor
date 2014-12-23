@@ -1,4 +1,4 @@
-﻿namespace ApiDocumentationTester
+﻿namespace OneDrive.ApiDocumentation.Windows
 {
     partial class MainForm
     {
@@ -81,7 +81,7 @@
             this.buttonAddParameters = new System.Windows.Forms.Button();
             this.listBoxParameters = new System.Windows.Forms.ListBox();
             this.label7 = new System.Windows.Forms.Label();
-            this.methodParametersEditorControl1 = new ApiDocumentationTester.MethodParametersEditorControl();
+            this.methodParametersEditorControl1 = new MethodParametersEditorControl();
             this.menuStrip1.SuspendLayout();
             this.tabControl1.SuspendLayout();
             this.tabPageFiles.SuspendLayout();

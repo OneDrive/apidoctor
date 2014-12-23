@@ -10,7 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace ApiDocumentationTester
+namespace OneDrive.ApiDocumentation.Windows
 {
     public partial class SchemaValidatorForm : Form
     {
@@ -39,8 +39,9 @@ namespace ApiDocumentationTester
         {
             if (null == ResourceCollection) return;
 
+            var annotation = new CodeBlockAnnotation { ResourceType = comboBoxSchema.Text, IsCollection = checkBoxCollection.Checked };
             ValidationError[] errors;
-            bool result = ResourceCollection.ValidateJson(comboBoxSchema.Text, textBoxJsonToValidate.Text, checkBoxCollection.Checked, out errors);
+            bool result = ResourceCollection.ValidateJson(annotation, textBoxJsonToValidate.Text, out errors);
 
             if (result)
             {

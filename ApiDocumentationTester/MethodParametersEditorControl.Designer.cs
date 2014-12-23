@@ -1,4 +1,4 @@
-﻿namespace ApiDocumentationTester
+﻿namespace OneDrive.ApiDocumentation.Windows
 {
     partial class MethodParametersEditorControl
     {
@@ -116,7 +116,7 @@
             this.listBoxParameters.ItemHeight = 16;
             this.listBoxParameters.Location = new System.Drawing.Point(7, 153);
             this.listBoxParameters.Name = "listBoxParameters";
-            this.listBoxParameters.Size = new System.Drawing.Size(170, 148);
+            this.listBoxParameters.Size = new System.Drawing.Size(170, 164);
             this.listBoxParameters.TabIndex = 6;
             this.listBoxParameters.SelectedIndexChanged += new System.EventHandler(this.listBoxParameters_SelectedIndexChanged);
             // 
@@ -231,7 +231,7 @@
             this.Controls.Add(this.label1);
             this.MinimumSize = new System.Drawing.Size(0, 295);
             this.Name = "MethodParametersEditorControl";
-            this.Size = new System.Drawing.Size(697, 372);
+            this.Size = new System.Drawing.Size(697, 340);
             this.ResumeLayout(false);
             this.PerformLayout();
 

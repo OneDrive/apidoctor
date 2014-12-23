@@ -1,4 +1,4 @@
-﻿namespace ApiDocumentationTester
+﻿namespace OneDrive.ApiDocumentation.Windows
 {
     partial class SchemaValidatorForm
     {

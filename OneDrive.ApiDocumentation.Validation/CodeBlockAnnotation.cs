@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 namespace OneDrive.ApiDocumentation.Validation
 {
     public class CodeBlockAnnotation
@@ -11,32 +12,29 @@ namespace OneDrive.ApiDocumentation.Validation
         /// <summary>
         /// The OData type name of the resource
         /// </summary>
-        [JsonProperty("@odata.type")]
+        [JsonProperty("@odata.type", NullValueHandling=NullValueHandling.Ignore )]
         public string ResourceType { get; set; }
 
         /// <summary>
         /// Type of code block
         /// </summary>
-        [JsonProperty("blockType")]
+        [JsonProperty("blockType", Order=-2), JsonConverter(typeof(StringEnumConverter))]
         public CodeBlockType BlockType { get; set; }
-
-        /// <summary>
-        /// Request parameters that need to be replaced
-        /// </summary>
-        [JsonProperty("Parameters")]
-        public string[] Parameters { get; set; }
 
         /// <summary>
         /// Specify the name of properties in the schema which are optional
         /// </summary>
-        [JsonProperty("optionalProperties")]
+        [JsonProperty("optionalProperties", NullValueHandling=NullValueHandling.Ignore)]
         public string[] OptionalProperties { get; set; }
 
         /// <summary>
         /// Speicfy that the result is a collection of the resource type instead of a single instance.
         /// </summary>
-        [JsonProperty("isCollection")]
+        [JsonProperty("isCollection", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public bool IsCollection { get; set; }
+
+        [JsonProperty("truncated", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public bool TruncatedResult { get; set; }
 
         public static CodeBlockAnnotation FromJson(string json)
         {

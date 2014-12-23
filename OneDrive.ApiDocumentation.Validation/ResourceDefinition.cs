@@ -1,6 +1,7 @@
 ﻿namespace OneDrive.ApiDocumentation.Validation
 {
     using System;
+    using Newtonsoft.Json;
 
     /// <summary>
     /// Represents an entity resource in the API.
@@ -10,7 +11,11 @@
         public ResourceDefinition(CodeBlockAnnotation annotation, string jsonContent)
         {
             Metadata = annotation;
-            JsonExample = jsonContent;
+
+            OriginalExample = jsonContent;
+            
+            object inputObject = JsonConvert.DeserializeObject(jsonContent);
+            JsonExample = JsonConvert.SerializeObject(inputObject, Formatting.Indented);
         }
 
         /// <summary>
@@ -21,9 +26,14 @@
         public string ResourceType { get { return Metadata.ResourceType; } }
 
         /// <summary>
-        /// The raw resource definition from the documentation (fenced code block with annotation)
+        /// Parsed and reformatted json resource read from the documentation
         /// </summary>
         public string JsonExample { get; private set; }
+
+        /// <summary>
+        /// Original json example as written in the documentation.
+        /// </summary>
+        public string OriginalExample { get; private set; }
 
     }
 }

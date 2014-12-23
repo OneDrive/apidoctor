@@ -12,7 +12,7 @@ using OneDrive.ApiDocumentation.Validation.Json;
 using OneDrive.ApiDocumentation.Validation.Http;
 using OneDrive.ApiDocumentation.Validation.Param;
 
-namespace ApiDocumentationTester
+namespace OneDrive.ApiDocumentation.Windows
 {
     public partial class MainForm : Form
     {
@@ -75,7 +75,7 @@ namespace ApiDocumentationTester
         private void LoadSelectedDocumentPreview()
         {
             var doc = listBoxDocuments.SelectedItem as DocFile;
-            if (null != doc && !string.IsNullOrEmpty(doc.HtmlContent))
+            if (null != doc && !string.IsNullOrEmpty(doc.HtmlContent) && null != webBrowserPreview)
             {
                 webBrowserPreview.DocumentText = doc.HtmlContent;
             }
@@ -186,7 +186,18 @@ namespace ApiDocumentationTester
         private void buttonValidateExpectedResponse_Click(object sender, EventArgs e)
         {
             var parser = new HttpParser();
-            var response = parser.ParseHttpResponse(textBoxResponseExpected.Text);
+
+            HttpResponse response = null;
+            try
+            {
+                response = parser.ParseHttpResponse(textBoxResponseExpected.Text);
+            }
+            catch (Exception ex)
+            {
+                ErrorDisplayForm.ShowErrorDialog(new ValidationError[] { new ValidationError(null, "Error parsing HTTP response: {0}", ex.Message) });
+                return;
+            }
+
             ValidateHttpResponse(textBoxRequest.Tag as MethodDefinition, response);
         }
 
@@ -256,18 +267,7 @@ namespace ApiDocumentationTester
         private void buttonSaveParameterFile_Click(object sender, EventArgs e)
         {
             // Write out m_Parameters to disk somewhere
-
-            
-            
-            
-            SaveFileDialog dialog = new SaveFileDialog();
-            dialog.Filter = "Json Output (*.json)|*.json|All Files|*.*";
-            dialog.FileName = Properties.Settings.Default.RequestParametersFile;
-            var result = dialog.ShowDialog();
-            if (DialogResult.OK == result)
-            {
-                CurrentDocSet.TryWriteRequestParameters(textBoxMethodRequestParameterFile.Text, m_Parameters.ToArray());
-            }
+            CurrentDocSet.TryWriteRequestParameters(textBoxMethodRequestParameterFile.Text, m_Parameters.ToArray());
         }
 
         private void methodParametersEditorControl1_Load(object sender, EventArgs e)
