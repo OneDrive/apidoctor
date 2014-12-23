@@ -33,7 +33,7 @@
 
         public Json.JsonResourceCollection ResourceCollection { get { return m_ResourceCollection; } }
         
-        public Param.RequestParameters[] RequestParameters { get; private set;}
+        public List<Param.RequestParameters> RequestParameters { get; private set;}
 
         #endregion
 
@@ -171,10 +171,12 @@
                 {
                     rawJson = reader.ReadToEnd();
                 }
-                RequestParameters = Param.RequestParameters.ReadFromJson(rawJson);
+                RequestParameters = Param.RequestParameters.ReadFromJson(rawJson).ToList();
+                
+                // Make sure we have consistent method names
                 foreach (var request in RequestParameters)
                 {
-                    request.Method = ConvertPathSeparators(request.Method);
+                    request.Method = ConvertPathSeparatorsToLocal(request.Method);
                 }
 
 
@@ -187,10 +189,47 @@
             }
         }
 
-        private static string ConvertPathSeparators(string p)
+        public bool TryWriteRequestParameters(string relativePathToParamters, Param.RequestParameters[] parameters)
+        {
+            var path = String.Concat(SourceFolderPath, relativePathToParamters);
+
+            foreach (var request in parameters)
+            {
+                request.Method = ConvertPathSeparatorsToGlobal(request.Method);
+            }
+
+            bool result = false;
+            try
+            {
+                var text = Newtonsoft.Json.JsonConvert.SerializeObject(parameters, Newtonsoft.Json.Formatting.Indented);
+                using (var writer = System.IO.File.CreateText(path))
+                {
+                    writer.Write(text);
+                }
+                result = true;
+            }
+            catch (Exception ex)
+            {
+                result = false;
+            }
+
+            foreach (var request in parameters)
+            {
+                request.Method = ConvertPathSeparatorsToLocal(request.Method);
+            }
+            return result;
+        }
+
+        private static string ConvertPathSeparatorsToLocal(string p)
         {
             return p.Replace('/', Path.DirectorySeparatorChar);
         }
+
+        private static string ConvertPathSeparatorsToGlobal(string p)
+        {
+            return p.Replace(Path.DirectorySeparatorChar, '/');
+        }
+
 
         public Param.RequestParameters RequestParamtersForMethod(MethodDefinition method)
         {

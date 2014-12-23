@@ -60,20 +60,27 @@
         /// <returns></returns>
         public HttpWebRequest BuildRequest(string baseUrl, string accessToken, Param.RequestParameters methodParameters = null)
         {
+            var request = PreviewRequest(methodParameters);
+            request.Headers.Add("Authorization", "Bearer " + accessToken);
+
+            return request.PrepareHttpWebRequest(baseUrl);
+        }
+
+        public HttpRequest PreviewRequest(Param.RequestParameters methodParameters)
+        {
             var parser = new HttpParser();
             var request = parser.ParseHttpRequest(Request);
-            request.Headers.Add("Authorization", "Bearer " + accessToken);
 
             if (null != methodParameters)
             {
-                string newUrl = RewriteUrl(request.Url, methodParameters.Parameters);
+                string newUrl = RewriteUrl(request.Url, methodParameters.Parameters.ToArray());
                 request.Url = newUrl;
 
-                string newBody = RewriteJsonBody(request.Body, methodParameters.Parameters);
+                string newBody = RewriteJsonBody(request.Body, methodParameters.Parameters.ToArray());
                 request.Body = newBody;
             }
 
-            return request.PrepareHttpWebRequest(baseUrl);
+            return request;
         }
 
         private static string RewriteUrl(string url, Param.ParameterValue[] parameters)
@@ -120,7 +127,7 @@
 
         public async Task<HttpResponse> ApiResponseForMethod(string baseUrl, string accessToken, Param.RequestParameters methodParameters = null)
         {
-            var request = this.BuildRequest(baseUrl, accessToken, methodParameters);
+            var request = BuildRequest(baseUrl, accessToken, methodParameters);
             var response = await HttpResponse.ResponseFromHttpWebResponseAsync(request);
             return response;
         }

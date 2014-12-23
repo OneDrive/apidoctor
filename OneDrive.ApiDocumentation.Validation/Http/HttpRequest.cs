@@ -55,5 +55,24 @@
 
             return request;
         }
+
+        public string FullHttpText()
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.Append(Method);
+            sb.Append(" ");
+            sb.Append(Url);
+            sb.Append(" ");
+            sb.AppendLine("HTTP/1.1");
+            foreach (var header in Headers.AllKeys)
+            {
+                sb.AppendFormat("{0}: {1}", header, Headers[header]);
+                sb.AppendLine();
+            }
+            sb.AppendLine();
+            sb.Append(Body);
+            
+            return sb.ToString();
+        }
     }
 }

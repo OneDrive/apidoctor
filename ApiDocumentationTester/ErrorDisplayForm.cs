@@ -13,12 +13,24 @@ namespace ApiDocumentationTester
 {
     public partial class ErrorDisplayForm : Form
     {
-        public ErrorDisplayForm(ValidationError[] errors)
+
+        public ErrorDisplayForm()
         {
             InitializeComponent();
+        }
 
+        public ErrorDisplayForm(string title, string message) : this()
+        {
+            Text = title;
+            textBoxErrors.Text = message;
+            textBoxErrors.WordWrap = false;
+        }
+        
+        public ErrorDisplayForm(ValidationError[] errors) : this()
+        {
             textBoxErrors.Text = "The following errors were detetected:\r\n";
             textBoxErrors.AppendText(errors.AllErrors());
+            textBoxErrors.WordWrap = true;
         }
 
         private void buttonClose_Click(object sender, EventArgs e)

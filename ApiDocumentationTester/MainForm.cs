@@ -10,6 +10,7 @@ using System.Windows.Forms;
 using OneDrive.ApiDocumentation.Validation;
 using OneDrive.ApiDocumentation.Validation.Json;
 using OneDrive.ApiDocumentation.Validation.Http;
+using OneDrive.ApiDocumentation.Validation.Param;
 
 namespace ApiDocumentationTester
 {
@@ -17,6 +18,7 @@ namespace ApiDocumentationTester
     {
         DocSet CurrentDocSet { get; set; }
         string m_AccessToken = null;
+        BindingList<RequestParameters> m_Parameters = new BindingList<RequestParameters>();
 
         public MainForm()
         {
@@ -56,8 +58,13 @@ namespace ApiDocumentationTester
             listBoxMethods.DisplayMember = "DisplayName";
             listBoxMethods.DataSource = CurrentDocSet.Methods;
 
+
+            m_Parameters = new BindingList<RequestParameters>(CurrentDocSet.RequestParameters);
+
+            listBoxParameters.DisplayMember = "Method";
+            listBoxParameters.DataSource = m_Parameters;
+
             LoadSelectedDocumentPreview();
-         
         }
 
         private void listBoxDocuments_SelectedIndexChanged(object sender, EventArgs e)
@@ -224,6 +231,48 @@ namespace ApiDocumentationTester
         {
             Properties.Settings.Default.RequestParametersFile = textBoxMethodRequestParameterFile.Text;
             Properties.Settings.Default.Save();
+        }
+
+
+        private RequestParameters SelectedRequestConfiguration { get { return listBoxParameters.SelectedItem as RequestParameters; } }
+        private void listBoxParameters_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            methodParametersEditorControl1.OpenRequestParameters(SelectedRequestConfiguration, CurrentDocSet);
+        }
+
+        private void buttonAddParameters_Click(object sender, EventArgs e)
+        {
+            RequestParameters newParams = new RequestParameters { Note = "New request configuration." };
+            m_Parameters.Add(newParams);
+            listBoxParameters.SelectedItem = newParams;
+        }
+
+        private void buttonDeleteParameters_Click(object sender, EventArgs e)
+        {
+            var itemToRemove = listBoxParameters.SelectedItem as RequestParameters;
+            m_Parameters.Remove(itemToRemove);
+        }
+
+        private void buttonSaveParameterFile_Click(object sender, EventArgs e)
+        {
+            // Write out m_Parameters to disk somewhere
+
+            
+            
+            
+            SaveFileDialog dialog = new SaveFileDialog();
+            dialog.Filter = "Json Output (*.json)|*.json|All Files|*.*";
+            dialog.FileName = Properties.Settings.Default.RequestParametersFile;
+            var result = dialog.ShowDialog();
+            if (DialogResult.OK == result)
+            {
+                CurrentDocSet.TryWriteRequestParameters(textBoxMethodRequestParameterFile.Text, m_Parameters.ToArray());
+            }
+        }
+
+        private void methodParametersEditorControl1_Load(object sender, EventArgs e)
+        {
+
         }
     }
 }

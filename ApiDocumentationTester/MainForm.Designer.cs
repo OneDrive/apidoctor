@@ -67,14 +67,21 @@
             this.panel2 = new System.Windows.Forms.Panel();
             this.buttonFormat = new System.Windows.Forms.Button();
             this.tabPageOptions = new System.Windows.Forms.TabPage();
+            this.textBoxMethodRequestParameterFile = new System.Windows.Forms.TextBox();
+            this.label5 = new System.Windows.Forms.Label();
             this.textBoxAuthScopes = new System.Windows.Forms.TextBox();
             this.label4 = new System.Windows.Forms.Label();
             this.textBoxClientId = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
             this.textBoxBaseURL = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
-            this.textBoxMethodRequestParameterFile = new System.Windows.Forms.TextBox();
-            this.label5 = new System.Windows.Forms.Label();
+            this.tabPageParameters = new System.Windows.Forms.TabPage();
+            this.buttonSaveParameterFile = new System.Windows.Forms.Button();
+            this.buttonDeleteParameters = new System.Windows.Forms.Button();
+            this.buttonAddParameters = new System.Windows.Forms.Button();
+            this.listBoxParameters = new System.Windows.Forms.ListBox();
+            this.label7 = new System.Windows.Forms.Label();
+            this.methodParametersEditorControl1 = new ApiDocumentationTester.MethodParametersEditorControl();
             this.menuStrip1.SuspendLayout();
             this.tabControl1.SuspendLayout();
             this.tabPageFiles.SuspendLayout();
@@ -92,6 +99,7 @@
             this.panel1.SuspendLayout();
             this.panel2.SuspendLayout();
             this.tabPageOptions.SuspendLayout();
+            this.tabPageParameters.SuspendLayout();
             this.SuspendLayout();
             // 
             // menuStrip1
@@ -295,6 +303,7 @@
             this.tabControl1.Controls.Add(this.tabPageResources);
             this.tabControl1.Controls.Add(this.tabPageMethods);
             this.tabControl1.Controls.Add(this.tabPageOptions);
+            this.tabControl1.Controls.Add(this.tabPageParameters);
             this.tabControl1.Location = new System.Drawing.Point(12, 44);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
@@ -521,6 +530,23 @@
             this.tabPageOptions.Text = "Options";
             this.tabPageOptions.UseVisualStyleBackColor = true;
             // 
+            // textBoxMethodRequestParameterFile
+            // 
+            this.textBoxMethodRequestParameterFile.Location = new System.Drawing.Point(104, 111);
+            this.textBoxMethodRequestParameterFile.Name = "textBoxMethodRequestParameterFile";
+            this.textBoxMethodRequestParameterFile.Size = new System.Drawing.Size(384, 27);
+            this.textBoxMethodRequestParameterFile.TabIndex = 7;
+            this.textBoxMethodRequestParameterFile.TextChanged += new System.EventHandler(this.textBoxMethodRequestParameterFile_TextChanged);
+            // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.Location = new System.Drawing.Point(14, 114);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(86, 20);
+            this.label5.TabIndex = 6;
+            this.label5.Text = "Parameters:";
+            // 
             // textBoxAuthScopes
             // 
             this.textBoxAuthScopes.Location = new System.Drawing.Point(104, 78);
@@ -571,22 +597,83 @@
             this.label1.TabIndex = 0;
             this.label1.Text = "Base URL:";
             // 
-            // textBoxMethodRequestParameterFile
+            // tabPageParameters
             // 
-            this.textBoxMethodRequestParameterFile.Location = new System.Drawing.Point(104, 111);
-            this.textBoxMethodRequestParameterFile.Name = "textBoxMethodRequestParameterFile";
-            this.textBoxMethodRequestParameterFile.Size = new System.Drawing.Size(384, 27);
-            this.textBoxMethodRequestParameterFile.TabIndex = 7;
-            this.textBoxMethodRequestParameterFile.TextChanged += new System.EventHandler(this.textBoxMethodRequestParameterFile_TextChanged);
+            this.tabPageParameters.Controls.Add(this.buttonSaveParameterFile);
+            this.tabPageParameters.Controls.Add(this.buttonDeleteParameters);
+            this.tabPageParameters.Controls.Add(this.buttonAddParameters);
+            this.tabPageParameters.Controls.Add(this.listBoxParameters);
+            this.tabPageParameters.Controls.Add(this.label7);
+            this.tabPageParameters.Controls.Add(this.methodParametersEditorControl1);
+            this.tabPageParameters.Location = new System.Drawing.Point(4, 29);
+            this.tabPageParameters.Name = "tabPageParameters";
+            this.tabPageParameters.Size = new System.Drawing.Size(972, 606);
+            this.tabPageParameters.TabIndex = 5;
+            this.tabPageParameters.Text = "Parameters";
+            this.tabPageParameters.UseVisualStyleBackColor = true;
             // 
-            // label5
+            // buttonSaveParameterFile
             // 
-            this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(14, 114);
-            this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(86, 20);
-            this.label5.TabIndex = 6;
-            this.label5.Text = "Parameters:";
+            this.buttonSaveParameterFile.Location = new System.Drawing.Point(181, 34);
+            this.buttonSaveParameterFile.Name = "buttonSaveParameterFile";
+            this.buttonSaveParameterFile.Size = new System.Drawing.Size(80, 33);
+            this.buttonSaveParameterFile.TabIndex = 11;
+            this.buttonSaveParameterFile.Text = "Save";
+            this.buttonSaveParameterFile.UseVisualStyleBackColor = true;
+            this.buttonSaveParameterFile.Click += new System.EventHandler(this.buttonSaveParameterFile_Click);
+            // 
+            // buttonDeleteParameters
+            // 
+            this.buttonDeleteParameters.Location = new System.Drawing.Point(95, 35);
+            this.buttonDeleteParameters.Name = "buttonDeleteParameters";
+            this.buttonDeleteParameters.Size = new System.Drawing.Size(80, 33);
+            this.buttonDeleteParameters.TabIndex = 10;
+            this.buttonDeleteParameters.Text = "Delete";
+            this.buttonDeleteParameters.UseVisualStyleBackColor = true;
+            this.buttonDeleteParameters.Click += new System.EventHandler(this.buttonDeleteParameters_Click);
+            // 
+            // buttonAddParameters
+            // 
+            this.buttonAddParameters.Location = new System.Drawing.Point(9, 35);
+            this.buttonAddParameters.Name = "buttonAddParameters";
+            this.buttonAddParameters.Size = new System.Drawing.Size(80, 33);
+            this.buttonAddParameters.TabIndex = 9;
+            this.buttonAddParameters.Text = "Add";
+            this.buttonAddParameters.UseVisualStyleBackColor = true;
+            this.buttonAddParameters.Click += new System.EventHandler(this.buttonAddParameters_Click);
+            // 
+            // listBoxParameters
+            // 
+            this.listBoxParameters.FormattingEnabled = true;
+            this.listBoxParameters.ItemHeight = 20;
+            this.listBoxParameters.Location = new System.Drawing.Point(7, 75);
+            this.listBoxParameters.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.listBoxParameters.Name = "listBoxParameters";
+            this.listBoxParameters.Size = new System.Drawing.Size(254, 524);
+            this.listBoxParameters.TabIndex = 8;
+            this.listBoxParameters.SelectedIndexChanged += new System.EventHandler(this.listBoxParameters_SelectedIndexChanged);
+            // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.Location = new System.Drawing.Point(3, 11);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(251, 20);
+            this.label7.TabIndex = 0;
+            this.label7.Text = "Request Parameters For Service Calls";
+            // 
+            // methodParametersEditorControl1
+            // 
+            this.methodParametersEditorControl1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.methodParametersEditorControl1.Location = new System.Drawing.Point(279, 35);
+            this.methodParametersEditorControl1.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.methodParametersEditorControl1.MinimumSize = new System.Drawing.Size(0, 369);
+            this.methodParametersEditorControl1.Name = "methodParametersEditorControl1";
+            this.methodParametersEditorControl1.Size = new System.Drawing.Size(689, 564);
+            this.methodParametersEditorControl1.TabIndex = 1;
+            this.methodParametersEditorControl1.Load += new System.EventHandler(this.methodParametersEditorControl1_Load);
             // 
             // MainForm
             // 
@@ -627,6 +714,8 @@
             this.panel2.PerformLayout();
             this.tabPageOptions.ResumeLayout(false);
             this.tabPageOptions.PerformLayout();
+            this.tabPageParameters.ResumeLayout(false);
+            this.tabPageParameters.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -681,6 +770,13 @@
         private System.Windows.Forms.CheckBox checkBoxLinkWarnings;
         private System.Windows.Forms.TextBox textBoxMethodRequestParameterFile;
         private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.TabPage tabPageParameters;
+        private System.Windows.Forms.Label label7;
+        private System.Windows.Forms.ListBox listBoxParameters;
+        private MethodParametersEditorControl methodParametersEditorControl1;
+        private System.Windows.Forms.Button buttonSaveParameterFile;
+        private System.Windows.Forms.Button buttonDeleteParameters;
+        private System.Windows.Forms.Button buttonAddParameters;
     }
 }
 
