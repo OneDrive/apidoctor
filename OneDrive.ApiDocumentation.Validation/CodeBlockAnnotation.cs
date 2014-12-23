@@ -12,13 +12,13 @@ namespace OneDrive.ApiDocumentation.Validation
         /// <summary>
         /// The OData type name of the resource
         /// </summary>
-        [JsonProperty("@odata.type")]
+        [JsonProperty("@odata.type", NullValueHandling=NullValueHandling.Ignore )]
         public string ResourceType { get; set; }
 
         /// <summary>
         /// Type of code block
         /// </summary>
-        [JsonProperty("blockType"), JsonConverter(typeof(StringEnumConverter))]
+        [JsonProperty("blockType", Order=-2), JsonConverter(typeof(StringEnumConverter))]
         public CodeBlockType BlockType { get; set; }
 
         /// <summary>
@@ -30,11 +30,10 @@ namespace OneDrive.ApiDocumentation.Validation
         /// <summary>
         /// Speicfy that the result is a collection of the resource type instead of a single instance.
         /// </summary>
-        [JsonProperty("isCollection")]
+        [JsonProperty("isCollection", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public bool IsCollection { get; set; }
 
-
-        [JsonProperty("truncated")]
+        [JsonProperty("truncated", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public bool TruncatedResult { get; set; }
 
         public static CodeBlockAnnotation FromJson(string json)

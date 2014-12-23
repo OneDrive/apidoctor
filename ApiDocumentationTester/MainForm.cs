@@ -68,7 +68,7 @@ namespace OneDrive.ApiDocumentation.Windows
         private void LoadSelectedDocumentPreview()
         {
             var doc = listBoxDocuments.SelectedItem as DocFile;
-            if (null != doc && !string.IsNullOrEmpty(doc.HtmlContent))
+            if (null != doc && !string.IsNullOrEmpty(doc.HtmlContent) && null != webBrowserPreview)
             {
                 webBrowserPreview.DocumentText = doc.HtmlContent;
             }
