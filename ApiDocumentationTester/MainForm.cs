@@ -25,6 +25,7 @@ namespace ApiDocumentationTester
             textBoxBaseURL.Text = Properties.Settings.Default.ApiBaseRoot;
             textBoxClientId.Text = Properties.Settings.Default.ClientId;
             textBoxAuthScopes.Text = Properties.Settings.Default.AuthScopes;
+            textBoxMethodRequestParameterFile.Text = Properties.Settings.Default.RequestParametersFile;
         }
 
         private void openFolderToolStripMenuItem_Click(object sender, EventArgs e)
@@ -47,6 +48,7 @@ namespace ApiDocumentationTester
             listBoxDocuments.DataSource = CurrentDocSet.Files;
 
             CurrentDocSet.ScanDocumentation();
+            CurrentDocSet.TryReadRequestParameters(textBoxMethodRequestParameterFile.Text);
 
             listBoxResources.DisplayMember = "ResourceType";
             listBoxResources.DataSource = CurrentDocSet.Resources;
@@ -115,9 +117,9 @@ namespace ApiDocumentationTester
             }
 
             var method = listBoxMethods.SelectedItem as MethodDefinition;
-            var request = method.BuildRequest(textBoxBaseURL.Text, m_AccessToken);
+            var requestParams = CurrentDocSet.RequestParamtersForMethod(method);
+            var response = await method.ApiResponseForMethod(textBoxBaseURL.Text, m_AccessToken, requestParams);
 
-            var response = await HttpResponse.ResponseFromHttpWebResponseAsync(request);
             textBoxResponseActual.Text = response.FullResponse;
             textBoxResponseActual.Tag = response;
         }
@@ -216,6 +218,12 @@ namespace ApiDocumentationTester
             {
                 textBoxLinkValidation.Text = "No link errors detected";
             }
+        }
+
+        private void textBoxMethodRequestParameterFile_TextChanged(object sender, EventArgs e)
+        {
+            Properties.Settings.Default.RequestParametersFile = textBoxMethodRequestParameterFile.Text;
+            Properties.Settings.Default.Save();
         }
     }
 }

@@ -2,7 +2,9 @@
 {
     using System;
     using System.Net;
+    using System.Linq;
     using OneDrive.ApiDocumentation.Validation.Http;
+    using System.Threading.Tasks;
 
     /// <summary>
     /// Definition of a request / response pair for the API
@@ -56,15 +58,83 @@
         /// <param name="baseUrl"></param>
         /// <param name="accessToken"></param>
         /// <returns></returns>
-        public HttpWebRequest BuildRequest(string baseUrl, string accessToken)
+        public HttpWebRequest BuildRequest(string baseUrl, string accessToken, Param.RequestParameters methodParameters = null)
         {
             var parser = new HttpParser();
             var request = parser.ParseHttpRequest(Request);
             request.Headers.Add("Authorization", "Bearer " + accessToken);
 
-            // TODO: process parameters and replace values in the request
+            if (null != methodParameters)
+            {
+                string newUrl = RewriteUrl(request.Url, methodParameters.Parameters);
+                request.Url = newUrl;
+
+                string newBody = RewriteJsonBody(request.Body, methodParameters.Parameters);
+                request.Body = newBody;
+            }
 
             return request.PrepareHttpWebRequest(baseUrl);
+        }
+
+        private static string RewriteUrl(string url, Param.ParameterValue[] parameters)
+        {
+            var urlParameters = (from p in parameters
+                                 where p.Location == Param.ParameterLocation.Url
+                                 select p);
+            if (urlParameters.FirstOrDefault() != null)
+            {
+                foreach (var parameter in urlParameters)
+                {
+                    string placeholder = string.Concat("{", parameter.Id, "}");
+                    url = url.Replace(placeholder, parameter.Value);
+                }
+            }
+            return url;
+        }
+
+        private string RewriteJsonBody(string jsonSource, Param.ParameterValue[] parameters)
+        {
+            if (string.IsNullOrEmpty(jsonSource)) return jsonSource;
+
+            var jsonParameters = (from p in parameters
+                                  where p.Location == Param.ParameterLocation.Json
+                                  select p);
+
+            if (jsonParameters.FirstOrDefault() != null)
+            {
+                Newtonsoft.Json.Linq.JObject bodyObject = (Newtonsoft.Json.Linq.JObject)Newtonsoft.Json.JsonConvert.DeserializeObject(jsonSource);
+
+                foreach (var jsonParam in jsonParameters)
+                {
+                    bodyObject[jsonParam.Id] = jsonParam.Value;
+                }
+
+                return Newtonsoft.Json.JsonConvert.SerializeObject(bodyObject);
+            }
+            else
+            {
+                return jsonSource;
+            }
+        }
+
+
+        public async Task<HttpResponse> ApiResponseForMethod(string baseUrl, string accessToken, Param.RequestParameters methodParameters = null)
+        {
+            var request = this.BuildRequest(baseUrl, accessToken, methodParameters);
+            var response = await HttpResponse.ResponseFromHttpWebResponseAsync(request);
+            return response;
+        }
+
+        class DynamicBinder : System.Dynamic.SetMemberBinder
+        {
+            public DynamicBinder(string propertyName) : base(propertyName, true)
+            {
+            }
+
+            public override System.Dynamic.DynamicMetaObject FallbackSetMember(System.Dynamic.DynamicMetaObject target, System.Dynamic.DynamicMetaObject value, System.Dynamic.DynamicMetaObject errorSuggestion)
+            {
+                throw new NotImplementedException();
+            }
         }
     }
 }

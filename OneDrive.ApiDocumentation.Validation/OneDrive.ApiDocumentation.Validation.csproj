@@ -50,6 +50,7 @@
     <Compile Include="Http\HttpParser.cs" />
     <Compile Include="Http\HttpRequest.cs" />
     <Compile Include="Http\HttpResponse.cs" />
+    <Compile Include="Param\RequestParameters.cs" />
     <Compile Include="ValidationError.cs" />
     <Compile Include="Json\JsonProperty.cs" />
     <Compile Include="Json\JsonSchema.cs" />

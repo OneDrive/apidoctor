@@ -33,6 +33,8 @@
 
         public Json.JsonResourceCollection ResourceCollection { get { return m_ResourceCollection; } }
         
+        public Param.RequestParameters[] RequestParameters { get; private set;}
+
         #endregion
 
         #region Constructors
@@ -129,6 +131,7 @@
             return errors.Length == 0;
         }
 
+
         /// <summary>
         /// Pull the file and folder information from SourceFolderPath into the object
         /// </summary>
@@ -155,7 +158,51 @@
             return relativePath;
         }
 
+        public bool TryReadRequestParameters(string relativePathToParamters)
+        {
+            var path = String.Concat(SourceFolderPath, relativePathToParamters);
+            if (!File.Exists(path))
+                return false;
+            
+            try
+            {
+                string rawJson = null;
+                using (StreamReader reader = File.OpenText(path))
+                {
+                    rawJson = reader.ReadToEnd();
+                }
+                RequestParameters = Param.RequestParameters.ReadFromJson(rawJson);
+                foreach (var request in RequestParameters)
+                {
+                    request.Method = ConvertPathSeparators(request.Method);
+                }
 
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Error reading parameters: {0}", (object)ex.Message);
+                return false;
+            }
+        }
+
+        private static string ConvertPathSeparators(string p)
+        {
+            return p.Replace('/', Path.DirectorySeparatorChar);
+        }
+
+        public Param.RequestParameters RequestParamtersForMethod(MethodDefinition method)
+        {
+            if (null == RequestParameters) return null;
+
+            var id = method.DisplayName;
+            var query = from p in RequestParameters
+                        where p.Method == id && p.Enabled == true
+                        select p;
+
+            return query.FirstOrDefault();
+        }
 
 
 

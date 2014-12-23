@@ -50,34 +50,41 @@
             this.buttonValidateExpectedResponse = new System.Windows.Forms.Button();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPageFiles = new System.Windows.Forms.TabPage();
+            this.webBrowserPreview = new System.Windows.Forms.WebBrowser();
+            this.tabPageLinks = new System.Windows.Forms.TabPage();
+            this.checkBoxLinkWarnings = new System.Windows.Forms.CheckBox();
+            this.textBoxLinkValidation = new System.Windows.Forms.TextBox();
+            this.button1 = new System.Windows.Forms.Button();
             this.tabPageResources = new System.Windows.Forms.TabPage();
             this.textBoxResourceData = new System.Windows.Forms.TextBox();
             this.tabPageMethods = new System.Windows.Forms.TabPage();
+            this.splitContainerRequestResponse = new System.Windows.Forms.SplitContainer();
+            this.textBoxRequest = new System.Windows.Forms.TextBox();
+            this.labelRequestTitle = new System.Windows.Forms.Label();
             this.splitContainerResponseActualExpected = new System.Windows.Forms.SplitContainer();
             this.panel1 = new System.Windows.Forms.Panel();
             this.labelExpectedResponseType = new System.Windows.Forms.Label();
             this.panel2 = new System.Windows.Forms.Panel();
-            this.labelRequestTitle = new System.Windows.Forms.Label();
-            this.textBoxRequest = new System.Windows.Forms.TextBox();
-            this.webBrowserPreview = new System.Windows.Forms.WebBrowser();
+            this.buttonFormat = new System.Windows.Forms.Button();
             this.tabPageOptions = new System.Windows.Forms.TabPage();
-            this.label1 = new System.Windows.Forms.Label();
-            this.textBoxBaseURL = new System.Windows.Forms.TextBox();
-            this.textBoxClientId = new System.Windows.Forms.TextBox();
-            this.label2 = new System.Windows.Forms.Label();
             this.textBoxAuthScopes = new System.Windows.Forms.TextBox();
             this.label4 = new System.Windows.Forms.Label();
-            this.buttonFormat = new System.Windows.Forms.Button();
-            this.splitContainerRequestResponse = new System.Windows.Forms.SplitContainer();
-            this.tabPageLinks = new System.Windows.Forms.TabPage();
-            this.button1 = new System.Windows.Forms.Button();
-            this.textBoxLinkValidation = new System.Windows.Forms.TextBox();
-            this.checkBoxLinkWarnings = new System.Windows.Forms.CheckBox();
+            this.textBoxClientId = new System.Windows.Forms.TextBox();
+            this.label2 = new System.Windows.Forms.Label();
+            this.textBoxBaseURL = new System.Windows.Forms.TextBox();
+            this.label1 = new System.Windows.Forms.Label();
+            this.textBoxMethodRequestParameterFile = new System.Windows.Forms.TextBox();
+            this.label5 = new System.Windows.Forms.Label();
             this.menuStrip1.SuspendLayout();
             this.tabControl1.SuspendLayout();
             this.tabPageFiles.SuspendLayout();
+            this.tabPageLinks.SuspendLayout();
             this.tabPageResources.SuspendLayout();
             this.tabPageMethods.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainerRequestResponse)).BeginInit();
+            this.splitContainerRequestResponse.Panel1.SuspendLayout();
+            this.splitContainerRequestResponse.Panel2.SuspendLayout();
+            this.splitContainerRequestResponse.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainerResponseActualExpected)).BeginInit();
             this.splitContainerResponseActualExpected.Panel1.SuspendLayout();
             this.splitContainerResponseActualExpected.Panel2.SuspendLayout();
@@ -85,11 +92,6 @@
             this.panel1.SuspendLayout();
             this.panel2.SuspendLayout();
             this.tabPageOptions.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.splitContainerRequestResponse)).BeginInit();
-            this.splitContainerRequestResponse.Panel1.SuspendLayout();
-            this.splitContainerRequestResponse.Panel2.SuspendLayout();
-            this.splitContainerRequestResponse.SuspendLayout();
-            this.tabPageLinks.SuspendLayout();
             this.SuspendLayout();
             // 
             // menuStrip1
@@ -152,7 +154,7 @@
             // signInToolStripMenuItem
             // 
             this.signInToolStripMenuItem.Name = "signInToolStripMenuItem";
-            this.signInToolStripMenuItem.Size = new System.Drawing.Size(175, 24);
+            this.signInToolStripMenuItem.Size = new System.Drawing.Size(132, 24);
             this.signInToolStripMenuItem.Text = "Sign In...";
             this.signInToolStripMenuItem.Click += new System.EventHandler(this.signInToolStripMenuItem_Click);
             // 
@@ -310,6 +312,60 @@
             this.tabPageFiles.Text = "Files";
             this.tabPageFiles.UseVisualStyleBackColor = true;
             // 
+            // webBrowserPreview
+            // 
+            this.webBrowserPreview.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.webBrowserPreview.Location = new System.Drawing.Point(254, 0);
+            this.webBrowserPreview.MinimumSize = new System.Drawing.Size(20, 20);
+            this.webBrowserPreview.Name = "webBrowserPreview";
+            this.webBrowserPreview.Size = new System.Drawing.Size(718, 606);
+            this.webBrowserPreview.TabIndex = 2;
+            // 
+            // tabPageLinks
+            // 
+            this.tabPageLinks.Controls.Add(this.checkBoxLinkWarnings);
+            this.tabPageLinks.Controls.Add(this.textBoxLinkValidation);
+            this.tabPageLinks.Controls.Add(this.button1);
+            this.tabPageLinks.Location = new System.Drawing.Point(4, 29);
+            this.tabPageLinks.Name = "tabPageLinks";
+            this.tabPageLinks.Size = new System.Drawing.Size(972, 606);
+            this.tabPageLinks.TabIndex = 4;
+            this.tabPageLinks.Text = "Links";
+            this.tabPageLinks.UseVisualStyleBackColor = true;
+            // 
+            // checkBoxLinkWarnings
+            // 
+            this.checkBoxLinkWarnings.AutoSize = true;
+            this.checkBoxLinkWarnings.Location = new System.Drawing.Point(113, 9);
+            this.checkBoxLinkWarnings.Name = "checkBoxLinkWarnings";
+            this.checkBoxLinkWarnings.Size = new System.Drawing.Size(133, 24);
+            this.checkBoxLinkWarnings.TabIndex = 2;
+            this.checkBoxLinkWarnings.Text = "Show Warnings";
+            this.checkBoxLinkWarnings.UseVisualStyleBackColor = true;
+            // 
+            // textBoxLinkValidation
+            // 
+            this.textBoxLinkValidation.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.textBoxLinkValidation.Font = new System.Drawing.Font("Consolas", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.textBoxLinkValidation.Location = new System.Drawing.Point(4, 42);
+            this.textBoxLinkValidation.Multiline = true;
+            this.textBoxLinkValidation.Name = "textBoxLinkValidation";
+            this.textBoxLinkValidation.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+            this.textBoxLinkValidation.Size = new System.Drawing.Size(964, 561);
+            this.textBoxLinkValidation.TabIndex = 1;
+            // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(4, 4);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(103, 32);
+            this.button1.TabIndex = 0;
+            this.button1.Text = "Verify Links";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
+            // 
             // tabPageResources
             // 
             this.tabPageResources.Controls.Add(this.textBoxResourceData);
@@ -343,6 +399,49 @@
             this.tabPageMethods.TabIndex = 2;
             this.tabPageMethods.Text = "Methods";
             this.tabPageMethods.UseVisualStyleBackColor = true;
+            // 
+            // splitContainerRequestResponse
+            // 
+            this.splitContainerRequestResponse.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.splitContainerRequestResponse.Location = new System.Drawing.Point(254, 0);
+            this.splitContainerRequestResponse.Name = "splitContainerRequestResponse";
+            this.splitContainerRequestResponse.Orientation = System.Windows.Forms.Orientation.Horizontal;
+            // 
+            // splitContainerRequestResponse.Panel1
+            // 
+            this.splitContainerRequestResponse.Panel1.Controls.Add(this.textBoxRequest);
+            this.splitContainerRequestResponse.Panel1.Controls.Add(this.buttonMakeRequest);
+            this.splitContainerRequestResponse.Panel1.Controls.Add(this.labelRequestTitle);
+            // 
+            // splitContainerRequestResponse.Panel2
+            // 
+            this.splitContainerRequestResponse.Panel2.Controls.Add(this.splitContainerResponseActualExpected);
+            this.splitContainerRequestResponse.Size = new System.Drawing.Size(718, 606);
+            this.splitContainerRequestResponse.SplitterDistance = 200;
+            this.splitContainerRequestResponse.TabIndex = 17;
+            // 
+            // textBoxRequest
+            // 
+            this.textBoxRequest.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.textBoxRequest.Font = new System.Drawing.Font("Consolas", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.textBoxRequest.Location = new System.Drawing.Point(3, 32);
+            this.textBoxRequest.Multiline = true;
+            this.textBoxRequest.Name = "textBoxRequest";
+            this.textBoxRequest.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+            this.textBoxRequest.Size = new System.Drawing.Size(715, 165);
+            this.textBoxRequest.TabIndex = 11;
+            this.textBoxRequest.WordWrap = false;
+            // 
+            // labelRequestTitle
+            // 
+            this.labelRequestTitle.AutoSize = true;
+            this.labelRequestTitle.Location = new System.Drawing.Point(0, 7);
+            this.labelRequestTitle.Name = "labelRequestTitle";
+            this.labelRequestTitle.Size = new System.Drawing.Size(65, 20);
+            this.labelRequestTitle.TabIndex = 12;
+            this.labelRequestTitle.Text = "Request:";
             // 
             // splitContainerResponseActualExpected
             // 
@@ -394,40 +493,21 @@
             this.panel2.Size = new System.Drawing.Size(358, 75);
             this.panel2.TabIndex = 15;
             // 
-            // labelRequestTitle
+            // buttonFormat
             // 
-            this.labelRequestTitle.AutoSize = true;
-            this.labelRequestTitle.Location = new System.Drawing.Point(0, 7);
-            this.labelRequestTitle.Name = "labelRequestTitle";
-            this.labelRequestTitle.Size = new System.Drawing.Size(65, 20);
-            this.labelRequestTitle.TabIndex = 12;
-            this.labelRequestTitle.Text = "Request:";
-            // 
-            // textBoxRequest
-            // 
-            this.textBoxRequest.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.textBoxRequest.Font = new System.Drawing.Font("Consolas", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.textBoxRequest.Location = new System.Drawing.Point(3, 32);
-            this.textBoxRequest.Multiline = true;
-            this.textBoxRequest.Name = "textBoxRequest";
-            this.textBoxRequest.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.textBoxRequest.Size = new System.Drawing.Size(715, 165);
-            this.textBoxRequest.TabIndex = 11;
-            this.textBoxRequest.WordWrap = false;
-            // 
-            // webBrowserPreview
-            // 
-            this.webBrowserPreview.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.webBrowserPreview.Location = new System.Drawing.Point(254, 0);
-            this.webBrowserPreview.MinimumSize = new System.Drawing.Size(20, 20);
-            this.webBrowserPreview.Name = "webBrowserPreview";
-            this.webBrowserPreview.Size = new System.Drawing.Size(718, 606);
-            this.webBrowserPreview.TabIndex = 2;
+            this.buttonFormat.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.buttonFormat.Location = new System.Drawing.Point(271, 38);
+            this.buttonFormat.Name = "buttonFormat";
+            this.buttonFormat.Size = new System.Drawing.Size(84, 28);
+            this.buttonFormat.TabIndex = 15;
+            this.buttonFormat.Text = "Format";
+            this.buttonFormat.UseVisualStyleBackColor = true;
+            this.buttonFormat.Click += new System.EventHandler(this.buttonFormat_Click);
             // 
             // tabPageOptions
             // 
+            this.tabPageOptions.Controls.Add(this.textBoxMethodRequestParameterFile);
+            this.tabPageOptions.Controls.Add(this.label5);
             this.tabPageOptions.Controls.Add(this.textBoxAuthScopes);
             this.tabPageOptions.Controls.Add(this.label4);
             this.tabPageOptions.Controls.Add(this.textBoxClientId);
@@ -440,39 +520,6 @@
             this.tabPageOptions.TabIndex = 3;
             this.tabPageOptions.Text = "Options";
             this.tabPageOptions.UseVisualStyleBackColor = true;
-            // 
-            // label1
-            // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(14, 15);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(73, 20);
-            this.label1.TabIndex = 0;
-            this.label1.Text = "Base URL:";
-            // 
-            // textBoxBaseURL
-            // 
-            this.textBoxBaseURL.Location = new System.Drawing.Point(104, 12);
-            this.textBoxBaseURL.Name = "textBoxBaseURL";
-            this.textBoxBaseURL.Size = new System.Drawing.Size(384, 27);
-            this.textBoxBaseURL.TabIndex = 1;
-            // 
-            // textBoxClientId
-            // 
-            this.textBoxClientId.Location = new System.Drawing.Point(104, 45);
-            this.textBoxClientId.Name = "textBoxClientId";
-            this.textBoxClientId.Size = new System.Drawing.Size(384, 27);
-            this.textBoxClientId.TabIndex = 3;
-            this.textBoxClientId.TextChanged += new System.EventHandler(this.textBoxClientId_TextChanged);
-            // 
-            // label2
-            // 
-            this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(14, 48);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(69, 20);
-            this.label2.TabIndex = 2;
-            this.label2.Text = "Client ID:";
             // 
             // textBoxAuthScopes
             // 
@@ -491,81 +538,55 @@
             this.label4.TabIndex = 4;
             this.label4.Text = "Scopes:";
             // 
-            // buttonFormat
+            // textBoxClientId
             // 
-            this.buttonFormat.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.buttonFormat.Location = new System.Drawing.Point(271, 38);
-            this.buttonFormat.Name = "buttonFormat";
-            this.buttonFormat.Size = new System.Drawing.Size(84, 28);
-            this.buttonFormat.TabIndex = 15;
-            this.buttonFormat.Text = "Format";
-            this.buttonFormat.UseVisualStyleBackColor = true;
-            this.buttonFormat.Click += new System.EventHandler(this.buttonFormat_Click);
+            this.textBoxClientId.Location = new System.Drawing.Point(104, 45);
+            this.textBoxClientId.Name = "textBoxClientId";
+            this.textBoxClientId.Size = new System.Drawing.Size(384, 27);
+            this.textBoxClientId.TabIndex = 3;
+            this.textBoxClientId.TextChanged += new System.EventHandler(this.textBoxClientId_TextChanged);
             // 
-            // splitContainerRequestResponse
+            // label2
             // 
-            this.splitContainerRequestResponse.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.splitContainerRequestResponse.Location = new System.Drawing.Point(254, 0);
-            this.splitContainerRequestResponse.Name = "splitContainerRequestResponse";
-            this.splitContainerRequestResponse.Orientation = System.Windows.Forms.Orientation.Horizontal;
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(14, 48);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(69, 20);
+            this.label2.TabIndex = 2;
+            this.label2.Text = "Client ID:";
             // 
-            // splitContainerRequestResponse.Panel1
+            // textBoxBaseURL
             // 
-            this.splitContainerRequestResponse.Panel1.Controls.Add(this.textBoxRequest);
-            this.splitContainerRequestResponse.Panel1.Controls.Add(this.buttonMakeRequest);
-            this.splitContainerRequestResponse.Panel1.Controls.Add(this.labelRequestTitle);
+            this.textBoxBaseURL.Location = new System.Drawing.Point(104, 12);
+            this.textBoxBaseURL.Name = "textBoxBaseURL";
+            this.textBoxBaseURL.Size = new System.Drawing.Size(384, 27);
+            this.textBoxBaseURL.TabIndex = 1;
             // 
-            // splitContainerRequestResponse.Panel2
+            // label1
             // 
-            this.splitContainerRequestResponse.Panel2.Controls.Add(this.splitContainerResponseActualExpected);
-            this.splitContainerRequestResponse.Size = new System.Drawing.Size(718, 606);
-            this.splitContainerRequestResponse.SplitterDistance = 200;
-            this.splitContainerRequestResponse.TabIndex = 17;
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(14, 15);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(73, 20);
+            this.label1.TabIndex = 0;
+            this.label1.Text = "Base URL:";
             // 
-            // tabPageLinks
+            // textBoxMethodRequestParameterFile
             // 
-            this.tabPageLinks.Controls.Add(this.checkBoxLinkWarnings);
-            this.tabPageLinks.Controls.Add(this.textBoxLinkValidation);
-            this.tabPageLinks.Controls.Add(this.button1);
-            this.tabPageLinks.Location = new System.Drawing.Point(4, 29);
-            this.tabPageLinks.Name = "tabPageLinks";
-            this.tabPageLinks.Size = new System.Drawing.Size(972, 606);
-            this.tabPageLinks.TabIndex = 4;
-            this.tabPageLinks.Text = "Links";
-            this.tabPageLinks.UseVisualStyleBackColor = true;
+            this.textBoxMethodRequestParameterFile.Location = new System.Drawing.Point(104, 111);
+            this.textBoxMethodRequestParameterFile.Name = "textBoxMethodRequestParameterFile";
+            this.textBoxMethodRequestParameterFile.Size = new System.Drawing.Size(384, 27);
+            this.textBoxMethodRequestParameterFile.TabIndex = 7;
+            this.textBoxMethodRequestParameterFile.TextChanged += new System.EventHandler(this.textBoxMethodRequestParameterFile_TextChanged);
             // 
-            // button1
+            // label5
             // 
-            this.button1.Location = new System.Drawing.Point(4, 4);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(103, 32);
-            this.button1.TabIndex = 0;
-            this.button1.Text = "Verify Links";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
-            // 
-            // textBoxLinkValidation
-            // 
-            this.textBoxLinkValidation.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.textBoxLinkValidation.Font = new System.Drawing.Font("Consolas", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.textBoxLinkValidation.Location = new System.Drawing.Point(4, 42);
-            this.textBoxLinkValidation.Multiline = true;
-            this.textBoxLinkValidation.Name = "textBoxLinkValidation";
-            this.textBoxLinkValidation.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.textBoxLinkValidation.Size = new System.Drawing.Size(964, 561);
-            this.textBoxLinkValidation.TabIndex = 1;
-            // 
-            // checkBoxLinkWarnings
-            // 
-            this.checkBoxLinkWarnings.AutoSize = true;
-            this.checkBoxLinkWarnings.Location = new System.Drawing.Point(113, 9);
-            this.checkBoxLinkWarnings.Name = "checkBoxLinkWarnings";
-            this.checkBoxLinkWarnings.Size = new System.Drawing.Size(133, 24);
-            this.checkBoxLinkWarnings.TabIndex = 2;
-            this.checkBoxLinkWarnings.Text = "Show Warnings";
-            this.checkBoxLinkWarnings.UseVisualStyleBackColor = true;
+            this.label5.AutoSize = true;
+            this.label5.Location = new System.Drawing.Point(14, 114);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(86, 20);
+            this.label5.TabIndex = 6;
+            this.label5.Text = "Parameters:";
             // 
             // MainForm
             // 
@@ -584,9 +605,16 @@
             this.menuStrip1.PerformLayout();
             this.tabControl1.ResumeLayout(false);
             this.tabPageFiles.ResumeLayout(false);
+            this.tabPageLinks.ResumeLayout(false);
+            this.tabPageLinks.PerformLayout();
             this.tabPageResources.ResumeLayout(false);
             this.tabPageResources.PerformLayout();
             this.tabPageMethods.ResumeLayout(false);
+            this.splitContainerRequestResponse.Panel1.ResumeLayout(false);
+            this.splitContainerRequestResponse.Panel1.PerformLayout();
+            this.splitContainerRequestResponse.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainerRequestResponse)).EndInit();
+            this.splitContainerRequestResponse.ResumeLayout(false);
             this.splitContainerResponseActualExpected.Panel1.ResumeLayout(false);
             this.splitContainerResponseActualExpected.Panel1.PerformLayout();
             this.splitContainerResponseActualExpected.Panel2.ResumeLayout(false);
@@ -599,13 +627,6 @@
             this.panel2.PerformLayout();
             this.tabPageOptions.ResumeLayout(false);
             this.tabPageOptions.PerformLayout();
-            this.splitContainerRequestResponse.Panel1.ResumeLayout(false);
-            this.splitContainerRequestResponse.Panel1.PerformLayout();
-            this.splitContainerRequestResponse.Panel2.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.splitContainerRequestResponse)).EndInit();
-            this.splitContainerRequestResponse.ResumeLayout(false);
-            this.tabPageLinks.ResumeLayout(false);
-            this.tabPageLinks.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -658,6 +679,8 @@
         private System.Windows.Forms.TextBox textBoxLinkValidation;
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.CheckBox checkBoxLinkWarnings;
+        private System.Windows.Forms.TextBox textBoxMethodRequestParameterFile;
+        private System.Windows.Forms.Label label5;
     }
 }
 

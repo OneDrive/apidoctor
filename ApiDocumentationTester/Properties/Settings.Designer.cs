@@ -70,5 +70,17 @@ namespace ApiDocumentationTester.Properties {
                 this["AuthScopes"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("\\internal\\api-automation.json")]
+        public string RequestParametersFile {
+            get {
+                return ((string)(this["RequestParametersFile"]));
+            }
+            set {
+                this["RequestParametersFile"] = value;
+            }
+        }
     }
 }

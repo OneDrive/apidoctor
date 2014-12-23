@@ -14,5 +14,8 @@
     <Setting Name="AuthScopes" Type="System.String" Scope="User">
       <Value Profile="(Default)">wl.skydrive_update,wl.contacts_skydrive,wl.signin</Value>
     </Setting>
+    <Setting Name="RequestParametersFile" Type="System.String" Scope="User">
+      <Value Profile="(Default)">\internal\api-automation.json</Value>
+    </Setting>
   </Settings>
 </SettingsFile>
