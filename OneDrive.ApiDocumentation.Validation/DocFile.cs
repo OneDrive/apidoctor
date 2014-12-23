@@ -1,0 +1,300 @@
+﻿namespace OneDrive.ApiDocumentation.Validation
+{
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
+    using System.IO;
+
+    /// <summary>
+    /// A documentation file that may contain one more resources or API methods
+    /// </summary>
+    public class DocFile
+    {
+        #region Instance Variables
+        private string m_BasePath;
+        private List<MarkdownDeep.Block> m_CodeBlocks = new List<MarkdownDeep.Block>();
+        private List<ResourceDefinition> m_Resources = new List<ResourceDefinition>();
+        private List<MethodDefinition> m_Requests = new List<MethodDefinition>();
+        private List<MarkdownDeep.LinkInfo> m_Links = new List<MarkdownDeep.LinkInfo>();
+        #endregion
+
+        #region Properties
+        /// <summary>
+        /// Friendly name of the file
+        /// </summary>
+        public string DisplayName { get; private set; }
+
+        /// <summary>
+        /// Path to the file on disk
+        /// </summary>
+        public string FullPath { get; private set; }
+
+        /// <summary>
+        /// HTML-rendered version of the markdown source (for displaying)
+        /// </summary>
+        public string HtmlContent { get; private set; }
+
+        public ResourceDefinition[] Resources
+        {
+            get { return m_Resources.ToArray(); }
+        }
+
+        public MethodDefinition[] Requests
+        {
+            get { return m_Requests.ToArray(); }
+        }
+
+        public string[] LinkDestinations
+        {
+            get
+            {
+                var query = from p in m_Links
+                            select p.def.url;
+                return query.ToArray();
+            }
+        }
+
+        /// <summary>
+        /// Raw Markdown parsed blocks
+        /// </summary>
+        private MarkdownDeep.Block[] Blocks { get; set; }
+
+        #endregion
+
+        #region Constructor
+        public DocFile(string basePath, string relativePath)
+        {
+            m_BasePath = basePath;
+            FullPath = Path.Combine(basePath, relativePath.Substring(1));
+            DisplayName = relativePath;
+        }
+        #endregion
+
+        #region Markdown Parsing
+        /// <summary>
+        /// Read the contents of the file into blocks and generate any resource or method definitions from the contents
+        /// </summary>
+        public void Scan()
+        {
+            MarkdownDeep.Markdown md = new MarkdownDeep.Markdown();
+            md.SafeMode = false;
+            md.ExtraMode = true;
+            
+            using (StreamReader reader = File.OpenText(this.FullPath))
+            {
+                HtmlContent = md.Transform(reader.ReadToEnd());
+            }
+
+            Blocks = md.Blocks;
+            
+            // Scan through the blocks to find something interesting
+            m_CodeBlocks.Clear();
+            foreach (var block in Blocks)
+            {
+                switch (block.BlockType)
+                {
+                    case MarkdownDeep.BlockType.codeblock:
+                    case MarkdownDeep.BlockType.html:
+                        m_CodeBlocks.Add(block);
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            for (int i = 0; i < m_CodeBlocks.Count;)
+            {
+                var htmlComment = m_CodeBlocks[i];
+                if (htmlComment.BlockType != MarkdownDeep.BlockType.html)
+                {
+                    i++;
+                    continue;
+                }
+
+                var codeBlock = m_CodeBlocks[i + 1];
+
+                try 
+                {
+                    ParseCodeBlock(htmlComment, codeBlock);
+                } 
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Warning: file {0} has an invalid format: {1}", FullPath, ex.Message);
+                }
+                i += 2;
+            }
+
+            m_Links.AddRange(md.FoundLinks);
+        }
+
+        /// <summary>
+        /// Convert an annotation and fenced code block in the documentation into something usable
+        /// </summary>
+        /// <param name="metadata"></param>
+        /// <param name="code"></param>
+        public void ParseCodeBlock(MarkdownDeep.Block metadata, MarkdownDeep.Block code)
+        {
+            if (metadata.BlockType != MarkdownDeep.BlockType.html)
+                throw new ArgumentException("metadata block does not appear to be metadata");
+            if (code.BlockType != MarkdownDeep.BlockType.codeblock)
+                throw new ArgumentException("code block does not appear to be code");
+
+            var metadataJsonString = metadata.Content.Substring(4, metadata.Content.Length - 9);
+            var annotation = CodeBlockAnnotation.FromJson(metadataJsonString);
+
+            switch (annotation.BlockType)
+            {
+                case CodeBlockType.Resource:
+                    {
+                        m_Resources.Add(new ResourceDefinition(annotation, code.Content));
+                        break;
+                    }
+                case CodeBlockType.Request:
+                    {
+                        var method = MethodDefinition.FromRequest(code.Content, annotation);
+                        method.DisplayName = string.Format("{0} #{1}", DisplayName, m_Requests.Count);
+                        m_Requests.Add(method);
+                        break;
+                    }
+
+                case CodeBlockType.Response:
+                    {
+                        var method = m_Requests.Last();
+                        method.AddResponse(code.Content, annotation);
+                        break;
+                    }
+                case CodeBlockType.Ignored:
+                    break;
+                default:
+                    {
+                        throw new NotSupportedException("Unsupported block type: " + annotation.BlockType);
+                    }
+            }
+        }
+
+        public MarkdownDeep.Block[] CodeBlocks
+        {
+            get { return m_CodeBlocks.ToArray(); }
+        }
+        #endregion
+
+        #region Link Verification
+
+        /// <summary>
+        /// Checks all links detected in the source document to make sure they are valid.
+        /// </summary>
+        /// <param name="errors">Information about broken links</param>
+        /// <returns>True if all links are valid. Otherwise false</returns>
+        public bool ValidateNoBrokenLinks(bool includeWarnings, out ValidationError[] errors)
+        {
+            var foundErrors = new List<ValidationError>();
+            foreach (var link in m_Links)
+            {
+                var result = VerifyLink(FullPath, link.def.url, m_BasePath);
+                switch (result)
+                {
+                    case LinkValidationResult.BookmarkSkipped:
+                    case LinkValidationResult.ExternalSkipped:
+                        if (includeWarnings)
+                            foundErrors.Add(new ValidationError(this.DisplayName, "Skipped validation of link '{1}' to URL '{0}'", link.def.url, link.link_text));
+                        break;
+                    case LinkValidationResult.FileNotFound:
+                        foundErrors.Add(new ValidationError(this.DisplayName, "Destination missing for link '{1}' to URL '{0}'", link.def.url, link.link_text));
+                        break;
+                    case LinkValidationResult.ParentAboveDocSetPath:
+                        foundErrors.Add(new ValidationError(this.DisplayName, "Destination outside of doc set for link '{1}' to URL '{0}'", link.def.url, link.link_text));
+                        break;
+                    case LinkValidationResult.UrlFormatInvalid:
+                        foundErrors.Add(new ValidationError(this.DisplayName, "Invalid URL format for link '{1}' to URL '{0}'", link.def.url, link.link_text));
+                        break;
+                    case LinkValidationResult.Valid:
+                        break;
+                    default:
+                        foundErrors.Add(new ValidationError(this.DisplayName, "{2}: for link '{1}' to URL '{0}'", link.def.url, link.link_text, result));
+                        break;
+
+                }
+            }
+
+            errors = foundErrors.ToArray();
+            return errors.Length == 0;
+        }
+
+        private enum LinkValidationResult
+        {
+            Valid,
+            FileNotFound,
+            UrlFormatInvalid,
+            ExternalSkipped,
+            BookmarkSkipped,
+            ParentAboveDocSetPath
+        }
+
+        private static LinkValidationResult VerifyLink(string docFilePath, string linkUrl, string docSetBasePath)
+        {
+            Uri parsedUri;
+            var validUrl = Uri.TryCreate(linkUrl, UriKind.RelativeOrAbsolute, out parsedUri);
+
+            FileInfo sourceFile = new FileInfo(docFilePath);
+            var sourceFileName = Path.Combine(sourceFile.DirectoryName.Substring(docSetBasePath.Length), 
+                sourceFile.Name);
+
+            if (validUrl)
+            {
+                if (parsedUri.IsAbsoluteUri && (parsedUri.Scheme == "http" || parsedUri.Scheme == "https"))
+                {
+                    // TODO: verify the URL is valid
+                    return LinkValidationResult.ExternalSkipped;
+                }
+                else if (linkUrl.StartsWith("#"))
+                {
+                    // TODO: bookmark link within the same document
+                    return LinkValidationResult.BookmarkSkipped;
+                }
+                else
+                {
+                    var rootPath = sourceFile.DirectoryName;
+                    if (linkUrl.Contains("#"))
+                    {
+                        linkUrl = linkUrl.Substring(0, linkUrl.IndexOf("#"));
+                    }
+                    while (linkUrl.StartsWith(".." + Path.DirectorySeparatorChar))
+                    {
+                        var nextLevelParent = new DirectoryInfo(rootPath).Parent;
+                        rootPath = nextLevelParent.FullName;
+                        linkUrl = linkUrl.Substring(3);
+                    }
+
+                    if (rootPath.Length < docSetBasePath.Length)
+                    {
+                        return LinkValidationResult.ParentAboveDocSetPath;
+                    }
+
+                    var pathToFile = Path.Combine(rootPath, linkUrl);
+                    if (!File.Exists(pathToFile))
+                    {
+                        return LinkValidationResult.FileNotFound;
+                    }
+                }
+            }
+            else
+            {
+                return LinkValidationResult.UrlFormatInvalid;
+            }
+
+            return LinkValidationResult.Valid;
+        }
+
+        #endregion
+
+    }
+
+    public enum DocType
+    {
+        Unknown = 0,
+        Resource,
+        MethodRequest
+    }
+}

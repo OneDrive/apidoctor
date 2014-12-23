@@ -1,0 +1,21 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="ApiDocumentationTester.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="LastOpenedPath" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="ApiBaseRoot" Type="System.String" Scope="User">
+      <Value Profile="(Default)">https://df.api.onedrive.com/v1.0</Value>
+    </Setting>
+    <Setting Name="ClientId" Type="System.String" Scope="User">
+      <Value Profile="(Default)">0000000044128B55</Value>
+    </Setting>
+    <Setting Name="AuthScopes" Type="System.String" Scope="User">
+      <Value Profile="(Default)">wl.skydrive_update,wl.contacts_skydrive,wl.signin</Value>
+    </Setting>
+    <Setting Name="RequestParametersFile" Type="System.String" Scope="User">
+      <Value Profile="(Default)">\internal\api-automation.json</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>

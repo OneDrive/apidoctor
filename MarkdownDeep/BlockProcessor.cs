@@ -1496,8 +1496,20 @@ namespace MarkdownDeep
 
 			// Rest of line must be blank
 			SkipLinespace();
-			if (!eol)
-				return false;
+            if (!eol)
+            {
+                // TODO: Look for a language specifier
+                Mark();
+                while (char.IsLetterOrDigit(current))
+                {
+                    SkipForward(1);
+                }
+                string codeblockLangauge = Extract();
+                b.CodeLanguage = codeblockLangauge;
+                //return false;
+
+                SkipLinespace();
+            }
 
 			// Skip the eol and remember start of code
 			SkipEol();
