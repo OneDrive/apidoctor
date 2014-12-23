@@ -46,7 +46,7 @@
             }
             catch (Exception ex)
             {
-                errors = new ValidationError[] { new ValidationError(null, "Failed to parse json string: {0}", ex.Message) };
+                errors = new ValidationError[] { new ValidationError(null, "Failed to parse json string: {0}. Json: {1}", ex.Message, json) };
                 return false;
             }
 
@@ -56,28 +56,40 @@
             if (isCollection)
             {
                 // We only care about validating the members of the "value" property now
-                var returnedObject = obj[collectionPropertyName].First();
-                obj = (JContainer)returnedObject;
-            }
-
-            foreach (JToken token in obj)
-            {
-                JsonProperty inputProperty = ParseProperty(token);
-                missingProperties.Remove(inputProperty.Name);
-                var validationResponse = ValidateProperty(inputProperty, otherSchemas, detectedErrors);
-            }
-
-            if (null != OptionalProperties)
-            {
-                foreach (var optionalProp in OptionalProperties)
+                var collection = obj[collectionPropertyName];
+                if (null == collection)
                 {
-                    missingProperties.Remove(optionalProp);
+                    detectedErrors.Add(new ValidationError(null, "Failed to location collection property '{0}' in response.", collectionPropertyName));
                 }
+                else
+                {
+                    var returnedObject = obj[collectionPropertyName].FirstOrDefault();
+                    obj = (JContainer)returnedObject;
+                }
+                
             }
 
-            if (missingProperties.Count > 0)
+            if (null == obj)
             {
-                detectedErrors.Add(new ValidationError(null, "Missing properties: response was missing these required properties: {0}", missingProperties.ComponentsJoinedByString(",")));
+                foreach (JToken token in obj)
+                {
+                    JsonProperty inputProperty = ParseProperty(token);
+                    missingProperties.Remove(inputProperty.Name);
+                    var validationResponse = ValidateProperty(inputProperty, otherSchemas, detectedErrors);
+                }
+
+                if (null != OptionalProperties)
+                {
+                    foreach (var optionalProp in OptionalProperties)
+                    {
+                        missingProperties.Remove(optionalProp);
+                    }
+                }
+
+                if (missingProperties.Count > 0)
+                {
+                    detectedErrors.Add(new ValidationError(null, "Missing properties: response was missing these required properties: {0}", missingProperties.ComponentsJoinedByString(",")));
+                }
             }
 
             errors = detectedErrors.ToArray();

@@ -99,10 +99,18 @@
             else if (!string.IsNullOrEmpty(response.Body))
             {
                 ValidationError[] schemaErrors;
-                if (!m_ResourceCollection.ValidateJson(method.ResponseMetadata.ResourceType, response.Body, 
-                    method.ResponseMetadata.IsCollection, out schemaErrors))
+
+                if (string.IsNullOrEmpty(method.ResponseMetadata.ResourceType))
                 {
-                    detectedErrors.AddRange(schemaErrors);
+                    detectedErrors.Add(new ValidationError(null, "Missing resource type on method {0}", method.DisplayName));
+                }
+                else
+                {
+                    if (!m_ResourceCollection.ValidateJson(method.ResponseMetadata.ResourceType, response.Body,
+                        method.ResponseMetadata.IsCollection, out schemaErrors))
+                    {
+                        detectedErrors.AddRange(schemaErrors);
+                    }
                 }
             }
 

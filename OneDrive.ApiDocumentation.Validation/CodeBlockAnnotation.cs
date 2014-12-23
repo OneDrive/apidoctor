@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 namespace OneDrive.ApiDocumentation.Validation
 {
     public class CodeBlockAnnotation
@@ -17,19 +18,13 @@ namespace OneDrive.ApiDocumentation.Validation
         /// <summary>
         /// Type of code block
         /// </summary>
-        [JsonProperty("blockType")]
+        [JsonProperty("blockType"), JsonConverter(typeof(StringEnumConverter))]
         public CodeBlockType BlockType { get; set; }
-
-        /// <summary>
-        /// Request parameters that need to be replaced
-        /// </summary>
-        [JsonProperty("Parameters")]
-        public string[] Parameters { get; set; }
 
         /// <summary>
         /// Specify the name of properties in the schema which are optional
         /// </summary>
-        [JsonProperty("optionalProperties")]
+        [JsonProperty("optionalProperties", NullValueHandling=NullValueHandling.Ignore)]
         public string[] OptionalProperties { get; set; }
 
         /// <summary>

@@ -31,8 +31,17 @@
         /// <returns></returns>
         public bool ValidateJson(string resourceType, string json, bool jsonIsCollection, out ValidationError[] errors)
         {
-            var schema = m_RegisteredSchema[resourceType];
-            return ValidateJson(schema, json, jsonIsCollection, out errors);
+            if (resourceType == "stream")
+            {
+                // No validation since we're streaming data
+                errors = null;
+                return true;
+            }
+            else
+            {
+                var schema = m_RegisteredSchema[resourceType];
+                return ValidateJson(schema, json, jsonIsCollection, out errors);
+            }
         }
 
         public bool ValidateJson(JsonSchema schema, string json, bool jsonIsCollection, out ValidationError[] errors)
