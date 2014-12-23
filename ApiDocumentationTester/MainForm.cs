@@ -123,8 +123,10 @@ namespace OneDrive.ApiDocumentation.Windows
                 }
             }
 
-            var method = listBoxMethods.SelectedItem as MethodDefinition;
-            var requestParams = CurrentDocSet.RequestParamtersForMethod(method);
+            var originalMethod = listBoxMethods.SelectedItem as MethodDefinition;
+            var method = MethodDefinition.FromRequest(textBoxRequest.Text, originalMethod.RequestMetadata);
+            
+            var requestParams = CurrentDocSet.RequestParamtersForMethod(originalMethod);
             var response = await method.ApiResponseForMethod(textBoxBaseURL.Text, m_AccessToken, requestParams);
 
             textBoxResponseActual.Text = response.FullResponse;
@@ -273,6 +275,19 @@ namespace OneDrive.ApiDocumentation.Windows
         private void methodParametersEditorControl1_Load(object sender, EventArgs e)
         {
 
+        }
+
+        private void buttonPreviewRequest_Click(object sender, EventArgs e)
+        {
+            var originalMethod = listBoxMethods.SelectedItem as MethodDefinition;
+            var method = MethodDefinition.FromRequest(textBoxRequest.Text, originalMethod.RequestMetadata);
+            var requestParams = CurrentDocSet.RequestParamtersForMethod(originalMethod);
+
+            var request = method.PreviewRequest(requestParams);
+            var requestText = request.FullHttpText();
+
+            ErrorDisplayForm form = new ErrorDisplayForm("Request Preview", requestText);
+            form.ShowDialog(this);
         }
     }
 }

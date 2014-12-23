@@ -59,6 +59,7 @@
             this.textBoxResourceData = new System.Windows.Forms.TextBox();
             this.tabPageMethods = new System.Windows.Forms.TabPage();
             this.splitContainerRequestResponse = new System.Windows.Forms.SplitContainer();
+            this.buttonPreviewRequest = new System.Windows.Forms.Button();
             this.textBoxRequest = new System.Windows.Forms.TextBox();
             this.labelRequestTitle = new System.Windows.Forms.Label();
             this.splitContainerResponseActualExpected = new System.Windows.Forms.SplitContainer();
@@ -81,7 +82,7 @@
             this.buttonAddParameters = new System.Windows.Forms.Button();
             this.listBoxParameters = new System.Windows.Forms.ListBox();
             this.label7 = new System.Windows.Forms.Label();
-            this.methodParametersEditorControl1 = new MethodParametersEditorControl();
+            this.methodParametersEditorControl1 = new OneDrive.ApiDocumentation.Windows.MethodParametersEditorControl();
             this.menuStrip1.SuspendLayout();
             this.tabControl1.SuspendLayout();
             this.tabPageFiles.SuspendLayout();
@@ -302,8 +303,8 @@
             this.tabControl1.Controls.Add(this.tabPageLinks);
             this.tabControl1.Controls.Add(this.tabPageResources);
             this.tabControl1.Controls.Add(this.tabPageMethods);
-            this.tabControl1.Controls.Add(this.tabPageOptions);
             this.tabControl1.Controls.Add(this.tabPageParameters);
+            this.tabControl1.Controls.Add(this.tabPageOptions);
             this.tabControl1.Location = new System.Drawing.Point(12, 44);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
@@ -418,6 +419,7 @@
             // 
             // splitContainerRequestResponse.Panel1
             // 
+            this.splitContainerRequestResponse.Panel1.Controls.Add(this.buttonPreviewRequest);
             this.splitContainerRequestResponse.Panel1.Controls.Add(this.textBoxRequest);
             this.splitContainerRequestResponse.Panel1.Controls.Add(this.buttonMakeRequest);
             this.splitContainerRequestResponse.Panel1.Controls.Add(this.labelRequestTitle);
@@ -428,6 +430,17 @@
             this.splitContainerRequestResponse.Size = new System.Drawing.Size(718, 606);
             this.splitContainerRequestResponse.SplitterDistance = 200;
             this.splitContainerRequestResponse.TabIndex = 17;
+            // 
+            // buttonPreviewRequest
+            // 
+            this.buttonPreviewRequest.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.buttonPreviewRequest.Location = new System.Drawing.Point(507, 3);
+            this.buttonPreviewRequest.Name = "buttonPreviewRequest";
+            this.buttonPreviewRequest.Size = new System.Drawing.Size(80, 28);
+            this.buttonPreviewRequest.TabIndex = 13;
+            this.buttonPreviewRequest.Text = "Preview";
+            this.buttonPreviewRequest.UseVisualStyleBackColor = true;
+            this.buttonPreviewRequest.Click += new System.EventHandler(this.buttonPreviewRequest_Click);
             // 
             // textBoxRequest
             // 
@@ -777,6 +790,7 @@
         private System.Windows.Forms.Button buttonSaveParameterFile;
         private System.Windows.Forms.Button buttonDeleteParameters;
         private System.Windows.Forms.Button buttonAddParameters;
+        private System.Windows.Forms.Button buttonPreviewRequest;
     }
 }
 

@@ -80,6 +80,11 @@
                 request.Body = newBody;
             }
 
+            if (string.IsNullOrEmpty(request.Accept))
+            {
+                request.Accept = "application/json";
+            }
+
             return request;
         }
 
