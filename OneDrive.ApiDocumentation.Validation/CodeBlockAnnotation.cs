@@ -33,6 +33,10 @@ namespace OneDrive.ApiDocumentation.Validation
         [JsonProperty("isCollection")]
         public bool IsCollection { get; set; }
 
+
+        [JsonProperty("truncated")]
+        public bool TruncatedResult { get; set; }
+
         public static CodeBlockAnnotation FromJson(string json)
         {
             return JsonConvert.DeserializeObject<CodeBlockAnnotation>(json);

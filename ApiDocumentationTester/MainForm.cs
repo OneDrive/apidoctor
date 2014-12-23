@@ -179,7 +179,18 @@ namespace OneDrive.ApiDocumentation.Windows
         private void buttonValidateExpectedResponse_Click(object sender, EventArgs e)
         {
             var parser = new HttpParser();
-            var response = parser.ParseHttpResponse(textBoxResponseExpected.Text);
+
+            HttpResponse response = null;
+            try
+            {
+                response = parser.ParseHttpResponse(textBoxResponseExpected.Text);
+            }
+            catch (Exception ex)
+            {
+                ErrorDisplayForm.ShowErrorDialog(new ValidationError[] { new ValidationError(null, "Error parsing HTTP response: {0}", ex.Message) });
+                return;
+            }
+
             ValidateHttpResponse(textBoxRequest.Tag as MethodDefinition, response);
         }
 

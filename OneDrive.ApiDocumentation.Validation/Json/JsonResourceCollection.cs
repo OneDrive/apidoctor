@@ -29,8 +29,9 @@
         /// <param name="expectedJson"></param>
         /// <param name="actualJson"></param>
         /// <returns></returns>
-        public bool ValidateJson(string resourceType, string json, bool jsonIsCollection, out ValidationError[] errors)
+        public bool ValidateJson(CodeBlockAnnotation annotation, string json, out ValidationError[] errors)
         {
+            var resourceType = annotation.ResourceType;
             if (resourceType == "stream")
             {
                 // No validation since we're streaming data
@@ -40,13 +41,13 @@
             else
             {
                 var schema = m_RegisteredSchema[resourceType];
-                return ValidateJson(schema, json, jsonIsCollection, out errors);
+                return ValidateJson(schema, json, annotation, out errors);
             }
         }
 
-        public bool ValidateJson(JsonSchema schema, string json, bool jsonIsCollection, out ValidationError[] errors)
+        public bool ValidateJson(JsonSchema schema, string json, CodeBlockAnnotation annotation, out ValidationError[] errors)
         {
-            return schema.ValidateJson(json, out errors, m_RegisteredSchema, jsonIsCollection);
+            return schema.ValidateJson(json, out errors, m_RegisteredSchema, annotation);
         }
 
         internal void RegisterJsonResources(IEnumerable<ResourceDefinition> resources)

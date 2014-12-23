@@ -106,8 +106,7 @@
                 }
                 else
                 {
-                    if (!m_ResourceCollection.ValidateJson(method.ResponseMetadata.ResourceType, response.Body,
-                        method.ResponseMetadata.IsCollection, out schemaErrors))
+                    if (!m_ResourceCollection.ValidateJson(method.ResponseMetadata, response.Body, out schemaErrors))
                     {
                         detectedErrors.AddRange(schemaErrors);
                     }

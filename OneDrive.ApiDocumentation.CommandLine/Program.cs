@@ -187,6 +187,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             bool result = true;
             foreach (var method in methods)
             {
+                Console.WriteLine();
                 Console.Write("Checking \"{0}\"...", method.DisplayName);
 
                 var parser = new HttpParser();
