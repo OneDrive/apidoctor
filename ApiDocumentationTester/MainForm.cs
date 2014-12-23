@@ -11,7 +11,7 @@ using OneDrive.ApiDocumentation.Validation;
 using OneDrive.ApiDocumentation.Validation.Json;
 using OneDrive.ApiDocumentation.Validation.Http;
 
-namespace ApiDocumentationTester
+namespace OneDrive.ApiDocumentation.Windows
 {
     public partial class MainForm : Form
     {

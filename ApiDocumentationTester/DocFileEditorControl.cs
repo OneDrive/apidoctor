@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using OneDrive.ApiDocumentation.Validation;
 
-namespace ApiDocumentationTester
+namespace OneDrive.ApiDocumentation.Windows
 {
     public partial class DocFileEditorControl : UserControl
     {

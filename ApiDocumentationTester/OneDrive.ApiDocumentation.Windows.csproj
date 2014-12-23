@@ -7,8 +7,8 @@
     <ProjectGuid>{53A12F19-7C03-4E61-A34E-ADC5C211DE6E}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>ApiDocumentationTester</RootNamespace>
-    <AssemblyName>ApiDocumentationTester</AssemblyName>
+    <RootNamespace>OneDrive.ApiDocumentation.Windows</RootNamespace>
+    <AssemblyName>OneDrive_ApiTesterWindows</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -91,6 +91,7 @@
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
     </Compile>
     <EmbeddedResource Include="SchemaValidatorForm.resx">
       <DependentUpon>SchemaValidatorForm.cs</DependentUpon>
