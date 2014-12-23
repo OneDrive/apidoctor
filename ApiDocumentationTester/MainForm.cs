@@ -123,6 +123,9 @@ namespace OneDrive.ApiDocumentation.Windows
                 }
             }
 
+            textBoxResponseActual.Clear();
+            textBoxResponseActual.Tag = null;
+
             var originalMethod = listBoxMethods.SelectedItem as MethodDefinition;
             var method = MethodDefinition.FromRequest(textBoxRequest.Text, originalMethod.RequestMetadata);
             
@@ -287,7 +290,7 @@ namespace OneDrive.ApiDocumentation.Windows
             var requestText = request.FullHttpText();
 
             ErrorDisplayForm form = new ErrorDisplayForm("Request Preview", requestText);
-            form.ShowDialog(this);
+            form.Show(this);
         }
     }
 }

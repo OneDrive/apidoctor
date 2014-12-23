@@ -83,7 +83,7 @@
 
                         response.HttpVersion = components[0];
                         response.StatusCode = int.Parse(components[1]);
-                        response.StatusMessage = components[2];
+                        response.StatusMessage = components.ComponentsJoinedByString(" ", 2);
 
                         mode = ParserMode.Headers;
                         break;

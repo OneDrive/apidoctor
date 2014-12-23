@@ -9,14 +9,23 @@
     static class ExtensionMethods
     {
 
-        public static string ComponentsJoinedByString(this IEnumerable<string> source, string separator)
+        public static string ComponentsJoinedByString(this IEnumerable<string> source, string separator, int startIndex = 0)
         {
             StringBuilder sb = new StringBuilder();
+            int index = 0;
             foreach (var component in source)
             {
+                if (index < startIndex)
+                {
+                    index++;
+                    continue;
+                }
+
                 if (sb.Length > 0)
                     sb.Append(separator);
                 sb.Append(component);
+
+                index++;
             }
             return sb.ToString();
         }

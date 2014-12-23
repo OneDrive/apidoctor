@@ -111,6 +111,11 @@
                 var schemaPropertyDef = Schema[inputProperty.Name];
                 if (schemaPropertyDef.Type == inputProperty.Type)
                 {
+                    // TODO: For an Array type, we should validate the first child of the array.
+                    if (inputProperty.Type == JsonDataType.Array)
+                    {
+                        detectedErrors.Add(new ValidationError(null, "Warning: Object included an array property '{0}' whose children were not validated.", inputProperty.Name));
+                    }
                     // This checks out.
                     return PropertyValidationOutcome.OK;
                 }
@@ -128,7 +133,7 @@
                         ValidationError[] odataErrors;
                         if (!odataSchema.ValidateCustomObject(inputProperty.CustomMembers.Values.ToArray(), out odataErrors, otherSchemas, isTruncated))
                         {
-                            var propertyError = new ValidationError(null, "Schema errors detected in property '{0}' ['{1}']:{2}{3}", inputProperty.Name, odataSchema.ResourceName, Environment.NewLine, odataErrors.AllErrors());
+                            var propertyError = new ValidationError(null, "Schema errors detected in property '{0}' ['{1}']:{2}{3}", inputProperty.Name, odataSchema.ResourceName, Environment.NewLine, odataErrors.ErrorsToString("   "));
                             propertyError.InnerErrors = odataErrors;
                             detectedErrors.Add(propertyError);
 

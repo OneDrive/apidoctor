@@ -17,7 +17,9 @@
 
         public static MethodDefinition FromRequest(string request, CodeBlockAnnotation annotation)
         {
-            return new MethodDefinition { Request = request, RequestMetadata = annotation };
+            var method = new MethodDefinition { Request = request, RequestMetadata = annotation };
+            method.DisplayName = annotation.MethodName;
+            return method;
         }
 
 

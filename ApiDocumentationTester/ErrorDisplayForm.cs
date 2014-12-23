@@ -29,7 +29,7 @@ namespace OneDrive.ApiDocumentation.Windows
         public ErrorDisplayForm(ValidationError[] errors) : this()
         {
             textBoxErrors.Text = "The following errors were detetected:\r\n";
-            textBoxErrors.AppendText(errors.AllErrors());
+            textBoxErrors.AppendText(errors.ErrorsToString(linesBetweenErrors: 1));
             textBoxErrors.WordWrap = true;
         }
 
