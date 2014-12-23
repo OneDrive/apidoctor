@@ -53,6 +53,20 @@
             List<ValidationError> detectedErrors = new List<ValidationError>();
             List<string> missingProperties = new List<string>(Schema.Keys);
 
+            // Check for an error response
+            dynamic errorObject = obj["error"];
+            if (null != errorObject)
+            {
+                string code = errorObject.code;
+                string message = errorObject.message;
+                string odataError = errorObject["@error.details"];
+
+                detectedErrors.Clear();
+                detectedErrors.Add(new ValidationError(null, "Error response received. Code: {0}, Message: {1}", code, message));
+                errors = detectedErrors.ToArray();
+                return false;
+            }
+
             if (null != annotation && annotation.IsCollection)
             {
                 // TODO: also validate additional properties on the collection, like nextDataLink
@@ -309,5 +323,13 @@
             MissingResourceType
         }
         #endregion
+
+        public static JsonSchema EmptyResponseSchema
+        {
+            get
+            {
+                return new JsonSchema("{ }", new CodeBlockAnnotation { BlockType = CodeBlockType.Response, IsCollection = false, MethodName = "EmptyResponse" });
+            }
+        }
     }
 }

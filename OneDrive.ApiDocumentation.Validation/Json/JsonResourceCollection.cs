@@ -40,7 +40,11 @@
             }
             else
             {
-                var schema = m_RegisteredSchema[resourceType];
+                JsonSchema schema;
+                if (string.IsNullOrEmpty(resourceType) || !m_RegisteredSchema.TryGetValue(resourceType, out schema))
+                {
+                    schema = JsonSchema.EmptyResponseSchema;
+                }
                 return ValidateJson(schema, json, annotation, out errors);
             }
         }

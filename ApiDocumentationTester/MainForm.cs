@@ -132,7 +132,7 @@ namespace OneDrive.ApiDocumentation.Windows
             var requestParams = CurrentDocSet.RequestParamtersForMethod(originalMethod);
             var response = await method.ApiResponseForMethod(textBoxBaseURL.Text, m_AccessToken, requestParams);
 
-            textBoxResponseActual.Text = response.FullResponse;
+            textBoxResponseActual.Text = response.FullHttpText();
             textBoxResponseActual.Tag = response;
         }
 

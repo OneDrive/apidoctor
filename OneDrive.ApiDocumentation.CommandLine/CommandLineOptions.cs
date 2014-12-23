@@ -47,6 +47,9 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         [Option('p', "path", Required=true, HelpText="Path to the documentation set")]
         public string PathToDocSet { get; set; }
 
+        [Option("short", HelpText="Print output in short format. Cannot be combined with Verbose.")]
+        public bool ShortForm { get; set; }
+
         [Option("verbose", HelpText = "Print verbose output")]
         public bool Verbose { get; set; }
 
@@ -54,20 +57,23 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
     class ConsistencyCheckOptions : CommonOptions
     {
-        [Option("method", HelpText = "Name of the method to test")]
+        [Option('m', "method", HelpText = "Name of the method to test")]
         public string MethodName { get; set; }
     }
 
-    class ServiceConsistencyOptions : CommonOptions
+    class ServiceConsistencyOptions : ConsistencyCheckOptions
     {
-        [Option("access-token", Required=true, HelpText="OAuth access token")]
+        [Option('t', "access-token", Required=true, HelpText="OAuth access token")]
         public string AccessToken { get; set; }
 
-        [Option("url-root", Required=true, DefaultValue="https://df.api.onedrive.com/v1.0/", HelpText="Root URL for API calls")]
+        [Option('u', "url", Required=true, HelpText="Root URL for API calls, like https://api.onedrive.com/v1.0")]
         public string ServiceRootUrl { get; set; }
 
-        [Option('p', "parameter-file", DefaultValue="/internal/api-automation.json", HelpText="Source for parameter values in API calls")]
+        [Option('f', "parameter-file", DefaultValue="/internal/api-automation.json", HelpText="Source for parameter values in API calls")]
         public string ParameterSource { get; set; }
+
+        [Option("pause", HelpText="Pause between method requests.")]
+        public bool PauseBetweenRequests { get; set; }
 
     }
 }

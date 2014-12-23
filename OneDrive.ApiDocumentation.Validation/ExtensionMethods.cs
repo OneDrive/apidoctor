@@ -6,7 +6,7 @@
     using System.Text;
     using System.Threading.Tasks;
 
-    static class ExtensionMethods
+    public static class ExtensionMethods
     {
 
         public static string ComponentsJoinedByString(this IEnumerable<string> source, string separator, int startIndex = 0)
@@ -60,6 +60,12 @@
                 return storedValue;
             else
                 return defaultValue;
+        }
+
+        public static string TopLineOnly(this string input)
+        {
+            System.IO.StringReader reader = new System.IO.StringReader(input);
+            return reader.ReadLine();
         }
     }
 }

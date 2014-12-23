@@ -36,6 +36,11 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
             VerboseEnabled = invokedVerbInstance.Verbose;
 
+            Nito.AsyncEx.AsyncContext.Run(() => RunInvokedMethodAsync(invokedVerb, invokedVerbInstance));
+        }
+
+        private static async Task RunInvokedMethodAsync(string invokedVerb, CommonOptions invokedVerbInstance)
+        {
             switch (invokedVerb)
             {
                 case "files":
@@ -54,14 +59,18 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                     MethodExampleValidation((ConsistencyCheckOptions)invokedVerbInstance);
                     break;
                 case "service":
-                    throw new NotImplementedException();
+                    await ServiceCallValidation((ServiceConsistencyOptions)invokedVerbInstance);
                     break;
             }
-
         }
 
-
-
+        private static void VerbosePrint(string output)
+        {
+            if (VerboseEnabled)
+            {
+                Console.WriteLine(output);
+            }
+        }
         private static void VerbosePrint(string format, params object[] parameters)
         {
             if (VerboseEnabled)
@@ -78,6 +87,17 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             VerbosePrint("Scanning documentation files...");
             set.ScanDocumentation();
 
+            var serviceOptions = options as ServiceConsistencyOptions;
+            if (null != serviceOptions)
+            {
+                VerbosePrint("Reading configuration parameters...");
+                bool success = set.TryReadRequestParameters(serviceOptions.ParameterSource);
+                if (!success)
+                {
+                    Console.WriteLine("WARNING: Unable to read request parameter configuration file: {0}", serviceOptions.ParameterSource);
+                }
+            }
+
             return set;
         }
 
@@ -85,7 +105,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         {
             var docset = GetDocSet(options);
 
-            string format = options.Verbose ? "{0} => {1} (r: {2}, m: {3})" : "{0} (r: {2}, m:{3})";
+            string format = options.Verbose ? "{0} => {1} (resources: {2}, methods: {3})" : "{0} (r:{2}, m:{3})";
             foreach (var file in docset.Files)
             {
                 Console.WriteLine(format, file.DisplayName, file.FullPath, file.Resources.Length, file.Requests.Length);
@@ -120,15 +140,18 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             {
                 Console.WriteLine(resource.ResourceType);
 
-                if (options.Verbose)
+                if (!options.ShortForm && options.Verbose)
                 {
                     string metadata = JsonConvert.SerializeObject(resource.Metadata);
                     Console.WriteLine(string.Concat("Metadata: ", metadata));
                     Console.WriteLine();
                 }
 
-                Console.WriteLine(resource.JsonExample);
-                Console.WriteLine();
+                if (!options.ShortForm)
+                {
+                    Console.WriteLine(resource.JsonExample);
+                    Console.WriteLine();
+                }
             }
         }
 
@@ -142,13 +165,18 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 var requestMetadata = options.Verbose ? JsonConvert.SerializeObject(method.RequestMetadata) : string.Empty;
                 var responseMetadata = options.Verbose ? JsonConvert.SerializeObject(method.ResponseMetadata) : string.Empty;
 
+                string headerFormatText = options.Verbose ? "{0}: {1}" : "{0}";
+
                 Console.WriteLine("Method \"{0}\"", method.DisplayName);
-                Console.WriteLine("Request: {0}", requestMetadata);
-                Console.WriteLine(method.Request);
+                Console.WriteLine(headerFormatText, "Request", requestMetadata);
+                Console.WriteLine(options.ShortForm ? method.Request.TopLineOnly() : method.Request);
                 Console.WriteLine();
-                Console.WriteLine("Response: {0}", responseMetadata );
-                Console.WriteLine(method.Response);
-                Console.WriteLine();
+                if (!options.ShortForm)
+                {
+                    Console.WriteLine(headerFormatText, "Response", responseMetadata);
+                    Console.WriteLine(method.Response);
+                    Console.WriteLine();
+                }
                 Console.WriteLine();
             }
         }
@@ -167,22 +195,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             var docset = GetDocSet(options);
             Console.WriteLine();
 
-            MethodDefinition[] methods = null;
-            if (!string.IsNullOrEmpty(options.MethodName))
-            {
-                var foundMethod = LookUpMethod(docset, options.MethodName);
-                if (null == foundMethod)
-                {
-                    Console.WriteLine("Unable to locate method '{0}' in docset.", options.MethodName);
-                    Environment.Exit(ExitCodeFailure);
-                    return;
-                }
-                methods = new MethodDefinition[] { LookUpMethod(docset, options.MethodName) };
-            }
-            else
-            {
-                methods = docset.Methods;
-            }
+            MethodDefinition[] methods = TestMethods(options, docset);
 
             bool result = true;
             foreach (var method in methods)
@@ -201,11 +214,31 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 Environment.Exit(ExitCodeSuccess);
         }
 
-        private static void WriteOutErrors(ValidationError[] errors)
+        private static MethodDefinition[] TestMethods(ConsistencyCheckOptions options, DocSet docset)
+        {
+            MethodDefinition[] methods = null;
+            if (!string.IsNullOrEmpty(options.MethodName))
+            {
+                var foundMethod = LookUpMethod(docset, options.MethodName);
+                if (null == foundMethod)
+                {
+                    Console.WriteLine("Unable to locate method '{0}' in docset.", options.MethodName);
+                    Environment.Exit(ExitCodeFailure);
+                }
+                methods = new MethodDefinition[] { LookUpMethod(docset, options.MethodName) };
+            }
+            else
+            {
+                methods = docset.Methods;
+            }
+            return methods;
+        }
+
+        private static void WriteOutErrors(ValidationError[] errors, string indent = "")
         {
             foreach (var error in errors)
             {
-                Console.WriteLine(error.ErrorText);
+                Console.WriteLine(string.Concat(indent, error.ErrorText));
             }
         }
 
@@ -215,7 +248,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             if (!docset.ValidateApiMethod(method, response, expectedResponse, out errors))
             {
                 Console.WriteLine();
-                WriteOutErrors(errors);
+                WriteOutErrors(errors, "  ");
                 return false;
             }
             else
@@ -223,6 +256,49 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 Console.WriteLine(" no errors");
                 return true;
             }
+        }
+
+        private static async Task ServiceCallValidation(ServiceConsistencyOptions options)
+        {
+            var docset = GetDocSet(options);
+            Console.WriteLine();
+
+            var methods = TestMethods(options, docset);
+
+            bool result = true;
+            foreach (var method in methods)
+            {
+                Console.WriteLine();
+                Console.Write("Calling method \"{0}\"...", method.DisplayName);
+
+                var requestParams = docset.RequestParamtersForMethod(method);
+                VerbosePrint("");
+                VerbosePrint("Request:");
+                VerbosePrint(method.PreviewRequest(requestParams).FullHttpText());
+
+                var parser = new HttpParser();
+                var expectedResponse = parser.ParseHttpResponse(method.Response);
+                
+                var actualResponse = await method.ApiResponseForMethod(options.ServiceRootUrl, options.AccessToken, requestParams);
+
+                VerbosePrint("Response:");
+                VerbosePrint(actualResponse.FullHttpText());
+
+                VerbosePrint("Validation results:");
+                result &= ValidateHttpResponse(docset, method, actualResponse, expectedResponse);
+
+                if (options.PauseBetweenRequests)
+                {
+                    Console.Write("Press any key to continue");
+                    Console.ReadKey();
+                    Console.WriteLine();
+                }
+            }
+
+            if (!result)
+                Environment.Exit(ExitCodeFailure);
+            else
+                Environment.Exit(ExitCodeSuccess);
         }
         
 

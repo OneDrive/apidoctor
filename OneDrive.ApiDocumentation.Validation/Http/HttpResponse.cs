@@ -61,12 +61,9 @@
             return resp;
         }
 
-        public string FullResponse
+        public string FullHttpText()
         {
-            get
-            {
-                return FormatFullResponse(Body);
-            }
+            return FormatFullResponse(Body);
         }
 
         public string FormatFullResponse(string body)
@@ -85,28 +82,28 @@
             return sb.ToString();
         }
 
-        public bool CompareToResponse(HttpResponse otherResponse, out ValidationError[] errors)
+        public bool CompareToResponse(HttpResponse actualResponse, out ValidationError[] errors)
         {
             List<ValidationError> errorList = new List<ValidationError>();
-            if (StatusCode != otherResponse.StatusCode)
+            if (StatusCode != actualResponse.StatusCode)
             {
-                errorList.Add(new ValidationError { Message = string.Format("Expected status code {0} but received {1}", StatusCode, otherResponse.StatusCode) });
+                errorList.Add(new ValidationError { Message = string.Format("Unexpected status code {1}, expected: {0}.", StatusCode, actualResponse.StatusCode) });
             }
 
-            if (StatusMessage != otherResponse.StatusMessage)
+            if (StatusMessage != actualResponse.StatusMessage)
             {
-                errorList.Add(new ValidationError { Message = string.Format("Expected status message '{0}' but received '{1}'", StatusMessage, otherResponse.StatusMessage) });
+                errorList.Add(new ValidationError { Message = string.Format("Unexpected status message {1}, expected: {0}.", StatusMessage, actualResponse.StatusMessage) });
             }
 
             // Check to see that expected headers were found in the response
-            List<string> otherResponseHeaderKeys = new List<string>(otherResponse.Headers.AllKeys);
+            List<string> otherResponseHeaderKeys = new List<string>(actualResponse.Headers.AllKeys);
 
             var comparer = new HeaderNameComparer();
             foreach(var expectedHeader in Headers.AllKeys)
             {
                 if (!otherResponseHeaderKeys.Contains(expectedHeader, comparer))
                 {
-                    errorList.Add(new ValidationError { Message = string.Format("Response is missing header '{0}'.", expectedHeader) });
+                    errorList.Add(new ValidationError { Message = string.Format("Response is missing header expected header: {0}.", expectedHeader) });
                 }
             }
 
