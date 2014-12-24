@@ -167,7 +167,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             foreach (var method in docset.Methods)
             {
                 var requestMetadata = options.Verbose ? JsonConvert.SerializeObject(method.RequestMetadata) : string.Empty;
-                var responseMetadata = options.Verbose ? JsonConvert.SerializeObject(method.ResponseMetadata) : string.Empty;
+                var responseMetadata = options.Verbose ? JsonConvert.SerializeObject(method.ExpectedResponseMetadata) : string.Empty;
 
                 string headerFormatText = options.Verbose ? "{0}: {1}" : "{0}";
 
@@ -178,7 +178,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 if (!options.ShortForm)
                 {
                     Console.WriteLine(headerFormatText, "Response", responseMetadata);
-                    Console.WriteLine(method.Response);
+                    Console.WriteLine(method.ExpectedResponse);
                     Console.WriteLine();
                 }
                 Console.WriteLine();
@@ -208,7 +208,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 Console.Write("Checking \"{0}\"...", method.DisplayName);
 
                 var parser = new HttpParser();
-                var expectedResponse = parser.ParseHttpResponse(method.Response);
+                var expectedResponse = parser.ParseHttpResponse(method.ExpectedResponse);
                 result &= ValidateHttpResponse(docset, method, expectedResponse);
             }
 
@@ -281,7 +281,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 VerbosePrint(method.PreviewRequest(requestParams).FullHttpText());
 
                 var parser = new HttpParser();
-                var expectedResponse = parser.ParseHttpResponse(method.Response);
+                var expectedResponse = parser.ParseHttpResponse(method.ExpectedResponse);
                 
                 var actualResponse = await method.ApiResponseForMethod(options.ServiceRootUrl, options.AccessToken, requestParams);
 

@@ -16,9 +16,13 @@ namespace OneDrive.ApiDocumentation.Windows
 {
     public partial class MainForm : Form
     {
+        string m_AccessToken = null;
+
         DocSet CurrentDocSet { get; set; }
         ValidationError[] DocSetLoadErrors { get; set; }
-        string m_AccessToken = null;
+
+        internal string AccessToken { get { return m_AccessToken; } }
+        
         BindingList<RequestParameters> m_Parameters = new BindingList<RequestParameters>();
 
         public MainForm()
@@ -61,9 +65,7 @@ namespace OneDrive.ApiDocumentation.Windows
             listBoxResources.DisplayMember = "ResourceType";
             listBoxResources.DataSource = CurrentDocSet.Resources;
 
-            listBoxMethods.DisplayMember = "DisplayName";
-            listBoxMethods.DataSource = CurrentDocSet.Methods;
-
+            methodsPage.LoadFromDocSet(CurrentDocSet);
 
             m_Parameters = new BindingList<RequestParameters>(CurrentDocSet.RequestParameters);
 
@@ -107,57 +109,19 @@ namespace OneDrive.ApiDocumentation.Windows
             textBoxResourceData.Text = resource.JsonExample;
         }
 
-        private void listBoxMethods_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            var method = ((ListBox)sender).SelectedItem as MethodDefinition;
-            labelExpectedResponseType.Text = string.Format("{0} (col: {1})", method.ResponseMetadata.ResourceType, method.ResponseMetadata.IsCollection);
-            textBoxRequest.Text = method.Request;
-            textBoxRequest.Tag = method;
-            textBoxResponseExpected.Text = method.Response;
-            textBoxResponseActual.Clear();
-        }
-
-        private async void buttonMakeRequest_Click(object sender, EventArgs e)
-        {
-            if (string.IsNullOrEmpty(m_AccessToken))
-            {
-                await SignInAsync();
-
-                if (string.IsNullOrEmpty(m_AccessToken))
-                {
-                    return;
-                }
-            }
-
-            textBoxResponseActual.Clear();
-            textBoxResponseActual.Tag = null;
-
-            var originalMethod = listBoxMethods.SelectedItem as MethodDefinition;
-            var method = MethodDefinition.FromRequest(textBoxRequest.Text, originalMethod.RequestMetadata);
-            
-            var requestParams = CurrentDocSet.RequestParamtersForMethod(originalMethod);
-            var response = await method.ApiResponseForMethod(textBoxBaseURL.Text, m_AccessToken, requestParams);
-
-            textBoxResponseActual.Text = response.FullHttpText();
-            textBoxResponseActual.Tag = response;
-        }
+     
 
         private async void signInToolStripMenuItem_Click(object sender, EventArgs e)
         {
             await SignInAsync();
         }
 
-        private async Task SignInAsync()
+        public async Task SignInAsync()
         {
             var clientId = textBoxClientId.Text;
             var scopes = textBoxAuthScopes.Text.Split(',');
 
             m_AccessToken = await MicrosoftAccountSDK.Windows.FormMicrosoftAccountAuth.GetAuthenticationToken(clientId, scopes, MicrosoftAccountSDK.Windows.OAuthFlow.ImplicitGrant, this);
-        }
-
-        private void toolStripTextBoxAPIRoot_TextChanged(object sender, EventArgs e)
-        {
-            Properties.Settings.Default.ApiBaseRoot = ((TextBox)sender).Text;
         }
 
         private void exitToolStripMenuItem_Click(object sender, EventArgs e)
@@ -171,47 +135,6 @@ namespace OneDrive.ApiDocumentation.Windows
             form.Show();
         }
 
-        private void buttonValidate_Click(object sender, EventArgs e)
-        {
-            HttpParser parser = new HttpParser();
-            var expectedResponse = parser.ParseHttpResponse(textBoxResponseExpected.Text);
-            var response = textBoxResponseActual.Tag as HttpResponse;
-            ValidateHttpResponse(textBoxRequest.Tag as MethodDefinition, response, expectedResponse);
-
-        }
-
-        private void ValidateHttpResponse(MethodDefinition method, HttpResponse response, HttpResponse expectedResponse = null)
-        {
-
-            ValidationError[] errors;
-            if (!CurrentDocSet.ValidateApiMethod(method, response, expectedResponse, out errors))
-            {
-                ErrorDisplayForm.ShowErrorDialog(errors, this);   
-            }
-            else
-            {
-                MessageBox.Show("No errors detected.");
-            }
-        }
-
-        private void buttonValidateExpectedResponse_Click(object sender, EventArgs e)
-        {
-            var parser = new HttpParser();
-
-            HttpResponse response = null;
-            try
-            {
-                response = parser.ParseHttpResponse(textBoxResponseExpected.Text);
-            }
-            catch (Exception ex)
-            {
-                ErrorDisplayForm.ShowErrorDialog(new ValidationError[] { new ValidationError(null, "Error parsing HTTP response: {0}", ex.Message) });
-                return;
-            }
-
-            ValidateHttpResponse(textBoxRequest.Tag as MethodDefinition, response);
-        }
-
         private void textBoxClientId_TextChanged(object sender, EventArgs e)
         {
             Properties.Settings.Default.ClientId = textBoxClientId.Text;
@@ -223,17 +146,6 @@ namespace OneDrive.ApiDocumentation.Windows
             Properties.Settings.Default.AuthScopes = textBoxAuthScopes.Text;
             Properties.Settings.Default.Save();
 
-        }
-
-        private void buttonFormat_Click(object sender, EventArgs e)
-        {
-            var response = textBoxResponseActual.Tag as HttpResponse;
-            var jsonString = response.Body;
-
-            var obj = Newtonsoft.Json.JsonConvert.DeserializeObject(jsonString);
-            var cleanJson = Newtonsoft.Json.JsonConvert.SerializeObject(obj, Newtonsoft.Json.Formatting.Indented);
-
-            textBoxResponseActual.Text = response.FormatFullResponse(cleanJson);
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -281,23 +193,7 @@ namespace OneDrive.ApiDocumentation.Windows
             CurrentDocSet.TryWriteRequestParameters(textBoxMethodRequestParameterFile.Text, m_Parameters.ToArray());
         }
 
-        private void methodParametersEditorControl1_Load(object sender, EventArgs e)
-        {
-
-        }
-
-        private void buttonPreviewRequest_Click(object sender, EventArgs e)
-        {
-            var originalMethod = listBoxMethods.SelectedItem as MethodDefinition;
-            var method = MethodDefinition.FromRequest(textBoxRequest.Text, originalMethod.RequestMetadata);
-            var requestParams = CurrentDocSet.RequestParamtersForMethod(originalMethod);
-
-            var request = method.PreviewRequest(requestParams);
-            var requestText = request.FullHttpText();
-
-            ErrorDisplayForm form = new ErrorDisplayForm("Request Preview", requestText);
-            form.Show(this);
-        }
+      
 
         private void showLoadErrorsToolStripMenuItem_Click(object sender, EventArgs e)
         {

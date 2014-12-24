@@ -32,22 +32,16 @@
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.openFolderToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.openLastFolderToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItem2 = new System.Windows.Forms.ToolStripSeparator();
+            this.showLoadErrorsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripSeparator();
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.accountToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.signInToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.validateJsonToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.listBoxDocuments = new System.Windows.Forms.ListBox();
-            this.textBoxResponseExpected = new System.Windows.Forms.TextBox();
             this.listBoxResources = new System.Windows.Forms.ListBox();
             this.label3 = new System.Windows.Forms.Label();
-            this.listBoxMethods = new System.Windows.Forms.ListBox();
-            this.buttonMakeRequest = new System.Windows.Forms.Button();
-            this.labelExpectedResposne = new System.Windows.Forms.Label();
-            this.label6 = new System.Windows.Forms.Label();
-            this.textBoxResponseActual = new System.Windows.Forms.TextBox();
-            this.buttonValidateActualResponse = new System.Windows.Forms.Button();
-            this.buttonValidateExpectedResponse = new System.Windows.Forms.Button();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPageFiles = new System.Windows.Forms.TabPage();
             this.webBrowserPreview = new System.Windows.Forms.WebBrowser();
@@ -58,22 +52,12 @@
             this.tabPageResources = new System.Windows.Forms.TabPage();
             this.textBoxResourceData = new System.Windows.Forms.TextBox();
             this.tabPageMethods = new System.Windows.Forms.TabPage();
-            this.splitContainerRequestResponse = new System.Windows.Forms.SplitContainer();
-            this.buttonPreviewRequest = new System.Windows.Forms.Button();
-            this.textBoxRequest = new System.Windows.Forms.TextBox();
-            this.labelRequestTitle = new System.Windows.Forms.Label();
-            this.splitContainerResponseActualExpected = new System.Windows.Forms.SplitContainer();
-            this.panel1 = new System.Windows.Forms.Panel();
-            this.labelExpectedResponseType = new System.Windows.Forms.Label();
-            this.panel2 = new System.Windows.Forms.Panel();
-            this.buttonFormat = new System.Windows.Forms.Button();
             this.tabPageParameters = new System.Windows.Forms.TabPage();
             this.buttonSaveParameterFile = new System.Windows.Forms.Button();
             this.buttonDeleteParameters = new System.Windows.Forms.Button();
             this.buttonAddParameters = new System.Windows.Forms.Button();
             this.listBoxParameters = new System.Windows.Forms.ListBox();
             this.label7 = new System.Windows.Forms.Label();
-            this.methodParametersEditorControl1 = new OneDrive.ApiDocumentation.Windows.MethodParametersEditorControl();
             this.tabPageOptions = new System.Windows.Forms.TabPage();
             this.textBoxMethodRequestParameterFile = new System.Windows.Forms.TextBox();
             this.label5 = new System.Windows.Forms.Label();
@@ -83,24 +67,14 @@
             this.label2 = new System.Windows.Forms.Label();
             this.textBoxBaseURL = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
-            this.showLoadErrorsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripMenuItem2 = new System.Windows.Forms.ToolStripSeparator();
+            this.methodParametersEditorControl1 = new OneDrive.ApiDocumentation.Windows.MethodParametersEditorControl();
+            this.methodsPage = new OneDrive.ApiDocumentation.Windows.TabPages.MethodsPage();
             this.menuStrip1.SuspendLayout();
             this.tabControl1.SuspendLayout();
             this.tabPageFiles.SuspendLayout();
             this.tabPageLinks.SuspendLayout();
             this.tabPageResources.SuspendLayout();
             this.tabPageMethods.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.splitContainerRequestResponse)).BeginInit();
-            this.splitContainerRequestResponse.Panel1.SuspendLayout();
-            this.splitContainerRequestResponse.Panel2.SuspendLayout();
-            this.splitContainerRequestResponse.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.splitContainerResponseActualExpected)).BeginInit();
-            this.splitContainerResponseActualExpected.Panel1.SuspendLayout();
-            this.splitContainerResponseActualExpected.Panel2.SuspendLayout();
-            this.splitContainerResponseActualExpected.SuspendLayout();
-            this.panel1.SuspendLayout();
-            this.panel2.SuspendLayout();
             this.tabPageParameters.SuspendLayout();
             this.tabPageOptions.SuspendLayout();
             this.SuspendLayout();
@@ -113,7 +87,7 @@
             this.validateJsonToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(996, 24);
+            this.menuStrip1.Size = new System.Drawing.Size(949, 24);
             this.menuStrip1.TabIndex = 0;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -143,6 +117,18 @@
             this.openLastFolderToolStripMenuItem.Size = new System.Drawing.Size(174, 22);
             this.openLastFolderToolStripMenuItem.Text = "Open Last Folder";
             this.openLastFolderToolStripMenuItem.Click += new System.EventHandler(this.openLastFolderToolStripMenuItem_Click);
+            // 
+            // toolStripMenuItem2
+            // 
+            this.toolStripMenuItem2.Name = "toolStripMenuItem2";
+            this.toolStripMenuItem2.Size = new System.Drawing.Size(171, 6);
+            // 
+            // showLoadErrorsToolStripMenuItem
+            // 
+            this.showLoadErrorsToolStripMenuItem.Name = "showLoadErrorsToolStripMenuItem";
+            this.showLoadErrorsToolStripMenuItem.Size = new System.Drawing.Size(174, 22);
+            this.showLoadErrorsToolStripMenuItem.Text = "Show Load Errors...";
+            this.showLoadErrorsToolStripMenuItem.Click += new System.EventHandler(this.showLoadErrorsToolStripMenuItem_Click);
             // 
             // toolStripMenuItem1
             // 
@@ -184,23 +170,10 @@
             this.listBoxDocuments.FormattingEnabled = true;
             this.listBoxDocuments.ItemHeight = 15;
             this.listBoxDocuments.Location = new System.Drawing.Point(0, 0);
-            this.listBoxDocuments.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.listBoxDocuments.Name = "listBoxDocuments";
-            this.listBoxDocuments.Size = new System.Drawing.Size(254, 611);
+            this.listBoxDocuments.Size = new System.Drawing.Size(254, 466);
             this.listBoxDocuments.TabIndex = 1;
             this.listBoxDocuments.SelectedIndexChanged += new System.EventHandler(this.listBoxDocuments_SelectedIndexChanged);
-            // 
-            // textBoxResponseExpected
-            // 
-            this.textBoxResponseExpected.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.textBoxResponseExpected.Font = new System.Drawing.Font("Consolas", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.textBoxResponseExpected.Location = new System.Drawing.Point(0, 75);
-            this.textBoxResponseExpected.Multiline = true;
-            this.textBoxResponseExpected.Name = "textBoxResponseExpected";
-            this.textBoxResponseExpected.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.textBoxResponseExpected.Size = new System.Drawing.Size(356, 331);
-            this.textBoxResponseExpected.TabIndex = 3;
-            this.textBoxResponseExpected.WordWrap = false;
             // 
             // listBoxResources
             // 
@@ -208,9 +181,8 @@
             this.listBoxResources.FormattingEnabled = true;
             this.listBoxResources.ItemHeight = 15;
             this.listBoxResources.Location = new System.Drawing.Point(0, 0);
-            this.listBoxResources.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.listBoxResources.Name = "listBoxResources";
-            this.listBoxResources.Size = new System.Drawing.Size(254, 611);
+            this.listBoxResources.Size = new System.Drawing.Size(254, 468);
             this.listBoxResources.TabIndex = 5;
             this.listBoxResources.SelectedIndexChanged += new System.EventHandler(this.listBoxResources_SelectedIndexChanged);
             // 
@@ -222,81 +194,6 @@
             this.label3.Size = new System.Drawing.Size(54, 15);
             this.label3.TabIndex = 6;
             this.label3.Text = "Methods";
-            // 
-            // listBoxMethods
-            // 
-            this.listBoxMethods.Dock = System.Windows.Forms.DockStyle.Left;
-            this.listBoxMethods.FormattingEnabled = true;
-            this.listBoxMethods.ItemHeight = 15;
-            this.listBoxMethods.Location = new System.Drawing.Point(0, 0);
-            this.listBoxMethods.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
-            this.listBoxMethods.Name = "listBoxMethods";
-            this.listBoxMethods.Size = new System.Drawing.Size(254, 611);
-            this.listBoxMethods.TabIndex = 7;
-            this.listBoxMethods.SelectedIndexChanged += new System.EventHandler(this.listBoxMethods_SelectedIndexChanged);
-            // 
-            // buttonMakeRequest
-            // 
-            this.buttonMakeRequest.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.buttonMakeRequest.Location = new System.Drawing.Point(593, 3);
-            this.buttonMakeRequest.Name = "buttonMakeRequest";
-            this.buttonMakeRequest.Size = new System.Drawing.Size(123, 28);
-            this.buttonMakeRequest.TabIndex = 8;
-            this.buttonMakeRequest.Text = "Submit Request";
-            this.buttonMakeRequest.UseVisualStyleBackColor = true;
-            this.buttonMakeRequest.Click += new System.EventHandler(this.buttonMakeRequest_Click);
-            // 
-            // labelExpectedResposne
-            // 
-            this.labelExpectedResposne.AutoSize = true;
-            this.labelExpectedResposne.Location = new System.Drawing.Point(3, 9);
-            this.labelExpectedResposne.Name = "labelExpectedResposne";
-            this.labelExpectedResposne.Size = new System.Drawing.Size(110, 15);
-            this.labelExpectedResposne.TabIndex = 11;
-            this.labelExpectedResposne.Text = "Expected Response:";
-            // 
-            // label6
-            // 
-            this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(3, 9);
-            this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(94, 15);
-            this.label6.TabIndex = 13;
-            this.label6.Text = "Actual Response";
-            // 
-            // textBoxResponseActual
-            // 
-            this.textBoxResponseActual.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.textBoxResponseActual.Font = new System.Drawing.Font("Consolas", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.textBoxResponseActual.Location = new System.Drawing.Point(0, 75);
-            this.textBoxResponseActual.Multiline = true;
-            this.textBoxResponseActual.Name = "textBoxResponseActual";
-            this.textBoxResponseActual.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.textBoxResponseActual.Size = new System.Drawing.Size(358, 331);
-            this.textBoxResponseActual.TabIndex = 12;
-            this.textBoxResponseActual.WordWrap = false;
-            // 
-            // buttonValidateActualResponse
-            // 
-            this.buttonValidateActualResponse.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.buttonValidateActualResponse.Location = new System.Drawing.Point(271, 5);
-            this.buttonValidateActualResponse.Name = "buttonValidateActualResponse";
-            this.buttonValidateActualResponse.Size = new System.Drawing.Size(84, 28);
-            this.buttonValidateActualResponse.TabIndex = 14;
-            this.buttonValidateActualResponse.Text = "Validate";
-            this.buttonValidateActualResponse.UseVisualStyleBackColor = true;
-            this.buttonValidateActualResponse.Click += new System.EventHandler(this.buttonValidate_Click);
-            // 
-            // buttonValidateExpectedResponse
-            // 
-            this.buttonValidateExpectedResponse.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.buttonValidateExpectedResponse.Location = new System.Drawing.Point(265, 5);
-            this.buttonValidateExpectedResponse.Name = "buttonValidateExpectedResponse";
-            this.buttonValidateExpectedResponse.Size = new System.Drawing.Size(88, 28);
-            this.buttonValidateExpectedResponse.TabIndex = 15;
-            this.buttonValidateExpectedResponse.Text = "Validate";
-            this.buttonValidateExpectedResponse.UseVisualStyleBackColor = true;
-            this.buttonValidateExpectedResponse.Click += new System.EventHandler(this.buttonValidateExpectedResponse_Click);
             // 
             // tabControl1
             // 
@@ -312,7 +209,7 @@
             this.tabControl1.Location = new System.Drawing.Point(12, 44);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(980, 639);
+            this.tabControl1.Size = new System.Drawing.Size(933, 494);
             this.tabControl1.TabIndex = 16;
             // 
             // tabPageFiles
@@ -321,7 +218,7 @@
             this.tabPageFiles.Controls.Add(this.listBoxDocuments);
             this.tabPageFiles.Location = new System.Drawing.Point(4, 24);
             this.tabPageFiles.Name = "tabPageFiles";
-            this.tabPageFiles.Size = new System.Drawing.Size(972, 611);
+            this.tabPageFiles.Size = new System.Drawing.Size(925, 466);
             this.tabPageFiles.TabIndex = 0;
             this.tabPageFiles.Text = "Files";
             this.tabPageFiles.UseVisualStyleBackColor = true;
@@ -332,7 +229,7 @@
             this.webBrowserPreview.Location = new System.Drawing.Point(254, 0);
             this.webBrowserPreview.MinimumSize = new System.Drawing.Size(20, 20);
             this.webBrowserPreview.Name = "webBrowserPreview";
-            this.webBrowserPreview.Size = new System.Drawing.Size(718, 611);
+            this.webBrowserPreview.Size = new System.Drawing.Size(671, 466);
             this.webBrowserPreview.TabIndex = 2;
             // 
             // tabPageLinks
@@ -342,7 +239,7 @@
             this.tabPageLinks.Controls.Add(this.button1);
             this.tabPageLinks.Location = new System.Drawing.Point(4, 24);
             this.tabPageLinks.Name = "tabPageLinks";
-            this.tabPageLinks.Size = new System.Drawing.Size(972, 611);
+            this.tabPageLinks.Size = new System.Drawing.Size(925, 466);
             this.tabPageLinks.TabIndex = 4;
             this.tabPageLinks.Text = "Links";
             this.tabPageLinks.UseVisualStyleBackColor = true;
@@ -363,7 +260,7 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.textBoxLinkValidation.Font = new System.Drawing.Font("Consolas", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.textBoxLinkValidation.Location = new System.Drawing.Point(4, 42);
+            this.textBoxLinkValidation.Location = new System.Drawing.Point(3, 42);
             this.textBoxLinkValidation.Multiline = true;
             this.textBoxLinkValidation.Name = "textBoxLinkValidation";
             this.textBoxLinkValidation.ScrollBars = System.Windows.Forms.ScrollBars.Both;
@@ -372,7 +269,7 @@
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(4, 4);
+            this.button1.Location = new System.Drawing.Point(3, 3);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(103, 32);
             this.button1.TabIndex = 0;
@@ -386,7 +283,7 @@
             this.tabPageResources.Controls.Add(this.listBoxResources);
             this.tabPageResources.Location = new System.Drawing.Point(4, 24);
             this.tabPageResources.Name = "tabPageResources";
-            this.tabPageResources.Size = new System.Drawing.Size(972, 611);
+            this.tabPageResources.Size = new System.Drawing.Size(925, 466);
             this.tabPageResources.TabIndex = 1;
             this.tabPageResources.Text = "Resources";
             this.tabPageResources.UseVisualStyleBackColor = true;
@@ -399,155 +296,38 @@
             this.textBoxResourceData.Multiline = true;
             this.textBoxResourceData.Name = "textBoxResourceData";
             this.textBoxResourceData.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.textBoxResourceData.Size = new System.Drawing.Size(718, 611);
+            this.textBoxResourceData.Size = new System.Drawing.Size(671, 468);
             this.textBoxResourceData.TabIndex = 17;
             this.textBoxResourceData.WordWrap = false;
             // 
             // tabPageMethods
             // 
-            this.tabPageMethods.Controls.Add(this.splitContainerRequestResponse);
-            this.tabPageMethods.Controls.Add(this.listBoxMethods);
+            this.tabPageMethods.Controls.Add(this.methodsPage);
             this.tabPageMethods.Location = new System.Drawing.Point(4, 24);
             this.tabPageMethods.Name = "tabPageMethods";
-            this.tabPageMethods.Size = new System.Drawing.Size(972, 611);
+            this.tabPageMethods.Size = new System.Drawing.Size(925, 466);
             this.tabPageMethods.TabIndex = 2;
             this.tabPageMethods.Text = "Methods";
             this.tabPageMethods.UseVisualStyleBackColor = true;
             // 
-            // splitContainerRequestResponse
-            // 
-            this.splitContainerRequestResponse.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.splitContainerRequestResponse.Location = new System.Drawing.Point(254, 0);
-            this.splitContainerRequestResponse.Name = "splitContainerRequestResponse";
-            this.splitContainerRequestResponse.Orientation = System.Windows.Forms.Orientation.Horizontal;
-            // 
-            // splitContainerRequestResponse.Panel1
-            // 
-            this.splitContainerRequestResponse.Panel1.Controls.Add(this.buttonPreviewRequest);
-            this.splitContainerRequestResponse.Panel1.Controls.Add(this.textBoxRequest);
-            this.splitContainerRequestResponse.Panel1.Controls.Add(this.buttonMakeRequest);
-            this.splitContainerRequestResponse.Panel1.Controls.Add(this.labelRequestTitle);
-            // 
-            // splitContainerRequestResponse.Panel2
-            // 
-            this.splitContainerRequestResponse.Panel2.Controls.Add(this.splitContainerResponseActualExpected);
-            this.splitContainerRequestResponse.Size = new System.Drawing.Size(718, 611);
-            this.splitContainerRequestResponse.SplitterDistance = 201;
-            this.splitContainerRequestResponse.TabIndex = 17;
-            // 
-            // buttonPreviewRequest
-            // 
-            this.buttonPreviewRequest.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.buttonPreviewRequest.Location = new System.Drawing.Point(507, 3);
-            this.buttonPreviewRequest.Name = "buttonPreviewRequest";
-            this.buttonPreviewRequest.Size = new System.Drawing.Size(80, 28);
-            this.buttonPreviewRequest.TabIndex = 13;
-            this.buttonPreviewRequest.Text = "Preview";
-            this.buttonPreviewRequest.UseVisualStyleBackColor = true;
-            this.buttonPreviewRequest.Click += new System.EventHandler(this.buttonPreviewRequest_Click);
-            // 
-            // textBoxRequest
-            // 
-            this.textBoxRequest.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.textBoxRequest.Font = new System.Drawing.Font("Consolas", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.textBoxRequest.Location = new System.Drawing.Point(3, 32);
-            this.textBoxRequest.Multiline = true;
-            this.textBoxRequest.Name = "textBoxRequest";
-            this.textBoxRequest.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.textBoxRequest.Size = new System.Drawing.Size(715, 166);
-            this.textBoxRequest.TabIndex = 11;
-            this.textBoxRequest.WordWrap = false;
-            // 
-            // labelRequestTitle
-            // 
-            this.labelRequestTitle.AutoSize = true;
-            this.labelRequestTitle.Location = new System.Drawing.Point(0, 7);
-            this.labelRequestTitle.Name = "labelRequestTitle";
-            this.labelRequestTitle.Size = new System.Drawing.Size(52, 15);
-            this.labelRequestTitle.TabIndex = 12;
-            this.labelRequestTitle.Text = "Request:";
-            // 
-            // splitContainerResponseActualExpected
-            // 
-            this.splitContainerResponseActualExpected.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.splitContainerResponseActualExpected.Location = new System.Drawing.Point(0, 0);
-            this.splitContainerResponseActualExpected.Name = "splitContainerResponseActualExpected";
-            // 
-            // splitContainerResponseActualExpected.Panel1
-            // 
-            this.splitContainerResponseActualExpected.Panel1.Controls.Add(this.textBoxResponseExpected);
-            this.splitContainerResponseActualExpected.Panel1.Controls.Add(this.panel1);
-            // 
-            // splitContainerResponseActualExpected.Panel2
-            // 
-            this.splitContainerResponseActualExpected.Panel2.Controls.Add(this.textBoxResponseActual);
-            this.splitContainerResponseActualExpected.Panel2.Controls.Add(this.panel2);
-            this.splitContainerResponseActualExpected.Size = new System.Drawing.Size(718, 406);
-            this.splitContainerResponseActualExpected.SplitterDistance = 356;
-            this.splitContainerResponseActualExpected.TabIndex = 16;
-            // 
-            // panel1
-            // 
-            this.panel1.Controls.Add(this.labelExpectedResponseType);
-            this.panel1.Controls.Add(this.labelExpectedResposne);
-            this.panel1.Controls.Add(this.buttonValidateExpectedResponse);
-            this.panel1.Dock = System.Windows.Forms.DockStyle.Top;
-            this.panel1.Location = new System.Drawing.Point(0, 0);
-            this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(356, 75);
-            this.panel1.TabIndex = 16;
-            // 
-            // labelExpectedResponseType
-            // 
-            this.labelExpectedResponseType.AutoSize = true;
-            this.labelExpectedResponseType.Location = new System.Drawing.Point(4, 39);
-            this.labelExpectedResponseType.Name = "labelExpectedResponseType";
-            this.labelExpectedResponseType.Size = new System.Drawing.Size(83, 15);
-            this.labelExpectedResponseType.TabIndex = 16;
-            this.labelExpectedResponseType.Text = "oneDrive.drive";
-            // 
-            // panel2
-            // 
-            this.panel2.Controls.Add(this.buttonFormat);
-            this.panel2.Controls.Add(this.label6);
-            this.panel2.Controls.Add(this.buttonValidateActualResponse);
-            this.panel2.Dock = System.Windows.Forms.DockStyle.Top;
-            this.panel2.Location = new System.Drawing.Point(0, 0);
-            this.panel2.Name = "panel2";
-            this.panel2.Size = new System.Drawing.Size(358, 75);
-            this.panel2.TabIndex = 15;
-            // 
-            // buttonFormat
-            // 
-            this.buttonFormat.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.buttonFormat.Location = new System.Drawing.Point(271, 38);
-            this.buttonFormat.Name = "buttonFormat";
-            this.buttonFormat.Size = new System.Drawing.Size(84, 28);
-            this.buttonFormat.TabIndex = 15;
-            this.buttonFormat.Text = "Format";
-            this.buttonFormat.UseVisualStyleBackColor = true;
-            this.buttonFormat.Click += new System.EventHandler(this.buttonFormat_Click);
-            // 
             // tabPageParameters
             // 
+            this.tabPageParameters.Controls.Add(this.methodParametersEditorControl1);
             this.tabPageParameters.Controls.Add(this.buttonSaveParameterFile);
             this.tabPageParameters.Controls.Add(this.buttonDeleteParameters);
             this.tabPageParameters.Controls.Add(this.buttonAddParameters);
             this.tabPageParameters.Controls.Add(this.listBoxParameters);
             this.tabPageParameters.Controls.Add(this.label7);
-            this.tabPageParameters.Controls.Add(this.methodParametersEditorControl1);
             this.tabPageParameters.Location = new System.Drawing.Point(4, 24);
             this.tabPageParameters.Name = "tabPageParameters";
-            this.tabPageParameters.Size = new System.Drawing.Size(972, 611);
+            this.tabPageParameters.Size = new System.Drawing.Size(925, 466);
             this.tabPageParameters.TabIndex = 5;
             this.tabPageParameters.Text = "Parameters";
             this.tabPageParameters.UseVisualStyleBackColor = true;
             // 
             // buttonSaveParameterFile
             // 
-            this.buttonSaveParameterFile.Location = new System.Drawing.Point(181, 34);
+            this.buttonSaveParameterFile.Location = new System.Drawing.Point(181, 33);
             this.buttonSaveParameterFile.Name = "buttonSaveParameterFile";
             this.buttonSaveParameterFile.Size = new System.Drawing.Size(80, 33);
             this.buttonSaveParameterFile.TabIndex = 11;
@@ -557,7 +337,7 @@
             // 
             // buttonDeleteParameters
             // 
-            this.buttonDeleteParameters.Location = new System.Drawing.Point(95, 35);
+            this.buttonDeleteParameters.Location = new System.Drawing.Point(94, 35);
             this.buttonDeleteParameters.Name = "buttonDeleteParameters";
             this.buttonDeleteParameters.Size = new System.Drawing.Size(80, 33);
             this.buttonDeleteParameters.TabIndex = 10;
@@ -580,7 +360,6 @@
             this.listBoxParameters.FormattingEnabled = true;
             this.listBoxParameters.ItemHeight = 15;
             this.listBoxParameters.Location = new System.Drawing.Point(7, 75);
-            this.listBoxParameters.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.listBoxParameters.Name = "listBoxParameters";
             this.listBoxParameters.Size = new System.Drawing.Size(254, 514);
             this.listBoxParameters.TabIndex = 8;
@@ -589,24 +368,11 @@
             // label7
             // 
             this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(3, 11);
+            this.label7.Location = new System.Drawing.Point(3, 12);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(199, 15);
             this.label7.TabIndex = 0;
             this.label7.Text = "Request Parameters For Service Calls";
-            // 
-            // methodParametersEditorControl1
-            // 
-            this.methodParametersEditorControl1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.methodParametersEditorControl1.Location = new System.Drawing.Point(279, 35);
-            this.methodParametersEditorControl1.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
-            this.methodParametersEditorControl1.MinimumSize = new System.Drawing.Size(0, 369);
-            this.methodParametersEditorControl1.Name = "methodParametersEditorControl1";
-            this.methodParametersEditorControl1.Size = new System.Drawing.Size(689, 564);
-            this.methodParametersEditorControl1.TabIndex = 1;
-            this.methodParametersEditorControl1.Load += new System.EventHandler(this.methodParametersEditorControl1_Load);
             // 
             // tabPageOptions
             // 
@@ -620,7 +386,7 @@
             this.tabPageOptions.Controls.Add(this.label1);
             this.tabPageOptions.Location = new System.Drawing.Point(4, 24);
             this.tabPageOptions.Name = "tabPageOptions";
-            this.tabPageOptions.Size = new System.Drawing.Size(972, 611);
+            this.tabPageOptions.Size = new System.Drawing.Size(925, 466);
             this.tabPageOptions.TabIndex = 3;
             this.tabPageOptions.Text = "Options";
             this.tabPageOptions.UseVisualStyleBackColor = true;
@@ -692,29 +458,38 @@
             this.label1.TabIndex = 0;
             this.label1.Text = "Base URL:";
             // 
-            // showLoadErrorsToolStripMenuItem
+            // methodParametersEditorControl1
             // 
-            this.showLoadErrorsToolStripMenuItem.Name = "showLoadErrorsToolStripMenuItem";
-            this.showLoadErrorsToolStripMenuItem.Size = new System.Drawing.Size(174, 22);
-            this.showLoadErrorsToolStripMenuItem.Text = "Show Load Errors...";
-            this.showLoadErrorsToolStripMenuItem.Click += new System.EventHandler(this.showLoadErrorsToolStripMenuItem_Click);
+            this.methodParametersEditorControl1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.methodParametersEditorControl1.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.methodParametersEditorControl1.Location = new System.Drawing.Point(267, 35);
+            this.methodParametersEditorControl1.Margin = new System.Windows.Forms.Padding(2);
+            this.methodParametersEditorControl1.MinimumSize = new System.Drawing.Size(0, 277);
+            this.methodParametersEditorControl1.Name = "methodParametersEditorControl1";
+            this.methodParametersEditorControl1.Size = new System.Drawing.Size(610, 341);
+            this.methodParametersEditorControl1.TabIndex = 12;
             // 
-            // toolStripMenuItem2
+            // methodsPage
             // 
-            this.toolStripMenuItem2.Name = "toolStripMenuItem2";
-            this.toolStripMenuItem2.Size = new System.Drawing.Size(171, 6);
+            this.methodsPage.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.methodsPage.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.methodsPage.Location = new System.Drawing.Point(0, 0);
+            this.methodsPage.Name = "methodsPage";
+            this.methodsPage.Size = new System.Drawing.Size(925, 466);
+            this.methodsPage.TabIndex = 0;
             // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(996, 695);
+            this.ClientSize = new System.Drawing.Size(949, 550);
             this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.menuStrip1);
             this.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.MainMenuStrip = this.menuStrip1;
-            this.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.Name = "MainForm";
             this.Text = "API Documentation Test Tool";
             this.menuStrip1.ResumeLayout(false);
@@ -726,21 +501,6 @@
             this.tabPageResources.ResumeLayout(false);
             this.tabPageResources.PerformLayout();
             this.tabPageMethods.ResumeLayout(false);
-            this.splitContainerRequestResponse.Panel1.ResumeLayout(false);
-            this.splitContainerRequestResponse.Panel1.PerformLayout();
-            this.splitContainerRequestResponse.Panel2.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.splitContainerRequestResponse)).EndInit();
-            this.splitContainerRequestResponse.ResumeLayout(false);
-            this.splitContainerResponseActualExpected.Panel1.ResumeLayout(false);
-            this.splitContainerResponseActualExpected.Panel1.PerformLayout();
-            this.splitContainerResponseActualExpected.Panel2.ResumeLayout(false);
-            this.splitContainerResponseActualExpected.Panel2.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.splitContainerResponseActualExpected)).EndInit();
-            this.splitContainerResponseActualExpected.ResumeLayout(false);
-            this.panel1.ResumeLayout(false);
-            this.panel1.PerformLayout();
-            this.panel2.ResumeLayout(false);
-            this.panel2.PerformLayout();
             this.tabPageParameters.ResumeLayout(false);
             this.tabPageParameters.PerformLayout();
             this.tabPageOptions.ResumeLayout(false);
@@ -759,30 +519,16 @@
         private System.Windows.Forms.ToolStripMenuItem exitToolStripMenuItem;
         private System.Windows.Forms.ListBox listBoxDocuments;
         private System.Windows.Forms.ToolStripMenuItem openLastFolderToolStripMenuItem;
-        private System.Windows.Forms.TextBox textBoxResponseExpected;
         private System.Windows.Forms.ListBox listBoxResources;
         private System.Windows.Forms.Label label3;
-        private System.Windows.Forms.ListBox listBoxMethods;
-        private System.Windows.Forms.Button buttonMakeRequest;
         private System.Windows.Forms.ToolStripMenuItem accountToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem signInToolStripMenuItem;
-        private System.Windows.Forms.Label labelExpectedResposne;
-        private System.Windows.Forms.Label label6;
-        private System.Windows.Forms.TextBox textBoxResponseActual;
         private System.Windows.Forms.ToolStripMenuItem validateJsonToolStripMenuItem;
-        private System.Windows.Forms.Button buttonValidateActualResponse;
-        private System.Windows.Forms.Button buttonValidateExpectedResponse;
         private System.Windows.Forms.TabControl tabControl1;
         private System.Windows.Forms.TabPage tabPageFiles;
         private System.Windows.Forms.TabPage tabPageResources;
         private System.Windows.Forms.TextBox textBoxResourceData;
         private System.Windows.Forms.TabPage tabPageMethods;
-        private System.Windows.Forms.SplitContainer splitContainerResponseActualExpected;
-        private System.Windows.Forms.Panel panel1;
-        private System.Windows.Forms.Panel panel2;
-        private System.Windows.Forms.Label labelRequestTitle;
-        private System.Windows.Forms.TextBox textBoxRequest;
-        private System.Windows.Forms.Label labelExpectedResponseType;
         private System.Windows.Forms.WebBrowser webBrowserPreview;
         private System.Windows.Forms.TabPage tabPageOptions;
         private System.Windows.Forms.TextBox textBoxBaseURL;
@@ -791,8 +537,6 @@
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.TextBox textBoxClientId;
         private System.Windows.Forms.Label label2;
-        private System.Windows.Forms.Button buttonFormat;
-        private System.Windows.Forms.SplitContainer splitContainerRequestResponse;
         private System.Windows.Forms.TabPage tabPageLinks;
         private System.Windows.Forms.TextBox textBoxLinkValidation;
         private System.Windows.Forms.Button button1;
@@ -802,13 +546,13 @@
         private System.Windows.Forms.TabPage tabPageParameters;
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.ListBox listBoxParameters;
-        private MethodParametersEditorControl methodParametersEditorControl1;
         private System.Windows.Forms.Button buttonSaveParameterFile;
         private System.Windows.Forms.Button buttonDeleteParameters;
         private System.Windows.Forms.Button buttonAddParameters;
-        private System.Windows.Forms.Button buttonPreviewRequest;
         private System.Windows.Forms.ToolStripSeparator toolStripMenuItem2;
         private System.Windows.Forms.ToolStripMenuItem showLoadErrorsToolStripMenuItem;
+        private MethodParametersEditorControl methodParametersEditorControl1;
+        private TabPages.MethodsPage methodsPage;
     }
 }
 

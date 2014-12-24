@@ -106,6 +106,12 @@
     <Compile Include="SchemaValidatorForm.Designer.cs">
       <DependentUpon>SchemaValidatorForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="TabPages\MethodsPage.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="TabPages\MethodsPage.Designer.cs">
+      <DependentUpon>MethodsPage.cs</DependentUpon>
+    </Compile>
     <EmbeddedResource Include="ErrorDisplayForm.resx">
       <DependentUpon>ErrorDisplayForm.cs</DependentUpon>
     </EmbeddedResource>
@@ -127,6 +133,9 @@
     </Compile>
     <EmbeddedResource Include="SchemaValidatorForm.resx">
       <DependentUpon>SchemaValidatorForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="TabPages\MethodsPage.resx">
+      <DependentUpon>MethodsPage.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="OneDrive.ApiDocumentation.Windows_TemporaryKey.pfx" />
     <None Include="packages.config" />

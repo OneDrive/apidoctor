@@ -41,18 +41,20 @@
         /// <summary>
         /// The raw response data from the documentation (fenced code block with annotation)
         /// </summary>
-        public string Response { get; private set; }
+        public string ExpectedResponse { get; private set; }
 
         /// <summary>
         /// Properties about the Response
         /// </summary>
-        public CodeBlockAnnotation ResponseMetadata { get; set; }
+        public CodeBlockAnnotation ExpectedResponseMetadata { get; set; }
 
-        public void AddResponse(string rawResponse, CodeBlockAnnotation annotation)
+        public void AddExpectedResponse(string rawResponse, CodeBlockAnnotation annotation)
         {
-            Response = rawResponse;
-            ResponseMetadata = annotation;
+            ExpectedResponse = rawResponse;
+            ExpectedResponseMetadata = annotation;
         }
+
+        public string ActualResponse { get; set; }
 
         /// <summary>
         /// Converts the raw HTTP request in Request into a callable HttpWebRequest

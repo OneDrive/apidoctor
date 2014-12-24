@@ -8,8 +8,7 @@
 
     public class ValidationError
     {
-
-        public ValidationError()
+        protected ValidationError()
         {
 
         }
@@ -26,20 +25,65 @@
 
         public ValidationError[] InnerErrors { get; set; }
 
+        public virtual bool IsWarning { get { return false; } }
+
         public string ErrorText 
         {
             get 
             {
                 StringBuilder sb = new StringBuilder();
+                if (IsWarning)
+                {
+                    sb.Append("Warning: ");
+                }
+                else
+                {
+                    sb.Append("Error: ");
+                }
+                
                 if (!string.IsNullOrEmpty(Source))
                 {
                     sb.Append(Source);
                     sb.Append(": ");
                 }
                 sb.Append(Message);
+
+                if (null != InnerErrors && InnerErrors.Length > 0)
+                {
+                    sb.AppendLine();
+                    sb.AppendLine(InnerErrors.ErrorsToString("   "));
+                }
+                
                 return sb.ToString();
             }
         }
+
+        public static ValidationError NewConsolidatedError(ValidationError[] errors, string message, params object[] parameters)
+        {
+            ValidationError error = null;
+            if (errors.All(err => err.IsWarning))
+            {
+                error = new ValidationWarning(null, message, parameters);
+            }
+            else
+            {
+                error = new ValidationError(null, message, parameters);
+            }
+
+            error.InnerErrors = errors;
+            return error;
+        }
+    }
+
+    public class ValidationWarning : ValidationError
+    {
+
+        public ValidationWarning(string source, string format, params object[] formatParams) : base(source, format, formatParams)
+        {
+
+        }
+
+        public override bool IsWarning { get { return true; } }
     }
 
     public static class ValidationErrorExtensions

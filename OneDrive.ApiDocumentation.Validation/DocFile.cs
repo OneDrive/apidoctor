@@ -121,7 +121,7 @@
                 var htmlComment = m_CodeBlocks[i];
                 if (htmlComment.BlockType != MarkdownDeep.BlockType.html)
                 {
-                    detectedErrors.Add(new ValidationError(FullPath, "Block skipped - expected HTML comment, found: {0}", htmlComment.BlockType, htmlComment.Content));
+                    detectedErrors.Add(new ValidationWarning(FullPath, "Block skipped - expected HTML comment, found: {0}", htmlComment.BlockType, htmlComment.Content));
                     
                     i++;
                     continue;
@@ -179,7 +179,7 @@
                 case CodeBlockType.Response:
                     {
                         var method = m_Requests.Last();
-                        method.AddResponse(code.Content, annotation);
+                        method.AddExpectedResponse(code.Content, annotation);
                         break;
                     }
                 case CodeBlockType.Ignored:
@@ -215,7 +215,7 @@
                     case LinkValidationResult.BookmarkSkipped:
                     case LinkValidationResult.ExternalSkipped:
                         if (includeWarnings)
-                            foundErrors.Add(new ValidationError(this.DisplayName, "Skipped validation of link '{1}' to URL '{0}'", link.def.url, link.link_text));
+                            foundErrors.Add(new ValidationWarning(this.DisplayName, "Skipped validation of link '{1}' to URL '{0}'", link.def.url, link.link_text));
                         break;
                     case LinkValidationResult.FileNotFound:
                         foundErrors.Add(new ValidationError(this.DisplayName, "Destination missing for link '{1}' to URL '{0}'", link.def.url, link.link_text));

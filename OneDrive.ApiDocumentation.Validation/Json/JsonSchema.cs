@@ -82,7 +82,7 @@
                     var collectionMembers = obj[collectionPropertyName];
                     if (collectionMembers.Count() == 0)
                     {
-                        detectedErrors.Add(new ValidationError(null, "Warning: property contained an empty array that was not validated: {0}", collectionPropertyName));
+                        detectedErrors.Add(new ValidationWarning(null, "Property contained an empty array that was not validated: {0}", collectionPropertyName));
                     }
                     foreach (JContainer container in collectionMembers)
                     {
@@ -118,7 +118,7 @@
 
             if ((annotation == null || !annotation.TruncatedResult) && missingProperties.Count > 0)
             {
-                detectedErrors.Add(new ValidationError(null, "Missing properties: response was missing these required properties: {0}", missingProperties.ComponentsJoinedByString(",")));
+                detectedErrors.Add(new ValidationWarning(null, "Missing properties: response was missing these required properties: {0}", missingProperties.ComponentsJoinedByString(",")));
             }
         }
 
@@ -139,7 +139,7 @@
                     // TODO: For an Array type, we should validate the first child of the array.
                     if (inputProperty.Type == JsonDataType.Array)
                     {
-                        detectedErrors.Add(new ValidationError(null, "Warning: Object included an array property '{0}' whose children were not validated.", inputProperty.Name));
+                        detectedErrors.Add(new ValidationWarning(null, "Warning: Object included an array property '{0}' whose children were not validated.", inputProperty.Name));
                     }
                     // This checks out.
                     return PropertyValidationOutcome.OK;
@@ -149,7 +149,7 @@
                     // Compare the ODataType schema to the custom schema
                     if (!otherSchemas.ContainsKey(schemaPropertyDef.ODataTypeName))
                     {
-                        detectedErrors.Add(new ValidationError { Message = string.Format("Missing resource: resource [0] was not found (property name '{1}').", schemaPropertyDef.ODataTypeName, inputProperty.Name) });
+                        detectedErrors.Add(new ValidationError(null, "Missing resource: resource [0] was not found (property name '{1}').", schemaPropertyDef.ODataTypeName, inputProperty.Name));
                         return PropertyValidationOutcome.MissingResourceType;
                     }
                     else
@@ -158,8 +158,7 @@
                         ValidationError[] odataErrors;
                         if (!odataSchema.ValidateCustomObject(inputProperty.CustomMembers.Values.ToArray(), out odataErrors, otherSchemas, isTruncated))
                         {
-                            var propertyError = new ValidationError(null, "Schema errors detected in property '{0}' ['{1}']:{2}{3}", inputProperty.Name, odataSchema.ResourceName, Environment.NewLine, odataErrors.ErrorsToString("   "));
-                            propertyError.InnerErrors = odataErrors;
+                            var propertyError = ValidationError.NewConsolidatedError(odataErrors, "Schema validation failed on property '{0}' ['{1}']", inputProperty.Name, odataSchema.ResourceName);
                             detectedErrors.Add(propertyError);
 
                             return PropertyValidationOutcome.InvalidType;
@@ -168,17 +167,14 @@
                 }
                 else
                 {
-                    detectedErrors.Add(new ValidationError
-                    {
-                        Message = string.Format("Type mismatch: property '{0}' [{1}] doesn't match expected type [{2}].",
-                        inputProperty.Name, inputProperty.Type, schemaPropertyDef.Type)
-                    });
+                    detectedErrors.Add(new ValidationError(null, "Type mismatch: property '{0}' [{1}] doesn't match expected type [{2}].", 
+                        inputProperty.Name, inputProperty.Type, schemaPropertyDef.Type));
                     return PropertyValidationOutcome.InvalidType;
                 }
             }
             else
             {
-                detectedErrors.Add(new ValidationError { Message = string.Format("Extra property: property '{0}' [{1}] was not expected.", inputProperty.Name, inputProperty.Type) });
+                detectedErrors.Add(new ValidationWarning(null, "Extra property: property '{0}' [{1}] was not expected.", inputProperty.Name, inputProperty.Type));
                 return PropertyValidationOutcome.MissingFromSchema;
             }
 
@@ -205,7 +201,7 @@
 
             if (!ignoreMissingProperties && missingProperties.Count > 0)
             {
-                detectedErrors.Add(new ValidationError(null, "missing properties detected: {0}", missingProperties.ComponentsJoinedByString(",")));
+                detectedErrors.Add(new ValidationWarning(null, "missing properties detected: {0}", missingProperties.ComponentsJoinedByString(",")));
             }
 
             errors = detectedErrors.ToArray();

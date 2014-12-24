@@ -108,13 +108,13 @@
             else if (!string.IsNullOrEmpty(response.Body))
             {
                 ValidationError[] schemaErrors;
-                if (string.IsNullOrEmpty(method.ResponseMetadata.ResourceType) && (expectedResponse != null && !string.IsNullOrEmpty(expectedResponse.Body)))
+                if (method.ExpectedResponseMetadata == null || (string.IsNullOrEmpty(method.ExpectedResponseMetadata.ResourceType) && (expectedResponse != null && !string.IsNullOrEmpty(expectedResponse.Body))))
                 {
                     detectedErrors.Add(new ValidationError(null, "Expected a response, but resource type on method is missing: {0}", method.DisplayName));
                 }
                 else
                 {
-                    if (!m_ResourceCollection.ValidateJson(method.ResponseMetadata, response.Body, out schemaErrors))
+                    if (!m_ResourceCollection.ValidateJson(method.ExpectedResponseMetadata, response.Body, out schemaErrors))
                     {
                         detectedErrors.AddRange(schemaErrors);
                     }
