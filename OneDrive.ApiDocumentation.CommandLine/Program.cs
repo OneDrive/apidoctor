@@ -85,7 +85,11 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             DocSet set = new DocSet(options.PathToDocSet);
 
             VerbosePrint("Scanning documentation files...");
-            set.ScanDocumentation();
+            ValidationError[] loadErrors;
+            if (!set.ScanDocumentation(out loadErrors) && options.Verbose)
+            {
+                WriteOutErrors(loadErrors);
+            }
 
             var serviceOptions = options as ServiceConsistencyOptions;
             if (null != serviceOptions)

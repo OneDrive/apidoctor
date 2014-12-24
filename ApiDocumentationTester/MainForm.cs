@@ -17,6 +17,7 @@ namespace OneDrive.ApiDocumentation.Windows
     public partial class MainForm : Form
     {
         DocSet CurrentDocSet { get; set; }
+        ValidationError[] DocSetLoadErrors { get; set; }
         string m_AccessToken = null;
         BindingList<RequestParameters> m_Parameters = new BindingList<RequestParameters>();
 
@@ -49,7 +50,12 @@ namespace OneDrive.ApiDocumentation.Windows
             listBoxDocuments.DisplayMember = "DisplayName";
             listBoxDocuments.DataSource = CurrentDocSet.Files;
 
-            CurrentDocSet.ScanDocumentation();
+            ValidationError[] loadErrors;
+            if (!CurrentDocSet.ScanDocumentation(out loadErrors))
+            {
+                DocSetLoadErrors = loadErrors;
+            }
+
             CurrentDocSet.TryReadRequestParameters(textBoxMethodRequestParameterFile.Text);
 
             listBoxResources.DisplayMember = "ResourceType";
@@ -291,6 +297,18 @@ namespace OneDrive.ApiDocumentation.Windows
 
             ErrorDisplayForm form = new ErrorDisplayForm("Request Preview", requestText);
             form.Show(this);
+        }
+
+        private void showLoadErrorsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (DocSetLoadErrors != null)
+            {
+                ErrorDisplayForm.ShowErrorDialog(DocSetLoadErrors, this);
+            }
+            else
+            {
+                MessageBox.Show("No errors detected during load.");
+            }
         }
     }
 }

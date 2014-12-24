@@ -76,15 +76,25 @@
         /// <summary>
         /// Read the contents of the file into blocks and generate any resource or method definitions from the contents
         /// </summary>
-        public void Scan()
+        public bool Scan(out ValidationError[] errors)
         {
+            List<ValidationError> detectedErrors = new List<ValidationError>();
+
             MarkdownDeep.Markdown md = new MarkdownDeep.Markdown();
             md.SafeMode = false;
             md.ExtraMode = true;
-            
-            using (StreamReader reader = File.OpenText(this.FullPath))
+            try
             {
-                HtmlContent = md.Transform(reader.ReadToEnd());
+                using (StreamReader reader = File.OpenText(this.FullPath))
+                {
+                    HtmlContent = md.Transform(reader.ReadToEnd());
+                }
+            }
+            catch (Exception ex)
+            {
+                detectedErrors.Add(new ValidationError(DisplayName, "Error reading file contents: {0}", ex.Message));
+                errors = detectedErrors.ToArray();
+                return false;
             }
 
             Blocks = md.Blocks;
@@ -106,27 +116,33 @@
 
             for (int i = 0; i < m_CodeBlocks.Count;)
             {
+                // We're looking for pairs of html + code blocks. The HTML block contains metadata about the block.
+                // If we don't find an HTML block, then we skip the code block.
                 var htmlComment = m_CodeBlocks[i];
                 if (htmlComment.BlockType != MarkdownDeep.BlockType.html)
                 {
+                    detectedErrors.Add(new ValidationError(FullPath, "Block skipped - expected HTML comment, found: {0}", htmlComment.BlockType, htmlComment.Content));
+                    
                     i++;
                     continue;
                 }
 
                 var codeBlock = m_CodeBlocks[i + 1];
-
                 try 
                 {
                     ParseCodeBlock(htmlComment, codeBlock);
                 } 
                 catch (Exception ex)
                 {
-                    Console.WriteLine("Warning: file {0} has an invalid format: {1}", FullPath, ex.Message);
+                    detectedErrors.Add(new ValidationError(FullPath, "Exception while parsing code block: {0}.", ex.Message));
                 }
                 i += 2;
             }
 
             m_Links.AddRange(md.FoundLinks);
+
+            errors = detectedErrors.ToArray();
+            return detectedErrors.Count == 0;
         }
 
         /// <summary>

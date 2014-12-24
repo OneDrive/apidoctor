@@ -49,15 +49,21 @@
         /// Scan all files in the documentation set to load
         /// information about resources and methods defined in those files
         /// </summary>
-        public void ScanDocumentation()
+        public bool ScanDocumentation(out ValidationError[] errors)
         {
             var foundResources = new List<ResourceDefinition>();
             var foundMethods = new List<MethodDefinition>();
 
+            var detectedErrors = new List<ValidationError>();
+
             m_ResourceCollection.Clear();
             foreach (var file in Files)
             {
-                file.Scan();
+                ValidationError[] parseErrors;
+                if (!file.Scan(out parseErrors))
+                {
+                    detectedErrors.AddRange(parseErrors);
+                }
 
                 foundResources.AddRange(file.Resources);
                 foundMethods.AddRange(file.Requests);
@@ -66,6 +72,9 @@
 
             Resources = foundResources.ToArray();
             Methods = foundMethods.ToArray();
+
+            errors = detectedErrors.ToArray();
+            return detectedErrors.Count == 0;
         }
 
         /// <summary>
