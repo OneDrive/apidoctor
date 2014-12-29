@@ -255,8 +255,6 @@
             var validUrl = Uri.TryCreate(linkUrl, UriKind.RelativeOrAbsolute, out parsedUri);
 
             FileInfo sourceFile = new FileInfo(docFilePath);
-            var sourceFileName = Path.Combine(sourceFile.DirectoryName.Substring(docSetBasePath.Length), 
-                sourceFile.Name);
 
             if (validUrl)
             {

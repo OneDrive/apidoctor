@@ -59,7 +59,7 @@
             {
                 string code = errorObject.code;
                 string message = errorObject.message;
-                string odataError = errorObject["@error.details"];
+//                string odataError = errorObject["@error.details"];
 
                 detectedErrors.Clear();
                 detectedErrors.Add(new ValidationError(null, "Error response received. Code: {0}, Message: {1}", code, message));
@@ -105,7 +105,7 @@
             {
                 JsonProperty inputProperty = ParseProperty(token);
                 missingProperties.Remove(inputProperty.Name);
-                var validationResponse = ValidateProperty(inputProperty, otherSchemas, detectedErrors, annotation.TruncatedResult);
+                ValidateProperty(inputProperty, otherSchemas, detectedErrors, annotation.TruncatedResult);
             }
 
             if (null != OptionalProperties)

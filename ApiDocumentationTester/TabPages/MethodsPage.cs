@@ -21,7 +21,7 @@ namespace OneDrive.ApiDocumentation.Windows.TabPages
         }
 
         public DocSet CurrentDocSet { get; private set; }
-        public MainForm ParentForm 
+        public new MainForm ParentForm 
         {
             get
             {
