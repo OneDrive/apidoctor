@@ -88,7 +88,7 @@
 
         public override bool IsWarning { get { return true; } }
 
-        public virtual bool IsError { get { return false; } }
+        public override bool IsError { get { return false; } }
     }
 
     public class ValidationMessage : ValidationError
