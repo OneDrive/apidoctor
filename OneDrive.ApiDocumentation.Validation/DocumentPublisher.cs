@@ -168,7 +168,7 @@
 				else
 				{
 					var displayName = RelativeDirectoryPath(folder, true);
-                    LogMessage(new ValidationMessage(folder.Name, "Scanning directory."));
+                    LogMessage(new ValidationMessage(displayName, "Scanning directory."));
 					await CleanDirectory(folder, destinationRoot);
 				}
 			}
@@ -263,7 +263,7 @@
 			var pathComponents = relativePath.Split(new char[] {Path.DirectorySeparatorChar},
 				StringSplitOptions.RemoveEmptyEntries);
 			var pathSyntax = "\\" + pathComponents.ComponentsJoinedByString("\\");
-			return SkipPaths.Contains(pathSyntax);
+			return ignoredPaths.Contains(pathSyntax);
 		}
 
 		#endregion
