@@ -16,10 +16,16 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         private const int ExitCodeFailure = 1;
         private const int ExitCodeSuccess = 0;
 
+        private const ConsoleColor ConsoleHeaderColor = ConsoleColor.Cyan;
+        private const ConsoleColor ConsoleCodeColor = ConsoleColor.Gray;
+        private const ConsoleColor ConsoleErrorColor = ConsoleColor.Red;
+        private const ConsoleColor ConsoleWarningColor = ConsoleColor.Yellow;
+        private const ConsoleColor ConsoleSuccessColor = ConsoleColor.Green;
+
         static void Main(string[] args)
         {
-            string invokedVerb = null;
-            CommonOptions invokedVerbInstance = null;
+            string verbName = null;
+            BaseOptions verbOptions = null;
 
             var options = new CommandLineOptions();
             if (!CommandLine.Parser.Default.ParseArguments(args, options,
@@ -27,64 +33,102 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
               {
                   // if parsing succeeds the verb name and correct instance
                   // will be passed to onVerbCommand delegate (string,object)
-                  invokedVerb = verb;
-                  invokedVerbInstance = (CommonOptions)subOptions;
+                  verbName = verb;
+                  verbOptions = (BaseOptions)subOptions;
               }))
             {
                 Environment.Exit(CommandLine.Parser.DefaultExitCodeFail);
             }
 
-            VerboseEnabled = invokedVerbInstance.Verbose;
+            var commandOptions = verbOptions as CommandOptions;
+            if (null != commandOptions)
+            {
+                VerboseEnabled = commandOptions.Verbose;
+            }
 
-            Nito.AsyncEx.AsyncContext.Run(() => RunInvokedMethodAsync(invokedVerb, invokedVerbInstance));
+            Nito.AsyncEx.AsyncContext.Run(() => RunInvokedMethodAsync(options, verbName, verbOptions));
         }
 
-        private static async Task RunInvokedMethodAsync(string invokedVerb, CommonOptions invokedVerbInstance)
+        private static async Task RunInvokedMethodAsync(CommandLineOptions origCommandLineOpts, string invokedVerb, BaseOptions options)
         {
+            string[] missingProps;
+            if (!options.HasRequiredProperties(out missingProps))
+            {
+                var error = new ValidationError(null, "Command line is missing required arguments: {0}", missingProps.ComponentsJoinedByString(", "));
+                FancyConsole.WriteLine(origCommandLineOpts.GetUsage(invokedVerb));
+                WriteOutErrors(new ValidationError[] { error });
+                Environment.Exit(ExitCodeFailure);
+            }
+
             switch (invokedVerb)
             {
-                case "files":
-                    PrintFiles(invokedVerbInstance);
+                case CommandLineOptions.VerbPrint:
+                    PrintDocInformation((PrintOptions)options);
                     break;
-                case "links":
-                    VerifyLinks(invokedVerbInstance);
+                case CommandLineOptions.VerbCheckLinks:
+                    VerifyLinks((CommandOptions)options);
                     break;
-                case "resources":
-                    PrintResources(invokedVerbInstance);
+                case CommandLineOptions.VerbDocs:
+                    MethodExampleValidation((ConsistencyCheckOptions)options);
                     break;
-                case "methods":
-                    PrintMethods(invokedVerbInstance);
+                case CommandLineOptions.VerbService:
+                    await ServiceCallValidation((ServiceConsistencyOptions)options);
                     break;
-                case "docs":
-                    MethodExampleValidation((ConsistencyCheckOptions)invokedVerbInstance);
-                    break;
-                case "service":
-                    await ServiceCallValidation((ServiceConsistencyOptions)invokedVerbInstance);
+                case CommandLineOptions.VerbSet:
+                    SetDefaultValues((SetCommandOptions)options);
                     break;
             }
         }
 
-        private static void VerbosePrint(string output)
+        private static void SetDefaultValues(SetCommandOptions setCommandOptions)
         {
-            if (VerboseEnabled)
+            var settings = Properties.Settings.Default;
+            if (setCommandOptions.ResetStoredValues)
             {
-                Console.WriteLine(output);
+                settings.AccessToken = null;
+                settings.DocumentationPath = null;
+                settings.ServiceUrl = null;
             }
-        }
-        private static void VerbosePrint(string format, params object[] parameters)
-        {
-            if (VerboseEnabled)
+
+            if (!string.IsNullOrEmpty(setCommandOptions.AccessToken))
             {
-                Console.WriteLine(format, parameters);
+                settings.AccessToken = setCommandOptions.AccessToken;
             }
+
+            if (!string.IsNullOrEmpty(setCommandOptions.DocumentationPath))
+            {
+                settings.DocumentationPath = setCommandOptions.DocumentationPath;
+            }
+
+            if (!string.IsNullOrEmpty(setCommandOptions.ServiceUrl))
+            {
+                settings.ServiceUrl = setCommandOptions.ServiceUrl;
+            }
+
+            settings.Save();
+
+            if (setCommandOptions.PrintValues)
+            {
+                FancyConsole.WriteLine(ConsoleHeaderColor, "Stored settings:");
+                FancyConsole.WriteLineIndented("  ", "{0}: {1}", "AccessToken", settings.AccessToken);
+                FancyConsole.WriteLineIndented("  ", "{0}: {1}", "DocumentationPath", settings.DocumentationPath);
+                FancyConsole.WriteLineIndented("  ", "{0}: {1}", "ServiceUrl", settings.ServiceUrl);
+            }
+            
         }
 
-        private static DocSet GetDocSet(CommonOptions options)
+
+        /// <summary>
+        /// Create a document set based on input options
+        /// </summary>
+        /// <param name="options"></param>
+        /// <returns></returns>
+        private static DocSet GetDocSet(CommandOptions options)
         {
-            VerbosePrint("Opening documentation from {0}", options.PathToDocSet);
+            FancyConsole.VerboseWriteLine("Opening documentation from {0}", options.PathToDocSet);
             DocSet set = new DocSet(options.PathToDocSet);
 
-            VerbosePrint("Scanning documentation files...");
+            FancyConsole.VerboseWriteLine("Scanning documentation files...");
             ValidationError[] loadErrors;
             if (!set.ScanDocumentation(out loadErrors) && options.Verbose)
             {
@@ -94,94 +138,146 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             var serviceOptions = options as ServiceConsistencyOptions;
             if (null != serviceOptions)
             {
-                VerbosePrint("Reading configuration parameters...");
+                FancyConsole.VerboseWriteLine("Reading configuration parameters...");
                 bool success = set.TryReadRequestParameters(serviceOptions.ParameterSource);
                 if (!success)
                 {
-                    Console.WriteLine("WARNING: Unable to read request parameter configuration file: {0}", serviceOptions.ParameterSource);
+                    FancyConsole.WriteLine(ConsoleWarningColor, "WARNING: Unable to read request parameter configuration file: {0}", serviceOptions.ParameterSource);
                 }
             }
 
             return set;
         }
 
-        private static void PrintFiles(CommonOptions options)
+        private static void PrintDocInformation(PrintOptions options)
         {
-            var docset = GetDocSet(options);
-
-            string format = options.Verbose ? "{0} => {1} (resources: {2}, methods: {3})" : "{0} (r:{2}, m:{3})";
-            foreach (var file in docset.Files)
+            DocSet docset = GetDocSet(options);
+            if (options.PrintFiles)
             {
-                Console.WriteLine(format, file.DisplayName, file.FullPath, file.Resources.Length, file.Requests.Length);
+                PrintFiles(options, docset);
+            }
+            if (options.PrintResources)
+            {
+                PrintResources(options, docset);
+            }
+            if (options.PrintMethods)
+            {
+                PrintMethods(options, docset);
             }
         }
 
-        private static void VerifyLinks(CommonOptions options)
+        private static void PrintFiles(CommandOptions options, DocSet docset)
+        {
+            if (null == docset)
+                docset = GetDocSet(options);
+
+            FancyConsole.WriteLine();
+            FancyConsole.WriteLine(ConsoleHeaderColor, "Documentation files");
+
+            string format = null;
+            if (options.Verbose)
+                format = "{0} => {1} (resources: {2}, methods: {3})";
+            else if (options.ShortForm)
+                format = "{0}";
+            else
+                format = "{0} (r:{2}, m:{3})";
+
+            foreach (var file in docset.Files)
+            {
+                FancyConsole.WriteLineIndented("  ", format, file.DisplayName, file.FullPath, file.Resources.Length, file.Requests.Length);
+            }
+        }
+
+        private static void VerifyLinks(CommandOptions options)
         {
             var docset = GetDocSet(options);
             ValidationError[] errors;
             if (!docset.ValidateLinks(options.Verbose, out errors))
             {
-                foreach (var error in errors)
-                {
-                    Console.WriteLine(error.ErrorText);
-                }
+                WriteOutErrors(errors);
                 Environment.Exit(ExitCodeFailure);
             }
             else
             {
-                Console.WriteLine("No link errors detected.");
+                FancyConsole.WriteLine(ConsoleSuccessColor, "No link errors detected.");
                 Environment.Exit(ExitCodeSuccess);
             }
         }
 
-        private static void PrintResources(CommonOptions options)
+        private static void PrintResources(CommandOptions options, DocSet docset)
         {
-            var docset = GetDocSet(options);
-            Console.WriteLine();
+            if (null == docset)
+                docset = GetDocSet(options);
+
+            FancyConsole.WriteLine();
+            FancyConsole.WriteLine(ConsoleHeaderColor, "Defined resources:");
+            FancyConsole.WriteLine();
 
             foreach (var resource in docset.Resources)
             {
-                Console.WriteLine(resource.ResourceType);
+
 
                 if (!options.ShortForm && options.Verbose)
                 {
                     string metadata = JsonConvert.SerializeObject(resource.Metadata);
-                    Console.WriteLine(string.Concat("Metadata: ", metadata));
-                    Console.WriteLine();
+                    FancyConsole.Write("  ");
+                    FancyConsole.Write(ConsoleHeaderColor, resource.ResourceType);
+                    FancyConsole.WriteLine(" flags: {1}", resource.ResourceType, metadata);
+                }
+                else
+                {
+                    FancyConsole.WriteLineIndented("  ", resource.ResourceType);
                 }
 
                 if (!options.ShortForm)
                 {
-                    Console.WriteLine(resource.JsonExample);
-                    Console.WriteLine();
+                    FancyConsole.WriteLineIndented("    ", ConsoleCodeColor, resource.JsonExample);
+                    FancyConsole.WriteLine();
                 }
             }
         }
 
-        private static void PrintMethods(CommonOptions options)
+        private static void PrintMethods(CommandOptions options, DocSet docset)
         {
-            var docset = GetDocSet(options);
-            Console.WriteLine();
+            if (null == docset)
+                docset = GetDocSet(options);
+
+            FancyConsole.WriteLine();
+            FancyConsole.WriteLine(ConsoleHeaderColor, "Defined methods:");
+            FancyConsole.WriteLine();
 
             foreach (var method in docset.Methods)
             {
-                var requestMetadata = options.Verbose ? JsonConvert.SerializeObject(method.RequestMetadata) : string.Empty;
-                var responseMetadata = options.Verbose ? JsonConvert.SerializeObject(method.ExpectedResponseMetadata) : string.Empty;
 
-                string headerFormatText = options.Verbose ? "{0}: {1}" : "{0}";
 
-                Console.WriteLine("Method \"{0}\"", method.DisplayName);
-                Console.WriteLine(headerFormatText, "Request", requestMetadata);
-                Console.WriteLine(options.ShortForm ? method.Request.TopLineOnly() : method.Request);
-                Console.WriteLine();
-                if (!options.ShortForm)
+
+                FancyConsole.WriteLine("Method {0} in file {1}", method.DisplayName, method.SourceFile.DisplayName);
+
+                if (options.ShortForm)
                 {
-                    Console.WriteLine(headerFormatText, "Response", responseMetadata);
-                    Console.WriteLine(method.ExpectedResponse);
-                    Console.WriteLine();
+                    FancyConsole.WriteLineIndented("  ", "Request: {0}", method.Request.TopLineOnly());
                 }
-                Console.WriteLine();
+                else
+                {
+                    var requestMetadata = options.Verbose ? JsonConvert.SerializeObject(method.RequestMetadata) : string.Empty;
+                    FancyConsole.WriteLineIndented("  ", "Request: {0}", requestMetadata);
+                    FancyConsole.WriteLineIndented("    ", ConsoleCodeColor, method.Request);
+                }
+
+                FancyConsole.WriteLine();
+                if (options.Verbose)
+                {
+                    var responseMetadata = JsonConvert.SerializeObject(method.ExpectedResponseMetadata);
+                    if (options.ShortForm)
+                        FancyConsole.WriteLineIndented("  ", "Response: {0}", method.ExpectedResponse.TopLineOnly());
+                    else
+                    {
+                        FancyConsole.WriteLineIndented("  ", "Response: {0}", responseMetadata);
+                        FancyConsole.WriteLineIndented("    ", ConsoleCodeColor, method.ExpectedResponse);
+                    }
+                    FancyConsole.WriteLine();
+                }
+                FancyConsole.WriteLine();
             }
         }
 
@@ -197,14 +293,14 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         private static void MethodExampleValidation(ConsistencyCheckOptions options)
         {
             var docset = GetDocSet(options);
-            Console.WriteLine();
+            FancyConsole.WriteLine();
 
             MethodDefinition[] methods = TestMethods(options, docset);
 
             bool result = true;
             foreach (var method in methods)
             {
-                Console.Write("Checking \"{0}\" in {1}...", method.DisplayName, method.SourceFile.DisplayName);
+                FancyConsole.Write(ConsoleHeaderColor, "Checking \"{0}\" in {1}...", method.DisplayName, method.SourceFile.DisplayName);
 
                 var parser = new HttpParser();
                 var expectedResponse = parser.ParseHttpResponse(method.ExpectedResponse);
@@ -225,7 +321,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 var foundMethod = LookUpMethod(docset, options.MethodName);
                 if (null == foundMethod)
                 {
-                    Console.WriteLine("Unable to locate method '{0}' in docset.", options.MethodName);
+                    FancyConsole.WriteLine(ConsoleErrorColor, "Unable to locate method '{0}' in docset.", options.MethodName);
                     Environment.Exit(ExitCodeFailure);
                 }
                 methods = new MethodDefinition[] { LookUpMethod(docset, options.MethodName) };
@@ -241,9 +337,8 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         {
             foreach (var error in errors)
             {
-                Console.ForegroundColor = error.IsWarning ? ConsoleColor.Yellow : ConsoleColor.Red;
-                Console.WriteLine(string.Concat(indent, error.ErrorText));
-                Console.ResetColor();
+                var color = error.IsWarning ? ConsoleWarningColor : ConsoleErrorColor;
+                FancyConsole.WriteLineIndented(indent, color, error.ErrorText);
             }
         }
 
@@ -252,16 +347,14 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             ValidationError[] errors;
             if (!docset.ValidateApiMethod(method, response, expectedResponse, out errors))
             {
-                Console.WriteLine();
+                FancyConsole.WriteLine();
                 WriteOutErrors(errors, "  ");
-                Console.WriteLine();
+                FancyConsole.WriteLine();
                 return false;
             }
             else
             {
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine(" no errors");
-                Console.ResetColor();
+                FancyConsole.WriteLine(ConsoleSuccessColor, " no errors");
                 return true;
             }
         }
@@ -269,37 +362,37 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         private static async Task ServiceCallValidation(ServiceConsistencyOptions options)
         {
             var docset = GetDocSet(options);
-            Console.WriteLine();
+            FancyConsole.WriteLine();
 
             var methods = TestMethods(options, docset);
 
             bool result = true;
             foreach (var method in methods)
             {
-                Console.WriteLine();
-                Console.Write("Calling method \"{0}\"...", method.DisplayName);
+                FancyConsole.WriteLine();
+                FancyConsole.Write(ConsoleHeaderColor, "Calling method \"{0}\"...", method.DisplayName);
 
                 var requestParams = docset.RequestParamtersForMethod(method);
-                VerbosePrint("");
-                VerbosePrint("Request:");
-                VerbosePrint(method.PreviewRequest(requestParams).FullHttpText());
+                FancyConsole.VerboseWriteLine("");
+                FancyConsole.VerboseWriteLine("Request:");
+                FancyConsole.VerboseWriteLineIndented("  ", method.PreviewRequest(requestParams).FullHttpText());
 
                 var parser = new HttpParser();
                 var expectedResponse = parser.ParseHttpResponse(method.ExpectedResponse);
                 
                 var actualResponse = await method.ApiResponseForMethod(options.ServiceRootUrl, options.AccessToken, requestParams);
 
-                VerbosePrint("Response:");
-                VerbosePrint(actualResponse.FullHttpText());
+                FancyConsole.VerboseWriteLine("Response:");
+                FancyConsole.VerboseWriteLineIndented("  ", actualResponse.FullHttpText());
 
-                VerbosePrint("Validation results:");
+                FancyConsole.VerboseWriteLine("Validation results:");
                 result &= ValidateHttpResponse(docset, method, actualResponse, expectedResponse);
 
                 if (options.PauseBetweenRequests)
                 {
-                    Console.Write("Press any key to continue");
+                    FancyConsole.Write("Press any key to continue");
                     Console.ReadKey();
-                    Console.WriteLine();
+                    FancyConsole.WriteLine();
                 }
             }
 
@@ -308,7 +401,6 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             else
                 Environment.Exit(ExitCodeSuccess);
         }
-        
 
     }
 }

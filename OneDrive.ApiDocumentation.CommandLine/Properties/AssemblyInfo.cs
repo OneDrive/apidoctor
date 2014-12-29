@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("API Documentation Tool")]
+[assembly: AssemblyTitle("API Documentation Test Tool")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("OneDrive.ApiDocumentation.ConsoleApp")]
-[assembly: AssemblyCopyright("Copyright © Microsoft Corporation 2014")]
+[assembly: AssemblyCopyright("Copyright Microsoft Corporation 2014")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
