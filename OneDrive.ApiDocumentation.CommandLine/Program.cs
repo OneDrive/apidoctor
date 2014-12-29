@@ -242,7 +242,9 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         {
             foreach (var error in errors)
             {
+                Console.ForegroundColor = error.IsWarning ? ConsoleColor.Yellow : ConsoleColor.Red;
                 Console.WriteLine(string.Concat(indent, error.ErrorText));
+                Console.ResetColor();
             }
         }
 
