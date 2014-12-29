@@ -49,6 +49,10 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
     class BaseOptions
     {
+
+        [Option("log", HelpText="Write the console output to file.")]
+        public string LogFile { get; set; }
+
         public virtual bool HasRequiredProperties(out string[] missingArguments)
         {
             missingArguments = new string[0];

@@ -3,21 +3,38 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.IO;
 
 namespace OneDrive.ApiDocumentation.ConsoleApp
 {
     public class FancyConsole
     {
+        private static string _logFileName;
+        private static StreamWriter _logWriter;
 
         public static bool WriteVerboseOutput { get; set; }
 
+        public static string LogFileName 
+        {
+            get { return _logFileName; }
+            set
+            {
+                _logFileName = value;
+                _logWriter = new StreamWriter(_logFileName, false);
+                _logWriter.AutoFlush = true;
+            }
+        }
+
         public static void Write(string output)
         {
+            if (null != _logWriter) _logWriter.Write(output);
             Console.Write(output);
         }
 
         public static void Write(ConsoleColor color, string output)
         {
+            if (null != _logWriter) _logWriter.Write(output);
+
             Console.ForegroundColor = color;
             Console.Write(output);
             Console.ResetColor();
@@ -25,6 +42,8 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
         public static void Write(ConsoleColor color, string format, params object[] values)
         {
+            if (null != _logWriter) _logWriter.Write(format, values);
+
             Console.ForegroundColor = color;
             Console.Write(format, values);
             Console.ResetColor();
@@ -32,16 +51,26 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
         public static void WriteLine()
         {
+            if (null != _logWriter) _logWriter.WriteLine();
             Console.WriteLine();
         }
 
         public static void WriteLine(string format, params object[] values)
         {
+            if (null != _logWriter) _logWriter.WriteLine(format, values);
             Console.WriteLine(format, values);
+        }
+
+        public static void WriteLine(string output)
+        {
+            if (null != _logWriter) _logWriter.WriteLine(output);
+            Console.WriteLine(output);
         }
 
         public static void WriteLine(ConsoleColor color, string format, params object[] values)
         {
+            if (null != _logWriter) _logWriter.WriteLine(format, values);
+
             Console.ForegroundColor = color;
             Console.WriteLine(format, values);
             Console.ResetColor();
@@ -68,7 +97,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 string line;
                 while ((line = reader.ReadLine()) != null)
                 {
-                    Console.WriteLine(string.Concat(indentString, line));
+                    WriteLine(string.Concat(indentString, line));
                 }
             }
         }
@@ -80,17 +109,24 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 string line;
                 while ((line = reader.ReadLine()) != null)
                 {
-                    Console.WriteLine(string.Concat(indentString, line));
+                    WriteLine(string.Concat(indentString, line));
                 }
             }
         }
 
+        public static void VerboseWriteLine()
+        {
+            if (WriteVerboseOutput)
+            {
+                WriteLine();
+            }
+        }
 
         public static void VerboseWriteLine(string output)
         {
             if (WriteVerboseOutput)
             {
-                FancyConsole.WriteLine(output);
+                WriteLine(output);
             }
         }
 
@@ -98,7 +134,15 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         {
             if (WriteVerboseOutput)
             {
-                FancyConsole.WriteLine(format, parameters);
+                WriteLine(format, parameters);
+            }
+        }
+
+        public static void VerboseWriteLineIndented(string indent, string output)
+        {
+            if (WriteVerboseOutput)
+            {
+                WriteLineIndented(indent, output);
             }
         }
 
@@ -106,7 +150,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         {
             if (WriteVerboseOutput)
             {
-                FancyConsole.WriteLineIndented(indent, format, parameters);
+                WriteLineIndented(indent, format, parameters);
             }
         }
 

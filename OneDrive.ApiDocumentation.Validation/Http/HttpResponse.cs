@@ -89,12 +89,12 @@
             List<ValidationError> errorList = new List<ValidationError>();
             if (StatusCode != actualResponse.StatusCode)
             {
-                errorList.Add(new ValidationError(null, "Unexpected status code {1}, expected: {0}.", StatusCode, actualResponse.StatusCode));
+                errorList.Add(new ValidationError(null, "Expected status code :{0}, received: {1}.", StatusCode, actualResponse.StatusCode));
             }
 
             if (StatusMessage != actualResponse.StatusMessage)
             {
-                errorList.Add(new ValidationError(null, "Unexpected status message {1}, expected: {0}.", StatusMessage, actualResponse.StatusMessage));
+                errorList.Add(new ValidationError(null, "Expected status message {0}, received: {1}.", StatusMessage, actualResponse.StatusMessage));
             }
 
             // Check to see that expected headers were found in the response

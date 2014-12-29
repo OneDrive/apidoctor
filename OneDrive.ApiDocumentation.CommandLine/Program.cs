@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using OneDrive.ApiDocumentation.Validation;
 using OneDrive.ApiDocumentation.Validation.Http;
+using OneDrive.ApiDocumentation.Validation.Param;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,8 +12,6 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 {
     class Program
     {
-        static bool VerboseEnabled { get; set; }
-
         private const int ExitCodeFailure = 1;
         private const int ExitCodeSuccess = 0;
 
@@ -45,8 +44,9 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             var commandOptions = verbOptions as DocSetOptions;
             if (null != commandOptions)
             {
-                VerboseEnabled = commandOptions.Verbose;
+                FancyConsole.WriteVerboseOutput = commandOptions.Verbose;
             }
+            FancyConsole.LogFileName = verbOptions.LogFile;
 
             Nito.AsyncEx.AsyncContext.Run(() => RunInvokedMethodAsync(options, verbName, verbOptions));
         }
@@ -74,7 +74,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                     MethodExampleValidation((ConsistencyCheckOptions)options);
                     break;
                 case CommandLineOptions.VerbService:
-                    await ServiceCallValidation((ServiceConsistencyOptions)options);
+                    await CheckMethodsAgainstService((ServiceConsistencyOptions)options);
                     break;
                 case CommandLineOptions.VerbSet:
                     SetDefaultValues((SetCommandOptions)options);
@@ -304,7 +304,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             var docset = GetDocSet(options);
             FancyConsole.WriteLine();
 
-            MethodDefinition[] methods = TestMethods(options, docset);
+            MethodDefinition[] methods = FindTestMethods(options, docset);
 
             bool result = true;
             foreach (var method in methods)
@@ -322,7 +322,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 Environment.Exit(ExitCodeSuccess);
         }
 
-        private static MethodDefinition[] TestMethods(ConsistencyCheckOptions options, DocSet docset)
+        private static MethodDefinition[] FindTestMethods(ConsistencyCheckOptions options, DocSet docset)
         {
             MethodDefinition[] methods = null;
             if (!string.IsNullOrEmpty(options.MethodName))
@@ -346,7 +346,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         {
             foreach (var error in errors)
             {
-                if (!error.IsWarning && !error.IsError && !VerboseEnabled)
+                if (!error.IsWarning && !error.IsError && !FancyConsole.WriteVerboseOutput)
                     continue;
                 WriteValidationError(indent, error);
             }
@@ -365,13 +365,13 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             FancyConsole.WriteLineIndented(indent, color, error.ErrorText);
         }
 
-        private static bool ValidateHttpResponse(DocSet docset, MethodDefinition method, HttpResponse response, HttpResponse expectedResponse = null)
+        private static bool ValidateHttpResponse(DocSet docset, MethodDefinition method, HttpResponse response, HttpResponse expectedResponse = null, string indentLevel = "")
         {
             ValidationError[] errors;
             if (!docset.ValidateApiMethod(method, response, expectedResponse, out errors))
             {
                 FancyConsole.WriteLine();
-                WriteOutErrors(errors, "  ");
+                WriteOutErrors(errors, indentLevel + "  ");
                 FancyConsole.WriteLine();
                 return false;
             }
@@ -382,40 +382,32 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             }
         }
 
-        private static async Task ServiceCallValidation(ServiceConsistencyOptions options)
+        private static async Task CheckMethodsAgainstService(ServiceConsistencyOptions options)
         {
             var docset = GetDocSet(options);
             FancyConsole.WriteLine();
 
-            var methods = TestMethods(options, docset);
+            var methods = FindTestMethods(options, docset);
 
             bool result = true;
             foreach (var method in methods)
             {
-                FancyConsole.WriteLine();
                 FancyConsole.Write(ConsoleHeaderColor, "Calling method \"{0}\"...", method.DisplayName);
-
-                var requestParams = docset.RunParameters.RunParamtersForMethod(method);
-                FancyConsole.VerboseWriteLine("");
-                FancyConsole.VerboseWriteLine("Request:");
-                FancyConsole.VerboseWriteLineIndented("  ", method.PreviewRequest(requestParams).FullHttpText());
-
-                var parser = new HttpParser();
-                var expectedResponse = parser.ParseHttpResponse(method.ExpectedResponse);
-                
-                var actualResponse = await method.ApiResponseForMethod(options.ServiceRootUrl, options.AccessToken, requestParams);
-
-                FancyConsole.VerboseWriteLine("Response:");
-                FancyConsole.VerboseWriteLineIndented("  ", actualResponse.FullHttpText());
-
-                FancyConsole.VerboseWriteLine("Validation results:");
-                result &= ValidateHttpResponse(docset, method, actualResponse, expectedResponse);
-
-                if (options.PauseBetweenRequests)
+                var setsOfParameters = docset.RunParameters.SetOfRunParametersForMethod(method);
+                if (setsOfParameters.Length == 0)
                 {
-                    FancyConsole.Write("Press any key to continue");
-                    Console.ReadKey();
-                    FancyConsole.WriteLine();
+                    // If there are no parameters defined, we still try to call the request as-is.
+                    result &= await TestMethodWithParameters(docset, method, null, options.ServiceRootUrl, options.AccessToken);
+                    AddPause(options);
+                }
+                else
+                {
+                    // Otherwise, if there are parameter sets, we call each of them and check the result.
+                    foreach (var requestSettings in setsOfParameters)
+                    {
+                        result &= await TestMethodWithParameters(docset, method, requestSettings, options.ServiceRootUrl, options.AccessToken);
+                        AddPause(options);
+                    }
                 }
             }
 
@@ -423,6 +415,43 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 Environment.Exit(ExitCodeFailure);
             else
                 Environment.Exit(ExitCodeSuccess);
+        }
+
+        private static void AddPause(ServiceConsistencyOptions options)
+        {
+            if (options.PauseBetweenRequests)
+            {
+                FancyConsole.Write("Press any key to continue");
+                Console.ReadKey();
+                FancyConsole.WriteLine();
+            }
+        }
+
+        private static async Task<bool> TestMethodWithParameters(DocSet docset, MethodDefinition method, RequestParameters requestSettings, string rootUrl, string accessToken)
+        {
+            string indentLevel = "";
+            if (requestSettings != null)
+            {
+                FancyConsole.WriteLine();
+                FancyConsole.Write(ConsoleHeaderColor, "  With configuration \"{1}\"...", method.DisplayName, requestSettings.Note);
+                indentLevel = "  ";
+            }
+
+            FancyConsole.VerboseWriteLine("");
+            FancyConsole.VerboseWriteLineIndented(indentLevel, "Request:");
+            FancyConsole.VerboseWriteLineIndented(indentLevel + "  ", method.PreviewRequest(requestSettings).FullHttpText());
+
+            var parser = new HttpParser();
+            var expectedResponse = parser.ParseHttpResponse(method.ExpectedResponse);
+
+            var actualResponse = await method.ApiResponseForMethod(rootUrl, accessToken, requestSettings);
+
+            FancyConsole.VerboseWriteLineIndented(indentLevel, "Response:");
+            FancyConsole.VerboseWriteLineIndented(indentLevel + "  ", actualResponse.FullHttpText());
+            FancyConsole.VerboseWriteLine();
+            
+            FancyConsole.VerboseWriteLineIndented(indentLevel, "Validation results:");
+            return ValidateHttpResponse(docset, method, actualResponse, expectedResponse, indentLevel);
         }
 
         private static async Task PublishDocumentationAsync(PublishOptions options)
@@ -460,7 +489,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
         static void publisher_NewMessage(object sender, ValidationError e)
         {
-            if (!VerboseEnabled && !e.IsError && !e.IsWarning)
+            if (!FancyConsole.WriteVerboseOutput && !e.IsError && !e.IsWarning)
                 return;
 
             WriteValidationError("", e);
