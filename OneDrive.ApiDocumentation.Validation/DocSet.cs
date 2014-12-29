@@ -40,6 +40,17 @@
         #region Constructors
         public DocSet(string sourceFolderPath)
         {
+            if (sourceFolderPath.StartsWith("~" + Path.DirectorySeparatorChar))
+            {
+                // Need to resolve back to the user's folder
+                var userFolderPath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                sourceFolderPath = Path.Combine(userFolderPath, sourceFolderPath.Substring(2));
+            }
+            if (sourceFolderPath.EndsWith(Path.DirectorySeparatorChar.ToString()))
+            {
+                sourceFolderPath = sourceFolderPath.TrimEnd(new char[] { Path.DirectorySeparatorChar });
+            }
+
             SourceFolderPath = sourceFolderPath;
             ReadDocumentationHierarchy(sourceFolderPath);
         }
@@ -153,6 +164,11 @@
         private void ReadDocumentationHierarchy(string path)
         {
             DirectoryInfo sourceFolder = new DirectoryInfo(path);
+            if (!sourceFolder.Exists)
+            {
+                throw new FileNotFoundException(string.Format("Cannot find documentation. Directory doesn't exist: {0}", sourceFolder.FullName));
+            }
+
             var fileInfos = sourceFolder.GetFiles(DocumentationFileExtension, SearchOption.AllDirectories);
 
             var relativeFilePaths = from fi in fileInfos

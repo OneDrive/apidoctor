@@ -15,10 +15,11 @@
         {
         }
 
-        public static MethodDefinition FromRequest(string request, CodeBlockAnnotation annotation)
+        public static MethodDefinition FromRequest(string request, CodeBlockAnnotation annotation, DocFile source)
         {
             var method = new MethodDefinition { Request = request, RequestMetadata = annotation };
             method.DisplayName = annotation.MethodName;
+            method.SourceFile = source;
             return method;
         }
 
@@ -47,6 +48,12 @@
         /// Properties about the Response
         /// </summary>
         public CodeBlockAnnotation ExpectedResponseMetadata { get; set; }
+
+        /// <summary>
+        /// The documentation file that was the source of this method
+        /// </summary>
+        /// <value>The source file.</value>
+        public DocFile SourceFile {get; private set;}
 
         public void AddExpectedResponse(string rawResponse, CodeBlockAnnotation annotation)
         {

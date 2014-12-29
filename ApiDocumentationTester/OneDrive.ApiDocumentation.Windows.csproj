@@ -63,10 +63,6 @@
     <SignManifests>true</SignManifests>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Newtonsoft.Json.6.0.7\lib\net45\Newtonsoft.Json.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -76,6 +72,9 @@
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>..\packages\Newtonsoft.Json.6.0.7\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ErrorDisplayForm.cs">
@@ -153,7 +152,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\vroom-windows-client\MicrosoftAccountSDK.Windows\MicrosoftAccountSDK.Windows.csproj">
-      <Project>{9e9f37be-3cb5-4124-8b7c-e60c4ab90ecf}</Project>
+      <Project>{9E9F37BE-3CB5-4124-8B7C-E60C4AB90ECF}</Project>
       <Name>MicrosoftAccountSDK.Windows</Name>
     </ProjectReference>
     <ProjectReference Include="..\MarkdownDeep\MarkdownDeep.csproj">
@@ -161,7 +160,7 @@
       <Name>MarkdownDeep</Name>
     </ProjectReference>
     <ProjectReference Include="..\OneDrive.ApiDocumentation.Validation\OneDrive.ApiDocumentation.Validation.csproj">
-      <Project>{33b10320-3802-49cf-8965-3510ae66d5ec}</Project>
+      <Project>{33B10320-3802-49CF-8965-3510AE66D5EC}</Project>
       <Name>OneDrive.ApiDocumentation.Validation</Name>
     </ProjectReference>
   </ItemGroup>

@@ -164,12 +164,12 @@
             {
                 case CodeBlockType.Resource:
                     {
-                        m_Resources.Add(new ResourceDefinition(annotation, code.Content));
+                        m_Resources.Add(new ResourceDefinition(annotation, code.Content, this));
                         break;
                     }
                 case CodeBlockType.Request:
                     {
-                        var method = MethodDefinition.FromRequest(code.Content, annotation);
+                        var method = MethodDefinition.FromRequest(code.Content, annotation, this);
                         if (string.IsNullOrEmpty(method.DisplayName))
                             method.DisplayName = string.Format("{0} #{1}", DisplayName, m_Requests.Count);
                         m_Requests.Add(method);

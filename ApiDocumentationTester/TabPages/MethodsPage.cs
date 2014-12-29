@@ -79,7 +79,7 @@ namespace OneDrive.ApiDocumentation.Windows.TabPages
         private void buttonPreviewRequest_Click(object sender, EventArgs e)
         {
             var originalMethod = SelectedMethod;
-            var method = MethodDefinition.FromRequest(textBoxRequest.Text, originalMethod.RequestMetadata);
+            var method = MethodDefinition.FromRequest(textBoxRequest.Text, originalMethod.RequestMetadata, originalMethod.SourceFile);
 
             RequestParameters requestParams = null;
             if (checkBoxUseParameters.Checked)
@@ -259,7 +259,7 @@ namespace OneDrive.ApiDocumentation.Windows.TabPages
             var method = originalMethod;
             if (!string.IsNullOrEmpty(requestString))
             {
-                method = MethodDefinition.FromRequest(requestString, originalMethod.RequestMetadata);
+                method = MethodDefinition.FromRequest(requestString, originalMethod.RequestMetadata, originalMethod.SourceFile);
                 method.AddExpectedResponse(expectedResponseString, originalMethod.ExpectedResponseMetadata);
             }
             

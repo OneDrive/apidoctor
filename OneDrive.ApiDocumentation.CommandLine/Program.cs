@@ -204,8 +204,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             bool result = true;
             foreach (var method in methods)
             {
-                Console.WriteLine();
-                Console.Write("Checking \"{0}\"...", method.DisplayName);
+                Console.Write("Checking \"{0}\" in {1}...", method.DisplayName, method.SourceFile.DisplayName);
 
                 var parser = new HttpParser();
                 var expectedResponse = parser.ParseHttpResponse(method.ExpectedResponse);
@@ -255,11 +254,14 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             {
                 Console.WriteLine();
                 WriteOutErrors(errors, "  ");
+                Console.WriteLine();
                 return false;
             }
             else
             {
+                Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine(" no errors");
+                Console.ResetColor();
                 return true;
             }
         }

@@ -8,11 +8,11 @@
     /// </summary>
     public class ResourceDefinition
     {
-        public ResourceDefinition(CodeBlockAnnotation annotation, string jsonContent)
+        public ResourceDefinition(CodeBlockAnnotation annotation, string jsonContent, DocFile source)
         {
             Metadata = annotation;
-
             OriginalExample = jsonContent;
+            SourceFile = source;
             
             object inputObject = JsonConvert.DeserializeObject(jsonContent);
             JsonExample = JsonConvert.SerializeObject(inputObject, Formatting.Indented);
@@ -34,6 +34,12 @@
         /// Original json example as written in the documentation.
         /// </summary>
         public string OriginalExample { get; private set; }
+
+        /// <summary>
+        /// The documentation file that was the source of this resource
+        /// </summary>
+        /// <value>The source file.</value>
+        public DocFile SourceFile {get; private set;}
 
     }
 }
