@@ -33,7 +33,7 @@
 
         public Json.JsonResourceCollection ResourceCollection { get { return m_ResourceCollection; } }
         
-        public List<Param.RequestParameters> RequestParameters { get; private set;}
+        public RunMethodParameters RunParameters {get; set;}
 
         #endregion
 
@@ -53,6 +53,7 @@
 
             SourceFolderPath = sourceFolderPath;
             ReadDocumentationHierarchy(sourceFolderPath);
+            RunParameters = new RunMethodParameters();
         }
         #endregion
 
@@ -189,90 +190,7 @@
             return relativePath;
         }
 
-        public bool TryReadRequestParameters(string relativePathToParamters)
-        {
-            var path = String.Concat(SourceFolderPath, relativePathToParamters);
-            if (!File.Exists(path))
-                return false;
-            
-            try
-            {
-                string rawJson = null;
-                using (StreamReader reader = File.OpenText(path))
-                {
-                    rawJson = reader.ReadToEnd();
-                }
-                RequestParameters = Param.RequestParameters.ReadFromJson(rawJson).ToList();
-                
-                // Make sure we have consistent method names
-                foreach (var request in RequestParameters)
-                {
-                    request.Method = ConvertPathSeparatorsToLocal(request.Method);
-                }
-
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine("Error reading parameters: {0}", (object)ex.Message);
-                return false;
-            }
-        }
-
-        public bool TryWriteRequestParameters(string relativePathToParamters, Param.RequestParameters[] parameters)
-        {
-            var path = String.Concat(SourceFolderPath, relativePathToParamters);
-
-            foreach (var request in parameters)
-            {
-                request.Method = ConvertPathSeparatorsToGlobal(request.Method);
-            }
-
-            bool result = false;
-            try
-            {
-                var text = Newtonsoft.Json.JsonConvert.SerializeObject(parameters, Newtonsoft.Json.Formatting.Indented);
-                using (var writer = System.IO.File.CreateText(path))
-                {
-                    writer.Write(text);
-                }
-                result = true;
-            }
-            catch (Exception)
-            {
-                result = false;
-            }
-
-            foreach (var request in parameters)
-            {
-                request.Method = ConvertPathSeparatorsToLocal(request.Method);
-            }
-            return result;
-        }
-
-        private static string ConvertPathSeparatorsToLocal(string p)
-        {
-            return p.Replace('/', Path.DirectorySeparatorChar);
-        }
-
-        private static string ConvertPathSeparatorsToGlobal(string p)
-        {
-            return p.Replace(Path.DirectorySeparatorChar, '/');
-        }
-
-
-        public Param.RequestParameters RequestParamtersForMethod(MethodDefinition method)
-        {
-            if (null == RequestParameters) return null;
-
-            var id = method.DisplayName;
-            var query = from p in RequestParameters
-                        where p.Method == id && p.Enabled == true
-                        select p;
-
-            return query.FirstOrDefault();
-        }
+        
 
 
 

@@ -60,14 +60,14 @@ namespace OneDrive.ApiDocumentation.Windows
                 DocSetLoadErrors = loadErrors;
             }
 
-            CurrentDocSet.TryReadRequestParameters(textBoxMethodRequestParameterFile.Text);
+            CurrentDocSet.RunParameters = new RunMethodParameters(CurrentDocSet, textBoxMethodRequestParameterFile.Text);
 
             listBoxResources.DisplayMember = "ResourceType";
             listBoxResources.DataSource = CurrentDocSet.Resources;
 
             methodsPage.LoadFromDocSet(CurrentDocSet);
 
-            m_Parameters = new BindingList<RequestParameters>(CurrentDocSet.RequestParameters);
+            m_Parameters = new BindingList<RequestParameters>(CurrentDocSet.RunParameters.Definitions);
 
             listBoxParameters.DisplayMember = "Method";
             listBoxParameters.DataSource = m_Parameters;
@@ -189,11 +189,8 @@ namespace OneDrive.ApiDocumentation.Windows
 
         private void buttonSaveParameterFile_Click(object sender, EventArgs e)
         {
-            // Write out m_Parameters to disk somewhere
-            CurrentDocSet.TryWriteRequestParameters(textBoxMethodRequestParameterFile.Text, m_Parameters.ToArray());
+            CurrentDocSet.RunParameters.TrySaveToFile();
         }
-
-      
 
         private void showLoadErrorsToolStripMenuItem_Click(object sender, EventArgs e)
         {

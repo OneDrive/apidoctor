@@ -146,8 +146,9 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             if (null != serviceOptions)
             {
                 FancyConsole.VerboseWriteLine("Reading configuration parameters...");
-                bool success = set.TryReadRequestParameters(serviceOptions.ParameterSource);
-                if (!success)
+
+                set.RunParameters = new RunMethodParameters(set, serviceOptions.ParameterSource);
+                if (!set.RunParameters.Loaded)
                 {
                     FancyConsole.WriteLine(ConsoleWarningColor, "WARNING: Unable to read request parameter configuration file: {0}", serviceOptions.ParameterSource);
                 }
@@ -376,7 +377,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 FancyConsole.WriteLine();
                 FancyConsole.Write(ConsoleHeaderColor, "Calling method \"{0}\"...", method.DisplayName);
 
-                var requestParams = docset.RequestParamtersForMethod(method);
+                var requestParams = docset.RunParameters.RunParamtersForMethod(method);
                 FancyConsole.VerboseWriteLine("");
                 FancyConsole.VerboseWriteLine("Request:");
                 FancyConsole.VerboseWriteLineIndented("  ", method.PreviewRequest(requestParams).FullHttpText());
