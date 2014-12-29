@@ -20,8 +20,15 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             set
             {
                 _logFileName = value;
-                _logWriter = new StreamWriter(_logFileName, false);
-                _logWriter.AutoFlush = true;
+                if (!string.IsNullOrEmpty(_logFileName))
+                {
+                    _logWriter = new StreamWriter(_logFileName, false);
+                    _logWriter.AutoFlush = true;
+                }
+                else
+                {
+                    _logWriter = null;
+                }
             }
         }
 
