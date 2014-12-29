@@ -16,8 +16,10 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         private const int ExitCodeFailure = 1;
         private const int ExitCodeSuccess = 0;
 
+        private const ConsoleColor ConsoleDefaultColor = ConsoleColor.Gray;
         private const ConsoleColor ConsoleHeaderColor = ConsoleColor.Cyan;
-        private const ConsoleColor ConsoleCodeColor = ConsoleColor.Gray;
+        private const ConsoleColor ConsoleSubheaderColor = ConsoleColor.DarkCyan;
+        private const ConsoleColor ConsoleCodeColor = ConsoleColor.DarkGray;
         private const ConsoleColor ConsoleErrorColor = ConsoleColor.Red;
         private const ConsoleColor ConsoleWarningColor = ConsoleColor.Yellow;
         private const ConsoleColor ConsoleSuccessColor = ConsoleColor.Green;
@@ -90,24 +92,29 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 settings.ServiceUrl = null;
             }
 
+            bool setValues = false;
+
             if (!string.IsNullOrEmpty(setCommandOptions.AccessToken))
             {
                 settings.AccessToken = setCommandOptions.AccessToken;
+                setValues = true;
             }
 
             if (!string.IsNullOrEmpty(setCommandOptions.DocumentationPath))
             {
                 settings.DocumentationPath = setCommandOptions.DocumentationPath;
+                setValues = true;
             }
 
             if (!string.IsNullOrEmpty(setCommandOptions.ServiceUrl))
             {
                 settings.ServiceUrl = setCommandOptions.ServiceUrl;
+                setValues = true;
             }
 
             settings.Save();
 
-            if (setCommandOptions.PrintValues)
+            if (setCommandOptions.PrintValues || setValues)
             {
                 FancyConsole.WriteLine(ConsoleHeaderColor, "Stored settings:");
                 FancyConsole.WriteLineIndented("  ", "{0}: {1}", "AccessToken", settings.AccessToken);
@@ -176,7 +183,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
             string format = null;
             if (options.Verbose)
-                format = "{0} => {1} (resources: {2}, methods: {3})";
+                format = "{1} (resources: {2}, methods: {3})";
             else if (options.ShortForm)
                 format = "{0}";
             else
@@ -184,7 +191,11 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
             foreach (var file in docset.Files)
             {
-                FancyConsole.WriteLineIndented("  ", format, file.DisplayName, file.FullPath, file.Resources.Length, file.Requests.Length);
+                ConsoleColor color = ConsoleSuccessColor;
+                if (file.Resources.Length == 0 && file.Requests.Length == 0)
+                    color = ConsoleWarningColor;
+
+                FancyConsole.WriteLineIndented("  ", color, format, file.DisplayName, file.FullPath, file.Resources.Length, file.Requests.Length);
             }
         }
 
@@ -248,31 +259,24 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
             foreach (var method in docset.Methods)
             {
+                FancyConsole.WriteLine(ConsoleHeaderColor, "Method '{0}' in file '{1}'", method.DisplayName, method.SourceFile.DisplayName);
 
-
-
-                FancyConsole.WriteLine("Method {0} in file {1}", method.DisplayName, method.SourceFile.DisplayName);
-
-                if (options.ShortForm)
-                {
-                    FancyConsole.WriteLineIndented("  ", "Request: {0}", method.Request.TopLineOnly());
-                }
-                else
+                if (!options.ShortForm)
                 {
                     var requestMetadata = options.Verbose ? JsonConvert.SerializeObject(method.RequestMetadata) : string.Empty;
-                    FancyConsole.WriteLineIndented("  ", "Request: {0}", requestMetadata);
+                    FancyConsole.WriteLineIndented("  ", ConsoleSubheaderColor, "Request: {0}", requestMetadata);
                     FancyConsole.WriteLineIndented("    ", ConsoleCodeColor, method.Request);
                 }
 
-                FancyConsole.WriteLine();
                 if (options.Verbose)
                 {
+                    FancyConsole.WriteLine();
                     var responseMetadata = JsonConvert.SerializeObject(method.ExpectedResponseMetadata);
                     if (options.ShortForm)
-                        FancyConsole.WriteLineIndented("  ", "Response: {0}", method.ExpectedResponse.TopLineOnly());
+                        FancyConsole.WriteLineIndented("  ", ConsoleHeaderColor, "Expected Response: {0}", method.ExpectedResponse.TopLineOnly());
                     else
                     {
-                        FancyConsole.WriteLineIndented("  ", "Response: {0}", responseMetadata);
+                        FancyConsole.WriteLineIndented("  ", ConsoleSubheaderColor, "Expected Response: {0}", responseMetadata);
                         FancyConsole.WriteLineIndented("    ", ConsoleCodeColor, method.ExpectedResponse);
                     }
                     FancyConsole.WriteLine();

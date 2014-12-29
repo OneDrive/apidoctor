@@ -9,7 +9,7 @@
       <Value Profile="(Default)" />
     </Setting>
     <Setting Name="ServiceUrl" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
+      <Value Profile="(Default)">https://df.api.onedrive.com/v1.0</Value>
     </Setting>
   </Settings>
 </SettingsFile>
