@@ -467,7 +467,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
             FancyConsole.WriteLine("Publishing documentation to {0}", outputPath);
 
-            var publisher = new OneDrive.ApiDocumentation.Validation.Publish.DocumentPublisher(inputPath);
+            var publisher = new DocumentPublisher(inputPath);
             
             publisher.VerboseLogging = options.Verbose;
             publisher.TextFileExtensions = options.TextFileExtensions;
