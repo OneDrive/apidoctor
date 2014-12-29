@@ -15,6 +15,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         public const string VerbSet = "set";
         public const string VerbDocs = "check-docs";
         public const string VerbService = "check-service";
+        public const string VerbClean = "publish";
 
         public CommandLineOptions()
         {
@@ -25,7 +26,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         public PrintOptions PrintVerbOptions { get; set; }
 
         [VerbOption(VerbCheckLinks, HelpText = "Verify links in the documentation aren't broken.")]
-        public CommandOptions LinksVerb { get; set; }
+        public DocSetOptions LinksVerb { get; set; }
 
         [VerbOption(VerbDocs, HelpText = "Check for errors in the documentation (resources + examples).")]
         public ConsistencyCheckOptions InternalConsistencyVerb { get; set; }
@@ -35,6 +36,9 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
         [VerbOption(VerbSet, HelpText = "Save or reset default parameter values.")]
         public SetCommandOptions SetVerb { get; set; }
+
+        [VerbOption(VerbClean, HelpText="Publish a sanitized version of the documentation.")]
+        public PublishOptions PublishVerb { get; set; }
 
         [HelpVerbOption]
         public string GetUsage(string verb)
@@ -65,7 +69,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
     }
 
-    class CommandOptions : BaseOptions
+    class DocSetOptions : BaseOptions
     {
         private const string PathArgument = "path";
         private const string ShortArgument = "short";
@@ -135,7 +139,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         }
     }
 
-    class PrintOptions : CommandOptions
+    class PrintOptions : DocSetOptions
     {
         [Option("files", HelpText="Print the files discovered as part of the documentation")]
         public bool PrintFiles { get; set; }
@@ -164,7 +168,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         }
     }
 
-    class ConsistencyCheckOptions : CommandOptions
+    class ConsistencyCheckOptions : DocSetOptions
     {
         [Option('m', "method", HelpText = "Name of the method to test. If missing, all methods are tested.")]
         public string MethodName { get; set; }
@@ -210,5 +214,29 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             return missingArguments.Length == 0;
         }
 
+    }
+
+    class PublishOptions : DocSetOptions
+    {
+        [Option("output", Required=true, HelpText="Output directory for sanitized documentation.")]
+        public string OutputDirectory { get; set; }
+
+        [Option("format", DefaultValue=SanitizedFormat.Markdown, HelpText="Format of the output documentation.")]
+        public SanitizedFormat Format { get; set; }
+
+        [Option("extensions", HelpText="File extensions to scan for internal content.", DefaultValue=".md,.mdown")]
+        public string TextFileExtensions { get; set; }
+
+        [Option("ignore-path", HelpText="Semicolon separated list of paths to ignore.")]
+        public string IgnorePaths { get; set; }
+
+        [Option("include-all", DefaultValue=true, HelpText="Include all content files, not just scanned text files.")]
+        public bool PublishAllFiles { get; set; }
+
+        public enum SanitizedFormat
+        {
+            Markdown,
+            Html
+        }
     }
 }

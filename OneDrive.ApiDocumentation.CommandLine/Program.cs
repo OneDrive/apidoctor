@@ -42,7 +42,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 Environment.Exit(CommandLine.Parser.DefaultExitCodeFail);
             }
 
-            var commandOptions = verbOptions as CommandOptions;
+            var commandOptions = verbOptions as DocSetOptions;
             if (null != commandOptions)
             {
                 VerboseEnabled = commandOptions.Verbose;
@@ -68,7 +68,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                     PrintDocInformation((PrintOptions)options);
                     break;
                 case CommandLineOptions.VerbCheckLinks:
-                    VerifyLinks((CommandOptions)options);
+                    VerifyLinks((DocSetOptions)options);
                     break;
                 case CommandLineOptions.VerbDocs:
                     MethodExampleValidation((ConsistencyCheckOptions)options);
@@ -79,8 +79,12 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 case CommandLineOptions.VerbSet:
                     SetDefaultValues((SetCommandOptions)options);
                     break;
+                case CommandLineOptions.VerbClean:
+                    await PublishDocumentationAsync((PublishOptions)options);
+                    break;
             }
         }
+
 
         private static void SetDefaultValues(SetCommandOptions setCommandOptions)
         {
@@ -130,7 +134,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         /// </summary>
         /// <param name="options"></param>
         /// <returns></returns>
-        private static DocSet GetDocSet(CommandOptions options)
+        private static DocSet GetDocSet(DocSetOptions options)
         {
             FancyConsole.VerboseWriteLine("Opening documentation from {0}", options.PathToDocSet);
             DocSet set = new DocSet(options.PathToDocSet);
@@ -174,7 +178,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             }
         }
 
-        private static void PrintFiles(CommandOptions options, DocSet docset)
+        private static void PrintFiles(DocSetOptions options, DocSet docset)
         {
             if (null == docset)
                 docset = GetDocSet(options);
@@ -200,7 +204,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             }
         }
 
-        private static void VerifyLinks(CommandOptions options)
+        private static void VerifyLinks(DocSetOptions options)
         {
             var docset = GetDocSet(options);
             ValidationError[] errors;
@@ -216,7 +220,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             }
         }
 
-        private static void PrintResources(CommandOptions options, DocSet docset)
+        private static void PrintResources(DocSetOptions options, DocSet docset)
         {
             if (null == docset)
                 docset = GetDocSet(options);
@@ -249,7 +253,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             }
         }
 
-        private static void PrintMethods(CommandOptions options, DocSet docset)
+        private static void PrintMethods(DocSetOptions options, DocSet docset)
         {
             if (null == docset)
                 docset = GetDocSet(options);
@@ -338,13 +342,27 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             return methods;
         }
 
-        private static void WriteOutErrors(ValidationError[] errors, string indent = "")
+        private static void WriteOutErrors(IEnumerable<ValidationError> errors, string indent = "")
         {
             foreach (var error in errors)
             {
-                var color = error.IsWarning ? ConsoleWarningColor : ConsoleErrorColor;
-                FancyConsole.WriteLineIndented(indent, color, error.ErrorText);
+                if (!error.IsWarning && !error.IsError && !VerboseEnabled)
+                    continue;
+                WriteValidationError(indent, error);
             }
+        }
+
+        private static void WriteValidationError(string indent, ValidationError error)
+        {
+            ConsoleColor color;
+            if (error.IsWarning)
+                color = ConsoleWarningColor;
+            else if (error.IsError)
+                color = ConsoleErrorColor;
+            else
+                color = ConsoleDefaultColor;
+
+            FancyConsole.WriteLineIndented(indent, color, error.ErrorText);
         }
 
         private static bool ValidateHttpResponse(DocSet docset, MethodDefinition method, HttpResponse response, HttpResponse expectedResponse = null)
@@ -407,5 +425,45 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 Environment.Exit(ExitCodeSuccess);
         }
 
+        private static async Task PublishDocumentationAsync(PublishOptions options)
+        {
+            if (options.Format != PublishOptions.SanitizedFormat.Markdown)
+            {
+                FancyConsole.WriteLine(ConsoleErrorColor, "Publish format not yet implemented: {0}", options.Format);
+                return;
+            }
+
+            var outputPath = options.OutputDirectory;
+            var inputPath = options.PathToDocSet;
+
+            FancyConsole.WriteLine("Publishing documentation to {0}", outputPath);
+
+            var publisher = new OneDrive.ApiDocumentation.Validation.Publish.DocumentPublisher(inputPath);
+            
+            publisher.VerboseLogging = options.Verbose;
+            publisher.TextFileExtensions = options.TextFileExtensions;
+            FancyConsole.WriteLineIndented("  ", "File extensions: {0}", publisher.TextFileExtensions);
+
+            if (!string.IsNullOrEmpty(options.IgnorePaths))
+                publisher.SkipPaths = options.IgnorePaths;
+            FancyConsole.WriteLineIndented("  ", "Ignored Paths: {0}", publisher.SkipPaths);
+            publisher.PublishAllFiles = options.PublishAllFiles;
+            FancyConsole.WriteLineIndented("  ", "Include all files: {0}", publisher.PublishAllFiles);
+            FancyConsole.WriteLine();
+            
+            FancyConsole.WriteLine("Publishing content...");
+            publisher.NewMessage += publisher_NewMessage;
+            await publisher.PublishToFolderAsync(outputPath);
+
+            FancyConsole.WriteLine(ConsoleSuccessColor, "Finished publishing documentation to: {0}", outputPath);
+        }
+
+        static void publisher_NewMessage(object sender, ValidationError e)
+        {
+            if (!VerboseEnabled && !e.IsError && !e.IsWarning)
+                return;
+
+            WriteValidationError("", e);
+        }
     }
 }

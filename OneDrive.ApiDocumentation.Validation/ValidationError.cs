@@ -27,6 +27,8 @@
 
         public virtual bool IsWarning { get { return false; } }
 
+        public virtual bool IsError { get { return true; } }
+
         public string ErrorText 
         {
             get 
@@ -36,7 +38,7 @@
                 {
                     sb.Append("Warning: ");
                 }
-                else
+                else if (IsError)
                 {
                     sb.Append("Error: ");
                 }
@@ -78,12 +80,27 @@
     public class ValidationWarning : ValidationError
     {
 
-        public ValidationWarning(string source, string format, params object[] formatParams) : base(source, format, formatParams)
+        public ValidationWarning(string source, string format, params object[] formatParams)
+            : base(source, format, formatParams)
         {
 
         }
 
         public override bool IsWarning { get { return true; } }
+
+        public virtual bool IsError { get { return false; } }
+    }
+
+    public class ValidationMessage : ValidationError
+    {
+        public ValidationMessage(string source, string format, params object[] formatParams)
+            : base(source, format, formatParams)
+        {
+
+        }
+
+        public override bool IsWarning { get { return false; } }
+        public override bool IsError { get { return false; } }
     }
 
     public static class ValidationErrorExtensions

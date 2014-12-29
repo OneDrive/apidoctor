@@ -50,6 +50,7 @@
     <Compile Include="Http\HttpRequest.cs" />
     <Compile Include="Http\HttpResponse.cs" />
     <Compile Include="Param\RequestParameters.cs" />
+    <Compile Include="Publish\DocumentPublisher.cs" />
     <Compile Include="RunMethodParameters.cs" />
     <Compile Include="ValidationError.cs" />
     <Compile Include="Json\JsonProperty.cs" />
