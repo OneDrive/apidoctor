@@ -159,7 +159,7 @@ namespace OneDrive.ApiDocumentation.Windows.TabPages
             }
             catch (Exception ex)
             {
-                ErrorDisplayForm.ShowErrorDialog(new ValidationError[] { new ValidationError(null, "Error parsing HTTP response: {0}", ex.Message) });
+                ErrorDisplayForm.ShowErrorDialog(new ValidationError[] { new ValidationError(ValidationErrorCode.HttpResponseFormatInvalid, null, "Error parsing HTTP response: {0}", ex.Message) });
                 return;
             }
 
@@ -242,7 +242,7 @@ namespace OneDrive.ApiDocumentation.Windows.TabPages
         {
             var tokenAvailable = await EnsureAccessTokenAvailable();
             if (!tokenAvailable)
-                return new MethodValidationResult() { Result = RunResult.Error, Errors = new ValidationError[] { new ValidationError(null, "No access token available.")} };
+                return new MethodValidationResult() { Result = RunResult.Error, Errors = new ValidationError[] { new ValidationError(ValidationErrorCode.MissingAccessToken, null, "No access token available.") } };
 
             var httpParser = new HttpParser();
 

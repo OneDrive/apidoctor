@@ -121,14 +121,14 @@
 
             if (string.IsNullOrEmpty(response.Body) && (expectedResponse != null && !string.IsNullOrEmpty(expectedResponse.Body)))
             {
-                detectedErrors.Add(new ValidationError(null, "Body missing from response (expected response includes a body)."));
+                detectedErrors.Add(new ValidationError(ValidationErrorCode.HttpBodyExpected, null, "Body missing from response (expected response includes a body)."));
             }
             else if (!string.IsNullOrEmpty(response.Body))
             {
                 ValidationError[] schemaErrors;
                 if (method.ExpectedResponseMetadata == null || (string.IsNullOrEmpty(method.ExpectedResponseMetadata.ResourceType) && (expectedResponse != null && !string.IsNullOrEmpty(expectedResponse.Body))))
                 {
-                    detectedErrors.Add(new ValidationError(null, "Expected a response, but resource type on method is missing: {0}", method.DisplayName));
+                    detectedErrors.Add(new ValidationError(ValidationErrorCode.ResponseResourceTypeMissing, null, "Expected a response, but resource type on method is missing: {0}", method.DisplayName));
                 }
                 else
                 {

@@ -17,7 +17,12 @@
 
         protected CodeBlockAnnotation Metadata { get; private set; }
 
-        public string[] OptionalProperties { get { return Metadata.OptionalProperties; } }
+        public string[] OptionalProperties { get { return (null == Metadata) ? null : Metadata.OptionalProperties; } }
+
+        public JsonProperty[] Properties
+        {
+            get { return ExpectedProperties.Values.ToArray(); }
+        }
 
         #endregion
 
@@ -46,7 +51,7 @@
             }
             catch (Exception ex)
             {
-                errors = new ValidationError[] { new ValidationError(null, "Failed to parse json string: {0}. Json: {1}", ex.Message, json) };
+                errors = new ValidationError[] { new ValidationError(ValidationErrorCode.JsonParserException, null, "Failed to parse json string: {0}. Json: {1}", ex.Message, json) };
                 return false;
             }
 
@@ -62,7 +67,7 @@
 //                string odataError = errorObject["@error.details"];
 
                 detectedErrors.Clear();
-                detectedErrors.Add(new ValidationError(null, "Error response received. Code: {0}, Message: {1}", code, message));
+                detectedErrors.Add(new ValidationError(ValidationErrorCode.JsonErrorObject, null, "Error response received. Code: {0}, Message: {1}", code, message));
                 errors = detectedErrors.ToArray();
                 return false;
             }
@@ -76,14 +81,14 @@
                 var collection = obj[collectionPropertyName];
                 if (null == collection)
                 {
-                    detectedErrors.Add(new ValidationError(null, "Failed to location collection property '{0}' in response.", collectionPropertyName));
+                    detectedErrors.Add(new ValidationError(ValidationErrorCode.MissingCollectionProperty, null, "Failed to location collection property '{0}' in response.", collectionPropertyName));
                 }
                 else
                 {
                     var collectionMembers = obj[collectionPropertyName];
                     if (collectionMembers.Count() == 0)
                     {
-                        detectedErrors.Add(new ValidationWarning(null, "Property contained an empty array that was not validated: {0}", collectionPropertyName));
+                        detectedErrors.Add(new ValidationWarning(ValidationErrorCode.CollectionArrayEmpty, null, "Property contained an empty array that was not validated: {0}", collectionPropertyName));
                     }
                     foreach (JContainer container in collectionMembers)
                     {
@@ -102,14 +107,16 @@
 
         private void ValidateJContainer(JContainer obj, CodeBlockAnnotation annotation, Dictionary<string, JsonSchema> otherSchemas, List<ValidationError> detectedErrors)
         {
-            string resourceType = null;
             bool allowTruncatedResult = false;
             if (null != annotation)
             {
-                resourceType = annotation.ResourceType;
+                if (annotation.ResourceType != ResourceName)
+                {
+                    throw new InvalidOperationException("Attempting to verify a container with a different resource type than the current schema.");
+                }
                 allowTruncatedResult = annotation.TruncatedResult;
             }
-            ValidateJContainer(obj, resourceType, allowTruncatedResult, otherSchemas, detectedErrors);
+            ValidateJContainer(obj, allowTruncatedResult, otherSchemas, detectedErrors);
         }
 
         /// <summary>
@@ -120,20 +127,14 @@
         /// <param name="allowTruncation"></param>
         /// <param name="otherSchemas"></param>
         /// <param name="detectedErrors"></param>
-        private void ValidateJContainer(JContainer obj, string resourceType, bool allowTruncation, Dictionary<string, JsonSchema> otherSchemas, List<ValidationError> detectedErrors)
+        private void ValidateJContainer(JContainer obj, bool allowTruncation, Dictionary<string, JsonSchema> otherSchemas, List<ValidationError> detectedErrors)
         {
             List<string> missingProperties = new List<string>();
-            JsonSchema containerSchema;
-            if (!otherSchemas.TryGetValue(resourceType, out containerSchema))
-            {
-                detectedErrors.Add(new ValidationWarning(null, "Unable to find a schema definiton for object: {0}", obj.ToString()));
-                containerSchema = null;
-            }
-            missingProperties.AddRange(from m in containerSchema.ExpectedProperties select m.Key);
+            missingProperties.AddRange(from m in ExpectedProperties select m.Key);
 
             foreach (JToken token in obj)
             {
-                JsonProperty inputProperty = ParseProperty(token, containerSchema);
+                JsonProperty inputProperty = ParseProperty(token, this);
                 missingProperties.Remove(inputProperty.Name);
                 ValidateProperty(inputProperty, otherSchemas, detectedErrors, allowTruncation);
             }
@@ -148,7 +149,7 @@
 
             if (!allowTruncation && missingProperties.Count > 0)
             {
-                detectedErrors.Add(new ValidationWarning(null, "Missing properties: response was missing these required properties: {0}", missingProperties.ComponentsJoinedByString(",")));
+                detectedErrors.Add(new ValidationWarning(ValidationErrorCode.RequiredPropertiesMissing, null, "Missing properties: response was missing these required properties: {0}", missingProperties.ComponentsJoinedByString(",")));
             }
         }
 
@@ -177,17 +178,25 @@
                     else
                     {
                         // Type of the inputProperty is mismatched from the expected value.
+                        detectedErrors.Add(new ValidationError(ValidationErrorCode.ExpectedTypeDifferent, null, "Expected type {0} but was instead {1}: {2}", schemaPropertyDef.Type, inputProperty.Type, inputProperty.Name));
                         return PropertyValidationOutcome.InvalidType;
                     }
                 }
-                else if (schemaPropertyDef.IsArray)
+                else if (schemaPropertyDef.IsArray || inputProperty.IsArray)
                 {
                     // Check for an array
-                    if (!inputProperty.IsArray)
+                    if (schemaPropertyDef.IsArray && !inputProperty.IsArray)
                     {
                         // Expected an array, but didn't get one
+                        detectedErrors.Add(new ValidationError(ValidationErrorCode.ExpectedArrayValue, null, "Expected an array but property was not an array: {0}", inputProperty.Name));
                         return PropertyValidationOutcome.InvalidType;
                     }
+                    else if (!schemaPropertyDef.IsArray && inputProperty.IsArray)
+                    {
+                        detectedErrors.Add(new ValidationError(ValidationErrorCode.ExpectedNonArrayValue, null, "Expected a value of type {0} but property was an array: {1}", schemaPropertyDef.Type, inputProperty.Name));
+                        return PropertyValidationOutcome.InvalidType;
+                    }
+
 
                     return ValidateArrayProperty(inputProperty, schemas, detectedErrors, isTruncated);
                 }
@@ -196,7 +205,7 @@
                     // Compare the ODataType schema to the custom schema
                     if (!schemas.ContainsKey(schemaPropertyDef.ODataTypeName))
                     {
-                        detectedErrors.Add(new ValidationError(null, "Missing resource: resource [0] was not found (property name '{1}').", schemaPropertyDef.ODataTypeName, inputProperty.Name));
+                        detectedErrors.Add(new ValidationError(ValidationErrorCode.ResourceTypeNotFound, null, "Missing resource: resource [0] was not found (property name '{1}').", schemaPropertyDef.ODataTypeName, inputProperty.Name));
                         return PropertyValidationOutcome.MissingResourceType;
                     }
                     else if (inputProperty.Type == JsonDataType.Custom)
@@ -205,14 +214,14 @@
                         ValidationError[] odataErrors;
                         if (null != inputProperty.CustomMembers && !odataSchema.ValidateCustomObject(inputProperty.CustomMembers.Values.ToArray(), out odataErrors, schemas, isTruncated))
                         {
-                            var propertyError = ValidationError.NewConsolidatedError(odataErrors, "Schema validation failed on property '{0}' ['{1}']", inputProperty.Name, odataSchema.ResourceName);
+                            var propertyError = ValidationError.NewConsolidatedError(ValidationErrorCode.ConsolidatedError, odataErrors, "Schema validation failed on property '{0}' ['{1}']", inputProperty.Name, odataSchema.ResourceName);
                             detectedErrors.Add(propertyError);
 
                             return PropertyValidationOutcome.InvalidType;
                         }
                         else if (null == inputProperty.CustomMembers)
                         {
-                            detectedErrors.Add(new ValidationError(null, "Property '{0}' is of type Custom but has no custom members.", inputProperty.Name));
+                            detectedErrors.Add(new ValidationError(ValidationErrorCode.NoCustomMembersFound, null, "Property '{0}' is of type Custom but has no custom members.", inputProperty.Name));
                         }
                         return PropertyValidationOutcome.OK;
                     }
@@ -223,19 +232,19 @@
                 }
                 else if (schemaPropertyDef.Type == JsonDataType.Custom)
                 {
-                    detectedErrors.Add(new ValidationWarning(null, "Schema type was 'Custom' which is not supported. Add a resource type to the definition of property: {0}", inputProperty.Name));
+                    detectedErrors.Add(new ValidationWarning(ValidationErrorCode.CustomValidationNotSupported, null, "Schema type was 'Custom' which is not supported. Add a resource type to the definition of property: {0}", inputProperty.Name));
                     return PropertyValidationOutcome.MissingResourceType;
                 }
                 else
                 {
-                    detectedErrors.Add(new ValidationError(null, "Type mismatch: property '{0}' [{1}] doesn't match expected type [{2}].", 
+                    detectedErrors.Add(new ValidationError(ValidationErrorCode.ExpectedTypeDifferent, null, "Type mismatch: property '{0}' [{1}] doesn't match expected type [{2}].", 
                         inputProperty.Name, inputProperty.Type, schemaPropertyDef.Type));
                     return PropertyValidationOutcome.InvalidType;
                 }
             }
             else
             {
-                detectedErrors.Add(new ValidationWarning(null, "Extra property: property '{0}' [{1}] was not expected.", inputProperty.Name, inputProperty.Type));
+                detectedErrors.Add(new ValidationWarning(ValidationErrorCode.AdditionalPropertyDetected, null, "Extra property: property '{0}' [{1}] was not expected.", inputProperty.Name, inputProperty.Type));
                 return PropertyValidationOutcome.MissingFromSchema;
             }
         }
@@ -264,7 +273,7 @@
             JsonSchema memberSchema;
             if (!schemas.TryGetValue(actualProperty.ODataTypeName, out memberSchema))
             {
-                detectedErrors.Add(new ValidationError(null, "Failed to locate schema definition for: {0}", actualProperty.ODataTypeName));
+                detectedErrors.Add(new ValidationError(ValidationErrorCode.ResourceTypeNotFound, null, "Failed to locate resource definition for: {0}", actualProperty.ODataTypeName));
                 return PropertyValidationOutcome.MissingResourceType;
             }
 
@@ -275,7 +284,7 @@
                 if (member != null)
                 {
                     List<ValidationError> memberErrors = new List<ValidationError>();
-                    memberSchema.ValidateJContainer(member, actualProperty.ODataTypeName, allowTruncatedResponse, schemas, memberErrors);
+                    memberSchema.ValidateJContainer(member, allowTruncatedResponse, schemas, memberErrors);
 
                     hadErrors |= memberErrors.Count > 0;
                     foreach (var error in memberErrors)
@@ -309,7 +318,7 @@
 
             if (!ignoreMissingProperties && missingProperties.Count > 0)
             {
-                detectedErrors.Add(new ValidationWarning(null, "missing properties detected: {0}", missingProperties.ComponentsJoinedByString(",")));
+                detectedErrors.Add(new ValidationWarning(ValidationErrorCode.RequiredPropertiesMissing, null, "missing properties detected: {0}", missingProperties.ComponentsJoinedByString(",")));
             }
 
             errors = detectedErrors.ToArray();
@@ -322,12 +331,18 @@
         private Dictionary<string, JsonProperty> BuildSchemaFromJson(string json)
         {
             Dictionary<string, JsonProperty> schema = new Dictionary<string, JsonProperty>();
-
-            JContainer obj = (JContainer)JsonConvert.DeserializeObject(json);
-            foreach (JToken token in obj)
+            try
             {
-                JsonProperty propertyInfo = ParseProperty(token, null);
-                schema[propertyInfo.Name] = propertyInfo;
+                JContainer obj = (JContainer)JsonConvert.DeserializeObject(json);
+                foreach (JToken token in obj)
+                {
+                    JsonProperty propertyInfo = ParseProperty(token, null);
+                    schema[propertyInfo.Name] = propertyInfo;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new SchemaBuildException(ex.Message, ex);
             }
             return schema;
         }

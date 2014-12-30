@@ -159,7 +159,7 @@
 				}
 				else
 				{
-                    LogMessage(new ValidationWarning(file.Name, "Source file was not in the scan or copy list, skipped."));
+                    LogMessage(new ValidationWarning(ValidationErrorCode.ExtraFileDetected, file.Name, "Source file was not in the scan or copy list, skipped."));
 				}
 			}
 
@@ -214,7 +214,7 @@
 			}
 			catch (Exception ex)
 			{
-                LogMessage(new ValidationError(file.Name, "Cannot copy file to output directory: {0}", ex.Message));
+                LogMessage(new ValidationError(ValidationErrorCode.ErrorCopyingFile, file.Name, "Cannot copy file to output directory: {0}", ex.Message));
 			}
 		}
 

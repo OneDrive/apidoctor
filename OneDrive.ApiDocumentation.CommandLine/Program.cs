@@ -56,7 +56,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             string[] missingProps;
             if (!options.HasRequiredProperties(out missingProps))
             {
-                var error = new ValidationError(null, "Command line is missing required arguments: {0}", missingProps.ComponentsJoinedByString(", "));
+                var error = new ValidationError(ValidationErrorCode.MissingRequiredArguments, null, "Command line is missing required arguments: {0}", missingProps.ComponentsJoinedByString(", "));
                 FancyConsole.WriteLine(origCommandLineOpts.GetUsage(invokedVerb));
                 WriteOutErrors(new ValidationError[] { error });
                 Exit(failure: true);

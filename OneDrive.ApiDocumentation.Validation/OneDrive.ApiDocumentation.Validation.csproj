@@ -52,6 +52,7 @@
     <Compile Include="Param\RequestParameters.cs" />
     <Compile Include="DocumentPublisher.cs" />
     <Compile Include="RunMethodParameters.cs" />
+    <Compile Include="SchemaBuildException.cs" />
     <Compile Include="ValidationError.cs" />
     <Compile Include="Json\JsonProperty.cs" />
     <Compile Include="Json\JsonSchema.cs" />

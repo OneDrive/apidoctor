@@ -90,9 +90,15 @@
                     HtmlContent = md.Transform(reader.ReadToEnd());
                 }
             }
+            catch (IOException ioex)
+            {
+                detectedErrors.Add(new ValidationError(ValidationErrorCode.ErrorOpeningFile, DisplayName, "Error reading file contents: {0}", ioex.Message));
+                errors = detectedErrors.ToArray();
+                return false;
+            }
             catch (Exception ex)
             {
-                detectedErrors.Add(new ValidationError(DisplayName, "Error reading file contents: {0}", ex.Message));
+                detectedErrors.Add(new ValidationError(ValidationErrorCode.ErrorReadingFile, DisplayName, "Error reading file contents: {0}", ex.Message));
                 errors = detectedErrors.ToArray();
                 return false;
             }
@@ -121,7 +127,7 @@
                 var htmlComment = m_CodeBlocks[i];
                 if (htmlComment.BlockType != MarkdownDeep.BlockType.html)
                 {
-                    detectedErrors.Add(new ValidationWarning(FullPath, "Block skipped - expected HTML comment, found: {0}", htmlComment.BlockType, htmlComment.Content));
+                    detectedErrors.Add(new ValidationMessage(FullPath, "Block skipped - expected HTML comment, found: {0}", htmlComment.BlockType, htmlComment.Content));
                     
                     i++;
                     continue;
@@ -134,7 +140,7 @@
                 } 
                 catch (Exception ex)
                 {
-                    detectedErrors.Add(new ValidationError(FullPath, "Exception while parsing code block: {0}.", ex.Message));
+                    detectedErrors.Add(new ValidationError(ValidationErrorCode.MarkdownParserError, FullPath, "Exception while parsing code block: {0}.", ex.Message));
                 }
                 i += 2;
             }
@@ -211,7 +217,7 @@
             {
                 if (null == link.def)
                 {
-                    foundErrors.Add(new ValidationError(this.DisplayName, "Link specifies ID '{0}' which was not found in the document.", link.link_text));
+                    foundErrors.Add(new ValidationError(ValidationErrorCode.MissingLinkSourceId, this.DisplayName, "Link specifies ID '{0}' which was not found in the document.", link.link_text));
                     continue;
                 }
 
@@ -221,21 +227,21 @@
                     case LinkValidationResult.BookmarkSkipped:
                     case LinkValidationResult.ExternalSkipped:
                         if (includeWarnings)
-                            foundErrors.Add(new ValidationWarning(this.DisplayName, "Skipped validation of link '{1}' to URL '{0}'", link.def.url, link.link_text));
+                            foundErrors.Add(new ValidationWarning(ValidationErrorCode.LinkValidationSkipped, this.DisplayName, "Skipped validation of link '{1}' to URL '{0}'", link.def.url, link.link_text));
                         break;
                     case LinkValidationResult.FileNotFound:
-                        foundErrors.Add(new ValidationError(this.DisplayName, "Destination missing for link '{1}' to URL '{0}'", link.def.url, link.link_text));
+                        foundErrors.Add(new ValidationError(ValidationErrorCode.LinkDestinationNotFound, this.DisplayName, "Destination missing for link '{1}' to URL '{0}'", link.def.url, link.link_text));
                         break;
                     case LinkValidationResult.ParentAboveDocSetPath:
-                        foundErrors.Add(new ValidationError(this.DisplayName, "Destination outside of doc set for link '{1}' to URL '{0}'", link.def.url, link.link_text));
+                        foundErrors.Add(new ValidationError(ValidationErrorCode.LinkDestinationOutsideDocSet, this.DisplayName, "Destination outside of doc set for link '{1}' to URL '{0}'", link.def.url, link.link_text));
                         break;
                     case LinkValidationResult.UrlFormatInvalid:
-                        foundErrors.Add(new ValidationError(this.DisplayName, "Invalid URL format for link '{1}' to URL '{0}'", link.def.url, link.link_text));
+                        foundErrors.Add(new ValidationError(ValidationErrorCode.LinkFormatInvalid, this.DisplayName, "Invalid URL format for link '{1}' to URL '{0}'", link.def.url, link.link_text));
                         break;
                     case LinkValidationResult.Valid:
                         break;
                     default:
-                        foundErrors.Add(new ValidationError(this.DisplayName, "{2}: for link '{1}' to URL '{0}'", link.def.url, link.link_text, result));
+                        foundErrors.Add(new ValidationError(ValidationErrorCode.Unknown, this.DisplayName, "{2}: for link '{1}' to URL '{0}'", link.def.url, link.link_text, result));
                         break;
 
                 }

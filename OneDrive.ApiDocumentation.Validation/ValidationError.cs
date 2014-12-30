@@ -6,18 +6,65 @@
     using System.Text;
     using System.Threading.Tasks;
 
+
+    public enum ValidationErrorCode
+    {
+        Unknown,
+        ConsolidatedError,
+        JsonParserException,
+        JsonErrorObject,
+        MissingCollectionProperty,
+        CollectionArrayEmpty,
+        RequiredPropertiesMissing,
+        AdditionalPropertyDetected,
+        ExpectedTypeDifferent,
+        ExpectedArrayValue,
+        ExpectedNonArrayValue,
+        ResourceTypeNotFound,
+        NoCustomMembersFound,
+        CustomValidationNotSupported,
+        ResponseResourceTypeMissing,
+
+        HttpStatusCodeDifferent,
+        HttpStatusMessageDifferent,
+        HttpRequiredHeaderMissing,
+        HttpHeaderValueDifferent,
+        HttpBodyExpected,
+        HttpResponseFormatInvalid,
+
+        ErrorOpeningFile,
+        ErrorReadingFile,
+        ErrorCopyingFile,
+        ExtraFileDetected,
+
+        MarkdownParserError,
+        
+        MissingLinkSourceId,
+        LinkValidationSkipped,
+        LinkDestinationNotFound,
+        LinkDestinationOutsideDocSet,
+        LinkFormatInvalid,
+        
+        MissingRequiredArguments,
+        MissingAccessToken
+
+    }
+
     public class ValidationError
     {
         protected ValidationError()
         {
-
+            
         }
 
-        public ValidationError(string source, string messageformat, params object[] formatParams)
+        public ValidationError(ValidationErrorCode code, string source, string messageformat, params object[] formatParams)
         {
-            this.Source = source;
-            this.Message = string.Format(messageformat, formatParams);
+            Code = code;
+            Source = source;
+            Message = string.Format(messageformat, formatParams);
         }
+
+        public ValidationErrorCode Code { get; set; }
 
         public string Message { get; set; }
 
@@ -60,16 +107,16 @@
             }
         }
 
-        public static ValidationError NewConsolidatedError(ValidationError[] errors, string message, params object[] parameters)
+        public static ValidationError NewConsolidatedError(ValidationErrorCode code, ValidationError[] errors, string message, params object[] parameters)
         {
             ValidationError error = null;
             if (errors.All(err => err.IsWarning))
             {
-                error = new ValidationWarning(null, message, parameters);
+                error = new ValidationWarning(code, null, message, parameters);
             }
             else
             {
-                error = new ValidationError(null, message, parameters);
+                error = new ValidationError(code, null, message, parameters);
             }
 
             error.InnerErrors = errors;
@@ -80,8 +127,8 @@
     public class ValidationWarning : ValidationError
     {
 
-        public ValidationWarning(string source, string format, params object[] formatParams)
-            : base(source, format, formatParams)
+        public ValidationWarning(ValidationErrorCode code, string source, string format, params object[] formatParams)
+            : base(code, source, format, formatParams)
         {
 
         }
@@ -94,7 +141,7 @@
     public class ValidationMessage : ValidationError
     {
         public ValidationMessage(string source, string format, params object[] formatParams)
-            : base(source, format, formatParams)
+            : base(ValidationErrorCode.Unknown, source, format, formatParams)
         {
 
         }

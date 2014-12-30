@@ -89,12 +89,12 @@
             List<ValidationError> errorList = new List<ValidationError>();
             if (StatusCode != actualResponse.StatusCode)
             {
-                errorList.Add(new ValidationError(null, "Expected status code :{0}, received: {1}.", StatusCode, actualResponse.StatusCode));
+                errorList.Add(new ValidationError(ValidationErrorCode.HttpStatusCodeDifferent, null, "Expected status code :{0}, received: {1}.", StatusCode, actualResponse.StatusCode));
             }
 
             if (StatusMessage != actualResponse.StatusMessage)
             {
-                errorList.Add(new ValidationError(null, "Expected status message {0}, received: {1}.", StatusMessage, actualResponse.StatusMessage));
+                errorList.Add(new ValidationError(ValidationErrorCode.HttpStatusMessageDifferent, null, "Expected status message {0}, received: {1}.", StatusMessage, actualResponse.StatusMessage));
             }
 
             // Check to see that expected headers were found in the response
@@ -105,7 +105,7 @@
             {
                 if (!otherResponseHeaderKeys.Contains(expectedHeader, comparer))
                 {
-                    errorList.Add(new ValidationError(null, "Response is missing header expected header: {0}.", expectedHeader));
+                    errorList.Add(new ValidationError(ValidationErrorCode.HttpRequiredHeaderMissing, null, "Response is missing header expected header: {0}.", expectedHeader));
                 }
                 else if (HeadersForPartialMatch.Contains(expectedHeader.ToLower()))
                 {
@@ -114,7 +114,7 @@
 
                     if (!actualValue.ToLower().StartsWith(expectedValue))
                     {
-                        errorList.Add(new ValidationError(null, "Header '{0}' has unexpected value '{1}' (expected {2})", expectedHeader, actualValue, expectedValue));
+                        errorList.Add(new ValidationError(ValidationErrorCode.HttpHeaderValueDifferent, null, "Header '{0}' has unexpected value '{1}' (expected {2})", expectedHeader, actualValue, expectedValue));
                     }
                 }
             }
