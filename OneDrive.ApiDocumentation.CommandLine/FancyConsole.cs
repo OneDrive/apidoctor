@@ -47,6 +47,12 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             Console.ResetColor();
         }
 
+        public static void Write(string format, params object[] values)
+        {
+            if (null != _logWriter) _logWriter.Write(format, values);
+            Console.Write(format, values);
+        }
+
         public static void Write(ConsoleColor color, string format, params object[] values)
         {
             if (null != _logWriter) _logWriter.Write(format, values);

@@ -71,7 +71,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                     VerifyLinks((DocSetOptions)options);
                     break;
                 case CommandLineOptions.VerbDocs:
-                    MethodExampleValidation((ConsistencyCheckOptions)options);
+                    CheckMethodExamples((ConsistencyCheckOptions)options);
                     break;
                 case CommandLineOptions.VerbService:
                     await CheckMethodsAgainstService((ServiceConsistencyOptions)options);
@@ -154,7 +154,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 set.RunParameters = new RunMethodParameters(set, serviceOptions.ParameterSource);
                 if (!set.RunParameters.Loaded)
                 {
-                    FancyConsole.WriteLine(ConsoleWarningColor, "WARNING: Unable to read request parameter configuration file: {0}", serviceOptions.ParameterSource);
+                    FancyConsole.WriteLine(ConsoleWarningColor, "Unable to read request parameter configuration file: {0}", serviceOptions.ParameterSource);
                 }
             }
 
@@ -299,7 +299,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             return query.FirstOrDefault();
         }
 
-        private static void MethodExampleValidation(ConsistencyCheckOptions options)
+        private static void CheckMethodExamples(ConsistencyCheckOptions options)
         {
             var docset = GetDocSet(options);
             FancyConsole.WriteLine();
@@ -307,14 +307,19 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             MethodDefinition[] methods = FindTestMethods(options, docset);
 
             bool result = true;
+            int successCount = 0;
             foreach (var method in methods)
             {
                 FancyConsole.Write(ConsoleHeaderColor, "Checking \"{0}\" in {1}...", method.DisplayName, method.SourceFile.DisplayName);
 
                 var parser = new HttpParser();
                 var expectedResponse = parser.ParseHttpResponse(method.ExpectedResponse);
-                result &= ValidateHttpResponse(docset, method, expectedResponse);
+                bool success = ValidateHttpResponse(docset, method, expectedResponse);
+                result &= success;
+                successCount += success ? 1 : 0;
             }
+
+            PrintStatusMessage(successCount, methods.Length);
 
             if (!result)
                 Environment.Exit(ExitCodeFailure);
@@ -382,13 +387,19 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             }
         }
 
+        /// <summary>
+        /// Make requests against the service. Uses DocSet.RunParameter information to alter requests.
+        /// </summary>
+        /// <param name="options"></param>
+        /// <returns></returns>
         private static async Task CheckMethodsAgainstService(ServiceConsistencyOptions options)
         {
             var docset = GetDocSet(options);
             FancyConsole.WriteLine();
 
             var methods = FindTestMethods(options, docset);
-
+            int successCount = 0;
+            int totalCount = 0;
             bool result = true;
             foreach (var method in methods)
             {
@@ -397,7 +408,9 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 if (setsOfParameters.Length == 0)
                 {
                     // If there are no parameters defined, we still try to call the request as-is.
-                    result &= await TestMethodWithParameters(docset, method, null, options.ServiceRootUrl, options.AccessToken);
+                    bool success = await TestMethodWithParameters(docset, method, null, options.ServiceRootUrl, options.AccessToken);
+                    result &= success;
+                    successCount += success ? 1 : 0; totalCount++;
                     AddPause(options);
                 }
                 else
@@ -405,16 +418,36 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                     // Otherwise, if there are parameter sets, we call each of them and check the result.
                     foreach (var requestSettings in setsOfParameters)
                     {
-                        result &= await TestMethodWithParameters(docset, method, requestSettings, options.ServiceRootUrl, options.AccessToken);
+                        bool success = await TestMethodWithParameters(docset, method, requestSettings, options.ServiceRootUrl, options.AccessToken);
+                        result &= success;
+                        successCount += success ? 1 : 0; totalCount++;
                         AddPause(options);
                     }
                 }
             }
 
+            PrintStatusMessage(successCount, totalCount);
+
             if (!result)
                 Environment.Exit(ExitCodeFailure);
             else
                 Environment.Exit(ExitCodeSuccess);
+        }
+
+        private static void PrintStatusMessage(int successCount, int totalCount)
+        {
+            FancyConsole.WriteLine();
+            FancyConsole.Write("Runs completed. ");
+            double percentCompleted = 100 * (successCount / (double)totalCount);
+
+            const string percentCompleteFormat = "{0:0.00}% passed";
+            if (percentCompleted == 100.0)
+                FancyConsole.Write(ConsoleSuccessColor, percentCompleteFormat, percentCompleted);
+            else
+                FancyConsole.Write(ConsoleWarningColor, percentCompleteFormat, percentCompleted);
+
+            if (successCount != totalCount)
+                FancyConsole.Write(ConsoleErrorColor, " ({0} failures)", totalCount - successCount);
         }
 
         private static void AddPause(ServiceConsistencyOptions options)

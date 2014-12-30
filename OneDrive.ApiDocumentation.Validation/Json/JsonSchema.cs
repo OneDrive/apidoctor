@@ -139,7 +139,7 @@
                     // TODO: For an Array type, we should validate the first child of the array.
                     if (inputProperty.Type == JsonDataType.Array)
                     {
-                        detectedErrors.Add(new ValidationWarning(null, "Warning: Object included an array property '{0}' whose children were not validated.", inputProperty.Name));
+                        detectedErrors.Add(new ValidationWarning(null, "Object included an array property '{0}' whose children were not validated.", inputProperty.Name));
                     }
                     // This checks out.
                     return PropertyValidationOutcome.OK;
