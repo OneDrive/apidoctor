@@ -97,7 +97,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             List<string> props = new List<string>();
 
             string value = PathToDocSet;
-            if (!MakePropertyValid(ref value, Properties.Settings.Default.DocumentationPath))
+            if (!MakePropertyValid(ref value, SavedSettings.Default.DocumentationPath))
             {
                 props.Add(PathArgument);
             }
@@ -204,13 +204,13 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             List<string> props = new List<string>(missingArguments);
             
             string checkValue = AccessToken;
-            if (!MakePropertyValid(ref checkValue, Properties.Settings.Default.AccessToken))
+            if (!MakePropertyValid(ref checkValue, SavedSettings.Default.AccessToken))
                 props.Add(AccessTokenArgument);
             else
                 AccessToken = checkValue;
 
             checkValue = ServiceRootUrl;
-            if (!MakePropertyValid(ref checkValue, Properties.Settings.Default.ServiceUrl))
+            if (!MakePropertyValid(ref checkValue, SavedSettings.Default.ServiceUrl))
                 props.Add(ServiceUrlArgument);
             ServiceRootUrl = checkValue;
 

@@ -88,7 +88,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
         private static void SetDefaultValues(SetCommandOptions setCommandOptions)
         {
-            var settings = Properties.Settings.Default;
+            var settings = SavedSettings.Default;
             if (setCommandOptions.ResetStoredValues)
             {
                 settings.AccessToken = null;
