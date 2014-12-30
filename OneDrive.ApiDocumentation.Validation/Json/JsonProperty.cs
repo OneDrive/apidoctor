@@ -18,6 +18,8 @@
 
         public string OriginalValue { get; set; }
 
+        public bool IsArray { get; set; }
+
 
         public string TypeDescription
         {

@@ -38,7 +38,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                   verbOptions = (BaseOptions)subOptions;
               }))
             {
-                Environment.Exit(CommandLine.Parser.DefaultExitCodeFail);
+                Exit(failure: true);
             }
 
             var commandOptions = verbOptions as DocSetOptions;
@@ -59,7 +59,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 var error = new ValidationError(null, "Command line is missing required arguments: {0}", missingProps.ComponentsJoinedByString(", "));
                 FancyConsole.WriteLine(origCommandLineOpts.GetUsage(invokedVerb));
                 WriteOutErrors(new ValidationError[] { error });
-                Environment.Exit(ExitCodeFailure);
+                Exit(failure: true);
             }
 
             switch (invokedVerb)
@@ -211,12 +211,12 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             if (!docset.ValidateLinks(options.Verbose, out errors))
             {
                 WriteOutErrors(errors);
-                Environment.Exit(ExitCodeFailure);
+                Exit(failure: true);
             }
             else
             {
                 FancyConsole.WriteLine(ConsoleSuccessColor, "No link errors detected.");
-                Environment.Exit(ExitCodeSuccess);
+                Exit(failure: false);
             }
         }
 
@@ -321,10 +321,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
             PrintStatusMessage(successCount, methods.Length);
 
-            if (!result)
-                Environment.Exit(ExitCodeFailure);
-            else
-                Environment.Exit(ExitCodeSuccess);
+            Exit(failure: !result);
         }
 
         private static MethodDefinition[] FindTestMethods(ConsistencyCheckOptions options, DocSet docset)
@@ -336,7 +333,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 if (null == foundMethod)
                 {
                     FancyConsole.WriteLine(ConsoleErrorColor, "Unable to locate method '{0}' in docset.", options.MethodName);
-                    Environment.Exit(ExitCodeFailure);
+                    Exit(failure: true);
                 }
                 methods = new MethodDefinition[] { LookUpMethod(docset, options.MethodName) };
             }
@@ -428,11 +425,20 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
             PrintStatusMessage(successCount, totalCount);
 
-            if (!result)
-                Environment.Exit(ExitCodeFailure);
-            else
-                Environment.Exit(ExitCodeSuccess);
+            Exit(!result);
         }
+
+        private static void Exit(bool failure)
+        {
+#if DEBUG
+            Console.WriteLine();
+            Console.Write("Press any key to exit.");
+            Console.ReadKey();
+#endif
+
+            Environment.Exit(failure ? ExitCodeFailure : ExitCodeSuccess);
+        }
+
 
         private static void PrintStatusMessage(int successCount, int totalCount)
         {
