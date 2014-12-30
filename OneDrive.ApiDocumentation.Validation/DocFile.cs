@@ -13,28 +13,29 @@
     public class DocFile
     {
         #region Instance Variables
-        private string m_BasePath;
-        private List<MarkdownDeep.Block> m_CodeBlocks = new List<MarkdownDeep.Block>();
-        private List<ResourceDefinition> m_Resources = new List<ResourceDefinition>();
-        private List<MethodDefinition> m_Requests = new List<MethodDefinition>();
-        private List<MarkdownDeep.LinkInfo> m_Links = new List<MarkdownDeep.LinkInfo>();
+        protected bool m_hasScanRun;
+        protected string m_BasePath;
+        protected List<MarkdownDeep.Block> m_CodeBlocks = new List<MarkdownDeep.Block>();
+        protected List<ResourceDefinition> m_Resources = new List<ResourceDefinition>();
+        protected List<MethodDefinition> m_Requests = new List<MethodDefinition>();
+        protected List<MarkdownDeep.LinkInfo> m_Links = new List<MarkdownDeep.LinkInfo>();
         #endregion
 
         #region Properties
         /// <summary>
         /// Friendly name of the file
         /// </summary>
-        public string DisplayName { get; private set; }
+        public string DisplayName { get; protected set; }
 
         /// <summary>
         /// Path to the file on disk
         /// </summary>
-        public string FullPath { get; private set; }
+        public string FullPath { get; protected set; }
 
         /// <summary>
         /// HTML-rendered version of the markdown source (for displaying)
         /// </summary>
-        public string HtmlContent { get; private set; }
+        public string HtmlContent { get; protected set; }
 
         public ResourceDefinition[] Resources
         {
@@ -59,11 +60,17 @@
         /// <summary>
         /// Raw Markdown parsed blocks
         /// </summary>
-        private MarkdownDeep.Block[] Blocks { get; set; }
+        protected MarkdownDeep.Block[] Blocks { get; set; }
 
         #endregion
 
         #region Constructor
+
+        protected DocFile()
+        {
+
+        }
+
         public DocFile(string basePath, string relativePath)
         {
             m_BasePath = basePath;
@@ -73,21 +80,32 @@
         #endregion
 
         #region Markdown Parsing
+
+        protected void ParseMarkdownForBlocksAndLinks(string inputMarkdown)
+        {
+            MarkdownDeep.Markdown md = new MarkdownDeep.Markdown();
+            md.SafeMode = false;
+            md.ExtraMode = true;
+
+            HtmlContent = md.Transform(inputMarkdown);
+            Blocks = md.Blocks;
+            m_Links = new List<MarkdownDeep.LinkInfo>(md.FoundLinks);
+        }
+
+
         /// <summary>
         /// Read the contents of the file into blocks and generate any resource or method definitions from the contents
         /// </summary>
         public bool Scan(out ValidationError[] errors)
         {
+            m_hasScanRun = true;
             List<ValidationError> detectedErrors = new List<ValidationError>();
-
-            MarkdownDeep.Markdown md = new MarkdownDeep.Markdown();
-            md.SafeMode = false;
-            md.ExtraMode = true;
+            
             try
             {
                 using (StreamReader reader = File.OpenText(this.FullPath))
                 {
-                    HtmlContent = md.Transform(reader.ReadToEnd());
+                    ParseMarkdownForBlocksAndLinks(reader.ReadToEnd());
                 }
             }
             catch (IOException ioex)
@@ -103,24 +121,17 @@
                 return false;
             }
 
-            Blocks = md.Blocks;
-            
-            // Scan through the blocks to find something interesting
-            m_CodeBlocks.Clear();
-            foreach (var block in Blocks)
-            {
-                switch (block.BlockType)
-                {
-                    case MarkdownDeep.BlockType.codeblock:
-                    case MarkdownDeep.BlockType.html:
-                        m_CodeBlocks.Add(block);
-                        break;
-                    default:
-                        break;
-                }
-            }
+            return ParseCodeBlocks(out errors);
+        }
 
-            for (int i = 0; i < m_CodeBlocks.Count;)
+        protected bool ParseCodeBlocks(out ValidationError[] errors)
+        {
+            List<ValidationError> detectedErrors = new List<ValidationError>();
+
+            // Scan through the blocks to find something interesting
+            m_CodeBlocks = FindCodeBlocks(Blocks);
+
+            for (int i = 0; i < m_CodeBlocks.Count; )
             {
                 // We're looking for pairs of html + code blocks. The HTML block contains metadata about the block.
                 // If we don't find an HTML block, then we skip the code block.
@@ -128,27 +139,42 @@
                 if (htmlComment.BlockType != MarkdownDeep.BlockType.html)
                 {
                     detectedErrors.Add(new ValidationMessage(FullPath, "Block skipped - expected HTML comment, found: {0}", htmlComment.BlockType, htmlComment.Content));
-                    
                     i++;
                     continue;
                 }
 
-                var codeBlock = m_CodeBlocks[i + 1];
-                try 
+                try
                 {
+                    var codeBlock = m_CodeBlocks[i + 1];
                     ParseCodeBlock(htmlComment, codeBlock);
-                } 
+                }
                 catch (Exception ex)
                 {
-                    detectedErrors.Add(new ValidationError(ValidationErrorCode.MarkdownParserError, FullPath, "Exception while parsing code block: {0}.", ex.Message));
+                    detectedErrors.Add(new ValidationError(ValidationErrorCode.MarkdownParserError, FullPath, "Exception while parsing code blocks: {0}.", ex.Message));
                 }
                 i += 2;
             }
 
-            m_Links.AddRange(md.FoundLinks);
-
             errors = detectedErrors.ToArray();
             return detectedErrors.Count == 0;
+        }
+
+        protected static List<MarkdownDeep.Block> FindCodeBlocks(MarkdownDeep.Block[] blocks)
+        {
+            var blockList = new List<MarkdownDeep.Block>();
+            foreach (var block in blocks)
+            {
+                switch (block.BlockType)
+                {
+                    case MarkdownDeep.BlockType.codeblock:
+                    case MarkdownDeep.BlockType.html:
+                        blockList.Add(block);
+                        break;
+                    default:
+                        break;
+                }
+            }
+            return blockList;
         }
 
         /// <summary>
@@ -212,6 +238,9 @@
         /// <returns>True if all links are valid. Otherwise false</returns>
         public bool ValidateNoBrokenLinks(bool includeWarnings, out ValidationError[] errors)
         {
+            if (!m_hasScanRun)
+                throw new InvalidOperationException("Cannot validate links until Scan() is called.");
+
             var foundErrors = new List<ValidationError>();
             foreach (var link in m_Links)
             {
@@ -251,7 +280,7 @@
             return errors.Length == 0;
         }
 
-        private enum LinkValidationResult
+        protected enum LinkValidationResult
         {
             Valid,
             FileNotFound,
@@ -261,7 +290,7 @@
             ParentAboveDocSetPath
         }
 
-        private static LinkValidationResult VerifyLink(string docFilePath, string linkUrl, string docSetBasePath)
+        protected LinkValidationResult VerifyLink(string docFilePath, string linkUrl, string docSetBasePath)
         {
             Uri parsedUri;
             var validUrl = Uri.TryCreate(linkUrl, UriKind.RelativeOrAbsolute, out parsedUri);
@@ -282,33 +311,38 @@
                 }
                 else
                 {
-                    var rootPath = sourceFile.DirectoryName;
-                    if (linkUrl.Contains("#"))
-                    {
-                        linkUrl = linkUrl.Substring(0, linkUrl.IndexOf("#"));
-                    }
-                    while (linkUrl.StartsWith(".." + Path.DirectorySeparatorChar))
-                    {
-                        var nextLevelParent = new DirectoryInfo(rootPath).Parent;
-                        rootPath = nextLevelParent.FullName;
-                        linkUrl = linkUrl.Substring(3);
-                    }
-
-                    if (rootPath.Length < docSetBasePath.Length)
-                    {
-                        return LinkValidationResult.ParentAboveDocSetPath;
-                    }
-
-                    var pathToFile = Path.Combine(rootPath, linkUrl);
-                    if (!File.Exists(pathToFile))
-                    {
-                        return LinkValidationResult.FileNotFound;
-                    }
+                    return VerifyRelativeLink(sourceFile, linkUrl, docSetBasePath);
                 }
             }
             else
             {
                 return LinkValidationResult.UrlFormatInvalid;
+            }
+        }
+
+        protected virtual LinkValidationResult VerifyRelativeLink(FileInfo sourceFile, string linkUrl, string docSetBasePath)
+        {
+            var rootPath = sourceFile.DirectoryName;
+            if (linkUrl.Contains("#"))
+            {
+                linkUrl = linkUrl.Substring(0, linkUrl.IndexOf("#"));
+            }
+            while (linkUrl.StartsWith(".." + Path.DirectorySeparatorChar))
+            {
+                var nextLevelParent = new DirectoryInfo(rootPath).Parent;
+                rootPath = nextLevelParent.FullName;
+                linkUrl = linkUrl.Substring(3);
+            }
+
+            if (rootPath.Length < docSetBasePath.Length)
+            {
+                return LinkValidationResult.ParentAboveDocSetPath;
+            }
+
+            var pathToFile = Path.Combine(rootPath, linkUrl);
+            if (!File.Exists(pathToFile))
+            {
+                return LinkValidationResult.FileNotFound;
             }
 
             return LinkValidationResult.Valid;
