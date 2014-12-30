@@ -242,7 +242,10 @@ namespace MarkdownDeep
 					return;
 
 				case BlockType.unsafe_html:
-//					m.HtmlEncode(b, buf, contentStart, contentLen);
+                    if (m.EncodeUnsafeHtml)
+                    {
+                        m.HtmlEncode(b, buf, contentStart, contentLen);
+                    }
 					return;
 
 				case BlockType.codeblock:
@@ -477,6 +480,7 @@ namespace MarkdownDeep
 			contentLen = other.contentLen;
 			lineStart = other.lineStart;
 			lineLen = other.lineLen;
+            CodeLanguage = other.CodeLanguage;
 			return this;
 		}
 
@@ -491,8 +495,6 @@ namespace MarkdownDeep
 
 
         public BlockType BlockType { get { return blockType; } }
-        public Block[] Children { get { return children.ToArray(); } }
-
         public string CodeLanguage { get; set; }
     }
 }

@@ -232,6 +232,16 @@ namespace MarkdownDeep
 			set;
 		}
 
+        /// <summary>
+        /// Gets or sets a value indicating if unsafe HTML is encoded and rendered, or skipped completely.
+        /// </summary>
+        public bool EncodeUnsafeHtml
+        {
+            get;
+            set;
+
+        }
+
 		// Set to true to enable ExtraMode, which enables the same set of 
 		// features as implemented by PHP Markdown Extra.
 		//  - Markdown in html (eg: <div markdown="1"> or <div markdown="deep"> )
