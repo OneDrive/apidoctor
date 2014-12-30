@@ -6,6 +6,7 @@
     using System.Threading.Tasks;
     using System.Diagnostics;
     using System.ComponentModel;
+    using MarkdownDeep;
 
 	public class DocumentPublisher
 	{
@@ -14,7 +15,7 @@
         /// <summary>
         /// Comma separated list of file extensions that should be scanned for internal content
         /// </summary>
-        public string TextFileExtensions { get; set; }
+        public string SourceFileExtensions { get; set; }
 
         /// <summary>
         /// Full path to the source folder for documentation
@@ -27,7 +28,8 @@
         public string SkipPaths { get; set; }
 
         /// <summary>
-        /// Indicates if non-text files are also published to the output directory
+        /// Indicates if non-text files are also published to the output directory.
+        /// SkipPaths are still ignored regardless of this setting.
         /// </summary>
         public bool PublishAllFiles { get; set; }
 
@@ -41,22 +43,27 @@
         /// </summary>
         public bool VerboseLogging { get; set; }
 
-
-        private List<string> scannableExtensions;
-        private List<string> ignoredPaths;
+        protected List<string> scannableExtensions;
+        protected List<string> ignoredPaths;
 
 		public DocumentPublisher(string sourceFolder)
 		{
+            sourceFolder = DocSet.ResolvePathWithUserRoot(sourceFolder);
+
             RootPath = new DirectoryInfo(sourceFolder).FullName;
             if (!RootPath.EndsWith(Path.DirectorySeparatorChar.ToString()))
                 RootPath = string.Concat(RootPath, Path.DirectorySeparatorChar);
 
-            TextFileExtensions = ".md,.mdown";
+            SourceFileExtensions = ".md,.mdown";
             SkipPaths = "\\internal;\\.git;\\legacy;\\generate_html_docs;\\.gitignore";
             Messages = new BindingList<ValidationError>();
 		}
 
-        private void LogMessage(ValidationError message)
+        /// <summary>
+        /// Logs out a validation message.
+        /// </summary>
+        /// <param name="message">Message.</param>
+        protected void LogMessage(ValidationError message)
         {
             var eventHandler = NewMessage;
             if (null != eventHandler)
@@ -76,10 +83,10 @@
             Messages.Clear();
 
             DirectoryInfo destination = new DirectoryInfo(outputFolder);
-            scannableExtensions = new List<string>(TextFileExtensions.Split(','));
+            scannableExtensions = new List<string>(SourceFileExtensions.Split(','));
             ignoredPaths = new List<string>(SkipPaths.Split(';'));
 
-			await CleanDirectory(new DirectoryInfo(RootPath), destination);
+			await PublishFromDirectory(new DirectoryInfo(RootPath), destination);
 		}
 
 		/// <summary>
@@ -88,7 +95,7 @@
 		/// </summary>
 		/// <returns>The directory path.</returns>
 		/// <param name="dir">Dir.</param>
-		private string RelativeDirectoryPath(DirectoryInfo dir, bool includeRootSpecifier)
+		protected string RelativeDirectoryPath(DirectoryInfo dir, bool includeRootSpecifier)
 		{
 			var fullPath = dir.FullName;
 			if (!fullPath.EndsWith(Path.DirectorySeparatorChar.ToString()))
@@ -117,7 +124,7 @@
 		/// internal comments in the markdown documents
 		/// </summary>
 		/// <param name="directory">Directory.</param>
-		private async Task CleanDirectory(DirectoryInfo directory, DirectoryInfo destinationRoot)
+		protected virtual async Task PublishFromDirectory(DirectoryInfo directory, DirectoryInfo destinationRoot)
 		{
 			var pathDisplayName = RelativeDirectoryPath(directory, true);
 
@@ -144,11 +151,11 @@
 				}
 				else if (IsScannableFile(file))
 				{
-					await WriteCleanFileToOutputAsync(file, destinationRoot);
+					await PublishFileToDestination(file, destinationRoot);
 				}
 				else if (CopyToOutput(file))
 				{
-					CopyFileToOutput(file, destinationRoot);
+					CopyFileToDestination(file, destinationRoot);
 				}
 				else
 				{
@@ -169,23 +176,39 @@
 				{
 					var displayName = RelativeDirectoryPath(folder, true);
                     LogMessage(new ValidationMessage(displayName, "Scanning directory."));
-					await CleanDirectory(folder, destinationRoot);
+					await PublishFromDirectory(folder, destinationRoot);
 				}
 			}
 		}
 
-		private string OutputPathForInputFile(FileInfo file, DirectoryInfo destinationRoot)
+        /// <summary>
+        /// Convert an input file into a path in the destinationRoot. Optionally
+        /// giving the file a new file extension.
+        /// </summary>
+        /// <returns>The file path.</returns>
+        /// <param name="file">File.</param>
+        /// <param name="destinationRoot">Destination root.</param>
+        /// <param name="newExtension">New extension.</param>
+        protected virtual string PublishedFilePath(FileInfo sourceFile, DirectoryInfo destinationRoot, string changeFileExtension = null)
 		{
-			var relativePath = RelativeDirectoryPath(file.Directory, false);
-			var outputPath = Path.Combine(destinationRoot.FullName, relativePath, file.Name);
+			var relativePath = RelativeDirectoryPath(sourceFile.Directory, false);
+
+            string destinationFileName = sourceFile.Name;
+            if (!string.IsNullOrEmpty(changeFileExtension))
+            {
+                var fileNameNoExtension = Path.GetFileNameWithoutExtension(sourceFile.Name);
+                destinationFileName = string.Concat(fileNameNoExtension, changeFileExtension);
+            }
+
+            var outputPath = Path.Combine(destinationRoot.FullName, relativePath, destinationFileName);
 			return outputPath;
 		}
 
-		private void CopyFileToOutput(FileInfo file, DirectoryInfo destinationRoot)
+		protected virtual void CopyFileToDestination(FileInfo file, DirectoryInfo destinationRoot)
 		{
 			try
 			{
-				var outPath = OutputPathForInputFile(file, destinationRoot);
+				var outPath = PublishedFilePath(file, destinationRoot);
                 LogMessage(new ValidationMessage(file.Name, "Copying to output directory without scanning."));
                 file.CopyTo(outPath, true);
 			}
@@ -199,15 +222,14 @@
 		/// Scans the text content of a file and removes any "internal" comments/references
 		/// </summary>
 		/// <param name="file">File.</param>
-		private async Task WriteCleanFileToOutputAsync(FileInfo file, DirectoryInfo destinationRoot)
+		protected virtual async Task PublishFileToDestination(FileInfo sourceFile, DirectoryInfo destinationRoot)
 		{
-            LogMessage(new ValidationMessage(file.Name, "Scanning text file for internal content."));
+            LogMessage(new ValidationMessage(sourceFile.Name, "Scanning text file for internal content."));
 
-			var outputPath = OutputPathForInputFile(file, destinationRoot);
-			StreamWriter writer = new StreamWriter(outputPath, false, System.Text.Encoding.UTF8);
-			writer.AutoFlush = true;
+            var outputPath = PublishedFilePath(sourceFile, destinationRoot);
+            var writer = new StreamWriter(outputPath, false, System.Text.Encoding.UTF8) { AutoFlush = true };
 
-			StreamReader reader = new StreamReader(file.OpenRead());
+			StreamReader reader = new StreamReader(sourceFile.OpenRead());
 
 			long lineNumber = 0;
 			string nextLine;
@@ -216,7 +238,7 @@
 				lineNumber++;
 				if (IsDoubleBlockQuote(nextLine))
 				{
-                    LogMessage(new ValidationMessage(string.Concat(file, ":", lineNumber), "Removing DoubleBlockQuote: {0}", nextLine));
+                    LogMessage(new ValidationMessage(string.Concat(sourceFile, ":", lineNumber), "Removing DoubleBlockQuote: {0}", nextLine));
 					continue;
 				}
 				await writer.WriteLineAsync(nextLine);
@@ -228,7 +250,7 @@
 		#region Scanning Rules
 
 		[ScanRuleAttribute(ScanRuleTarget.LineOfText)]
-		private bool IsDoubleBlockQuote(string text)
+		protected bool IsDoubleBlockQuote(string text)
 		{
 			return text.StartsWith(">>") || text.StartsWith(" >>");
 		}
@@ -258,7 +280,7 @@
 			return IsRelativePathInternal(relativePath);
 		}
 
-		private bool IsRelativePathInternal(string relativePath)
+		protected bool IsRelativePathInternal(string relativePath)
 		{
 			var pathComponents = relativePath.Split(new char[] {Path.DirectorySeparatorChar},
 				StringSplitOptions.RemoveEmptyEntries);
@@ -269,7 +291,7 @@
 		#endregion
 
 	}
-
+        
 	public class ScanRuleAttribute : Attribute
 	{
 		public ScanRuleTarget Target {get; set;}

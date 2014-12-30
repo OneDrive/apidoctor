@@ -66,6 +66,11 @@ namespace MarkdownDeep
 			return Transform(str, out defs);
 		}
 
+        protected virtual void BeforeRenderBlocks(List<Block> foundBlocks)
+        {
+            // Enable subclasses to do processing before the document is rendered
+        }
+
 		// Transform a string
 		public string Transform(string str, out Dictionary<string, LinkDefinition> definitions)
 		{
@@ -86,6 +91,8 @@ namespace MarkdownDeep
 				);
 			}
 
+            BeforeRenderBlocks(blocks);
+
 			// Setup string builder
 			StringBuilder sb = m_StringBuilderFinal;
 			sb.Length = 0;
@@ -98,7 +105,7 @@ namespace MarkdownDeep
 					var b = blocks[i];
 					b.RenderPlain(this, sb);
 
-					if (SummaryLength>0 && sb.Length > SummaryLength)
+					if (SummaryLength > 0 && sb.Length > SummaryLength)
 						break;
 				}
 
@@ -204,14 +211,21 @@ namespace MarkdownDeep
 			// Done
 			return sb.ToString();
 		}
-
-		public int SummaryLength
+            
+        /// <summary>
+        /// Gets or sets the length of the summary. If zero the whole document is converted.
+        /// </summary>
+        /// <value>The length of the summary.</value>
+        public int SummaryLength
 		{
 			get;
 			set;
 		}
-
-		// Set to true to only allow whitelisted safe html tags
+            
+        /// <summary>
+        /// Gets or sets a value indicating whether only whitelisted safe html tags are output.
+        /// </summary>
+        /// <value><c>true</c> if safe mode; otherwise, <c>false</c>.</value>
 		public bool SafeMode
 		{
 			get;
@@ -348,7 +362,7 @@ namespace MarkdownDeep
 			{
 				var q = QualifyUrl(url);
 				if (q != null)
-					return url;
+					return q;
 			}
 
 			// Quit if we don't have a base location

@@ -38,14 +38,20 @@
         #endregion
 
         #region Constructors
+
+        public static string ResolvePathWithUserRoot(string path)
+        {
+            if (path.StartsWith(string.Concat("~", Path.DirectorySeparatorChar.ToString())))
+            {
+                var userFolderPath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                return Path.Combine(userFolderPath, path.Substring(2));
+            }
+            return path;
+        }
+
         public DocSet(string sourceFolderPath)
         {
-            if (sourceFolderPath.StartsWith("~" + Path.DirectorySeparatorChar))
-            {
-                // Need to resolve back to the user's folder
-                var userFolderPath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-                sourceFolderPath = Path.Combine(userFolderPath, sourceFolderPath.Substring(2));
-            }
+            sourceFolderPath = ResolvePathWithUserRoot(sourceFolderPath);
             if (sourceFolderPath.EndsWith(Path.DirectorySeparatorChar.ToString()))
             {
                 sourceFolderPath = sourceFolderPath.TrimEnd(new char[] { Path.DirectorySeparatorChar });

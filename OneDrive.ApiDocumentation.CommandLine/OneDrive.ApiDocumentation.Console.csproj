@@ -22,8 +22,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>false</ConsolePause>
-    <Commandlineparameters>docs -p ~/SourceCode/github/onedrive-api-docs-internal/ --verbose
-</Commandlineparameters>
+    <Commandlineparameters>publish --path ~/SourceCode/github/onedrive-api-docs-internal --format html --output ~/published</Commandlineparameters>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>

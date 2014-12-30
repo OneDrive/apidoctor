@@ -456,22 +456,27 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
         private static async Task PublishDocumentationAsync(PublishOptions options)
         {
-            if (options.Format != PublishOptions.SanitizedFormat.Markdown)
-            {
-                FancyConsole.WriteLine(ConsoleErrorColor, "Publish format not yet implemented: {0}", options.Format);
-                return;
-            }
-
             var outputPath = options.OutputDirectory;
             var inputPath = options.PathToDocSet;
 
             FancyConsole.WriteLine("Publishing documentation to {0}", outputPath);
 
-            var publisher = new DocumentPublisher(inputPath);
-            
+            DocumentPublisher publisher = null;
+            switch (options.Format)
+            {
+                case PublishOptions.SanitizedFormat.Markdown:
+                    publisher = new DocumentPublisher(inputPath);
+                    break;
+                case PublishOptions.SanitizedFormat.Html:
+                    publisher = new DocumentPublisherHtml(inputPath);
+                    break;
+                default:
+                    throw new NotSupportedException("Unsupported format: " + options.Format.ToString());
+            }
+
             publisher.VerboseLogging = options.Verbose;
-            publisher.TextFileExtensions = options.TextFileExtensions;
-            FancyConsole.WriteLineIndented("  ", "File extensions: {0}", publisher.TextFileExtensions);
+            publisher.SourceFileExtensions = options.TextFileExtensions;
+            FancyConsole.WriteLineIndented("  ", "File extensions: {0}", publisher.SourceFileExtensions);
 
             if (!string.IsNullOrEmpty(options.IgnorePaths))
                 publisher.SkipPaths = options.IgnorePaths;

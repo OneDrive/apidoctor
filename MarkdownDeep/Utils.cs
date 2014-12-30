@@ -23,7 +23,7 @@ namespace MarkdownDeep
 	/*
 	 * Various utility and extension methods
 	 */
-	static class Utils
+	public static class Utils
 	{
 		// Extension method. Get the last item in a list (or null if empty)
 		public static T Last<T>(this List<T> list) where T:class

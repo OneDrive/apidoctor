@@ -242,7 +242,7 @@ namespace MarkdownDeep
 					return;
 
 				case BlockType.unsafe_html:
-					m.HtmlEncode(b, buf, contentStart, contentLen);
+//					m.HtmlEncode(b, buf, contentStart, contentLen);
 					return;
 
 				case BlockType.codeblock:
