@@ -150,18 +150,7 @@ which includes the following definition:
 ```
 
 An example usage would look like this in the markdown:
-```
-{
-  "blockType": "resource | request | response | ignored",
-  "@odata.type": "resource_identifier",
-  "optionalProperties": ["array", "of", "properties", "considered", "optional"],
-  "isCollection": "bool value to treat the response as a collection of a resource type",
-  "truncated": "bool value that the response may be missing properties required by the resource",
-  "name": "name of the request method"
-}
-```
 
-An example usage would look like this in the markdown:
 ```
 ### Resource Definition
 
