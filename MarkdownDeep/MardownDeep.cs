@@ -781,6 +781,7 @@ namespace MarkdownDeep
 		{
 			// Store it
 			m_LinkDefinitions[link.id]=link;
+            m_FoundLinks.Add(new LinkInfo(link, null));
 		}
 
         internal void AddLinkInfo(LinkInfo link)
@@ -814,10 +815,22 @@ namespace MarkdownDeep
 		public LinkDefinition GetLinkDefinition(string id)
 		{
 			LinkDefinition link;
-			if (m_LinkDefinitions.TryGetValue(id, out link))
-				return link;
-			else
-				return null;
+            if (m_LinkDefinitions.TryGetValue(id, out link))
+            {
+                return link;
+            }
+            else
+            {
+                // Link ID wasn't found - a missing link!
+                var alreadyExists = from l in m_FoundLinks
+                                    where l.def == null && l.link_text == id
+                                    select l;
+                if (alreadyExists.FirstOrDefault() == null)
+                {
+                    m_FoundLinks.Add(new LinkInfo(null, id));
+                }
+                return null;
+            }
 		}
 
 		internal void AddAbbreviation(string abbr, string title)

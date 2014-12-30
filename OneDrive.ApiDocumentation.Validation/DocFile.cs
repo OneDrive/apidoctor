@@ -209,6 +209,12 @@
             var foundErrors = new List<ValidationError>();
             foreach (var link in m_Links)
             {
+                if (null == link.def)
+                {
+                    foundErrors.Add(new ValidationError(this.DisplayName, "Link specifies ID '{0}' which was not found in the document.", link.link_text));
+                    continue;
+                }
+
                 var result = VerifyLink(FullPath, link.def.url, m_BasePath);
                 switch (result)
                 {
