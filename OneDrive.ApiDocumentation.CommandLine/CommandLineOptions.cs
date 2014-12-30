@@ -78,6 +78,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         private const string PathArgument = "path";
         private const string ShortArgument = "short";
         private const string VerboseArgument = "verbose";
+        private const string LoadErrorArguments = "show-load-warnings";
 
         [Option('p', PathArgument, HelpText = "Path to the documentation set. Required if no default value set.")]
         public string PathToDocSet { get; set; }
@@ -87,6 +88,9 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
         [Option(VerboseArgument, HelpText = "Print verbose output.")]
         public bool Verbose { get; set; }
+
+        [Option(LoadErrorArguments, HelpText="Show document set load messages and warnings")]
+        public bool ShowLoadWarnings { get; set; }
 
         /// <summary>
         /// Checks to see if this options block has all the required properties (or that we had values in the settings for them)

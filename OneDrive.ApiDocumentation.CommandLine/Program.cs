@@ -141,7 +141,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
             FancyConsole.VerboseWriteLine("Scanning documentation files...");
             ValidationError[] loadErrors;
-            if (!set.ScanDocumentation(out loadErrors) && options.Verbose)
+            if (!set.ScanDocumentation(out loadErrors) && options.ShowLoadWarnings)
             {
                 WriteOutErrors(loadErrors);
             }
@@ -431,9 +431,12 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         private static void Exit(bool failure)
         {
 #if DEBUG
-            Console.WriteLine();
-            Console.Write("Press any key to exit.");
-            Console.ReadKey();
+            if (System.Diagnostics.Debugger.IsAttached)
+            {
+                Console.WriteLine();
+                Console.Write("Press any key to exit.");
+                Console.ReadKey();
+            }
 #endif
 
             Environment.Exit(failure ? ExitCodeFailure : ExitCodeSuccess);

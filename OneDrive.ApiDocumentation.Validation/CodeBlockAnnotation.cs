@@ -39,6 +39,9 @@ namespace OneDrive.ApiDocumentation.Validation
         [JsonProperty("name", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public string MethodName { get; set; }
 
+        [JsonProperty("expectError", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public bool ExpectError { get; set; }
+
         public static CodeBlockAnnotation FromJson(string json)
         {
             return JsonConvert.DeserializeObject<CodeBlockAnnotation>(json);

@@ -58,9 +58,11 @@
             List<ValidationError> detectedErrors = new List<ValidationError>();
             List<string> missingProperties = new List<string>(ExpectedProperties.Keys);
 
+            bool expectErrorObject = (annotation != null) ? annotation.ExpectError : false;
+
             // Check for an error response
             dynamic errorObject = obj["error"];
-            if (null != errorObject)
+            if (null != errorObject && !expectErrorObject)
             {
                 string code = errorObject.code;
                 string message = errorObject.message;
@@ -70,6 +72,14 @@
                 detectedErrors.Add(new ValidationError(ValidationErrorCode.JsonErrorObject, null, "Error response received. Code: {0}, Message: {1}", code, message));
                 errors = detectedErrors.ToArray();
                 return false;
+            }
+            else if (expectErrorObject && null == errorObject)
+            {
+                detectedErrors.Clear();
+                detectedErrors.Add(new ValidationError(ValidationErrorCode.JsonErrorObjectExpected, null, "Expected an error object response, but didn't receive one."));
+                errors = detectedErrors.ToArray();
+                return false;
+
             }
 
             // Check to see if this is a "collection" instance
@@ -402,18 +412,30 @@
                         {
                             // See if we can infer type from the items in the array
                             var firstChild = value.First;
-                            var objectType = ParseProperty("foo", firstChild, null);
-                            if (null != objectType)
+                            if (null != firstChild)
                             {
-                                odataTypeName = objectType.ODataTypeName;
-                                propertyType = objectType.Type;
+                                var objectType = ParseProperty("foo", firstChild, null);
+                                if (null != objectType)
+                                {
+                                    odataTypeName = objectType.ODataTypeName;
+                                    propertyType = objectType.Type;
+                                }
+                            }
+                            else
+                            {
+                                propertyType = JsonDataType.Array;
+                                odataTypeName = null;
                             }
                         }
 
                         Dictionary<string, JsonProperty> members = null;
                         if (propertyType == JsonDataType.Custom || propertyType == JsonDataType.Array)
                         {
-                            members = ObjectToSchema((JObject)value.First);
+                            var firstValue = (JObject)value.First;
+                            if (firstValue != null)
+                            {
+                                members = ObjectToSchema(firstValue);
+                            }
                         }
 
                         return new JsonProperty { Name = name, Type = propertyType, ODataTypeName = odataTypeName, IsArray = true,

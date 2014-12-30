@@ -38,15 +38,16 @@
         ExtraFileDetected,
 
         MarkdownParserError,
-        
+
         MissingLinkSourceId,
         LinkValidationSkipped,
         LinkDestinationNotFound,
         LinkDestinationOutsideDocSet,
         LinkFormatInvalid,
-        
+
         MissingRequiredArguments,
-        MissingAccessToken
+        MissingAccessToken,
+        JsonErrorObjectExpected
 
     }
 
