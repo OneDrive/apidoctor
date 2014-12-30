@@ -196,3 +196,10 @@ after the request codeblock. You can have other codeblocks between a request and
 a response as long as they are missing the metadata or tagged as
 `"blockType": "ignored"`. A given file can have as many resources and
 request/response pairs as necessary.
+
+## Open Source
+The API Documentation Test Tool uses the following open source components:
+
+* [MarkdownDeep](https://github.com/toptensoftware/MarkdownDeep) - Markdown for C# parser. Apache 2.0 license, Copyright (C) 2010-2011 Topten Software.
+* [Newtonsoft.Json](https://github.com/JamesNK/Newtonsoft.Json) - Json parser for .NET apps. MIT license, Copyright (c) 2007 James Newton-King
+* [CommandLineParser](https://commandline.codeplex.com/) - Command line parser library. MIT license, Copyright (c) 2005 - 2012 Giacomo Stelluti Scala.
