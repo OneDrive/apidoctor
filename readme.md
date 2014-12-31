@@ -201,6 +201,75 @@ a response as long as they are missing the metadata or tagged as
 `"blockType": "ignored"`. A given file can have as many resources and
 request/response pairs as necessary.
 
+## Request Parameters
+
+The tool also supports defining parameters for requests in a separate file. This
+information is loaded and used to make one or more requests to the service by
+substituting values for placeholders in the initial request.
+
+For example, in a request for an item with a particular ID, you might write the
+request to look like this:
+
+```
+<!-- { "blockType": "request"; "name": "get-drive" } -->
+GET /drives/{drive-id}
+```
+
+However, when the test tool makes the API call to the service, calling it verbatim
+would result in an error. Request parameters allow you to define one or more
+scenarios that are used to call the method.
+
+A scenario can have one or more statically defined properties. It can also include
+an HTTP request and substitute one or more placeholder values with data from
+the response to that request.
+
+The scenario file contains a single JSON array, with each member of the array
+conforming to this schema:
+
+```json
+{
+  "name": "scenario",
+  "method": "get-drive",
+  "enabled": true,
+  "values": [
+    {
+      "placeholder": "drive-id",
+      "location": "url",
+      "value": "F04AA961744A"
+    }
+  ],
+  "values-from-request": {
+    "request": "GET /drive",
+    "values": [
+      {
+        "placeholder": drive-id",
+        "location": "url"
+        "path": "$.values[0].id"
+      }
+    ]
+  }
+}
+```
+
+Property | Type | Description
+---|---|---
+`name` | string | The name of the scenario described.
+`method` | string | The name of the method this scenario uses. Either defined in the documentation or a substitute name is auto-generated.
+`enabled` | bool | Enable or disable the scenario.
+`values` | Array | Array of static placeholder values.
+`values[#].placeholder` | string | The name of the placeholder. In `url` locations, the placeholder name is enclosed in braces `{drive-id}`.
+`values[#].location` | string | One of the following values: `url`, `json`, or `body`. For `json` the placeholder value is used as a jsonPath query to where in a request object the value should be inserted. For `body` the value of the placeholder is substituted for the body of the request.
+`values[#].value` | string | The value to use for the placeholder.
+`values-from-request` | object | Provides an HTTP request that will be used to populate the values of the placeholders.
+`values-from-request.request` | string | An HTTP request that is issued to the service. The request is parsed the same way that request methods are parsed. The service URL will be added to the root of the requested URL.
+`values-from-request.values` | Array | An array of placeholders.
+`values-from-request.values[#].placeholder` | string | Same as `values[#].placeholder`
+`values-from-request.values[#].location` | string | Same as `values[#].location`
+`values-from-request.values[#].path` | string | A jsonPath query expression for the value to use in the placeholder.
+
+
+
+
 ## Open Source
 The API Documentation Test Tool uses the following open source components:
 

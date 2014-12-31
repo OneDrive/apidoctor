@@ -468,19 +468,26 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             }
         }
 
-        private static async Task<bool> TestMethodWithParameters(DocSet docset, MethodDefinition method, RequestParameters requestSettings, string rootUrl, string accessToken)
+        private static async Task<bool> TestMethodWithParameters(DocSet docset, MethodDefinition method, ScenarioDefinition requestSettings, string rootUrl, string accessToken)
         {
             string indentLevel = "";
             if (requestSettings != null)
             {
                 FancyConsole.WriteLine();
-                FancyConsole.Write(ConsoleHeaderColor, "  With configuration \"{1}\"...", method.DisplayName, requestSettings.Note);
+                FancyConsole.Write(ConsoleHeaderColor, "  With configuration \"{1}\"...", method.DisplayName, requestSettings.Name);
                 indentLevel = "  ";
             }
 
             FancyConsole.VerboseWriteLine("");
             FancyConsole.VerboseWriteLineIndented(indentLevel, "Request:");
-            var requestPreview = await method.PreviewRequestAsync(requestSettings, rootUrl, accessToken);
+            var requestPreviewResult = await method.PreviewRequestAsync(requestSettings, rootUrl, accessToken);
+            if (requestPreviewResult.IsWarningOrError)
+            {
+                WriteOutErrors(requestPreviewResult.Messages, indentLevel + "  ");
+                return false;
+            }
+            
+            var requestPreview = requestPreviewResult.Value;
             FancyConsole.VerboseWriteLineIndented(indentLevel + "  ", requestPreview.FullHttpText());
 
             var parser = new HttpParser();

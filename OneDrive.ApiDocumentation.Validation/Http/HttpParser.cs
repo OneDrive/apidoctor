@@ -31,7 +31,8 @@
                 {
                     case ParserMode.FirstLine:
                         var components = line.Split(' ');
-                        if (components.Length < 2) throw new ArgumentException("requestString does not contain a proper HTTP request first line.");
+                        if (components.Length < 2) 
+                            throw new ArgumentException("requestString does not contain a proper HTTP request first line.");
 
                         request.Method = components[0];
                         request.Url = components[1];
@@ -48,7 +49,8 @@
 
                         // Parse each header
                         int split = line.IndexOf(": ");
-                        if (split < 1) throw new ArgumentException("requestString contains an invalid header definition");
+                        if (split < 1) 
+                            throw new ArgumentException("requestString contains an invalid header definition");
 
                         var headerName = line.Substring(0, split);
                         var headerValue = line.Substring(split + 1);

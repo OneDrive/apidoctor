@@ -80,13 +80,20 @@ namespace OneDrive.ApiDocumentation.Windows.TabPages
             var originalMethod = SelectedMethod;
             var method = MethodDefinition.FromRequest(textBoxRequest.Text, originalMethod.RequestMetadata, originalMethod.SourceFile);
 
-            RequestParameters requestParams = null;
+            ScenarioDefinition requestParams = null;
             if (checkBoxUseParameters.Checked)
             {
                 requestParams = CurrentDocSet.RunParameters.RunParamtersForMethod(originalMethod);
             }
 
-            var request = await method.PreviewRequestAsync(requestParams, string.Empty, string.Empty);
+            var buildRequestResult = await method.PreviewRequestAsync(requestParams, string.Empty, string.Empty);
+            if (buildRequestResult.IsWarningOrError)
+            {
+                ErrorDisplayForm.ShowErrorDialog(buildRequestResult.Messages);
+                return;
+            }
+
+            var request = buildRequestResult.Value;
             var requestText = request.FullHttpText();
 
             ErrorDisplayForm form = new ErrorDisplayForm("Request Preview", requestText);
@@ -262,15 +269,20 @@ namespace OneDrive.ApiDocumentation.Windows.TabPages
                 method.AddExpectedResponse(expectedResponseString, originalMethod.ExpectedResponseMetadata);
             }
             
-            RequestParameters requestParams = null;
+            ScenarioDefinition requestParams = null;
             if (applyParameters)
             {
                 requestParams = CurrentDocSet.RunParameters.RunParamtersForMethod(method);
             }
 
             var baseUrl = Properties.Settings.Default.ApiBaseRoot;
-            var response = await method.ApiResponseForMethod(baseUrl, ParentForm.AccessToken, requestParams);
+            var responseResult = await method.ApiResponseForMethod(baseUrl, ParentForm.AccessToken, requestParams);
+            if (responseResult.IsWarningOrError)
+            {
+                return new MethodValidationResult { Errors = responseResult.Messages, Result = RunResult.Error };
+            }
 
+            var response = responseResult.Value;
             originalMethod.ActualResponse = response.FullHttpText();
 
             ValidationError[] errors;

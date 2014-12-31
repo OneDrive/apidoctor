@@ -6,7 +6,6 @@
     using System.Text;
     using System.Threading.Tasks;
 
-
     public enum ValidationErrorCode
     {
         Unknown,
@@ -47,7 +46,11 @@
 
         MissingRequiredArguments,
         MissingAccessToken,
-        JsonErrorObjectExpected
+        JsonErrorObjectExpected,
+        RequestWasEmptyOrNull,
+        InvalidRequestFormat,
+        UnsupportedContentType,
+        RewriteRequestFailure
 
     }
 
@@ -123,32 +126,6 @@
             error.InnerErrors = errors;
             return error;
         }
-    }
-
-    public class ValidationWarning : ValidationError
-    {
-
-        public ValidationWarning(ValidationErrorCode code, string source, string format, params object[] formatParams)
-            : base(code, source, format, formatParams)
-        {
-
-        }
-
-        public override bool IsWarning { get { return true; } }
-
-        public override bool IsError { get { return false; } }
-    }
-
-    public class ValidationMessage : ValidationError
-    {
-        public ValidationMessage(string source, string format, params object[] formatParams)
-            : base(ValidationErrorCode.Unknown, source, format, formatParams)
-        {
-
-        }
-
-        public override bool IsWarning { get { return false; } }
-        public override bool IsError { get { return false; } }
     }
 
     public static class ValidationErrorExtensions

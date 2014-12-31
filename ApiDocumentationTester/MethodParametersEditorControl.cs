@@ -14,19 +14,19 @@ namespace OneDrive.ApiDocumentation.Windows
     public partial class MethodParametersEditorControl : UserControl
     {
 
-        public RequestParameters RequestParameters { get; private set; }
+        public ScenarioDefinition RequestParameters { get; private set; }
         public DocSet DocumentSet {get; private set;}
 
-        private BindingList<ParameterValue> m_ParamValues;
+        private BindingList<PlaceholderValue> m_ParamValues;
 
         public MethodParametersEditorControl()
         {
             InitializeComponent();
 
-            comboBoxParamLocation.DataSource = Enum.GetNames(typeof(ParameterLocation));
+            comboBoxParamLocation.DataSource = Enum.GetNames(typeof(PlaceholderLocation));
         }
 
-        public void OpenRequestParameters(RequestParameters param, DocSet docset)
+        public void OpenRequestParameters(ScenarioDefinition param, DocSet docset)
         {
             if (DocumentSet != docset)
                 DocumentSet = docset;
@@ -48,12 +48,12 @@ namespace OneDrive.ApiDocumentation.Windows
             comboBoxMethod.DisplayMember = "DisplayName";
             comboBoxMethod.Text = RequestParameters.Method;
 
-            textBoxNotes.Text = RequestParameters.Note;
+            textBoxNotes.Text = RequestParameters.Name;
             checkBoxEnabled.Checked = RequestParameters.Enabled;
 
             ignoreValueChanges = false;
 
-            m_ParamValues = new BindingList<ParameterValue>(RequestParameters.StaticParameters);
+            m_ParamValues = new BindingList<PlaceholderValue>(RequestParameters.StaticParameters);
             
             listBoxParameters.DisplayMember = "Id";
             listBoxParameters.DataSource = m_ParamValues;
@@ -66,16 +66,16 @@ namespace OneDrive.ApiDocumentation.Windows
             }
             else
             {
-                LoadSelectedParameter(new ParameterValue());
+                LoadSelectedParameter(new PlaceholderValue());
             }
             
         }
 
-        private ParameterValue SelectedParameterValue
+        private PlaceholderValue SelectedParameterValue
         {
             get
             {
-                return listBoxParameters.SelectedItem as ParameterValue;
+                return listBoxParameters.SelectedItem as PlaceholderValue;
             }
         }
 
@@ -89,8 +89,8 @@ namespace OneDrive.ApiDocumentation.Windows
         }
 
         bool ignoreValueChanges = false;
-        private ParameterValue m_lastParameterLoaded;
-        private void LoadSelectedParameter(ParameterValue value)
+        private PlaceholderValue m_lastParameterLoaded;
+        private void LoadSelectedParameter(PlaceholderValue value)
         {
             if (value == m_lastParameterLoaded)
                 return;
@@ -103,15 +103,15 @@ namespace OneDrive.ApiDocumentation.Windows
             ignoreValueChanges = false;
         }
 
-        private void UpdateSelectedParameter(ParameterValue value)
+        private void UpdateSelectedParameter(PlaceholderValue value)
         {
             if (ignoreValueChanges) return;
 
             value.Id = textBoxParamName.Text;
             value.Value = textBoxParamValue.Text;
 
-            ParameterLocation location;
-            if (Enum.TryParse<ParameterLocation>(comboBoxParamLocation.Text, out location))
+            PlaceholderLocation location;
+            if (Enum.TryParse<PlaceholderLocation>(comboBoxParamLocation.Text, out location))
             {
                 value.Location = location;
             }
@@ -126,8 +126,14 @@ namespace OneDrive.ApiDocumentation.Windows
                 return;
             }
 
-            var request = await method.PreviewRequestAsync(RequestParameters, string.Empty, string.Empty);
-            var requestText = request.FullHttpText();
+            var requestResult = await method.PreviewRequestAsync(RequestParameters, string.Empty, string.Empty);
+            if (requestResult.IsWarningOrError)
+            {
+                ErrorDisplayForm.ShowErrorDialog(requestResult.Messages);
+                return;
+            }
+
+            var requestText = requestResult.Value.FullHttpText();
 
             ErrorDisplayForm form = new ErrorDisplayForm("Request Preview", requestText);
             form.ShowDialog(this);
@@ -135,7 +141,7 @@ namespace OneDrive.ApiDocumentation.Windows
 
         private void buttonNewParameter_Click(object sender, EventArgs e)
         {
-            var newItem = new ParameterValue();
+            var newItem = new PlaceholderValue();
             newItem.Id = "new-property";
             m_ParamValues.Add(newItem);
 
@@ -160,7 +166,7 @@ namespace OneDrive.ApiDocumentation.Windows
             }
             else if (RequestParameters != null)
             {
-                ParameterValue value = new ParameterValue();
+                PlaceholderValue value = new PlaceholderValue();
                 UpdateSelectedParameter(value);
                 m_ParamValues.Add(value);
             }
@@ -180,7 +186,7 @@ namespace OneDrive.ApiDocumentation.Windows
             }
             else if (RequestParameters != null)
             {
-                ParameterValue value = new ParameterValue();
+                PlaceholderValue value = new PlaceholderValue();
                 UpdateSelectedParameter(value);
                 m_ParamValues.Add(value);
             }
@@ -196,7 +202,7 @@ namespace OneDrive.ApiDocumentation.Windows
             if (ignoreValueChanges) return;
 
             RequestParameters.Method = comboBoxMethod.Text;
-            RequestParameters.Note = textBoxNotes.Text;
+            RequestParameters.Name = textBoxNotes.Text;
             RequestParameters.Enabled = checkBoxEnabled.Checked;
         }
 

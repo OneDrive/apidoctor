@@ -22,7 +22,7 @@ namespace OneDrive.ApiDocumentation.Windows
 
         internal string AccessToken { get { return m_AccessToken; } }
         
-        BindingList<RequestParameters> m_Parameters = new BindingList<RequestParameters>();
+        BindingList<ScenarioDefinition> m_Parameters = new BindingList<ScenarioDefinition>();
 
         public MainForm()
         {
@@ -66,7 +66,7 @@ namespace OneDrive.ApiDocumentation.Windows
 
             methodsPage.LoadFromDocSet(CurrentDocSet);
 
-            m_Parameters = new BindingList<RequestParameters>(CurrentDocSet.RunParameters.Definitions);
+            m_Parameters = new BindingList<ScenarioDefinition>(CurrentDocSet.RunParameters.Definitions);
 
             listBoxParameters.DisplayMember = "Method";
             listBoxParameters.DataSource = m_Parameters;
@@ -167,7 +167,7 @@ namespace OneDrive.ApiDocumentation.Windows
         }
 
 
-        private RequestParameters SelectedRequestConfiguration { get { return listBoxParameters.SelectedItem as RequestParameters; } }
+        private ScenarioDefinition SelectedRequestConfiguration { get { return listBoxParameters.SelectedItem as ScenarioDefinition; } }
         private void listBoxParameters_SelectedIndexChanged(object sender, EventArgs e)
         {
             methodParametersEditorControl1.OpenRequestParameters(SelectedRequestConfiguration, CurrentDocSet);
@@ -175,14 +175,14 @@ namespace OneDrive.ApiDocumentation.Windows
 
         private void buttonAddParameters_Click(object sender, EventArgs e)
         {
-            RequestParameters newParams = new RequestParameters { Note = "New request configuration." };
+            ScenarioDefinition newParams = new ScenarioDefinition { Name = "New request configuration." };
             m_Parameters.Add(newParams);
             listBoxParameters.SelectedItem = newParams;
         }
 
         private void buttonDeleteParameters_Click(object sender, EventArgs e)
         {
-            var itemToRemove = listBoxParameters.SelectedItem as RequestParameters;
+            var itemToRemove = listBoxParameters.SelectedItem as ScenarioDefinition;
             m_Parameters.Remove(itemToRemove);
         }
 

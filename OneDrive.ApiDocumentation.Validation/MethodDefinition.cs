@@ -71,13 +71,20 @@ namespace OneDrive.ApiDocumentation.Validation
         /// <param name="baseUrl"></param>
         /// <param name="accessToken"></param>
         /// <returns></returns>
-        public async Task<HttpWebRequest> BuildRequestAsync(string baseUrl, string accessToken, RequestParameters methodParameters = null)
+        public async Task<ValidationResult<HttpWebRequest>> BuildRequestAsync(string baseUrl, string accessToken, ScenarioDefinition scenario = null)
         {
-            var request = await PreviewRequestAsync(methodParameters, baseUrl, accessToken);
-            return request.PrepareHttpWebRequest(baseUrl);
+            var previewResult = await PreviewRequestAsync(scenario, baseUrl, accessToken);
+            if (previewResult.IsWarningOrError)
+            {
+                return new ValidationResult<HttpWebRequest>(null, previewResult.Messages);
+            }
+
+            var httpRequest = previewResult.Value;
+            HttpWebRequest request = httpRequest.PrepareHttpWebRequest(baseUrl);
+            return new ValidationResult<HttpWebRequest>(request);
         }
 
-        public async Task<HttpRequest> PreviewRequestAsync(RequestParameters methodParameters, string baseUrl, string accessToken)
+        public async Task<ValidationResult<HttpRequest>> PreviewRequestAsync(ScenarioDefinition scenario, string baseUrl, string accessToken)
         {
             var parser = new HttpParser();
             var request = parser.ParseHttpRequest(Request);
@@ -86,26 +93,26 @@ namespace OneDrive.ApiDocumentation.Validation
                 request.Authorization = "Bearer " + accessToken;
             }
 
-            if (null != methodParameters)
+            if (null != scenario)
             {
 
-                if (null != methodParameters.DynamicParameters)
+                if (null != scenario.DynamicParameters)
                 {
-                    bool success = await methodParameters.DynamicParameters.PopulateValuesAsync(baseUrl, accessToken);
-                    if (!success)
+                    var result = await scenario.DynamicParameters.PopulateValuesFromRequestAsync(baseUrl, accessToken);
+                    if (result.IsWarningOrError)
                     {
-                        // TODO: Do something better here.
-                        return null;
+                        return new ValidationResult<HttpRequest>(null, result.Messages);
                     }
                 }
 
                 try 
                 {
-                    RewriteRequestWithParameters(request, methodParameters);
+                    RewriteRequestForScenario(request, scenario);
                 }
                 catch (Exception ex)
                 {
                     // Error when applying parameters to the request
+                    return new ValidationResult<HttpRequest>(null, new ValidationError(ValidationErrorCode.RewriteRequestFailure, "PreviewRequestAsync", ex.Message));
                 }
             }
 
@@ -114,12 +121,12 @@ namespace OneDrive.ApiDocumentation.Validation
                 request.Accept = "application/json";
             }
 
-            return request;
+            return new ValidationResult<HttpRequest>(request);
         }
 
-        private static void RewriteRequestWithParameters(HttpRequest request, RequestParameters parameters)
+        private static void RewriteRequestForScenario(HttpRequest request, ScenarioDefinition parameters)
         {
-            List<ParameterValue> paramValues = new List<ParameterValue>();
+            List<PlaceholderValue> paramValues = new List<PlaceholderValue>();
             paramValues.AddRange(parameters.StaticParameters);
             if (null != parameters.DynamicParameters)
             {
@@ -127,14 +134,14 @@ namespace OneDrive.ApiDocumentation.Validation
             }
 
             request.Url = RewriteUrlWithParameters(request.Url, from p in paramValues
-                                                              where p.Location == ParameterLocation.Url
+                                                              where p.Location == PlaceholderLocation.Url
                                                               select p);
 
             var bodyParameters = from p in paramValues
-                                          where p.Location == ParameterLocation.Body
+                                          where p.Location == PlaceholderLocation.Body
                                           select p;
             var jsonBodyParameters = from p in paramValues
-                                              where p.Location == ParameterLocation.Json
+                                              where p.Location == PlaceholderLocation.Json
                                               select p;
             if (jsonBodyParameters.FirstOrDefault() != null && request.ContentType.StartsWith("application/json"))
             {
@@ -146,7 +153,7 @@ namespace OneDrive.ApiDocumentation.Validation
             }
         }
 
-        private static string RewriteUrlWithParameters(string url, IEnumerable<ParameterValue> parameters)
+        private static string RewriteUrlWithParameters(string url, IEnumerable<PlaceholderValue> parameters)
         {
             foreach (var parameter in parameters)
             {
@@ -156,12 +163,12 @@ namespace OneDrive.ApiDocumentation.Validation
             return url;
         }
 
-        private static string RewriteJsonBodyWithParameters(string jsonSource, IEnumerable<ParameterValue> parameters)
+        private static string RewriteJsonBodyWithParameters(string jsonSource, IEnumerable<PlaceholderValue> parameters)
         {
             if (string.IsNullOrEmpty(jsonSource)) return jsonSource;
 
             var jsonParameters = (from p in parameters
-                                  where p.Location == ParameterLocation.Json
+                                  where p.Location == PlaceholderLocation.Json
                                   select p);
 
             if (jsonParameters.FirstOrDefault() != null)
@@ -181,12 +188,16 @@ namespace OneDrive.ApiDocumentation.Validation
             }
         }
 
-
-        public async Task<HttpResponse> ApiResponseForMethod(string baseUrl, string accessToken, RequestParameters methodParameters = null)
+        public async Task<ValidationResult<HttpResponse>> ApiResponseForMethod(string baseUrl, string accessToken, ScenarioDefinition scenario = null)
         {
-            var request = await BuildRequestAsync(baseUrl, accessToken, methodParameters);
-            var response = await HttpResponse.ResponseFromHttpWebResponseAsync(request);
-            return response;
+            var buildResult = await BuildRequestAsync(baseUrl, accessToken, scenario);
+            if (buildResult.IsWarningOrError)
+            {
+                return new ValidationResult<HttpResponse>(null, buildResult.Messages);
+            }
+
+            var response = await HttpResponse.ResponseFromHttpWebResponseAsync(buildResult.Value);
+            return new ValidationResult<HttpResponse>(response);
         }
 
         class DynamicBinder : System.Dynamic.SetMemberBinder
