@@ -20,6 +20,9 @@
 
         public string Body { get; set; }
 
+        public bool WasSuccessful { get { return StatusCode >= 200 && StatusCode < 300; } }
+
+        public string ContentType { get { return Headers["content-type"]; } }
 
         public static async Task<HttpResponse> ResponseFromHttpWebResponseAsync(HttpWebRequest request)
         {

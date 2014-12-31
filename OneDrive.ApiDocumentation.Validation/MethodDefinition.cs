@@ -72,7 +72,7 @@
         public HttpWebRequest BuildRequest(string baseUrl, string accessToken, RequestParameters methodParameters = null)
         {
             var request = PreviewRequest(methodParameters);
-            request.Headers.Add("Authorization", "Bearer " + accessToken);
+            request.Authorization = "Bearer " + accessToken;
 
             return request.PrepareHttpWebRequest(baseUrl);
         }

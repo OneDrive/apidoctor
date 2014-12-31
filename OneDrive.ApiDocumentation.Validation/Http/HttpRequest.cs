@@ -31,7 +31,11 @@
             }
         }
 
-
+        public string Authorization
+        {
+            get { return Headers["Authorization"]; }
+            set { Headers["Authorization"] = value; }
+        }
 
         public WebHeaderCollection Headers { get; private set; }
 

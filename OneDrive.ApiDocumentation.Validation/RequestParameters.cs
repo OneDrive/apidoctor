@@ -10,7 +10,6 @@
 
     public class RequestParameters : INotifyPropertyChanged
     {
-
         private string m_name;
 
         public RequestParameters()
@@ -18,7 +17,6 @@
             this.Parameters = new List<ParameterValue>();
         }
             
-
         [JsonProperty("method")]
         public string Method 
         {
@@ -99,6 +97,53 @@
             }
         }
 
+        [JsonProperty("source")]
+        public ValueSourceRequest ValueSource
+        {
+            get;
+            set;
+        }
+
+        public async Task<bool> ReadValueFromSourceAsync(string baseUrl, string accessToken)
+        {
+            if (null == ValueSource && null != Value)
+                return true;
+            else if (null == ValueSource)
+                return false;
+
+            // Make a request based on ValueSource and load the value from the response
+            Http.HttpParser parser = new Http.HttpParser();
+            var request = parser.ParseHttpRequest(ValueSource.HttpRequest);
+            request.Authorization = "Bearer " + accessToken;
+            var webRequest = request.PrepareHttpWebRequest(baseUrl);
+
+            try
+            {
+                var response = await Http.HttpResponse.ResponseFromHttpWebResponseAsync(webRequest);
+                if (response.WasSuccessful)
+                {
+                    if (response.ContentType.StartsWith("application/json"))
+                    {
+                        Value = Json.JsonPath.ValueFromJsonPath(response.Body, ValueSource.Query).ToString();
+                        return true;
+                    }
+                    else
+                    {
+                        // TODO: Handle any other relevent formats
+                        return false;
+                    }
+                }
+
+            }
+            catch(Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Exception while reading value from source: " + ex.Message);
+                return false;
+            }
+
+            return false;
+        }
+
         #region INotifyPropertyChanged
         public event PropertyChangedEventHandler PropertyChanged;
         protected void OnPropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string propertyName = null)
@@ -112,9 +157,27 @@
         #endregion
     }
 
+    public class ValueSourceRequest
+    {
+        [JsonProperty("request")]
+        public string HttpRequest { get; set; }
+
+        /// <summary>
+        /// Query to find the requested value in the response object. For JSON responses
+        /// the query should use the JSONpath language: http://goessner.net/articles/JsonPath/
+        /// </summary>
+        /// <value>The value path.</value>
+        [JsonProperty("query")]
+        public string Query { get; set; }
+
+        [JsonProperty("useAuth")]
+        public bool UsesAuth { get; set; }
+    }
+
     public enum ParameterLocation
     {
         Url,
-        Json
+        Json,
+        Body
     }
 }

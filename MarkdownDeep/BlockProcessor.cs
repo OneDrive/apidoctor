@@ -1498,7 +1498,7 @@ namespace MarkdownDeep
 			SkipLinespace();
             if (!eol)
             {
-                // TODO: Look for a language specifier
+                // Look for a language specifier
                 Mark();
                 while (char.IsLetterOrDigit(current))
                 {

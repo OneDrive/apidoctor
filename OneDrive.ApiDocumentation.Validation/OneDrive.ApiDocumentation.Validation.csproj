@@ -61,6 +61,7 @@
     <Compile Include="ResourceDefinition.cs" />
     <Compile Include="DocumentPublisherHtml.cs" />
     <Compile Include="RequestParameters.cs" />
+    <Compile Include="Json\JsonPath.cs" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
@@ -80,7 +81,4 @@
   <Target Name="AfterBuild">
   </Target>
   -->
-  <ItemGroup>
-    <Folder Include="Param\" />
-  </ItemGroup>
 </Project>
