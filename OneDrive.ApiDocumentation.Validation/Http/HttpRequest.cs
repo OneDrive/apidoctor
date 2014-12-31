@@ -37,6 +37,12 @@
             set { Headers["Authorization"] = value; }
         }
 
+        public string ContentType
+        {
+            get { return Headers["content-type"]; }
+            set { Headers["content-type"] = value; }
+        }
+
         public WebHeaderCollection Headers { get; private set; }
 
         public HttpWebRequest PrepareHttpWebRequest(string baseUrl)

@@ -1,4 +1,6 @@
-﻿namespace OneDrive.ApiDocumentation.Validation
+﻿using System.Collections.Generic;
+
+namespace OneDrive.ApiDocumentation.Validation
 {
     using System;
     using System.Net;
@@ -69,26 +71,42 @@
         /// <param name="baseUrl"></param>
         /// <param name="accessToken"></param>
         /// <returns></returns>
-        public HttpWebRequest BuildRequest(string baseUrl, string accessToken, RequestParameters methodParameters = null)
+        public async Task<HttpWebRequest> BuildRequestAsync(string baseUrl, string accessToken, RequestParameters methodParameters = null)
         {
-            var request = PreviewRequest(methodParameters);
-            request.Authorization = "Bearer " + accessToken;
-
+            var request = await PreviewRequestAsync(methodParameters, baseUrl, accessToken);
             return request.PrepareHttpWebRequest(baseUrl);
         }
 
-        public HttpRequest PreviewRequest(RequestParameters methodParameters)
+        public async Task<HttpRequest> PreviewRequestAsync(RequestParameters methodParameters, string baseUrl, string accessToken)
         {
             var parser = new HttpParser();
             var request = parser.ParseHttpRequest(Request);
+            if (!string.IsNullOrEmpty(accessToken) && string.IsNullOrEmpty(request.Authorization))
+            {
+                request.Authorization = "Bearer " + accessToken;
+            }
 
             if (null != methodParameters)
             {
-                string newUrl = RewriteUrl(request.Url, methodParameters.Parameters.ToArray());
-                request.Url = newUrl;
 
-                string newBody = RewriteJsonBody(request.Body, methodParameters.Parameters.ToArray());
-                request.Body = newBody;
+                if (null != methodParameters.DynamicParameters)
+                {
+                    bool success = await methodParameters.DynamicParameters.PopulateValuesAsync(baseUrl, accessToken);
+                    if (!success)
+                    {
+                        // TODO: Do something better here.
+                        return null;
+                    }
+                }
+
+                try 
+                {
+                    RewriteRequestWithParameters(request, methodParameters);
+                }
+                catch (Exception ex)
+                {
+                    // Error when applying parameters to the request
+                }
             }
 
             if (string.IsNullOrEmpty(request.Accept))
@@ -99,23 +117,46 @@
             return request;
         }
 
-        private static string RewriteUrl(string url, ParameterValue[] parameters)
+        private static void RewriteRequestWithParameters(HttpRequest request, RequestParameters parameters)
         {
-            var urlParameters = (from p in parameters
-                                 where p.Location == ParameterLocation.Url
-                                 select p);
-            if (urlParameters.FirstOrDefault() != null)
+            List<ParameterValue> paramValues = new List<ParameterValue>();
+            paramValues.AddRange(parameters.StaticParameters);
+            if (null != parameters.DynamicParameters)
             {
-                foreach (var parameter in urlParameters)
-                {
-                    string placeholder = string.Concat("{", parameter.Id, "}");
-                    url = url.Replace(placeholder, parameter.Value);
-                }
+                paramValues.AddRange(parameters.DynamicParameters.Values);
+            }
+
+            request.Url = RewriteUrlWithParameters(request.Url, from p in paramValues
+                                                              where p.Location == ParameterLocation.Url
+                                                              select p);
+
+            var bodyParameters = from p in paramValues
+                                          where p.Location == ParameterLocation.Body
+                                          select p;
+            var jsonBodyParameters = from p in paramValues
+                                              where p.Location == ParameterLocation.Json
+                                              select p;
+            if (jsonBodyParameters.FirstOrDefault() != null && request.ContentType.StartsWith("application/json"))
+            {
+                RewriteJsonBodyWithParameters(request.Body, jsonBodyParameters);
+            }
+            else if (bodyParameters.FirstOrDefault() != null)
+            {
+                request.Body = bodyParameters.First().Value.ToString();
+            }
+        }
+
+        private static string RewriteUrlWithParameters(string url, IEnumerable<ParameterValue> parameters)
+        {
+            foreach (var parameter in parameters)
+            {
+                string placeholder = string.Concat("{", parameter.Id, "}");
+                url = url.Replace(placeholder, parameter.Value.ToString());
             }
             return url;
         }
 
-        private string RewriteJsonBody(string jsonSource, ParameterValue[] parameters)
+        private static string RewriteJsonBodyWithParameters(string jsonSource, IEnumerable<ParameterValue> parameters)
         {
             if (string.IsNullOrEmpty(jsonSource)) return jsonSource;
 
@@ -129,7 +170,7 @@
 
                 foreach (var jsonParam in jsonParameters)
                 {
-                    bodyObject[jsonParam.Id] = jsonParam.Value;
+                    bodyObject[jsonParam.Id] = (dynamic)jsonParam.Value;
                 }
 
                 return Newtonsoft.Json.JsonConvert.SerializeObject(bodyObject);
@@ -143,7 +184,7 @@
 
         public async Task<HttpResponse> ApiResponseForMethod(string baseUrl, string accessToken, RequestParameters methodParameters = null)
         {
-            var request = BuildRequest(baseUrl, accessToken, methodParameters);
+            var request = await BuildRequestAsync(baseUrl, accessToken, methodParameters);
             var response = await HttpResponse.ResponseFromHttpWebResponseAsync(request);
             return response;
         }

@@ -53,14 +53,14 @@ namespace OneDrive.ApiDocumentation.Windows
 
             ignoreValueChanges = false;
 
-            m_ParamValues = new BindingList<ParameterValue>(RequestParameters.Parameters);
+            m_ParamValues = new BindingList<ParameterValue>(RequestParameters.StaticParameters);
             
             listBoxParameters.DisplayMember = "Id";
             listBoxParameters.DataSource = m_ParamValues;
 
             
 
-            if (RequestParameters.Parameters.Count > 0)
+            if (RequestParameters.StaticParameters.Count > 0)
             {
                 listBoxParameters.SelectedIndex = 0;
             }
@@ -98,7 +98,7 @@ namespace OneDrive.ApiDocumentation.Windows
             ignoreValueChanges = true;
             textBoxParamName.Text = value.Id;
             comboBoxParamLocation.SelectedItem = value.Location.ToString();
-            textBoxParamValue.Text = value.Value;
+            textBoxParamValue.Text = value.Value.ToString();
             m_lastParameterLoaded = value;
             ignoreValueChanges = false;
         }
@@ -117,7 +117,7 @@ namespace OneDrive.ApiDocumentation.Windows
             }
         }
 
-        private void ShowRequestPreview()
+        private async void ShowRequestPreview()
         {
             var method = (from m in DocumentSet.Methods where m.DisplayName == RequestParameters.Method select m).FirstOrDefault();
             if (null == method)
@@ -126,7 +126,7 @@ namespace OneDrive.ApiDocumentation.Windows
                 return;
             }
 
-            var request = method.PreviewRequest(RequestParameters);
+            var request = await method.PreviewRequestAsync(RequestParameters, string.Empty, string.Empty);
             var requestText = request.FullHttpText();
 
             ErrorDisplayForm form = new ErrorDisplayForm("Request Preview", requestText);

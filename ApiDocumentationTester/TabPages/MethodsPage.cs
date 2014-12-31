@@ -75,7 +75,7 @@ namespace OneDrive.ApiDocumentation.Windows.TabPages
             textBoxResponseActual.Text = method.ActualResponse;
         }
 
-        private void buttonPreviewRequest_Click(object sender, EventArgs e)
+        private async void buttonPreviewRequest_Click(object sender, EventArgs e)
         {
             var originalMethod = SelectedMethod;
             var method = MethodDefinition.FromRequest(textBoxRequest.Text, originalMethod.RequestMetadata, originalMethod.SourceFile);
@@ -86,7 +86,7 @@ namespace OneDrive.ApiDocumentation.Windows.TabPages
                 requestParams = CurrentDocSet.RunParameters.RunParamtersForMethod(originalMethod);
             }
 
-            var request = method.PreviewRequest(requestParams);
+            var request = await method.PreviewRequestAsync(requestParams, string.Empty, string.Empty);
             var requestText = request.FullHttpText();
 
             ErrorDisplayForm form = new ErrorDisplayForm("Request Preview", requestText);

@@ -14,10 +14,10 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         private const int ExitCodeFailure = 1;
         private const int ExitCodeSuccess = 0;
 
-        private const ConsoleColor ConsoleDefaultColor = ConsoleColor.Gray;
+        private const ConsoleColor ConsoleDefaultColor = ConsoleColor.White;
         private const ConsoleColor ConsoleHeaderColor = ConsoleColor.Cyan;
         private const ConsoleColor ConsoleSubheaderColor = ConsoleColor.DarkCyan;
-        private const ConsoleColor ConsoleCodeColor = ConsoleColor.DarkGray;
+        private const ConsoleColor ConsoleCodeColor = ConsoleColor.Gray;
         private const ConsoleColor ConsoleErrorColor = ConsoleColor.Red;
         private const ConsoleColor ConsoleWarningColor = ConsoleColor.Yellow;
         private const ConsoleColor ConsoleSuccessColor = ConsoleColor.Green;
@@ -480,12 +480,14 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
             FancyConsole.VerboseWriteLine("");
             FancyConsole.VerboseWriteLineIndented(indentLevel, "Request:");
-            FancyConsole.VerboseWriteLineIndented(indentLevel + "  ", method.PreviewRequest(requestSettings).FullHttpText());
+            var requestPreview = await method.PreviewRequestAsync(requestSettings, rootUrl, accessToken);
+            FancyConsole.VerboseWriteLineIndented(indentLevel + "  ", requestPreview.FullHttpText());
 
             var parser = new HttpParser();
             var expectedResponse = parser.ParseHttpResponse(method.ExpectedResponse);
 
-            var actualResponse = await method.ApiResponseForMethod(rootUrl, accessToken, requestSettings);
+            var request = requestPreview.PrepareHttpWebRequest(rootUrl);
+            var actualResponse = await HttpResponse.ResponseFromHttpWebResponseAsync(request);
 
             FancyConsole.VerboseWriteLineIndented(indentLevel, "Response:");
             FancyConsole.VerboseWriteLineIndented(indentLevel + "  ", actualResponse.FullHttpText());
