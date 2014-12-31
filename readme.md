@@ -22,6 +22,9 @@ platform. This tool is compatible with Mono or .NET.
 
 ## Command Line Tool
 
+![Screen shot of the command line tool in action](example-console.png)
+
+
 `apidocs.exe [command] [options]`
 
 Available commands are:
