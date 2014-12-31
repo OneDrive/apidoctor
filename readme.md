@@ -267,9 +267,6 @@ Property | Type | Description
 `values-from-request.values[#].location` | string | Same as `values[#].location`
 `values-from-request.values[#].path` | string | A jsonPath query expression for the value to use in the placeholder.
 
-
-
-
 ## Open Source
 The API Documentation Test Tool uses the following open source components:
 
