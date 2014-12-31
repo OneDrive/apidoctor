@@ -16,13 +16,13 @@
         }
 
         [JsonProperty("placeholder")]
-        public string Id { get; set; }
+        public string PlaceholderText { get; set; }
 
         [JsonProperty("location"), JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
         public PlaceholderLocation Location { get; set; }
 
         [JsonProperty("value", NullValueHandling = NullValueHandling.Ignore)]
-        public object Value { get; set; }
+        public string Value { get; set; }
 
         [JsonProperty("path", NullValueHandling = NullValueHandling.Ignore)]
         public string Path { get; set; }

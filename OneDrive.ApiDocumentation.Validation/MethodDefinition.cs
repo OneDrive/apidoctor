@@ -157,7 +157,7 @@ namespace OneDrive.ApiDocumentation.Validation
         {
             foreach (var parameter in parameters)
             {
-                string placeholder = string.Concat("{", parameter.Id, "}");
+                string placeholder = string.Concat("{", parameter.PlaceholderText, "}");
                 url = url.Replace(placeholder, parameter.Value.ToString());
             }
             return url;
@@ -177,7 +177,7 @@ namespace OneDrive.ApiDocumentation.Validation
 
                 foreach (var jsonParam in jsonParameters)
                 {
-                    bodyObject[jsonParam.Id] = (dynamic)jsonParam.Value;
+                    bodyObject[jsonParam.PlaceholderText] = (dynamic)jsonParam.Value;
                 }
 
                 return Newtonsoft.Json.JsonConvert.SerializeObject(bodyObject);

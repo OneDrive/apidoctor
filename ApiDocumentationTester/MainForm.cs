@@ -68,8 +68,8 @@ namespace OneDrive.ApiDocumentation.Windows
 
             m_Parameters = new BindingList<ScenarioDefinition>(CurrentDocSet.RunParameters.Definitions);
 
-            listBoxParameters.DisplayMember = "Method";
-            listBoxParameters.DataSource = m_Parameters;
+            listBoxScenarios.DisplayMember = "DisplayText";
+            listBoxScenarios.DataSource = m_Parameters;
 
             LoadSelectedDocumentPreview();
         }
@@ -167,7 +167,7 @@ namespace OneDrive.ApiDocumentation.Windows
         }
 
 
-        private ScenarioDefinition SelectedRequestConfiguration { get { return listBoxParameters.SelectedItem as ScenarioDefinition; } }
+        private ScenarioDefinition SelectedRequestConfiguration { get { return listBoxScenarios.SelectedItem as ScenarioDefinition; } }
         private void listBoxParameters_SelectedIndexChanged(object sender, EventArgs e)
         {
             methodParametersEditorControl1.OpenRequestParameters(SelectedRequestConfiguration, CurrentDocSet);
@@ -177,12 +177,12 @@ namespace OneDrive.ApiDocumentation.Windows
         {
             ScenarioDefinition newParams = new ScenarioDefinition { Name = "New request configuration." };
             m_Parameters.Add(newParams);
-            listBoxParameters.SelectedItem = newParams;
+            listBoxScenarios.SelectedItem = newParams;
         }
 
         private void buttonDeleteParameters_Click(object sender, EventArgs e)
         {
-            var itemToRemove = listBoxParameters.SelectedItem as ScenarioDefinition;
+            var itemToRemove = listBoxScenarios.SelectedItem as ScenarioDefinition;
             m_Parameters.Remove(itemToRemove);
         }
 

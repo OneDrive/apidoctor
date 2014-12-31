@@ -70,7 +70,7 @@
                     {
                         foreach (var parameter in Values)
                         {
-                            parameter.Value = Json.JsonPath.ValueFromJsonPath(response.Body, parameter.Path);
+                            parameter.Value = Json.JsonPath.ValueFromJsonPath(response.Body, parameter.Path).ToString();
                         }
                         return new ValidationResult<bool>(true);
                     }

@@ -56,7 +56,7 @@
             this.buttonSaveParameterFile = new System.Windows.Forms.Button();
             this.buttonDeleteParameters = new System.Windows.Forms.Button();
             this.buttonAddParameters = new System.Windows.Forms.Button();
-            this.listBoxParameters = new System.Windows.Forms.ListBox();
+            this.listBoxScenarios = new System.Windows.Forms.ListBox();
             this.label7 = new System.Windows.Forms.Label();
             this.tabPageOptions = new System.Windows.Forms.TabPage();
             this.textBoxMethodRequestParameterFile = new System.Windows.Forms.TextBox();
@@ -67,8 +67,8 @@
             this.label2 = new System.Windows.Forms.Label();
             this.textBoxBaseURL = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
-            this.methodParametersEditorControl1 = new OneDrive.ApiDocumentation.Windows.MethodParametersEditorControl();
             this.methodsPage = new OneDrive.ApiDocumentation.Windows.TabPages.MethodsPage();
+            this.methodParametersEditorControl1 = new OneDrive.ApiDocumentation.Windows.ScenarioEditorControl();
             this.menuStrip1.SuspendLayout();
             this.tabControl1.SuspendLayout();
             this.tabPageFiles.SuspendLayout();
@@ -153,7 +153,7 @@
             // signInToolStripMenuItem
             // 
             this.signInToolStripMenuItem.Name = "signInToolStripMenuItem";
-            this.signInToolStripMenuItem.Size = new System.Drawing.Size(119, 22);
+            this.signInToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.signInToolStripMenuItem.Text = "Sign In...";
             this.signInToolStripMenuItem.Click += new System.EventHandler(this.signInToolStripMenuItem_Click);
             // 
@@ -316,18 +316,18 @@
             this.tabPageParameters.Controls.Add(this.buttonSaveParameterFile);
             this.tabPageParameters.Controls.Add(this.buttonDeleteParameters);
             this.tabPageParameters.Controls.Add(this.buttonAddParameters);
-            this.tabPageParameters.Controls.Add(this.listBoxParameters);
+            this.tabPageParameters.Controls.Add(this.listBoxScenarios);
             this.tabPageParameters.Controls.Add(this.label7);
             this.tabPageParameters.Location = new System.Drawing.Point(4, 24);
             this.tabPageParameters.Name = "tabPageParameters";
             this.tabPageParameters.Size = new System.Drawing.Size(925, 466);
             this.tabPageParameters.TabIndex = 5;
-            this.tabPageParameters.Text = "Parameters";
+            this.tabPageParameters.Text = "Scenarios";
             this.tabPageParameters.UseVisualStyleBackColor = true;
             // 
             // buttonSaveParameterFile
             // 
-            this.buttonSaveParameterFile.Location = new System.Drawing.Point(181, 33);
+            this.buttonSaveParameterFile.Location = new System.Drawing.Point(180, 35);
             this.buttonSaveParameterFile.Name = "buttonSaveParameterFile";
             this.buttonSaveParameterFile.Size = new System.Drawing.Size(80, 33);
             this.buttonSaveParameterFile.TabIndex = 11;
@@ -355,24 +355,24 @@
             this.buttonAddParameters.UseVisualStyleBackColor = true;
             this.buttonAddParameters.Click += new System.EventHandler(this.buttonAddParameters_Click);
             // 
-            // listBoxParameters
+            // listBoxScenarios
             // 
-            this.listBoxParameters.FormattingEnabled = true;
-            this.listBoxParameters.ItemHeight = 15;
-            this.listBoxParameters.Location = new System.Drawing.Point(7, 75);
-            this.listBoxParameters.Name = "listBoxParameters";
-            this.listBoxParameters.Size = new System.Drawing.Size(254, 514);
-            this.listBoxParameters.TabIndex = 8;
-            this.listBoxParameters.SelectedIndexChanged += new System.EventHandler(this.listBoxParameters_SelectedIndexChanged);
+            this.listBoxScenarios.FormattingEnabled = true;
+            this.listBoxScenarios.ItemHeight = 15;
+            this.listBoxScenarios.Location = new System.Drawing.Point(7, 75);
+            this.listBoxScenarios.Name = "listBoxScenarios";
+            this.listBoxScenarios.Size = new System.Drawing.Size(254, 514);
+            this.listBoxScenarios.TabIndex = 8;
+            this.listBoxScenarios.SelectedIndexChanged += new System.EventHandler(this.listBoxParameters_SelectedIndexChanged);
             // 
             // label7
             // 
             this.label7.AutoSize = true;
             this.label7.Location = new System.Drawing.Point(3, 12);
             this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(199, 15);
+            this.label7.Size = new System.Drawing.Size(57, 15);
             this.label7.TabIndex = 0;
-            this.label7.Text = "Request Parameters For Service Calls";
+            this.label7.Text = "Scenarios";
             // 
             // tabPageOptions
             // 
@@ -458,6 +458,15 @@
             this.label1.TabIndex = 0;
             this.label1.Text = "Base URL:";
             // 
+            // methodsPage
+            // 
+            this.methodsPage.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.methodsPage.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.methodsPage.Location = new System.Drawing.Point(0, 0);
+            this.methodsPage.Name = "methodsPage";
+            this.methodsPage.Size = new System.Drawing.Size(925, 468);
+            this.methodsPage.TabIndex = 0;
+            // 
             // methodParametersEditorControl1
             // 
             this.methodParametersEditorControl1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
@@ -468,17 +477,8 @@
             this.methodParametersEditorControl1.Margin = new System.Windows.Forms.Padding(2);
             this.methodParametersEditorControl1.MinimumSize = new System.Drawing.Size(0, 277);
             this.methodParametersEditorControl1.Name = "methodParametersEditorControl1";
-            this.methodParametersEditorControl1.Size = new System.Drawing.Size(610, 341);
+            this.methodParametersEditorControl1.Size = new System.Drawing.Size(655, 429);
             this.methodParametersEditorControl1.TabIndex = 12;
-            // 
-            // methodsPage
-            // 
-            this.methodsPage.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.methodsPage.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.methodsPage.Location = new System.Drawing.Point(0, 0);
-            this.methodsPage.Name = "methodsPage";
-            this.methodsPage.Size = new System.Drawing.Size(925, 466);
-            this.methodsPage.TabIndex = 0;
             // 
             // MainForm
             // 
@@ -545,13 +545,13 @@
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.TabPage tabPageParameters;
         private System.Windows.Forms.Label label7;
-        private System.Windows.Forms.ListBox listBoxParameters;
+        private System.Windows.Forms.ListBox listBoxScenarios;
         private System.Windows.Forms.Button buttonSaveParameterFile;
         private System.Windows.Forms.Button buttonDeleteParameters;
         private System.Windows.Forms.Button buttonAddParameters;
         private System.Windows.Forms.ToolStripSeparator toolStripMenuItem2;
         private System.Windows.Forms.ToolStripMenuItem showLoadErrorsToolStripMenuItem;
-        private MethodParametersEditorControl methodParametersEditorControl1;
+        private ScenarioEditorControl methodParametersEditorControl1;
         private TabPages.MethodsPage methodsPage;
     }
 }

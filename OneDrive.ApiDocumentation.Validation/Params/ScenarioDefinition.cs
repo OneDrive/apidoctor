@@ -28,11 +28,20 @@
         [JsonProperty("enabled")]
         public bool Enabled { get; set; }
 
-        [JsonProperty("values")]
+        [JsonProperty("values", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public List<PlaceholderValue> StaticParameters { get; set; }
 
-        [JsonProperty("values-from-request")]
+        [JsonProperty("values-from-request", DefaultValueHandling=DefaultValueHandling.Ignore)]
         public PlaceholderRequest DynamicParameters { get ; set; }
+
+        [JsonIgnore]
+        public string DisplayText
+        {
+            get
+            {
+                return string.Concat(Name, " (", Method, ")");
+            }
+        }
 
         public static ScenarioDefinition[] ReadFromJson(string json)
         {

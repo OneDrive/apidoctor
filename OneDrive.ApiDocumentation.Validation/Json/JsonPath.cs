@@ -43,6 +43,9 @@ namespace OneDrive.ApiDocumentation.Validation.Json
                     {
                         throw new JsonPathException(string.Format("Couldn't locate property {0}", propertyName), ex);
                     }
+
+                    if (currentObject == null && (i < components.Length - 1 || arrayindex >= 0))
+                        throw new JsonPathException(string.Format("Property {0} was null or missing. Cannot continue to evaluate path.", propertyName));
                 }
                 else
                 {
@@ -51,7 +54,14 @@ namespace OneDrive.ApiDocumentation.Validation.Json
 
                 if (arrayindex >= 0)
                 {
-                    currentObject = ((dynamic)currentObject)[arrayindex];
+                    try
+                    {
+                        currentObject = ((dynamic)currentObject)[arrayindex];
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new JsonPathException("Specified array index was unavailable.");
+                    }
                 }
             }
 
