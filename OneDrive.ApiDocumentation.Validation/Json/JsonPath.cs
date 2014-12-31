@@ -14,7 +14,7 @@ namespace OneDrive.ApiDocumentation.Validation.Json
         /// <param name="path">Path.</param>
         public static object ValueFromJsonPath(string json, string path)
         {
-            var components = path.Split(',');
+            var components = path.Split('.');
             if (components.Length < 1 || components[0] != "$")
                 throw new ArgumentException("Path doesn't appear to conform to JSONpath syntax.", "path");
 
@@ -24,18 +24,57 @@ namespace OneDrive.ApiDocumentation.Validation.Json
             for (int i = 1; i < components.Length; i++)
             {
                 var propertyName = components[i];
+                int arrayindex = -1;
+                if (propertyName.EndsWith("]"))
+                {
+                    int startIndexPosition = propertyName.LastIndexOf("[");
+                    arrayindex = Int32.Parse(propertyName.Substring(startIndexPosition + 1, propertyName.Length - (startIndexPosition + 2)));
+                    propertyName = propertyName.Substring(0, startIndexPosition);
+                }
 
                 JContainer container = currentObject as JContainer;
                 if (null != container)
                 {
-                    container.TryGetPropertyValue(propertyName, out currentObject);
+                    try
+                    {
+                        currentObject = container[propertyName];
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new JsonPathException(string.Format("Couldn't locate property {0}", propertyName), ex);
+                    }
                 }
                 else
                 {
                     throw new JsonPathException("Ran out of objects before the path was exhausted.");
                 }
+
+                if (arrayindex >= 0)
+                {
+                    currentObject = ((dynamic)currentObject)[arrayindex];
+                }
             }
 
+            JValue value = currentObject as JValue;
+            if (null != value)
+            {
+                switch (value.Type)
+                {
+                    case JTokenType.Boolean:
+                    case JTokenType.Bytes:
+                    case JTokenType.Date:
+                    case JTokenType.Float:
+                    case JTokenType.Guid:
+                    case JTokenType.Integer:
+                    case JTokenType.Null:
+                    case JTokenType.String:
+                    case JTokenType.TimeSpan:
+                    case JTokenType.Uri:
+                        return value.Value;
+                    default:
+                        break;
+                }
+            }
             return currentObject;
         }
     }
