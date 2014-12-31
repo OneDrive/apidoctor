@@ -10,13 +10,13 @@ namespace OneDrive.ApiDocumentation.Validation
     public class RunMethodParameters
     {
         public bool Loaded { get; set; }
-        public List<Param.RequestParameters> Definitions { get; private set; }
+        public List<RequestParameters> Definitions { get; private set; }
         private string RelativePath { get; set; }
         private DocSet DocumentSet { get; set; }
 
         public RunMethodParameters()
         {
-            Definitions = new List<Param.RequestParameters>();
+            Definitions = new List<RequestParameters>();
         }
 
         public RunMethodParameters(DocSet set, string relativePath) : this()
@@ -40,7 +40,7 @@ namespace OneDrive.ApiDocumentation.Validation
                 {
                     rawJson = reader.ReadToEnd();
                 }
-                var parameters = Param.RequestParameters.ReadFromJson(rawJson).ToList();
+                var parameters = RequestParameters.ReadFromJson(rawJson).ToList();
 
                 // Make sure we have consistent method names
                 foreach (var request in parameters)
@@ -63,7 +63,7 @@ namespace OneDrive.ApiDocumentation.Validation
             return TryWriteRequestParameters(DocumentSet, RelativePath, Definitions.ToArray());
         }
 
-        public static bool TryWriteRequestParameters(DocSet set, string relativePath, Param.RequestParameters[] parameters)
+        public static bool TryWriteRequestParameters(DocSet set, string relativePath, RequestParameters[] parameters)
         {
             var path = string.Concat(set.SourceFolderPath, relativePath);
             foreach (var request in parameters)
@@ -103,7 +103,7 @@ namespace OneDrive.ApiDocumentation.Validation
             return p.Replace(Path.DirectorySeparatorChar, '/');
         }
 
-        public Param.RequestParameters RunParamtersForMethod(MethodDefinition method)
+        public RequestParameters RunParamtersForMethod(MethodDefinition method)
         {
             var parameters = SetOfRunParametersForMethod(method);
             if (null != parameters)
@@ -112,7 +112,7 @@ namespace OneDrive.ApiDocumentation.Validation
                 return null;
         }
 
-        public Param.RequestParameters[] SetOfRunParametersForMethod(MethodDefinition method)
+        public RequestParameters[] SetOfRunParametersForMethod(MethodDefinition method)
         {
             if (null == Definitions) return null;
 

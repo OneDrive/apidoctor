@@ -69,7 +69,7 @@
         /// <param name="baseUrl"></param>
         /// <param name="accessToken"></param>
         /// <returns></returns>
-        public HttpWebRequest BuildRequest(string baseUrl, string accessToken, Param.RequestParameters methodParameters = null)
+        public HttpWebRequest BuildRequest(string baseUrl, string accessToken, RequestParameters methodParameters = null)
         {
             var request = PreviewRequest(methodParameters);
             request.Headers.Add("Authorization", "Bearer " + accessToken);
@@ -77,7 +77,7 @@
             return request.PrepareHttpWebRequest(baseUrl);
         }
 
-        public HttpRequest PreviewRequest(Param.RequestParameters methodParameters)
+        public HttpRequest PreviewRequest(RequestParameters methodParameters)
         {
             var parser = new HttpParser();
             var request = parser.ParseHttpRequest(Request);
@@ -99,10 +99,10 @@
             return request;
         }
 
-        private static string RewriteUrl(string url, Param.ParameterValue[] parameters)
+        private static string RewriteUrl(string url, ParameterValue[] parameters)
         {
             var urlParameters = (from p in parameters
-                                 where p.Location == Param.ParameterLocation.Url
+                                 where p.Location == ParameterLocation.Url
                                  select p);
             if (urlParameters.FirstOrDefault() != null)
             {
@@ -115,12 +115,12 @@
             return url;
         }
 
-        private string RewriteJsonBody(string jsonSource, Param.ParameterValue[] parameters)
+        private string RewriteJsonBody(string jsonSource, ParameterValue[] parameters)
         {
             if (string.IsNullOrEmpty(jsonSource)) return jsonSource;
 
             var jsonParameters = (from p in parameters
-                                  where p.Location == Param.ParameterLocation.Json
+                                  where p.Location == ParameterLocation.Json
                                   select p);
 
             if (jsonParameters.FirstOrDefault() != null)
@@ -141,7 +141,7 @@
         }
 
 
-        public async Task<HttpResponse> ApiResponseForMethod(string baseUrl, string accessToken, Param.RequestParameters methodParameters = null)
+        public async Task<HttpResponse> ApiResponseForMethod(string baseUrl, string accessToken, RequestParameters methodParameters = null)
         {
             var request = BuildRequest(baseUrl, accessToken, methodParameters);
             var response = await HttpResponse.ResponseFromHttpWebResponseAsync(request);

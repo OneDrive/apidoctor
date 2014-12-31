@@ -9,7 +9,6 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using OneDrive.ApiDocumentation.Validation;
 using OneDrive.ApiDocumentation.Validation.Http;
-using OneDrive.ApiDocumentation.Validation.Param;
 
 namespace OneDrive.ApiDocumentation.Windows.TabPages
 {
