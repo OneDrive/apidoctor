@@ -55,6 +55,14 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             string[] missingProps;
             if (!options.HasRequiredProperties(out missingProps))
             {
+                if (options is SetCommandOptions)
+                {
+                    // Just print out the current values of the set parameters
+                    FancyConsole.WriteLine(origCommandLineOpts.GetUsage(invokedVerb));
+                    FancyConsole.WriteLine();
+                    WriteSavedValues(SavedSettings.Default);
+                    Exit(failure: true);
+                }
                 var error = new ValidationError(ValidationErrorCode.MissingRequiredArguments, null, "Command line is missing required arguments: {0}", missingProps.ComponentsJoinedByString(", "));
                 FancyConsole.WriteLine(origCommandLineOpts.GetUsage(invokedVerb));
                 WriteOutErrors(new ValidationError[] { error });
@@ -119,12 +127,17 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
             if (setCommandOptions.PrintValues || setValues)
             {
-                FancyConsole.WriteLine(ConsoleHeaderColor, "Stored settings:");
-                FancyConsole.WriteLineIndented("  ", "{0}: {1}", "AccessToken", settings.AccessToken);
-                FancyConsole.WriteLineIndented("  ", "{0}: {1}", "DocumentationPath", settings.DocumentationPath);
-                FancyConsole.WriteLineIndented("  ", "{0}: {1}", "ServiceUrl", settings.ServiceUrl);
+                WriteSavedValues(settings);
             }
             
+        }
+
+        private static void WriteSavedValues(SavedSettings settings)
+        {
+            FancyConsole.WriteLine(ConsoleHeaderColor, "Stored settings:");
+            FancyConsole.WriteLineIndented("  ", "{0}: {1}", "AccessToken", settings.AccessToken);
+            FancyConsole.WriteLineIndented("  ", "{0}: {1}", "DocumentationPath", settings.DocumentationPath);
+            FancyConsole.WriteLineIndented("  ", "{0}: {1}", "ServiceUrl", settings.ServiceUrl);
         }
 
 
