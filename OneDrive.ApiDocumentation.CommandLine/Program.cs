@@ -456,6 +456,8 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
             if (successCount != totalCount)
                 FancyConsole.Write(ConsoleErrorColor, " ({0} failures)", totalCount - successCount);
+
+            FancyConsole.WriteLine();
         }
 
         private static void AddPause(ServiceConsistencyOptions options)
