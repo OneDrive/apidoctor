@@ -37,7 +37,7 @@ namespace OneDrive.ApiDocumentation.Windows.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("https://df.api.onedrive.com/v1.0")]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
         public string ApiBaseRoot {
             get {
                 return ((string)(this["ApiBaseRoot"]));
@@ -49,7 +49,7 @@ namespace OneDrive.ApiDocumentation.Windows.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("0000000044128B55")]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
         public string ClientId {
             get {
                 return ((string)(this["ClientId"]));
@@ -61,7 +61,7 @@ namespace OneDrive.ApiDocumentation.Windows.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("wl.skydrive_update,wl.contacts_skydrive,wl.signin")]
+        [global::System.Configuration.DefaultSettingValueAttribute("wl.signin")]
         public string AuthScopes {
             get {
                 return ((string)(this["AuthScopes"]));
@@ -73,7 +73,7 @@ namespace OneDrive.ApiDocumentation.Windows.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("\\internal\\api-automation.json")]
+        [global::System.Configuration.DefaultSettingValueAttribute("api-automation.json")]
         public string RequestParametersFile {
             get {
                 return ((string)(this["RequestParametersFile"]));

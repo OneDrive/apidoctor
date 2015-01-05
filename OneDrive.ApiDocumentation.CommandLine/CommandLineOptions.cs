@@ -191,7 +191,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         [Option('t', AccessTokenArgument, HelpText = "OAuth access token. Required if not default value is set.")]
         public string AccessToken { get; set; }
 
-        [Option('u', ServiceUrlArgument, HelpText = "Root URL for API calls, like https://api.onedrive.com/v1.0. Required if not default value is set.")]
+        [Option('u', ServiceUrlArgument, HelpText = "Root URL for API calls, like https://api.example.org/v1.0. Required if not default value is set.")]
         public string ServiceRootUrl { get; set; }
 
         [Option('f', ParameterFileArgument, DefaultValue = "/internal/api-automation.json", HelpText = "Source for parameter values in API calls")]

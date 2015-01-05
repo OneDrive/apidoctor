@@ -22,7 +22,7 @@ namespace OneDrive.UnitTests.ApiDocumentation.Validation
             var newObj = new
             {
                 stringProp = "seattle, wa",
-                urlProp = "http://onedrive.com",
+                urlProp = "http://example.org",
                 numberProp = 1234567901,
                 dateProp = DateTime.UtcNow,
                 floatProp = 123123.1231231231
@@ -43,7 +43,7 @@ namespace OneDrive.UnitTests.ApiDocumentation.Validation
             var newObj = new
             {
                 stringProp = 1231234,
-                urlProp = "http://onedrive.com",
+                urlProp = "http://example.org",
                 numberProp = "1234567901",
                 dateProp = DateTime.UtcNow,
                 floatProp = 123123.1231231231
@@ -66,7 +66,7 @@ namespace OneDrive.UnitTests.ApiDocumentation.Validation
             {
                 stringProp = "seattle, wa",
                 foobar = "another value",
-                urlProp = "http://onedrive.com",
+                urlProp = "http://example.org",
                 numberProp = 1234567901,
                 dateProp = DateTime.UtcNow,
                 floatProp = 123123.1231231231
@@ -109,7 +109,7 @@ namespace OneDrive.UnitTests.ApiDocumentation.Validation
             var newObj = new
             {
                 stringProp = new string[] {"one", "two", "three"},
-                urlProp = "http://onedrive.com",
+                urlProp = "http://example.org",
                 numberProp = 1234567901,
                 dateProp = DateTime.UtcNow,
                 floatProp = 123123.1231231231

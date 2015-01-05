@@ -6,16 +6,16 @@
       <Value Profile="(Default)" />
     </Setting>
     <Setting Name="ApiBaseRoot" Type="System.String" Scope="User">
-      <Value Profile="(Default)">https://df.api.onedrive.com/v1.0</Value>
+      <Value Profile="(Default)"></Value>
     </Setting>
     <Setting Name="ClientId" Type="System.String" Scope="User">
-      <Value Profile="(Default)">0000000044128B55</Value>
+      <Value Profile="(Default)"></Value>
     </Setting>
     <Setting Name="AuthScopes" Type="System.String" Scope="User">
-      <Value Profile="(Default)">wl.skydrive_update,wl.contacts_skydrive,wl.signin</Value>
+      <Value Profile="(Default)">wl.signin</Value>
     </Setting>
     <Setting Name="RequestParametersFile" Type="System.String" Scope="User">
-      <Value Profile="(Default)">\internal\api-automation.json</Value>
+      <Value Profile="(Default)">api-automation.json</Value>
     </Setting>
   </Settings>
 </SettingsFile>

@@ -63,7 +63,7 @@ Check for broken links in the documentation.
 No specific options are required. Using `--verbose` will include warnings about
 links that were not verified.
 
-Example: `apidocs.exe links --path ~/github/onedrive-api-docs --method search`
+Example: `apidocs.exe links --path ~/github/api-docs --method search`
 
 ### Check-docs Command
 The `check-docs` command ensures that the documentation is internally consistent.
@@ -75,7 +75,7 @@ Option | Description
 ---|---
 --method <method_name> | Optional. Specify the name of a request method to evaluate. If missing, all methods are evaluated.
 
-Example: `apidocs.exe check-docs --path ~/github/onedrive-api-docs --method search`
+Example: `apidocs.exe check-docs --path ~/github/api-docs --method search`
 
 ### Check-service Command
 Check the documented requests and responses against an actual REST service. Requires
@@ -91,7 +91,7 @@ Option | Description
 
 Example:
 ```
-apidocs set --access-token "asdkljasdkj..." -url https://api.onedrive.com/v1.0
+apidocs set --access-token "asdkljasdkj..." -url https://api.example.org/v1.0
 apidocs check-service --parameter-file requests.json --method search
 ```
 
@@ -108,14 +108,14 @@ Option | Description
 `--ignore-path <value>` | Specify a semicolon separated list of paths in the documentation that should never be copied to output. Default is `\internal;\.git;\.gitignore;\generate_html_output`.
 `--include-all` | Default: true. Specify that all files, even those which are not in the extension list, are copied to the output location. This allows graphics and other non-text files to be copied.
 
-Example: `apidocs --path ~/github/onedrive-api-docs --output ~/documents/onedrive-docs`
+Example: `apidocs --path ~/github/api-docs --output ~/documents/docs`
 
 ### Set Command
 The set command lets you preset values for some parameters so they don't need to
 be specified on each command line. These values are stored in the app.config
 file next to the application executable.
 
-Example: `apidocs set --path ~/github/onedrive-api-docs --url https://api.onedrive.com/v1.0`
+Example: `apidocs set --path ~/github/api-docs --url https://api.example.org/v1.0`
 
 Option | Description
 ---|---
