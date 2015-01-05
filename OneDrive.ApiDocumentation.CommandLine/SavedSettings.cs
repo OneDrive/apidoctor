@@ -35,7 +35,6 @@
 
         public SavedSettings()
         {
-            ServiceUrl = "https://df.api.onedrive.com/v1.0";
             Load();
         }
 
