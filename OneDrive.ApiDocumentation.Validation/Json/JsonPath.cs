@@ -60,7 +60,7 @@ namespace OneDrive.ApiDocumentation.Validation.Json
                     }
                     catch (Exception ex)
                     {
-                        throw new JsonPathException("Specified array index was unavailable.");
+                        throw new JsonPathException("Specified array index was unavailable.", ex);
                     }
                 }
             }
