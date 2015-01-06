@@ -85,8 +85,8 @@
 
                 foundResources.AddRange(file.Resources);
                 foundMethods.AddRange(file.Requests);
-                m_ResourceCollection.RegisterJsonResources(foundResources);
             }
+            m_ResourceCollection.RegisterJsonResources(foundResources);
 
             Resources = foundResources.ToArray();
             Methods = foundMethods.ToArray();

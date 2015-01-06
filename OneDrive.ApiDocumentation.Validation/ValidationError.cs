@@ -23,6 +23,7 @@
         NoCustomMembersFound,
         CustomValidationNotSupported,
         ResponseResourceTypeMissing,
+        ArrayTypeMismatch,
 
         HttpStatusCodeDifferent,
         HttpStatusMessageDifferent,

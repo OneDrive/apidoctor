@@ -268,6 +268,24 @@
             return input.All(value => !value);
         }
 
+        private PropertyValidationOutcome ValidateSimpleArrayProperty(JsonProperty actualProperty, JsonProperty expectedProperty, List<ValidationError> detectedErrors)
+        {
+            if (actualProperty.IsArray != true || expectedProperty.IsArray != true)
+            {
+                throw new SchemaBuildException("Cannot use simple array valiation without array types", null);
+            }
+
+            if (actualProperty.Type == expectedProperty.Type && expectedProperty.Type != JsonDataType.Custom && expectedProperty.Type != JsonDataType.ODataType)
+            {
+                return PropertyValidationOutcome.OK;
+            }
+            else
+            {
+                detectedErrors.Add(new ValidationError(ValidationErrorCode.ArrayTypeMismatch, null, "Array expected members to be of type {0} but found: {1}", expectedProperty.Type, actualProperty.Type));
+                return PropertyValidationOutcome.InvalidType;
+            }
+        }
+
         /// <summary>
         /// Check each member of the actualProperty's array to make sure it matches the resource type specified for the property.
         /// </summary>
@@ -280,7 +298,11 @@
             JArray actualArray = (JArray)JsonConvert.DeserializeObject(actualProperty.OriginalValue);
 
             JsonSchema memberSchema;
-            if (!schemas.TryGetValue(actualProperty.ODataTypeName, out memberSchema))
+            if (string.IsNullOrEmpty(actualProperty.ODataTypeName))
+            {
+                return ValidateSimpleArrayProperty(actualProperty, this.ExpectedProperties[actualProperty.Name], detectedErrors);
+            }
+            else if (!schemas.TryGetValue(actualProperty.ODataTypeName, out memberSchema))
             {
                 detectedErrors.Add(new ValidationError(ValidationErrorCode.ResourceTypeNotFound, null, "Failed to locate resource definition for: {0}", actualProperty.ODataTypeName));
                 return PropertyValidationOutcome.MissingResourceType;
@@ -401,29 +423,32 @@
                         JsonProperty schemaProperty;
                         JsonDataType propertyType = JsonDataType.Array;
                         string odataTypeName = null;
-                        if (null != containerSchema && containerSchema.ExpectedProperties.TryGetValue(name, out schemaProperty))
+
+                        // Infer type from the items in the array
+                        var firstChild = value.First;
+                        if (null != firstChild)
                         {
-                            // Use the parent schema's type indication
-                            odataTypeName = schemaProperty.ODataTypeName;
-                            propertyType = schemaProperty.Type;
+                            var objectType = ParseProperty("array[0]", firstChild, null);
+                            if (null != objectType)
+                            {
+                                odataTypeName = objectType.ODataTypeName;
+                                propertyType = objectType.Type;
+                            }
                         }
                         else
                         {
-                            // See if we can infer type from the items in the array
-                            var firstChild = value.First;
-                            if (null != firstChild)
+                            propertyType = JsonDataType.Array;
+                            odataTypeName = null;
+                        }
+
+                        // See if we can do better than just Custom
+                        if (propertyType == JsonDataType.Custom)
+                        {
+                            if (null != containerSchema && containerSchema.ExpectedProperties.TryGetValue(name, out schemaProperty))
                             {
-                                var objectType = ParseProperty("foo", firstChild, null);
-                                if (null != objectType)
-                                {
-                                    odataTypeName = objectType.ODataTypeName;
-                                    propertyType = objectType.Type;
-                                }
-                            }
-                            else
-                            {
-                                propertyType = JsonDataType.Array;
-                                odataTypeName = null;
+                                // Use the parent schema's type indication
+                                odataTypeName = schemaProperty.ODataTypeName;
+                                propertyType = schemaProperty.Type;
                             }
                         }
 
