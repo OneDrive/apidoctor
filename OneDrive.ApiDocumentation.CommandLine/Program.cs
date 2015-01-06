@@ -247,7 +247,9 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             FancyConsole.WriteLine(ConsoleHeaderColor, "Defined resources:");
             FancyConsole.WriteLine();
 
-            foreach (var resource in docset.Resources)
+            var sortedResources = docset.Resources.OrderBy(x => x.ResourceType);
+
+            foreach (var resource in sortedResources)
             {
 
 
