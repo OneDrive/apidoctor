@@ -30,7 +30,7 @@ platform. This tool is compatible with Mono or .NET.
 Available commands are:
 
 * `print` - Print files, resources, and methods discovered in the documentation.
-* `links` - Verify links in the documentation aren't broken.
+* `check-links` - Verify links in the documentation aren't broken.
 * `check-docs` - Check for errors in the documentation's resources, requests, and response examples.
 * `check-service` - Check for differences between the documentation and service responses to documented requests.
 * `publish` - Create a sanitized version of the documentation without internal comments
@@ -38,26 +38,26 @@ Available commands are:
 
 All commands (except `set`) have the following options available:
 
-Option | Description
----|---
-`--path <path>` | Required. Path to the root of the documentation set to scan. Can be defaulted using the `set` command.
-`--short` | Print concise output to the console.
-`--verbose` | Print verbose output to the console, including full HTTP requests/responses.
-`--log <log_file>` | Log console output to a file.
+| Option             | Description                                                                                            |
+|:-------------------|:-------------------------------------------------------------------------------------------------------|
+| `--path <path>`    | Required. Path to the root of the documentation set to scan. Can be defaulted using the `set` command. |
+| `--short`          | Print concise output to the console.                                                                   |
+| `--verbose`        | Print verbose output to the console, including full HTTP requests/responses.                           |
+| `--log <log_file>` | Log console output to a file.                                                                          |
 
 ### Print Command
 Print information about the source files, resources, methods, and requests
 that were parsed by the tool.
 
-Option | Description
----|---
-`--files` | Output information about the files contained in the document set.
-`--resources` | Output resource definitions read from the documentation.
-`--methods` | Output method definitions read from the documentation.
+| Option        | Description                                                       |
+|:--------------|:------------------------------------------------------------------|
+| `--files`     | Output information about the files contained in the document set. |
+| `--resources` | Output resource definitions read from the documentation.          |
+| `--methods`   | Output method definitions read from the documentation.            |
 
 One of these three arguments is required to use the `print` command.
 
-### Links Command
+### Check-links Command
 Check for broken links in the documentation.
 
 No specific options are required. Using `--verbose` will include warnings about
@@ -71,9 +71,9 @@ It verifies that JSON examples are proper JSON, that API methods that accept or
 return a specific resource type have valid request/response examples, and that
 the metadata in the documentation is formatted properly.
 
-Option | Description
----|---
---method <method_name> | Optional. Specify the name of a request method to evaluate. If missing, all methods are evaluated.
+| Option                   | Description                                                                                        |
+|:-------------------------|:---------------------------------------------------------------------------------------------------|
+| `--method <method_name>` | Optional. Specify the name of a request method to evaluate. If missing, all methods are evaluated. |
 
 Example: `apidocs.exe check-docs --path ~/github/api-docs --method search`
 
@@ -81,13 +81,13 @@ Example: `apidocs.exe check-docs --path ~/github/api-docs --method search`
 Check the documented requests and responses against an actual REST service. Requires
 the URL for the service and an OAuth access token to call the service.
 
-Option | Description
----|---
-`--access-token "token"` | OAuth access token to use when calling the service. You can use set to provide a default value. You may need to escape the token value by enclosing it in double quotes.
-`--url <url>` | Set the base URL for the service calls.
-`--parameter-file <relative_path>` | Relative path to a JSON file describing the parameter replacements to make in the request methods.
-`--pause` | Pause for a key press between API calls to the service to enable reading the responses.
---method <method_name> | Check a single request/response method instead of everything in the documentation.
+| Option                             | Description                                                                                                                                                              |
+|:-----------------------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `--access-token "token"`           | OAuth access token to use when calling the service. You can use set to provide a default value. You may need to escape the token value by enclosing it in double quotes. |
+| `--url <url>`                      | Set the base URL for the service calls.                                                                                                                                  |
+| `--parameter-file <relative_path>` | Relative path to a JSON file describing the parameter replacements to make in the request methods.                                                                       |
+| `--pause`                          | Pause for a key press between API calls to the service to enable reading the responses.                                                                                  |
+| `--method <method_name>`           | Check a single request/response method instead of everything in the documentation.                                                                                       |
 
 Example:
 ```
@@ -100,13 +100,13 @@ The publish command creates a "clean" copy of the documentation set by running
 it through a simple set of processing rules. The output can either be the original
 format or you can convert the output to another supported format.
 
-Option | Description
----|---
-`--output <path>` | Required. Output directory for sanitized documentation.
-`--extensions <value>` | Specify a common separated list of file extensions that are considered "documentation files" and should be processed. Default is `.md,.mdown`.
-`--format [markdown,html]` | Specify the format for the output documentation. Either `markdown` (default) or `html`.
-`--ignore-path <value>` | Specify a semicolon separated list of paths in the documentation that should never be copied to output. Default is `\internal;\.git;\.gitignore;\generate_html_output`.
-`--include-all` | Default: true. Specify that all files, even those which are not in the extension list, are copied to the output location. This allows graphics and other non-text files to be copied.
+| Option                     | Description                                                                                                                                                                           |
+|:---------------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `--output <path>`          | Required. Output directory for sanitized documentation.                                                                                                                               |
+| `--extensions <value>`     | Specify a common separated list of file extensions that are considered "documentation files" and should be processed. Default is `.md,.mdown`.                                        |
+| `--format [markdown,html]` | Specify the format for the output documentation. Either `markdown` (default) or `html`.                                                                                               |
+| `--ignore-path <value>`    | Specify a semicolon separated list of paths in the documentation that should never be copied to output. Default is `\internal;\.git;\.gitignore;\generate_html_output`.               |
+| `--include-all`            | Default: true. Specify that all files, even those which are not in the extension list, are copied to the output location. This allows graphics and other non-text files to be copied. |
 
 Example: `apidocs --path ~/github/api-docs --output ~/documents/docs`
 
@@ -117,13 +117,13 @@ file next to the application executable.
 
 Example: `apidocs set --path ~/github/api-docs --url https://api.example.org/v1.0`
 
-Option | Description
----|---
-`--path <path>` | Set the path to the documentation folder.
-`--access-token "token"` | Set the access token used for calling the service.
-`--url <url>` | Set the base URL for API calls.
-`--reset` | Erase any stored values.
-`--print` | Print any currently stored values.
+| Option                   | Description                                        |
+|:-------------------------|:---------------------------------------------------|
+| `--path <path>`          | Set the path to the documentation folder.          |
+| `--access-token "token"` | Set the access token used for calling the service. |
+| `--url <url>`            | Set the base URL for API calls.                    |
+| `--reset`                | Erase any stored values.                           |
+| `--print`                | Print any currently stored values.                 |
 
 ## Documentation Format
 To work with this test tool, the source documentation has a few basic requirements:
@@ -254,21 +254,21 @@ conforming to this schema:
 }
 ```
 
-Property | Type | Description
----|---|---
-`name` | string | The name of the scenario described.
-`method` | string | The name of the method this scenario uses. Either defined in the documentation or a substitute name is auto-generated.
-`enabled` | bool | Enable or disable the scenario.
-`values` | Array | Array of static placeholder values.
-`values[#].placeholder` | string | The name of the placeholder. In `url` locations, the placeholder name is enclosed in braces `{drive-id}`.
-`values[#].location` | string | One of the following values: `url`, `json`, or `body`. For `json` the placeholder value is used as a jsonPath query to where in a request object the value should be inserted. For `body` the value of the placeholder is substituted for the body of the request.
-`values[#].value` | string | The value to use for the placeholder.
-`values-from-request` | object | Provides an HTTP request that will be used to populate the values of the placeholders.
-`values-from-request.request` | string | An HTTP request that is issued to the service. The request is parsed the same way that request methods are parsed. The service URL will be added to the root of the requested URL.
-`values-from-request.values` | Array | An array of placeholders.
-`values-from-request.values[#].placeholder` | string | Same as `values[#].placeholder`
-`values-from-request.values[#].location` | string | Same as `values[#].location`
-`values-from-request.values[#].path` | string | A jsonPath query expression for the value to use in the placeholder.
+| Property                                    | Type   | Description                                                                                                                                                                                                                                                        |
+|:--------------------------------------------|:-------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `name`                                      | string | The name of the scenario described.                                                                                                                                                                                                                                |
+| `method`                                    | string | The name of the method this scenario uses. Either defined in the documentation or a substitute name is auto-generated.                                                                                                                                             |
+| `enabled`                                   | bool   | Enable or disable the scenario.                                                                                                                                                                                                                                    |
+| `values`                                    | Array  | Array of static placeholder values.                                                                                                                                                                                                                                |
+| `values[#].placeholder`                     | string | The name of the placeholder. In `url` locations, the placeholder name is enclosed in braces `{drive-id}`.                                                                                                                                                          |
+| `values[#].location`                        | string | One of the following values: `url`, `json`, or `body`. For `json` the placeholder value is used as a jsonPath query to where in a request object the value should be inserted. For `body` the value of the placeholder is substituted for the body of the request. |
+| `values[#].value`                           | string | The value to use for the placeholder.                                                                                                                                                                                                                              |
+| `values-from-request`                       | object | Provides an HTTP request that will be used to populate the values of the placeholders.                                                                                                                                                                             |
+| `values-from-request.request`               | string | An HTTP request that is issued to the service. The request is parsed the same way that request methods are parsed. The service URL will be added to the root of the requested URL.                                                                                 |
+| `values-from-request.values`                | Array  | An array of placeholders.                                                                                                                                                                                                                                          |
+| `values-from-request.values[#].placeholder` | string | Same as `values[#].placeholder`                                                                                                                                                                                                                                    |
+| `values-from-request.values[#].location`    | string | Same as `values[#].location`                                                                                                                                                                                                                                       |
+| `values-from-request.values[#].path`        | string | A jsonPath query expression for the value to use in the placeholder.                                                                                                                                                                                               |
 
 ## Open Source
 The API Documentation Test Tool uses the following open source components:

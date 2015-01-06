@@ -11,7 +11,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
     class CommandLineOptions
     {
         public const string VerbPrint = "print";
-        public const string VerbCheckLinks = "links";
+        public const string VerbCheckLinks = "check-links";
         public const string VerbSet = "set";
         public const string VerbDocs = "check-docs";
         public const string VerbService = "check-service";

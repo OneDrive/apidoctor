@@ -56,7 +56,6 @@
             }
 
             List<ValidationError> detectedErrors = new List<ValidationError>();
-            List<string> missingProperties = new List<string>(ExpectedProperties.Keys);
 
             bool expectErrorObject = (annotation != null) ? annotation.ExpectError : false;
 

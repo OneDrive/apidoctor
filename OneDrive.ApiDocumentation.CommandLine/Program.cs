@@ -220,10 +220,16 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         {
             var docset = GetDocSet(options);
             ValidationError[] errors;
-            if (!docset.ValidateLinks(options.Verbose, out errors))
+            docset.ValidateLinks(options.Verbose, out errors);
+
+            if (null != errors && errors.Length > 0)
             {
                 WriteOutErrors(errors);
-                Exit(failure: true);
+                if (errors.All(x => !x.IsWarning && !x.IsError))
+                {
+                    FancyConsole.WriteLine(ConsoleSuccessColor, "No link errors detected.");
+                    Exit(failure: false);
+                }
             }
             else
             {
