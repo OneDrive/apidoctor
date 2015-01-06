@@ -145,6 +145,7 @@
             {
                 JsonProperty inputProperty = ParseProperty(token, this);
                 missingProperties.Remove(inputProperty.Name);
+                // This detects bad types, extra properties, etc.
                 ValidateProperty(inputProperty, otherSchemas, detectedErrors, allowTruncation);
             }
 
@@ -160,8 +161,6 @@
             {
                 detectedErrors.Add(new ValidationWarning(ValidationErrorCode.RequiredPropertiesMissing, null, "Missing properties: response was missing these required properties: {0}", missingProperties.ComponentsJoinedByString(",")));
             }
-
-            // TODO: No extra property detection here?
         }
 
         /// <summary>
@@ -238,6 +237,11 @@
                     }
                     else
                     {
+//                        // TODO: Verify that the property value matches the resource schema
+//                        var odataSchema = schemas[schemaPropertyDef.ODataTypeName];
+//                        odataSchema.ValidateJContainer(
+//
+//
                         return PropertyValidationOutcome.OK;
                     }
                 }
