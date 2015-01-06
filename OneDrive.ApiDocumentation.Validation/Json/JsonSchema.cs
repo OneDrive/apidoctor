@@ -160,6 +160,8 @@
             {
                 detectedErrors.Add(new ValidationWarning(ValidationErrorCode.RequiredPropertiesMissing, null, "Missing properties: response was missing these required properties: {0}", missingProperties.ComponentsJoinedByString(",")));
             }
+
+            // TODO: No extra property detection here?
         }
 
         /// <summary>
