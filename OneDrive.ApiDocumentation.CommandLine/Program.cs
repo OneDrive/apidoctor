@@ -355,6 +355,17 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 }
                 methods = new MethodDefinition[] { LookUpMethod(docset, options.MethodName) };
             }
+            else if (!string.IsNullOrEmpty(options.FileName))
+            {
+                var selectedFileQuery = from f in docset.Files where f.DisplayName == options.FileName select f;
+                var selectedFile = selectedFileQuery.SingleOrDefault();
+                if (selectedFile == null)
+                {
+                    FancyConsole.WriteLine(ConsoleErrorColor, "Unable to locate file '{0}' in docset.", options.FileName);
+                    Exit(failure: true);
+                }
+                methods = selectedFile.Requests;
+            }
             else
             {
                 methods = docset.Methods;

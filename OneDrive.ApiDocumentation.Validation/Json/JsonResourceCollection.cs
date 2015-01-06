@@ -31,6 +31,8 @@
         /// <returns></returns>
         public bool ValidateJson(CodeBlockAnnotation annotation, string json, out ValidationError[] errors)
         {
+            List<ValidationError> newErrors = new List<ValidationError>();
+
             var resourceType = annotation.ResourceType;
             if (resourceType == "stream")
             {
@@ -41,11 +43,23 @@
             else
             {
                 JsonSchema schema;
-                if (string.IsNullOrEmpty(resourceType) || !m_RegisteredSchema.TryGetValue(resourceType, out schema))
+                if (string.IsNullOrEmpty(resourceType))
                 {
                     schema = JsonSchema.EmptyResponseSchema;
                 }
-                return ValidateJson(schema, json, annotation, out errors);
+                else if (!m_RegisteredSchema.TryGetValue(resourceType, out schema))
+                {
+                    newErrors.Add(new ValidationWarning(ValidationErrorCode.ResponseResourceTypeMissing, null, "Missing required resource: {0}. Validation based on json in method response.", resourceType));
+                    // Create a new schema based on what's avaiable in the json
+                    schema = new JsonSchema(json, new CodeBlockAnnotation { ResourceType = annotation.ResourceType });
+                }
+
+                ValidationError[] validationJsonOutput;
+                ValidateJson(schema, json, annotation, out validationJsonOutput);
+
+                newErrors.AddRange(validationJsonOutput);
+                errors = newErrors.ToArray();
+                return errors.Length == 0;
             }
         }
 

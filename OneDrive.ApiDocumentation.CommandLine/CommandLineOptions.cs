@@ -178,8 +178,11 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
     class ConsistencyCheckOptions : DocSetOptions
     {
-        [Option('m', "method", HelpText = "Name of the method to test. If missing, all methods are tested.")]
+        [Option('m', "method", HelpText = "Name of the method to test. If missing, all methods are tested.", MutuallyExclusiveSet="fileOrMethod")]
         public string MethodName { get; set; }
+
+        [Option("file", HelpText="Name of the doc file to test. If missing, all methods are tested.", MutuallyExclusiveSet="fileOrMethod")]
+        public string FileName { get; set; }
     }
 
     class ServiceConsistencyOptions : ConsistencyCheckOptions
