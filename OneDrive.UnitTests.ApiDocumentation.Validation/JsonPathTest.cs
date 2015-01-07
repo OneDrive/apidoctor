@@ -15,6 +15,10 @@ namespace OneDrive.UnitTests.ApiDocumentation.Validation
             {
                 id = "1234",
                 path = "/root/Documents/something",
+                another = new {
+                    value = "test-string",
+                    number = 1234
+                },
                 thumbnails = new
                 {
                     small = new { id = "small", width = "100", height = "100", url = "http://small" },
@@ -101,6 +105,53 @@ namespace OneDrive.UnitTests.ApiDocumentation.Validation
         {
             var value = JsonPath.ValueFromJsonPath(GetJson(), "$.children[0].name");
             Assert.AreEqual("first_file.txt", value);
+        }
+
+
+
+        [Test]
+        public void JsonPathSetTopLevelValue()
+        {
+            string modifiedJson = JsonPath.SetValueForJsonPath(GetJson(), "$.id", "5678");
+
+            dynamic result = JsonConvert.DeserializeObject(modifiedJson);
+            Assert.AreEqual(JsonPath.ConvertValueForOutput(result.id), "5678");
+        }
+
+        [Test]
+        public void JsonPathSetSecondLevelValue()
+        {
+            string modifiedJson = JsonPath.SetValueForJsonPath(GetJson(), "$.another.value", "something-else-completely");
+
+            dynamic result = JsonConvert.DeserializeObject(modifiedJson);
+            Assert.AreEqual(JsonPath.ConvertValueForOutput(result.another.value), "something-else-completely");
+        }
+
+        [Test]
+        public void JsonPathSetArrayValue()
+        {
+            string modifiedJson = JsonPath.SetValueForJsonPath(GetJson(), "$.children[0].name", "something-else-completely");
+
+            dynamic result = JsonConvert.DeserializeObject(modifiedJson);
+            Assert.AreEqual(JsonPath.ConvertValueForOutput(result.children[0].name), "something-else-completely");
+        }
+
+        [Test]
+        public void JsonPathSetNewTopLevelValue()
+        {
+            string modifiedJson = JsonPath.SetValueForJsonPath(GetJson(), "$.zippy", "do-dah");
+
+            dynamic result = JsonConvert.DeserializeObject(modifiedJson);
+            Assert.AreEqual(JsonPath.ConvertValueForOutput(result.zippy), "do-dah");
+        }
+
+        [Test]
+        public void JsonPathSetNewSecondLevelValue()
+        {
+            string modifiedJson = JsonPath.SetValueForJsonPath(GetJson(), "$.zippy.foo", "do-dah");
+
+            dynamic result = JsonConvert.DeserializeObject(modifiedJson);
+            Assert.AreEqual(JsonPath.ConvertValueForOutput(result.zippy.foo), "do-dah");
         }
     }
 }
