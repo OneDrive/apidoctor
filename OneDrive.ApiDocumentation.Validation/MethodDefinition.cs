@@ -229,7 +229,7 @@ namespace OneDrive.ApiDocumentation.Validation
                 // Verify that the request is valid JSON
                 try
                 {
-                    var obj = JsonConvert.DeserializeObject(request.Body);
+                    JsonConvert.DeserializeObject(request.Body);
                 }
                 catch (Exception ex)
                 {

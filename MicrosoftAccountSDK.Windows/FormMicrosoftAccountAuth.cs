@@ -74,7 +74,9 @@ namespace MicrosoftAccountSDK.Windows
         private void CloseWindow()
         {
             const int interval = 100;
-            var t = new System.Threading.Timer(new System.Threading.TimerCallback((state) => 
+            // For some reason the default browser is launched sometimes if we close the form
+            // too early.
+            new System.Threading.Timer(new System.Threading.TimerCallback((state) => 
             {
                 this.DialogResult = System.Windows.Forms.DialogResult.OK;
                 this.BeginInvoke(new MethodInvoker(() => this.Close()));

@@ -55,7 +55,7 @@ namespace OneDrive.UnitTests.ApiDocumentation.Validation
         [ExpectedException(ExpectedException=typeof(JsonPathException))]
         public void JsonPathInvalidPath()
         {
-            var value = JsonPath.ValueFromJsonPath(GetJson(), "$.nothing.foo");
+            JsonPath.ValueFromJsonPath(GetJson(), "$.nothing.foo");
         }
 
         [Test]

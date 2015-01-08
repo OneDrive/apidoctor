@@ -126,7 +126,7 @@ namespace OneDrive.UnitTests.ApiDocumentation.Validation
         public void InvalidJsonMissingCommaSchema()
         {
             string badJson = "{ \"prop\": \"value\" \"prop2\": \"value\" }";
-            JsonSchema schema = new JsonSchema(badJson, null);
+            new JsonSchema(badJson, null);
         }
 
         [Test]
@@ -134,7 +134,7 @@ namespace OneDrive.UnitTests.ApiDocumentation.Validation
         public void InvalidJsonMissingBraceSchema()
         {
             string badJson = "{ \"prop\": \"value\", \"prop2\": \"value\" ";
-            JsonSchema schema = new JsonSchema(badJson, null);
+            new JsonSchema(badJson, null);
         }
 
 
