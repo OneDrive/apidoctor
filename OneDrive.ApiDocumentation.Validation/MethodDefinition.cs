@@ -224,21 +224,32 @@ namespace OneDrive.ApiDocumentation.Validation
                 return;
             }
 
-            if (null != request.ContentType && request.ContentType.StartsWith("application/json"))
+            if (null != request.ContentType)
             {
-                // Verify that the request is valid JSON
-                try
+                if (request.ContentType.StartsWith("application/json"))
                 {
-                    JsonConvert.DeserializeObject(request.Body);
+                    // Verify that the request is valid JSON
+                    try
+                    {
+                        JsonConvert.DeserializeObject(request.Body);
+                    }
+                    catch (Exception ex)
+                    {
+                        detectedErrors.Add(new ValidationError(ValidationErrorCode.JsonParserException, null, "Invalid JSON format: {0}", ex.Message));
+                    }
                 }
-                catch (Exception ex)
+                else if (request.ContentType.StartsWith("multipart/form-data"))
                 {
-                    detectedErrors.Add(new ValidationError(ValidationErrorCode.JsonParserException, null, "Invalid JSON format: {0}", ex.Message));
+                    // TODO: Parse the multipart/form-data body to ensure it's properly formatted
                 }
-            }
-            else if (!string.IsNullOrEmpty(request.ContentType))
-            {
-                detectedErrors.Add(new ValidationWarning(ValidationErrorCode.UnsupportedContentType, null, "Unvalidated request content type: {0}", request.ContentType));
+                else if (request.ContentType.StartsWith("text/plain"))
+                {
+                    // Ignore this, because it isn't something we can verify
+                }
+                else
+                {
+                    detectedErrors.Add(new ValidationWarning(ValidationErrorCode.UnsupportedContentType, null, "Unvalidated request content type: {0}", request.ContentType));
+                }
             }
         }
     }
