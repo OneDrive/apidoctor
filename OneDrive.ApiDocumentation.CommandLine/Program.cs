@@ -350,6 +350,12 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 }
             }
 
+            if (options.IgnoreWarnings)
+            {
+                successCount += warningCount;
+                warningCount = 0;
+            }
+
             PrintStatusMessage(successCount, warningCount, errorCount);
 
             Exit(failure: !result);
@@ -481,6 +487,12 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                         AddPause(options);
                     }
                 }
+            }
+
+            if (options.IgnoreWarnings)
+            {
+                successCount += warningCount;
+                warningCount = 0;
             }
 
             PrintStatusMessage(successCount, warningCount, errorCount);

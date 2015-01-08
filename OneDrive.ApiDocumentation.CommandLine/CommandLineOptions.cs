@@ -183,6 +183,9 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
         [Option("file", HelpText="Name of the doc file to test. If missing, all methods are tested.", MutuallyExclusiveSet="fileOrMethod")]
         public string FileName { get; set; }
+
+        [Option("ignore-warnings", HelpText="Ignore warnings as critical errors")]
+        public bool IgnoreWarnings { get; set; }
     }
 
     class ServiceConsistencyOptions : ConsistencyCheckOptions
