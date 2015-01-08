@@ -224,7 +224,7 @@ namespace OneDrive.ApiDocumentation.Validation
                 return;
             }
 
-            if (request.ContentType.StartsWith("application/json"))
+            if (null != request.ContentType && request.ContentType.StartsWith("application/json"))
             {
                 // Verify that the request is valid JSON
                 try
