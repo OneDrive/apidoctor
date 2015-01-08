@@ -51,7 +51,8 @@
         RequestWasEmptyOrNull,
         InvalidRequestFormat,
         UnsupportedContentType,
-        RewriteRequestFailure
+        RewriteRequestFailure,
+        HttpParserError
 
     }
 

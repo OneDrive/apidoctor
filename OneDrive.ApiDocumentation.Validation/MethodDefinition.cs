@@ -7,6 +7,7 @@ namespace OneDrive.ApiDocumentation.Validation
     using System.Linq;
     using OneDrive.ApiDocumentation.Validation.Http;
     using System.Threading.Tasks;
+    using Newtonsoft.Json;
 
     /// <summary>
     /// Definition of a request / response pair for the API
@@ -192,6 +193,7 @@ namespace OneDrive.ApiDocumentation.Validation
             return new ValidationResult<HttpResponse>(response);
         }
 
+
         class DynamicBinder : System.Dynamic.SetMemberBinder
         {
             public DynamicBinder(string propertyName) : base(propertyName, true)
@@ -201,6 +203,42 @@ namespace OneDrive.ApiDocumentation.Validation
             public override System.Dynamic.DynamicMetaObject FallbackSetMember(System.Dynamic.DynamicMetaObject target, System.Dynamic.DynamicMetaObject value, System.Dynamic.DynamicMetaObject errorSuggestion)
             {
                 throw new NotImplementedException();
+            }
+        }
+
+        /// <summary>
+        /// Check to ensure the http request is valid
+        /// </summary>
+        /// <param name="detectedErrors"></param>
+        internal void VerifyHttpRequest(List<ValidationError> detectedErrors)
+        {
+            HttpParser parser = new HttpParser();
+            HttpRequest request = null;
+            try
+            {
+                request = parser.ParseHttpRequest(Request);
+            }
+            catch (Exception ex)
+            {
+                detectedErrors.Add(new ValidationError(ValidationErrorCode.HttpParserError, null, "Exception while parsing HTTP request: {0}", ex.Message));
+                return;
+            }
+
+            if (request.ContentType.StartsWith("application/json"))
+            {
+                // Verify that the request is valid JSON
+                try
+                {
+                    var obj = JsonConvert.DeserializeObject(request.Body);
+                }
+                catch (Exception ex)
+                {
+                    detectedErrors.Add(new ValidationError(ValidationErrorCode.JsonParserException, null, "Invalid JSON format: {0}", ex.Message));
+                }
+            }
+            else if (!string.IsNullOrEmpty(request.ContentType))
+            {
+                detectedErrors.Add(new ValidationWarning(ValidationErrorCode.UnsupportedContentType, null, "Unvalidated request content type: {0}", request.ContentType));
             }
         }
     }

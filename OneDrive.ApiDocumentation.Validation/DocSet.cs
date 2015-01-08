@@ -116,6 +116,9 @@
 
             List<ValidationError> detectedErrors = new List<ValidationError>();
 
+            // Verify the HTTP request is valid
+            method.VerifyHttpRequest(detectedErrors);
+
             if (null != expectedResponse)
             {
                 // Verify that the HTTP portion of the expected response and the actual response are consistent
