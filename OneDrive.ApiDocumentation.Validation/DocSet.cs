@@ -33,11 +33,32 @@
 
         public Json.JsonResourceCollection ResourceCollection { get { return m_ResourceCollection; } }
         
-        public RunMethodParameters RunParameters {get; set;}
+        public Scenarios TestScenarios {get; set;}
 
         #endregion
 
         #region Constructors
+        public DocSet(string sourceFolderPath, string optionalScenarioFileRelativePath = null)
+        {
+            sourceFolderPath = ResolvePathWithUserRoot(sourceFolderPath);
+            if (sourceFolderPath.EndsWith(Path.DirectorySeparatorChar.ToString()))
+            {
+                sourceFolderPath = sourceFolderPath.TrimEnd(new char[] { Path.DirectorySeparatorChar });
+            }
+
+            SourceFolderPath = sourceFolderPath;
+            ReadDocumentationHierarchy(sourceFolderPath);
+
+            if (!string.IsNullOrEmpty(optionalScenarioFileRelativePath))
+                LoadTestScenarios(optionalScenarioFileRelativePath);
+        }
+        #endregion
+
+
+        public void LoadTestScenarios(string relativePathName)
+        {
+            TestScenarios = new Scenarios(this, relativePathName);
+        }
 
         public static string ResolvePathWithUserRoot(string path)
         {
@@ -48,20 +69,6 @@
             }
             return path;
         }
-
-        public DocSet(string sourceFolderPath)
-        {
-            sourceFolderPath = ResolvePathWithUserRoot(sourceFolderPath);
-            if (sourceFolderPath.EndsWith(Path.DirectorySeparatorChar.ToString()))
-            {
-                sourceFolderPath = sourceFolderPath.TrimEnd(new char[] { Path.DirectorySeparatorChar });
-            }
-
-            SourceFolderPath = sourceFolderPath;
-            ReadDocumentationHierarchy(sourceFolderPath);
-            RunParameters = new RunMethodParameters();
-        }
-        #endregion
 
         /// <summary>
         /// Scan all files in the documentation set to load

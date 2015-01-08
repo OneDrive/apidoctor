@@ -40,16 +40,17 @@
             this.buttonPreviewMethod = new System.Windows.Forms.Button();
             this.tabControlPlaceholders = new System.Windows.Forms.TabControl();
             this.tabPageStaticValues = new System.Windows.Forms.TabPage();
+            this.staticPlaceholderEditor = new OneDrive.ApiDocumentation.Windows.ScenarioPlaceholderEditor();
             this.tabPageRequestValues = new System.Windows.Forms.TabPage();
-            this.label4 = new System.Windows.Forms.Label();
-            this.textBoxHttpRequest = new System.Windows.Forms.TextBox();
+            this.label5 = new System.Windows.Forms.Label();
             this.listBoxDynamicPlaceholders = new System.Windows.Forms.ListBox();
+            this.dynamicPlaceholderEditor = new OneDrive.ApiDocumentation.Windows.ScenarioPlaceholderEditor();
             this.buttonNewDynmaicPlaceholder = new System.Windows.Forms.Button();
             this.buttonDeleteDynamicPlaceholder = new System.Windows.Forms.Button();
-            this.label5 = new System.Windows.Forms.Label();
-            this.staticPlaceholderEditor = new OneDrive.ApiDocumentation.Windows.ScenarioPlaceholderEditor();
-            this.dynamicPlaceholderEditor = new OneDrive.ApiDocumentation.Windows.ScenarioPlaceholderEditor();
+            this.textBoxHttpRequest = new System.Windows.Forms.TextBox();
+            this.label4 = new System.Windows.Forms.Label();
             this.checkBoxEnableDynamicRequest = new System.Windows.Forms.CheckBox();
+            this.textBoxRequestPreview = new System.Windows.Forms.TextBox();
             this.tabControlPlaceholders.SuspendLayout();
             this.tabPageStaticValues.SuspendLayout();
             this.tabPageRequestValues.SuspendLayout();
@@ -74,14 +75,16 @@
             this.comboBoxMethod.Location = new System.Drawing.Point(61, 31);
             this.comboBoxMethod.Margin = new System.Windows.Forms.Padding(2);
             this.comboBoxMethod.Name = "comboBoxMethod";
-            this.comboBoxMethod.Size = new System.Drawing.Size(648, 23);
+            this.comboBoxMethod.Size = new System.Drawing.Size(720, 23);
             this.comboBoxMethod.TabIndex = 1;
+            this.comboBoxMethod.SelectedIndexChanged += new System.EventHandler(this.comboBoxMethod_SelectedIndexChanged);
             this.comboBoxMethod.TextChanged += new System.EventHandler(this.requestParameterField_TextChanged);
             // 
             // checkBoxEnabled
             // 
+            this.checkBoxEnabled.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.checkBoxEnabled.AutoSize = true;
-            this.checkBoxEnabled.Location = new System.Drawing.Point(61, 58);
+            this.checkBoxEnabled.Location = new System.Drawing.Point(641, 8);
             this.checkBoxEnabled.Margin = new System.Windows.Forms.Padding(2);
             this.checkBoxEnabled.Name = "checkBoxEnabled";
             this.checkBoxEnabled.Size = new System.Drawing.Size(68, 19);
@@ -108,7 +111,7 @@
             this.textBoxScenarioName.Margin = new System.Windows.Forms.Padding(2);
             this.textBoxScenarioName.Name = "textBoxScenarioName";
             this.textBoxScenarioName.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.textBoxScenarioName.Size = new System.Drawing.Size(648, 23);
+            this.textBoxScenarioName.Size = new System.Drawing.Size(576, 23);
             this.textBoxScenarioName.TabIndex = 4;
             this.textBoxScenarioName.TextChanged += new System.EventHandler(this.requestParameterField_TextChanged);
             // 
@@ -131,13 +134,14 @@
             this.listBoxStaticPlaceholders.Location = new System.Drawing.Point(11, 32);
             this.listBoxStaticPlaceholders.Margin = new System.Windows.Forms.Padding(2);
             this.listBoxStaticPlaceholders.Name = "listBoxStaticPlaceholders";
-            this.listBoxStaticPlaceholders.Size = new System.Drawing.Size(153, 169);
+            this.listBoxStaticPlaceholders.Size = new System.Drawing.Size(153, 274);
             this.listBoxStaticPlaceholders.TabIndex = 6;
             this.listBoxStaticPlaceholders.SelectedIndexChanged += new System.EventHandler(this.listBoxStaticPlaceholders_SelectedIndexChanged);
             // 
             // buttonNewParameter
             // 
-            this.buttonNewParameter.Location = new System.Drawing.Point(168, 137);
+            this.buttonNewParameter.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.buttonNewParameter.Location = new System.Drawing.Point(11, 319);
             this.buttonNewParameter.Margin = new System.Windows.Forms.Padding(2);
             this.buttonNewParameter.Name = "buttonNewParameter";
             this.buttonNewParameter.Size = new System.Drawing.Size(72, 27);
@@ -148,7 +152,8 @@
             // 
             // buttonDeleteParameter
             // 
-            this.buttonDeleteParameter.Location = new System.Drawing.Point(245, 137);
+            this.buttonDeleteParameter.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.buttonDeleteParameter.Location = new System.Drawing.Point(87, 319);
             this.buttonDeleteParameter.Margin = new System.Windows.Forms.Padding(2);
             this.buttonDeleteParameter.Name = "buttonDeleteParameter";
             this.buttonDeleteParameter.Size = new System.Drawing.Size(72, 27);
@@ -176,10 +181,10 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.tabControlPlaceholders.Controls.Add(this.tabPageStaticValues);
             this.tabControlPlaceholders.Controls.Add(this.tabPageRequestValues);
-            this.tabControlPlaceholders.Location = new System.Drawing.Point(6, 98);
+            this.tabControlPlaceholders.Location = new System.Drawing.Point(6, 207);
             this.tabControlPlaceholders.Name = "tabControlPlaceholders";
             this.tabControlPlaceholders.SelectedIndex = 0;
-            this.tabControlPlaceholders.Size = new System.Drawing.Size(775, 313);
+            this.tabControlPlaceholders.Size = new System.Drawing.Size(775, 385);
             this.tabControlPlaceholders.TabIndex = 17;
             // 
             // tabPageStaticValues
@@ -191,10 +196,22 @@
             this.tabPageStaticValues.Controls.Add(this.buttonDeleteParameter);
             this.tabPageStaticValues.Location = new System.Drawing.Point(4, 24);
             this.tabPageStaticValues.Name = "tabPageStaticValues";
-            this.tabPageStaticValues.Size = new System.Drawing.Size(767, 285);
+            this.tabPageStaticValues.Size = new System.Drawing.Size(767, 357);
             this.tabPageStaticValues.TabIndex = 0;
             this.tabPageStaticValues.Text = "Static Values";
             this.tabPageStaticValues.UseVisualStyleBackColor = true;
+            // 
+            // staticPlaceholderEditor
+            // 
+            this.staticPlaceholderEditor.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.staticPlaceholderEditor.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.staticPlaceholderEditor.Location = new System.Drawing.Point(172, 32);
+            this.staticPlaceholderEditor.MinimumSize = new System.Drawing.Size(255, 100);
+            this.staticPlaceholderEditor.Name = "staticPlaceholderEditor";
+            this.staticPlaceholderEditor.Size = new System.Drawing.Size(568, 274);
+            this.staticPlaceholderEditor.TabIndex = 16;
             // 
             // tabPageRequestValues
             // 
@@ -208,62 +225,10 @@
             this.tabPageRequestValues.Controls.Add(this.checkBoxEnableDynamicRequest);
             this.tabPageRequestValues.Location = new System.Drawing.Point(4, 24);
             this.tabPageRequestValues.Name = "tabPageRequestValues";
-            this.tabPageRequestValues.Size = new System.Drawing.Size(767, 285);
+            this.tabPageRequestValues.Size = new System.Drawing.Size(767, 357);
             this.tabPageRequestValues.TabIndex = 1;
             this.tabPageRequestValues.Text = "Request Values";
             this.tabPageRequestValues.UseVisualStyleBackColor = true;
-            // 
-            // label4
-            // 
-            this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(8, 7);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(85, 15);
-            this.label4.TabIndex = 0;
-            this.label4.Text = "HTTP Request:";
-            // 
-            // textBoxHttpRequest
-            // 
-            this.textBoxHttpRequest.Location = new System.Drawing.Point(11, 25);
-            this.textBoxHttpRequest.Multiline = true;
-            this.textBoxHttpRequest.Name = "textBoxHttpRequest";
-            this.textBoxHttpRequest.Size = new System.Drawing.Size(336, 65);
-            this.textBoxHttpRequest.TabIndex = 1;
-            // 
-            // listBoxDynamicPlaceholders
-            // 
-            this.listBoxDynamicPlaceholders.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left)));
-            this.listBoxDynamicPlaceholders.FormattingEnabled = true;
-            this.listBoxDynamicPlaceholders.ItemHeight = 15;
-            this.listBoxDynamicPlaceholders.Location = new System.Drawing.Point(11, 117);
-            this.listBoxDynamicPlaceholders.Margin = new System.Windows.Forms.Padding(2);
-            this.listBoxDynamicPlaceholders.Name = "listBoxDynamicPlaceholders";
-            this.listBoxDynamicPlaceholders.Size = new System.Drawing.Size(153, 154);
-            this.listBoxDynamicPlaceholders.TabIndex = 17;
-            this.listBoxDynamicPlaceholders.SelectedIndexChanged += new System.EventHandler(this.listBoxDynamicPlaceholders_SelectedIndexChanged);
-            // 
-            // buttonNewDynmaicPlaceholder
-            // 
-            this.buttonNewDynmaicPlaceholder.Location = new System.Drawing.Point(175, 222);
-            this.buttonNewDynmaicPlaceholder.Margin = new System.Windows.Forms.Padding(2);
-            this.buttonNewDynmaicPlaceholder.Name = "buttonNewDynmaicPlaceholder";
-            this.buttonNewDynmaicPlaceholder.Size = new System.Drawing.Size(72, 27);
-            this.buttonNewDynmaicPlaceholder.TabIndex = 18;
-            this.buttonNewDynmaicPlaceholder.Text = "New";
-            this.buttonNewDynmaicPlaceholder.UseVisualStyleBackColor = true;
-            this.buttonNewDynmaicPlaceholder.Click += new System.EventHandler(this.buttonNewDynmaicPlaceholder_Click);
-            // 
-            // buttonDeleteDynamicPlaceholder
-            // 
-            this.buttonDeleteDynamicPlaceholder.Location = new System.Drawing.Point(252, 222);
-            this.buttonDeleteDynamicPlaceholder.Margin = new System.Windows.Forms.Padding(2);
-            this.buttonDeleteDynamicPlaceholder.Name = "buttonDeleteDynamicPlaceholder";
-            this.buttonDeleteDynamicPlaceholder.Size = new System.Drawing.Size(72, 27);
-            this.buttonDeleteDynamicPlaceholder.TabIndex = 19;
-            this.buttonDeleteDynamicPlaceholder.Text = "Delete";
-            this.buttonDeleteDynamicPlaceholder.UseVisualStyleBackColor = true;
-            this.buttonDeleteDynamicPlaceholder.Click += new System.EventHandler(this.buttonDeleteDynamicPlaceholder_Click);
             // 
             // label5
             // 
@@ -274,28 +239,72 @@
             this.label5.TabIndex = 21;
             this.label5.Text = "Placeholders:";
             // 
-            // staticPlaceholderEditor
+            // listBoxDynamicPlaceholders
             // 
-            this.staticPlaceholderEditor.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.staticPlaceholderEditor.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.staticPlaceholderEditor.Location = new System.Drawing.Point(172, 32);
-            this.staticPlaceholderEditor.MinimumSize = new System.Drawing.Size(255, 100);
-            this.staticPlaceholderEditor.Name = "staticPlaceholderEditor";
-            this.staticPlaceholderEditor.Size = new System.Drawing.Size(568, 100);
-            this.staticPlaceholderEditor.TabIndex = 16;
+            this.listBoxDynamicPlaceholders.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left)));
+            this.listBoxDynamicPlaceholders.FormattingEnabled = true;
+            this.listBoxDynamicPlaceholders.ItemHeight = 15;
+            this.listBoxDynamicPlaceholders.Location = new System.Drawing.Point(11, 117);
+            this.listBoxDynamicPlaceholders.Margin = new System.Windows.Forms.Padding(2);
+            this.listBoxDynamicPlaceholders.Name = "listBoxDynamicPlaceholders";
+            this.listBoxDynamicPlaceholders.Size = new System.Drawing.Size(153, 184);
+            this.listBoxDynamicPlaceholders.TabIndex = 17;
+            this.listBoxDynamicPlaceholders.SelectedIndexChanged += new System.EventHandler(this.listBoxDynamicPlaceholders_SelectedIndexChanged);
             // 
             // dynamicPlaceholderEditor
             // 
-            this.dynamicPlaceholderEditor.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            this.dynamicPlaceholderEditor.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.dynamicPlaceholderEditor.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.dynamicPlaceholderEditor.Location = new System.Drawing.Point(179, 117);
             this.dynamicPlaceholderEditor.MinimumSize = new System.Drawing.Size(255, 100);
             this.dynamicPlaceholderEditor.Name = "dynamicPlaceholderEditor";
-            this.dynamicPlaceholderEditor.Size = new System.Drawing.Size(491, 100);
+            this.dynamicPlaceholderEditor.Size = new System.Drawing.Size(568, 184);
             this.dynamicPlaceholderEditor.TabIndex = 20;
             this.dynamicPlaceholderEditor.PlaceholderChanged += new System.EventHandler(this.dynamicPlaceholderEditor_PlaceholderChanged);
+            // 
+            // buttonNewDynmaicPlaceholder
+            // 
+            this.buttonNewDynmaicPlaceholder.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.buttonNewDynmaicPlaceholder.Location = new System.Drawing.Point(11, 319);
+            this.buttonNewDynmaicPlaceholder.Margin = new System.Windows.Forms.Padding(2);
+            this.buttonNewDynmaicPlaceholder.Name = "buttonNewDynmaicPlaceholder";
+            this.buttonNewDynmaicPlaceholder.Size = new System.Drawing.Size(72, 27);
+            this.buttonNewDynmaicPlaceholder.TabIndex = 18;
+            this.buttonNewDynmaicPlaceholder.Text = "New";
+            this.buttonNewDynmaicPlaceholder.UseVisualStyleBackColor = true;
+            this.buttonNewDynmaicPlaceholder.Click += new System.EventHandler(this.buttonNewDynmaicPlaceholder_Click);
+            // 
+            // buttonDeleteDynamicPlaceholder
+            // 
+            this.buttonDeleteDynamicPlaceholder.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.buttonDeleteDynamicPlaceholder.Location = new System.Drawing.Point(88, 319);
+            this.buttonDeleteDynamicPlaceholder.Margin = new System.Windows.Forms.Padding(2);
+            this.buttonDeleteDynamicPlaceholder.Name = "buttonDeleteDynamicPlaceholder";
+            this.buttonDeleteDynamicPlaceholder.Size = new System.Drawing.Size(72, 27);
+            this.buttonDeleteDynamicPlaceholder.TabIndex = 19;
+            this.buttonDeleteDynamicPlaceholder.Text = "Delete";
+            this.buttonDeleteDynamicPlaceholder.UseVisualStyleBackColor = true;
+            this.buttonDeleteDynamicPlaceholder.Click += new System.EventHandler(this.buttonDeleteDynamicPlaceholder_Click);
+            // 
+            // textBoxHttpRequest
+            // 
+            this.textBoxHttpRequest.Location = new System.Drawing.Point(11, 25);
+            this.textBoxHttpRequest.Multiline = true;
+            this.textBoxHttpRequest.Name = "textBoxHttpRequest";
+            this.textBoxHttpRequest.Size = new System.Drawing.Size(336, 65);
+            this.textBoxHttpRequest.TabIndex = 1;
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(8, 7);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(85, 15);
+            this.label4.TabIndex = 0;
+            this.label4.Text = "HTTP Request:";
             // 
             // checkBoxEnableDynamicRequest
             // 
@@ -308,10 +317,24 @@
             this.checkBoxEnableDynamicRequest.UseVisualStyleBackColor = true;
             this.checkBoxEnableDynamicRequest.CheckedChanged += new System.EventHandler(this.checkBoxEnableDynamicRequest_CheckedChanged);
             // 
+            // textBoxRequestPreview
+            // 
+            this.textBoxRequestPreview.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.textBoxRequestPreview.Location = new System.Drawing.Point(61, 59);
+            this.textBoxRequestPreview.Multiline = true;
+            this.textBoxRequestPreview.Name = "textBoxRequestPreview";
+            this.textBoxRequestPreview.ReadOnly = true;
+            this.textBoxRequestPreview.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
+            this.textBoxRequestPreview.Size = new System.Drawing.Size(720, 142);
+            this.textBoxRequestPreview.TabIndex = 18;
+            this.textBoxRequestPreview.WordWrap = false;
+            // 
             // ScenarioEditorControl
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.Controls.Add(this.textBoxRequestPreview);
             this.Controls.Add(this.tabControlPlaceholders);
             this.Controls.Add(this.buttonPreviewMethod);
             this.Controls.Add(this.textBoxScenarioName);
@@ -323,7 +346,7 @@
             this.Margin = new System.Windows.Forms.Padding(2);
             this.MinimumSize = new System.Drawing.Size(0, 277);
             this.Name = "ScenarioEditorControl";
-            this.Size = new System.Drawing.Size(787, 414);
+            this.Size = new System.Drawing.Size(787, 595);
             this.tabControlPlaceholders.ResumeLayout(false);
             this.tabPageStaticValues.ResumeLayout(false);
             this.tabPageStaticValues.PerformLayout();
@@ -358,5 +381,6 @@
         private System.Windows.Forms.Button buttonNewDynmaicPlaceholder;
         private System.Windows.Forms.Button buttonDeleteDynamicPlaceholder;
         private System.Windows.Forms.CheckBox checkBoxEnableDynamicRequest;
+        private System.Windows.Forms.TextBox textBoxRequestPreview;
     }
 }

@@ -145,7 +145,7 @@ namespace OneDrive.ApiDocumentation.Validation
                                               select p;
             if (jsonBodyParameters.FirstOrDefault() != null && request.ContentType.StartsWith("application/json"))
             {
-                RewriteJsonBodyWithParameters(request.Body, jsonBodyParameters);
+                request.Body = RewriteJsonBodyWithParameters(request.Body, jsonBodyParameters);
             }
             else if (bodyParameters.FirstOrDefault() != null)
             {
@@ -171,21 +171,13 @@ namespace OneDrive.ApiDocumentation.Validation
                                   where p.Location == PlaceholderLocation.Json
                                   select p);
 
-            if (jsonParameters.FirstOrDefault() != null)
-            {
-                Newtonsoft.Json.Linq.JObject bodyObject = (Newtonsoft.Json.Linq.JObject)Newtonsoft.Json.JsonConvert.DeserializeObject(jsonSource);
 
-                foreach (var jsonParam in jsonParameters)
-                {
-                    bodyObject[jsonParam.PlaceholderText] = (dynamic)jsonParam.Value;
-                }
-
-                return Newtonsoft.Json.JsonConvert.SerializeObject(bodyObject);
-            }
-            else
+            foreach (var parameter in jsonParameters)
             {
-                return jsonSource;
+                jsonSource = Json.JsonPath.SetValueForJsonPath(jsonSource, parameter.PlaceholderText, parameter.Value);
             }
+
+            return jsonSource;
         }
 
         public async Task<ValidationResult<HttpResponse>> ApiResponseForMethod(string baseUrl, string accessToken, ScenarioDefinition scenario = null)

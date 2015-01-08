@@ -16,14 +16,13 @@ namespace OneDrive.ApiDocumentation.Windows
     public partial class MainForm : Form
     {
         string m_AccessToken = null;
+        public static MainForm MostRecentInstance { get; private set; }
 
         DocSet CurrentDocSet { get; set; }
         ValidationError[] DocSetLoadErrors { get; set; }
 
         internal string AccessToken { get { return m_AccessToken; } }
         
-        BindingList<ScenarioDefinition> m_Parameters = new BindingList<ScenarioDefinition>();
-
         public MainForm()
         {
             InitializeComponent();
@@ -31,7 +30,9 @@ namespace OneDrive.ApiDocumentation.Windows
             textBoxBaseURL.Text = Properties.Settings.Default.ApiBaseRoot;
             textBoxClientId.Text = Properties.Settings.Default.ClientId;
             textBoxAuthScopes.Text = Properties.Settings.Default.AuthScopes;
-            textBoxMethodRequestParameterFile.Text = Properties.Settings.Default.RequestParametersFile;
+            textBoxMethodRequestParameterFile.Text = Properties.Settings.Default.ScenariosFile;
+
+            MostRecentInstance = this;
         }
 
         private void openFolderToolStripMenuItem_Click(object sender, EventArgs e)
@@ -59,17 +60,12 @@ namespace OneDrive.ApiDocumentation.Windows
                 DocSetLoadErrors = loadErrors;
             }
 
-            CurrentDocSet.RunParameters = new RunMethodParameters(CurrentDocSet, textBoxMethodRequestParameterFile.Text);
+            CurrentDocSet.LoadTestScenarios(textBoxMethodRequestParameterFile.Text);
 
             listBoxResources.DisplayMember = "ResourceType";
             listBoxResources.DataSource = CurrentDocSet.Resources;
 
             methodsPage.LoadFromDocSet(CurrentDocSet);
-
-            m_Parameters = new BindingList<ScenarioDefinition>(CurrentDocSet.RunParameters.Definitions);
-
-            listBoxScenarios.DisplayMember = "DisplayText";
-            listBoxScenarios.DataSource = m_Parameters;
 
             LoadSelectedDocumentPreview();
         }
@@ -162,33 +158,8 @@ namespace OneDrive.ApiDocumentation.Windows
 
         private void textBoxMethodRequestParameterFile_TextChanged(object sender, EventArgs e)
         {
-            Properties.Settings.Default.RequestParametersFile = textBoxMethodRequestParameterFile.Text;
+            Properties.Settings.Default.ScenariosFile = textBoxMethodRequestParameterFile.Text;
             Properties.Settings.Default.Save();
-        }
-
-
-        private ScenarioDefinition SelectedRequestConfiguration { get { return listBoxScenarios.SelectedItem as ScenarioDefinition; } }
-        private void listBoxParameters_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            methodParametersEditorControl1.OpenRequestParameters(SelectedRequestConfiguration, CurrentDocSet);
-        }
-
-        private void buttonAddParameters_Click(object sender, EventArgs e)
-        {
-            ScenarioDefinition newParams = new ScenarioDefinition { Name = "New request configuration." };
-            m_Parameters.Add(newParams);
-            listBoxScenarios.SelectedItem = newParams;
-        }
-
-        private void buttonDeleteParameters_Click(object sender, EventArgs e)
-        {
-            var itemToRemove = listBoxScenarios.SelectedItem as ScenarioDefinition;
-            m_Parameters.Remove(itemToRemove);
-        }
-
-        private void buttonSaveParameterFile_Click(object sender, EventArgs e)
-        {
-            CurrentDocSet.RunParameters.TrySaveToFile();
         }
 
         private void showLoadErrorsToolStripMenuItem_Click(object sender, EventArgs e)
@@ -201,6 +172,18 @@ namespace OneDrive.ApiDocumentation.Windows
             {
                 MessageBox.Show("No errors detected during load.");
             }
+        }
+
+        private void editScenariosToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (null == CurrentDocSet)
+            {
+                MessageBox.Show("You need to open a document set first");
+                return;
+            }
+            
+            ScenarioEditorForm form = new ScenarioEditorForm(CurrentDocSet);
+            form.Show();
         }
     }
 }

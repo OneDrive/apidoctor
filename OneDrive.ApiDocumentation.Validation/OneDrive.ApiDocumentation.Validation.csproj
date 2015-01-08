@@ -54,7 +54,7 @@
     <Compile Include="DocumentPublisher.cs" />
     <Compile Include="Params\PlaceholderRequest.cs" />
     <Compile Include="Params\PlaceholderValue.cs" />
-    <Compile Include="RunMethodParameters.cs" />
+    <Compile Include="Scenarios.cs" />
     <Compile Include="SchemaBuildException.cs" />
     <Compile Include="ValidationError.cs" />
     <Compile Include="Json\JsonProperty.cs" />

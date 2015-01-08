@@ -189,7 +189,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
     {
         private const string AccessTokenArgument = "access-token";
         private const string ServiceUrlArgument = "url";
-        private const string ParameterFileArgument = "parameter-file";
+        private const string ParameterFileArgument = "scenarios";
 
         [Option('t', AccessTokenArgument, HelpText = "OAuth access token. Required if not default value is set.")]
         public string AccessToken { get; set; }
@@ -197,8 +197,8 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         [Option('u', ServiceUrlArgument, HelpText = "Root URL for API calls, like https://api.example.org/v1.0. Required if not default value is set.")]
         public string ServiceRootUrl { get; set; }
 
-        [Option('f', ParameterFileArgument, DefaultValue = "/internal/test-scenarios.json", HelpText = "Source for parameter values in API calls")]
-        public string ParameterSource { get; set; }
+        [Option('s', ParameterFileArgument, DefaultValue = "/internal/test-scenarios.json", HelpText = "Test scenarios configuration file")]
+        public string ScenarioFilePath { get; set; }
 
         [Option("pause", HelpText="Pause between method requests.")]
         public bool PauseBetweenRequests { get; set; }

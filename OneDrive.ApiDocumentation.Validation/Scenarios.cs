@@ -7,19 +7,40 @@ using System.Threading.Tasks;
 
 namespace OneDrive.ApiDocumentation.Validation
 {
-    public class RunMethodParameters
+    public class Scenarios
     {
-        public bool Loaded { get; set; }
-        public List<ScenarioDefinition> Definitions { get; private set; }
-        private string RelativePath { get; set; }
-        private DocSet DocumentSet { get; set; }
+        private List<ScenarioDefinition> _scenarios;
 
-        public RunMethodParameters()
+        public event EventHandler<ScenarioEventArgs> DefinitionsChanged;
+
+        /// <summary>
+        /// Indicates that scenarios have been loaded from a file
+        /// </summary>
+        public bool Loaded { get; private set; }
+
+        /// <summary>
+        /// If true, changes have been made to the scenarios collection since the file was loaded.
+        /// </summary>
+        public bool Dirty { get; private set; }
+
+        /// <summary>
+        /// Collection of the defined scenarios
+        /// </summary>
+        public IReadOnlyList<ScenarioDefinition> Definitions
         {
-            Definitions = new List<ScenarioDefinition>();
+            get { return _scenarios; }
         }
 
-        public RunMethodParameters(DocSet set, string relativePath) : this()
+        private string RelativePath { get; set; }
+        
+        private DocSet DocumentSet { get; set; }
+
+        internal Scenarios()
+        {
+            _scenarios = new List<ScenarioDefinition>();
+        }
+
+        internal Scenarios(DocSet set, string relativePath) : this()
         {
             Loaded = TryReadRequestParameters(set, relativePath);
         }
@@ -47,7 +68,7 @@ namespace OneDrive.ApiDocumentation.Validation
                 {
                     request.Method = ConvertPathSeparatorsToLocal(request.Method);
                 }
-                Definitions = parameters;
+                _scenarios = parameters;
 
                 return true;
             }
@@ -60,7 +81,12 @@ namespace OneDrive.ApiDocumentation.Validation
 
         public bool TrySaveToFile()
         {
-            return TryWriteRequestParameters(DocumentSet, RelativePath, Definitions.ToArray());
+            bool result = TryWriteRequestParameters(DocumentSet, RelativePath, Definitions.ToArray());
+            if (result)
+            {
+                Dirty = false;
+            }
+            return result;
         }
 
         public static bool TryWriteRequestParameters(DocSet set, string relativePath, ScenarioDefinition[] parameters)
@@ -103,16 +129,16 @@ namespace OneDrive.ApiDocumentation.Validation
             return p.Replace(Path.DirectorySeparatorChar, '/');
         }
 
-        public ScenarioDefinition RunParamtersForMethod(MethodDefinition method)
+        public ScenarioDefinition FirstScenarioForMethod(MethodDefinition method)
         {
-            var parameters = SetOfRunParametersForMethod(method);
+            var parameters = ScenariosForMethod(method);
             if (null != parameters)
                 return parameters.FirstOrDefault();
             else
                 return null;
         }
 
-        public ScenarioDefinition[] SetOfRunParametersForMethod(MethodDefinition method)
+        public ScenarioDefinition[] ScenariosForMethod(MethodDefinition method)
         {
             if (null == Definitions) return null;
 
@@ -123,5 +149,44 @@ namespace OneDrive.ApiDocumentation.Validation
 
             return query.ToArray();
         }
+
+        public void Add(ScenarioDefinition scenario)
+        {
+            _scenarios.Add(scenario);
+            var evt = DefinitionsChanged;
+            if (evt != null)
+                evt(this, new ScenarioEventArgs(scenario, ScenarioEventAction.Added));
+            Dirty = true;
+        }
+
+        public void Remove(ScenarioDefinition scenario)
+        {
+            if (_scenarios.Remove(scenario))
+            {
+                var evt = DefinitionsChanged;
+                if (evt != null)
+                    evt(this, new ScenarioEventArgs(scenario, ScenarioEventAction.Removed));
+                Dirty = true;
+            }
+        }
+    }
+
+
+    public class ScenarioEventArgs : EventArgs
+    {
+        public ScenarioDefinition Scenario { get; private set; }
+        public ScenarioEventAction Action { get; private set; }
+
+        public ScenarioEventArgs(ScenarioDefinition scenario, ScenarioEventAction action)
+        {
+            Scenario = scenario;
+            Action = action;
+        }
+    }
+
+    public enum ScenarioEventAction
+    {
+        Added,
+        Removed
     }
 }

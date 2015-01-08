@@ -162,11 +162,10 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             if (null != serviceOptions)
             {
                 FancyConsole.VerboseWriteLine("Reading configuration parameters...");
-
-                set.RunParameters = new RunMethodParameters(set, serviceOptions.ParameterSource);
-                if (!set.RunParameters.Loaded)
+                set.LoadTestScenarios(serviceOptions.ScenarioFilePath);
+                if (!set.TestScenarios.Loaded)
                 {
-                    FancyConsole.WriteLine(ConsoleWarningColor, "Unable to read request parameter configuration file: {0}", serviceOptions.ParameterSource);
+                    FancyConsole.WriteLine(ConsoleWarningColor, "Unable to read request parameter configuration file: {0}", serviceOptions.ScenarioFilePath);
                 }
             }
 
@@ -432,7 +431,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             foreach (var method in methods)
             {
                 FancyConsole.Write(ConsoleHeaderColor, "Calling method \"{0}\"...", method.DisplayName);
-                var setsOfParameters = docset.RunParameters.SetOfRunParametersForMethod(method);
+                var setsOfParameters = docset.TestScenarios.ScenariosForMethod(method);
                 if (setsOfParameters.Length == 0)
                 {
                     // If there are no parameters defined, we still try to call the request as-is.

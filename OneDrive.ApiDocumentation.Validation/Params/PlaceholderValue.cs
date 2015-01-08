@@ -7,16 +7,30 @@
     using System.Threading.Tasks;
     using Newtonsoft.Json;
     using System.ComponentModel;
+    using System.Runtime.CompilerServices;
 
-    public class PlaceholderValue
+    public class PlaceholderValue : INotifyPropertyChanged
     {
+        private string _placeholderText;
+
         public PlaceholderValue()
         {
 
         }
 
         [JsonProperty("placeholder")]
-        public string PlaceholderText { get; set; }
+        public string PlaceholderText 
+        {
+            get { return _placeholderText; }
+            set
+            {
+                if (value != _placeholderText)
+                {
+                    _placeholderText = value;
+                    RaisePropertyChanged();
+                }
+            }
+        }
 
         [JsonProperty("location"), JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
         public PlaceholderLocation Location { get; set; }
@@ -27,5 +41,22 @@
         [JsonProperty("path", NullValueHandling = NullValueHandling.Ignore)]
         public string Path { get; set; }
 
+
+        #region INotifyPropertyChanged
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected void RaisePropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            var evt = PropertyChanged;
+            if (null != evt)
+            {
+                evt(this, new PropertyChangedEventArgs(propertyName));
+            }
+        }
+
+        #endregion
+
+        
     }
 }

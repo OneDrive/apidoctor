@@ -49,6 +49,13 @@
             return results.ToArray();
         }
 
+        public ScenarioDefinition Copy()
+        {
+            string json = JsonConvert.SerializeObject(this);
+            ScenarioDefinition copy = JsonConvert.DeserializeObject<ScenarioDefinition>(json);
+            copy.Name = "Copy of " + copy.Name;
+            return copy;
+        }
     }
 
     public enum PlaceholderLocation

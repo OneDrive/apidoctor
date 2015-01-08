@@ -80,7 +80,7 @@ namespace OneDrive.ApiDocumentation.Validation.Json
                 currentComponent.SetValueForPart(jsonObject, value);
             }
 
-            return JsonConvert.SerializeObject(originalObject);
+            return JsonConvert.SerializeObject(originalObject, Formatting.Indented);
         }
 
 

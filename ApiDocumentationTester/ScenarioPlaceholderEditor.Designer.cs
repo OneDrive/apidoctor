@@ -38,12 +38,14 @@
             // 
             // textBoxValueOrPath
             // 
-            this.textBoxValueOrPath.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            this.textBoxValueOrPath.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.textBoxValueOrPath.Location = new System.Drawing.Point(78, 67);
             this.textBoxValueOrPath.Margin = new System.Windows.Forms.Padding(2);
+            this.textBoxValueOrPath.Multiline = true;
             this.textBoxValueOrPath.Name = "textBoxValueOrPath";
-            this.textBoxValueOrPath.Size = new System.Drawing.Size(229, 23);
+            this.textBoxValueOrPath.Size = new System.Drawing.Size(472, 151);
             this.textBoxValueOrPath.TabIndex = 20;
             this.textBoxValueOrPath.TextChanged += new System.EventHandler(this.ScenarioField_TextChanged);
             // 
@@ -85,7 +87,7 @@
             this.textBoxName.Location = new System.Drawing.Point(78, 2);
             this.textBoxName.Margin = new System.Windows.Forms.Padding(2);
             this.textBoxName.Name = "textBoxName";
-            this.textBoxName.Size = new System.Drawing.Size(229, 23);
+            this.textBoxName.Size = new System.Drawing.Size(472, 23);
             this.textBoxName.TabIndex = 16;
             this.textBoxName.TextChanged += new System.EventHandler(this.ScenarioField_TextChanged);
             // 
@@ -112,7 +114,7 @@
             this.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.MinimumSize = new System.Drawing.Size(255, 100);
             this.Name = "ScenarioPlaceholderEditor";
-            this.Size = new System.Drawing.Size(310, 100);
+            this.Size = new System.Drawing.Size(553, 229);
             this.ResumeLayout(false);
             this.PerformLayout();
 

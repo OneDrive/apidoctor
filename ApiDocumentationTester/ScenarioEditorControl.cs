@@ -14,8 +14,11 @@ namespace OneDrive.ApiDocumentation.Windows
     public partial class ScenarioEditorControl : UserControl
     {
         private bool ignoreValueChanges = false;
-        public ScenarioDefinition RequestParameters { get; private set; }
-        public DocSet DocumentSet {get; private set;}
+
+        public event EventHandler ScenarioChanged;
+
+        public ScenarioDefinition Scenario { get; private set; }
+        public DocSet DocumentSet {get; set;}
 
         private BindingList<PlaceholderValue> m_StaticPlaceholders;
         private BindingList<PlaceholderValue> m_DynamicPlaceholders;
@@ -25,16 +28,35 @@ namespace OneDrive.ApiDocumentation.Windows
             InitializeComponent();
         }
 
-        public void OpenRequestParameters(ScenarioDefinition param, DocSet docset)
+        public void LoadScenario(ScenarioDefinition param, DocSet docset)
         {
             if (DocumentSet != docset)
                 DocumentSet = docset;
-            if (param != RequestParameters)
+
+            if (param != Scenario)
             {
-                RequestParameters = param;
+                Scenario = param;
                 LoadControlsWithData();
             }
         }
+
+        public ScenarioDefinition CreateNewScenario(MethodDefinition method, DocSet docset)
+        {
+            if (DocumentSet != docset)
+                DocumentSet = docset;
+
+            Scenario = new ScenarioDefinition { Method = method.DisplayName };
+            LoadControlsWithData();
+
+            return Scenario;
+        }
+
+        public void Clear()
+        {
+            Scenario = new ScenarioDefinition();
+            LoadControlsWithData();
+        }
+
 
         private void UpdateTabPageNames()
         {
@@ -44,33 +66,33 @@ namespace OneDrive.ApiDocumentation.Windows
 
         private void LoadControlsWithData()
         {
-            if (RequestParameters == null)
+            if (Scenario == null)
                 return;
 
             ignoreValueChanges = true;
 
             comboBoxMethod.DataSource = DocumentSet.Methods;
             comboBoxMethod.DisplayMember = "DisplayName";
-            comboBoxMethod.Text = RequestParameters.Method;
+            comboBoxMethod.Text = Scenario.Method;
 
-            textBoxScenarioName.Text = RequestParameters.Name;
-            checkBoxEnabled.Checked = RequestParameters.Enabled;
+            textBoxScenarioName.Text = Scenario.Name;
+            checkBoxEnabled.Checked = Scenario.Enabled;
 
-            m_StaticPlaceholders = new BindingList<PlaceholderValue>(RequestParameters.StaticParameters);
+            m_StaticPlaceholders = new BindingList<PlaceholderValue>(Scenario.StaticParameters);
             listBoxStaticPlaceholders.DisplayMember = "PlaceholderText";
             listBoxStaticPlaceholders.DataSource = m_StaticPlaceholders;
 
-            if (RequestParameters.StaticParameters.Count > 0)
+            if (Scenario.StaticParameters.Count > 0)
                 listBoxStaticPlaceholders.SelectedIndex = 0;
             else
                 staticPlaceholderEditor.LoadPlaceholder(new PlaceholderValue(), false);
 
 
-            if (null != RequestParameters.DynamicParameters)
+            if (null != Scenario.DynamicParameters)
             {
                 checkBoxEnableDynamicRequest.Checked = true;
-                m_DynamicPlaceholders = new BindingList<PlaceholderValue>(RequestParameters.DynamicParameters.Values);
-                textBoxHttpRequest.Text = RequestParameters.DynamicParameters.HttpRequest;
+                m_DynamicPlaceholders = new BindingList<PlaceholderValue>(Scenario.DynamicParameters.Values);
+                textBoxHttpRequest.Text = Scenario.DynamicParameters.HttpRequest;
             }
             else
             {
@@ -84,9 +106,15 @@ namespace OneDrive.ApiDocumentation.Windows
             listBoxDynamicPlaceholders.DataSource = m_DynamicPlaceholders;
 
             if (m_DynamicPlaceholders.Count > 0)
+            {
                 listBoxDynamicPlaceholders.SelectedIndex = 0;
+                tabControlPlaceholders.SelectedIndex = 1;
+            }
             else
+            {
+                tabControlPlaceholders.SelectedIndex = 0;
                 dynamicPlaceholderEditor.LoadPlaceholder(new PlaceholderValue(), false);
+            }
 
             UpdateTabPageNames();
 
@@ -118,7 +146,7 @@ namespace OneDrive.ApiDocumentation.Windows
 
         private async void ShowRequestPreview()
         {
-            var method = (from m in DocumentSet.Methods where m.DisplayName == RequestParameters.Method select m).FirstOrDefault();
+            var method = (from m in DocumentSet.Methods where m.DisplayName == Scenario.Method select m).FirstOrDefault();
             if (null == method)
             {
                 MessageBox.Show("No matching method definition found.");
@@ -127,7 +155,7 @@ namespace OneDrive.ApiDocumentation.Windows
 
             string token = await EnsureAccessTokenAvailable();
 
-            var requestResult = await method.PreviewRequestAsync(RequestParameters, Properties.Settings.Default.ApiBaseRoot, token);
+            var requestResult = await method.PreviewRequestAsync(Scenario, Properties.Settings.Default.ApiBaseRoot, token);
             if (requestResult.IsWarningOrError)
             {
                 ErrorDisplayForm.ShowErrorDialog(requestResult.Messages);
@@ -167,7 +195,7 @@ namespace OneDrive.ApiDocumentation.Windows
 
         private async Task<string> EnsureAccessTokenAvailable()
         {
-            var form = (MainForm)ParentForm;
+            var form = MainForm.MostRecentInstance;
             if (string.IsNullOrEmpty(form.AccessToken))
             {
                 await form.SignInAsync();
@@ -188,22 +216,25 @@ namespace OneDrive.ApiDocumentation.Windows
         {
             if (ignoreValueChanges) return;
 
-            RequestParameters.Method = comboBoxMethod.Text;
-            RequestParameters.Name = textBoxScenarioName.Text;
-            RequestParameters.Enabled = checkBoxEnabled.Checked;
+            Scenario.Method = comboBoxMethod.Text;
+            Scenario.Name = textBoxScenarioName.Text;
+            Scenario.Enabled = checkBoxEnabled.Checked;
 
             if (checkBoxEnableDynamicRequest.Checked)
             {
-                if (RequestParameters.DynamicParameters == null)
-                    RequestParameters.DynamicParameters = new PlaceholderRequest();
-                var request = RequestParameters.DynamicParameters;
+                if (Scenario.DynamicParameters == null)
+                    Scenario.DynamicParameters = new PlaceholderRequest();
+                var request = Scenario.DynamicParameters;
                 request.HttpRequest = textBoxHttpRequest.Text;
                 request.Values = m_DynamicPlaceholders.ToList();
             }
             else
             {
-                RequestParameters.DynamicParameters = null;
+                Scenario.DynamicParameters = null;
             }
+            RaiseScenarioChanged();
+
+            listBoxDynamicPlaceholders.DataSource = listBoxDynamicPlaceholders.DataSource;
         }
 
         private void checkBoxEnabled_CheckedChanged(object sender, EventArgs e)
@@ -257,6 +288,28 @@ namespace OneDrive.ApiDocumentation.Windows
         {
             UpdateRequestParameters();
         }
+
+        private void comboBoxMethod_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            MethodDefinition selectedMethod = comboBoxMethod.SelectedItem as MethodDefinition;
+            if (null == selectedMethod)
+            {
+                textBoxRequestPreview.Clear();
+                return;
+            }
+
+            textBoxRequestPreview.Text = selectedMethod.Request;
+        }
+
+        private void RaiseScenarioChanged()
+        {
+            var evt = ScenarioChanged;
+            if (null != evt)
+            {
+                evt(this, EventArgs.Empty);
+            }
+        }
+
 
     }
 }
