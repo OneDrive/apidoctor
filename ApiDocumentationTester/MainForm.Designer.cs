@@ -39,6 +39,7 @@
             this.accountToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.signInToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.validateJsonToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.editScenariosToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.listBoxDocuments = new System.Windows.Forms.ListBox();
             this.listBoxResources = new System.Windows.Forms.ListBox();
             this.label3 = new System.Windows.Forms.Label();
@@ -52,6 +53,7 @@
             this.tabPageResources = new System.Windows.Forms.TabPage();
             this.textBoxResourceData = new System.Windows.Forms.TextBox();
             this.tabPageMethods = new System.Windows.Forms.TabPage();
+            this.methodsPage = new OneDrive.ApiDocumentation.Windows.TabPages.MethodsPage();
             this.tabPageOptions = new System.Windows.Forms.TabPage();
             this.textBoxMethodRequestParameterFile = new System.Windows.Forms.TextBox();
             this.label5 = new System.Windows.Forms.Label();
@@ -61,8 +63,6 @@
             this.label2 = new System.Windows.Forms.Label();
             this.textBoxBaseURL = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
-            this.editScenariosToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.methodsPage = new OneDrive.ApiDocumentation.Windows.TabPages.MethodsPage();
             this.menuStrip1.SuspendLayout();
             this.tabControl1.SuspendLayout();
             this.tabPageFiles.SuspendLayout();
@@ -157,6 +157,13 @@
             this.validateJsonToolStripMenuItem.Size = new System.Drawing.Size(87, 20);
             this.validateJsonToolStripMenuItem.Text = "Validate Json";
             this.validateJsonToolStripMenuItem.Click += new System.EventHandler(this.validateJsonToolStripMenuItem_Click);
+            // 
+            // editScenariosToolStripMenuItem
+            // 
+            this.editScenariosToolStripMenuItem.Name = "editScenariosToolStripMenuItem";
+            this.editScenariosToolStripMenuItem.Size = new System.Drawing.Size(92, 20);
+            this.editScenariosToolStripMenuItem.Text = "Edit Scenarios";
+            this.editScenariosToolStripMenuItem.Click += new System.EventHandler(this.editScenariosToolStripMenuItem_Click);
             // 
             // listBoxDocuments
             // 
@@ -303,6 +310,15 @@
             this.tabPageMethods.Text = "Methods";
             this.tabPageMethods.UseVisualStyleBackColor = true;
             // 
+            // methodsPage
+            // 
+            this.methodsPage.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.methodsPage.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.methodsPage.Location = new System.Drawing.Point(0, 0);
+            this.methodsPage.Name = "methodsPage";
+            this.methodsPage.Size = new System.Drawing.Size(925, 466);
+            this.methodsPage.TabIndex = 0;
+            // 
             // tabPageOptions
             // 
             this.tabPageOptions.Controls.Add(this.textBoxMethodRequestParameterFile);
@@ -377,6 +393,7 @@
             this.textBoxBaseURL.Name = "textBoxBaseURL";
             this.textBoxBaseURL.Size = new System.Drawing.Size(384, 23);
             this.textBoxBaseURL.TabIndex = 1;
+            this.textBoxBaseURL.TextChanged += new System.EventHandler(this.textBoxBaseURL_TextChanged);
             // 
             // label1
             // 
@@ -386,22 +403,6 @@
             this.label1.Size = new System.Drawing.Size(58, 15);
             this.label1.TabIndex = 0;
             this.label1.Text = "Base URL:";
-            // 
-            // editScenariosToolStripMenuItem
-            // 
-            this.editScenariosToolStripMenuItem.Name = "editScenariosToolStripMenuItem";
-            this.editScenariosToolStripMenuItem.Size = new System.Drawing.Size(92, 20);
-            this.editScenariosToolStripMenuItem.Text = "Edit Scenarios";
-            this.editScenariosToolStripMenuItem.Click += new System.EventHandler(this.editScenariosToolStripMenuItem_Click);
-            // 
-            // methodsPage
-            // 
-            this.methodsPage.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.methodsPage.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.methodsPage.Location = new System.Drawing.Point(0, 0);
-            this.methodsPage.Name = "methodsPage";
-            this.methodsPage.Size = new System.Drawing.Size(925, 466);
-            this.methodsPage.TabIndex = 0;
             // 
             // MainForm
             // 

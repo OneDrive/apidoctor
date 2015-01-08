@@ -66,7 +66,7 @@
                 var response = await Http.HttpResponse.ResponseFromHttpWebResponseAsync(webRequest);
                 if (response.WasSuccessful)
                 {
-                    if (response.ContentType.StartsWith("application/json"))
+                    if (response.ContentType != null && response.ContentType.StartsWith("application/json"))
                     {
                         foreach (var parameter in Values)
                         {

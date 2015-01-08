@@ -73,6 +73,7 @@
                 {
                     var writer = new StreamWriter(stream);
                     writer.Write(Body);
+                    writer.Flush();
                 }
             }
 

@@ -185,5 +185,11 @@ namespace OneDrive.ApiDocumentation.Windows
             ScenarioEditorForm form = new ScenarioEditorForm(CurrentDocSet);
             form.Show();
         }
+
+        private void textBoxBaseURL_TextChanged(object sender, EventArgs e)
+        {
+            Properties.Settings.Default.ApiBaseRoot = textBoxBaseURL.Text;
+            Properties.Settings.Default.Save();
+        }
     }
 }

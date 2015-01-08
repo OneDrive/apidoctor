@@ -86,7 +86,10 @@ namespace OneDrive.ApiDocumentation.Windows.TabPages
                 requestParams = CurrentDocSet.TestScenarios.FirstScenarioForMethod(originalMethod);
             }
 
-            var buildRequestResult = await method.PreviewRequestAsync(requestParams, string.Empty, string.Empty);
+            await MainForm.MostRecentInstance.SignInAsync();
+            var accessToken = MainForm.MostRecentInstance.AccessToken;
+
+            var buildRequestResult = await method.PreviewRequestAsync(requestParams, Properties.Settings.Default.ApiBaseRoot, accessToken);
             if (buildRequestResult.IsWarningOrError)
             {
                 ErrorDisplayForm.ShowErrorDialog(buildRequestResult.Messages);
@@ -124,7 +127,10 @@ namespace OneDrive.ApiDocumentation.Windows.TabPages
             
             SetItemState(selectedListViewItem, result);
 
-            textBoxResponseActual.Text = result.Response.FullHttpText();
+            if (result.Response != null)
+                textBoxResponseActual.Text = result.Response.FullHttpText();
+            else
+                textBoxResponseActual.Clear();
             textBoxResponseActual.Tag = result.Response;
 
             if (result.Result != RunResult.Success)

@@ -42,10 +42,10 @@ namespace OneDrive.ApiDocumentation.Validation
 
         internal Scenarios(DocSet set, string relativePath) : this()
         {
-            Loaded = TryReadRequestParameters(set, relativePath);
+            Loaded = TryReadScenarios(set, relativePath);
         }
 
-        public bool TryReadRequestParameters(DocSet set, string relativePath)
+        public bool TryReadScenarios(DocSet set, string relativePath)
         {
             var path = string.Concat(set.SourceFolderPath, relativePath);
             if (!File.Exists(path))
@@ -81,7 +81,7 @@ namespace OneDrive.ApiDocumentation.Validation
 
         public bool TrySaveToFile()
         {
-            bool result = TryWriteRequestParameters(DocumentSet, RelativePath, Definitions.ToArray());
+            bool result = TryWriteScenarios(DocumentSet, RelativePath, Definitions.ToArray());
             if (result)
             {
                 Dirty = false;
@@ -89,7 +89,7 @@ namespace OneDrive.ApiDocumentation.Validation
             return result;
         }
 
-        public static bool TryWriteRequestParameters(DocSet set, string relativePath, ScenarioDefinition[] parameters)
+        public static bool TryWriteScenarios(DocSet set, string relativePath, ScenarioDefinition[] parameters)
         {
             var path = string.Concat(set.SourceFolderPath, relativePath);
             foreach (var request in parameters)
