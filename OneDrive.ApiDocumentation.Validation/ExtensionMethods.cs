@@ -67,5 +67,15 @@
             System.IO.StringReader reader = new System.IO.StringReader(input);
             return reader.ReadLine();
         }
+
+        public static bool WereErrors(this ValidationError[] errors)
+        {
+            return errors.Any(x => x.IsError);
+        }
+
+        public static bool WereWarnings(this ValidationError[] errors)
+        {
+            return errors.Any(x => x.IsWarning);
+        }
     }
 }

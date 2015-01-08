@@ -326,19 +326,31 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             MethodDefinition[] methods = FindTestMethods(options, docset);
 
             bool result = true;
-            int successCount = 0;
+            int successCount = 0, errorCount = 0, warningCount = 0;
             foreach (var method in methods)
             {
                 FancyConsole.Write(ConsoleHeaderColor, "Checking \"{0}\" in {1}...", method.DisplayName, method.SourceFile.DisplayName);
 
                 var parser = new HttpParser();
                 var expectedResponse = parser.ParseHttpResponse(method.ExpectedResponse);
-                bool success = ValidateHttpResponse(docset, method, expectedResponse);
-                result &= success;
-                successCount += success ? 1 : 0;
+                ValidationError[] errors = ValidateHttpResponse(docset, method, expectedResponse);
+                result &= errors.WereErrors();
+
+                if (errors.WereErrors())
+                {
+                    errorCount++;
+                }
+                else if (errors.WereWarnings())
+                {
+                    warningCount++;
+                }
+                else
+                {
+                    successCount++;
+                }
             }
 
-            PrintStatusMessage(successCount, methods.Length);
+            PrintStatusMessage(successCount, warningCount, errorCount);
 
             Exit(failure: !result);
         }
@@ -397,7 +409,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             FancyConsole.WriteLineIndented(indent, color, error.ErrorText);
         }
 
-        private static bool ValidateHttpResponse(DocSet docset, MethodDefinition method, HttpResponse response, HttpResponse expectedResponse = null, string indentLevel = "")
+        private static ValidationError[] ValidateHttpResponse(DocSet docset, MethodDefinition method, HttpResponse response, HttpResponse expectedResponse = null, string indentLevel = "")
         {
             ValidationError[] errors;
             if (!docset.ValidateApiMethod(method, response, expectedResponse, out errors))
@@ -405,13 +417,12 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 FancyConsole.WriteLine();
                 WriteOutErrors(errors, indentLevel + "  ");
                 FancyConsole.WriteLine();
-                return false;
             }
             else
             {
                 FancyConsole.WriteLine(ConsoleSuccessColor, " no errors");
-                return true;
             }
+            return errors;
         }
 
         /// <summary>
@@ -425,8 +436,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             FancyConsole.WriteLine();
 
             var methods = FindTestMethods(options, docset);
-            int successCount = 0;
-            int totalCount = 0;
+            int successCount = 0, warningCount = 0, errorCount = 0;
             bool result = true;
             foreach (var method in methods)
             {
@@ -435,9 +445,19 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 if (setsOfParameters.Length == 0)
                 {
                     // If there are no parameters defined, we still try to call the request as-is.
-                    bool success = await TestMethodWithParameters(docset, method, null, options.ServiceRootUrl, options.AccessToken);
-                    result &= success;
-                    successCount += success ? 1 : 0; totalCount++;
+                    ValidationError[] errors = await TestMethodWithParameters(docset, method, null, options.ServiceRootUrl, options.AccessToken);
+                    if (errors.WereErrors())
+                    {
+                        errorCount++;
+                    }
+                    else if (errors.WereWarnings())
+                    {
+                        warningCount++;
+                    }
+                    else
+                    {
+                        successCount++;
+                    }
                     AddPause(options);
                 }
                 else
@@ -445,16 +465,26 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                     // Otherwise, if there are parameter sets, we call each of them and check the result.
                     foreach (var requestSettings in setsOfParameters)
                     {
-                        bool success = await TestMethodWithParameters(docset, method, requestSettings, options.ServiceRootUrl, options.AccessToken);
-                        result &= success;
-                        successCount += success ? 1 : 0; totalCount++;
+                        ValidationError[] errors = await TestMethodWithParameters(docset, method, requestSettings, options.ServiceRootUrl, options.AccessToken);
+                        if (errors.WereErrors())
+                        {
+                            errorCount++;
+                        }
+                        else if (errors.WereWarnings())
+                        {
+                            warningCount++;
+                        }
+                        else
+                        {
+                            successCount++;
+                        }
                         AddPause(options);
                     }
                 }
             }
 
-            PrintStatusMessage(successCount, totalCount);
-
+            PrintStatusMessage(successCount, warningCount, errorCount);
+            result = (errorCount > 0) || (warningCount > 0);
             Exit(!result);
         }
 
@@ -473,21 +503,30 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         }
 
 
-        private static void PrintStatusMessage(int successCount, int totalCount)
+        private static void PrintStatusMessage(int successCount, int warningCount, int errorCount)
         {
             FancyConsole.WriteLine();
             FancyConsole.Write("Runs completed. ");
-            double percentCompleted = 100 * (successCount / (double)totalCount);
+            var totalCount = successCount + warningCount + errorCount;
+            double percentSuccessful = 100 * (successCount / (double)totalCount);
 
             const string percentCompleteFormat = "{0:0.00}% passed";
-            if (percentCompleted == 100.0)
-                FancyConsole.Write(ConsoleSuccessColor, percentCompleteFormat, percentCompleted);
+            if (percentSuccessful == 100.0)
+                FancyConsole.Write(ConsoleSuccessColor, percentCompleteFormat, percentSuccessful);
             else
-                FancyConsole.Write(ConsoleWarningColor, percentCompleteFormat, percentCompleted);
+                FancyConsole.Write(ConsoleWarningColor, percentCompleteFormat, percentSuccessful);
 
-            if (successCount != totalCount)
-                FancyConsole.Write(ConsoleErrorColor, " ({0} failures)", totalCount - successCount);
-
+            if (errorCount > 0 || warningCount > 0)
+            {
+                FancyConsole.Write(" (");
+                if (errorCount > 0)
+                    FancyConsole.Write(ConsoleErrorColor, "{0} errors", errorCount);
+                if (warningCount > 0 && errorCount > 0)
+                    FancyConsole.Write(", ");
+                if (warningCount > 0)
+                    FancyConsole.Write(ConsoleWarningColor, "{0} warnings", warningCount);
+                FancyConsole.Write(")");
+            }
             FancyConsole.WriteLine();
         }
 
@@ -501,7 +540,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             }
         }
 
-        private static async Task<bool> TestMethodWithParameters(DocSet docset, MethodDefinition method, ScenarioDefinition requestSettings, string rootUrl, string accessToken)
+        private static async Task<ValidationError[]> TestMethodWithParameters(DocSet docset, MethodDefinition method, ScenarioDefinition requestSettings, string rootUrl, string accessToken)
         {
             string indentLevel = "";
             if (requestSettings != null)
@@ -517,7 +556,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             if (requestPreviewResult.IsWarningOrError)
             {
                 WriteOutErrors(requestPreviewResult.Messages, indentLevel + "  ");
-                return false;
+                return requestPreviewResult.Messages;
             }
             
             var requestPreview = requestPreviewResult.Value;
