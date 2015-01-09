@@ -55,11 +55,7 @@
                 return new ValidationResult<bool>(false, new ValidationError(ValidationErrorCode.InvalidRequestFormat, SourceName, "Request was not parsed: {0}", ex.Message));
             }
 
-            if (!string.IsNullOrEmpty(accessToken))
-            {
-                request.Authorization = "Bearer " + accessToken;
-            }
-            
+            MethodDefinition.AddAccessTokenToRequest(accessToken, request);
             try
             {
                 var webRequest = request.PrepareHttpWebRequest(baseUrl);

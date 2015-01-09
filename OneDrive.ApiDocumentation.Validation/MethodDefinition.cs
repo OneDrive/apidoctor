@@ -89,10 +89,7 @@ namespace OneDrive.ApiDocumentation.Validation
         {
             var parser = new HttpParser();
             var request = parser.ParseHttpRequest(Request);
-            if (!string.IsNullOrEmpty(accessToken) && string.IsNullOrEmpty(request.Authorization))
-            {
-                request.Authorization = "Bearer " + accessToken;
-            }
+            AddAccessTokenToRequest(accessToken, request);
 
             if (null != scenario)
             {
@@ -123,6 +120,14 @@ namespace OneDrive.ApiDocumentation.Validation
             }
 
             return new ValidationResult<HttpRequest>(request);
+        }
+
+        internal static void AddAccessTokenToRequest(string accessToken, HttpRequest request)
+        {
+            if (!string.IsNullOrEmpty(accessToken) && string.IsNullOrEmpty(request.Authorization))
+            {
+                request.Authorization = "Bearer " + accessToken;
+            }
         }
 
         private static void RewriteRequestForScenario(HttpRequest request, ScenarioDefinition parameters)

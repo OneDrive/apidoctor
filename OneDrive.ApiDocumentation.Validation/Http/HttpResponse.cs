@@ -36,12 +36,18 @@
                 webResponse = webex.Response as HttpWebResponse;
                 if (null == webResponse)
                 {
-                    return new HttpResponse { Body = webex.ToString() };
+                    return new HttpResponse {
+                        StatusCode = 504,
+                        StatusMessage = "HttpResponseFailure " + webex.Message
+                    };
                 }
             }
             catch (Exception ex)
             {
-                return new HttpResponse { Body = ex.ToString() };
+                return new HttpResponse {
+                    StatusCode = 504,
+                    StatusMessage = "HttpResponseFailure " + ex.Message
+                };
             }
 
             return await ConvertToResponse(webResponse);
@@ -74,12 +80,16 @@
             StringBuilder sb = new StringBuilder();
             sb.AppendFormat("{0} {1} {2}", HttpVersion, StatusCode, StatusMessage);
             sb.AppendLine();
-            foreach (var key in Headers.AllKeys)
+            if (null != Headers)
             {
-                sb.AppendFormat("{0}: {1}", key, Headers[key]);
+                foreach (var key in Headers.AllKeys)
+                {
+                    sb.AppendFormat("{0}: {1}", key, Headers[key]);
+                    sb.AppendLine();
+                }
                 sb.AppendLine();
             }
-            sb.AppendLine();
+            
             sb.Append(body);
 
             return sb.ToString();
@@ -101,7 +111,11 @@
             }
 
             // Check to see that expected headers were found in the response
-            List<string> otherResponseHeaderKeys = new List<string>(actualResponse.Headers.AllKeys);
+            List<string> otherResponseHeaderKeys = new List<string>();
+            if (actualResponse.Headers != null)
+            {
+                otherResponseHeaderKeys.AddRange(actualResponse.Headers.AllKeys);
+            }
 
             var comparer = new HeaderNameComparer();
             foreach(var expectedHeader in Headers.AllKeys)
