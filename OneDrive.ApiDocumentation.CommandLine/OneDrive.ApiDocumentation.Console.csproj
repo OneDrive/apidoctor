@@ -24,7 +24,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>false</ConsolePause>
-    <Commandlineparameters>check-docs --file /drives/default.md</Commandlineparameters>
+    <Commandlineparameters>check-docs --file /items/sharing_invite.md</Commandlineparameters>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -71,13 +71,13 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\vroom-windows-client\MicrosoftAccountSDK.Windows\MicrosoftAccountSDK.Windows.csproj">
-      <Project>{9E9F37BE-3CB5-4124-8B7C-E60C4AB90ECF}</Project>
-      <Name>MicrosoftAccountSDK.Windows</Name>
-    </ProjectReference>
     <ProjectReference Include="..\OneDrive.ApiDocumentation.Validation\OneDrive.ApiDocumentation.Validation.csproj">
       <Project>{33B10320-3802-49CF-8965-3510AE66D5EC}</Project>
       <Name>OneDrive.ApiDocumentation.Validation</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MicrosoftAccountSDK.Windows\MicrosoftAccountSDK.Windows.csproj">
+      <Project>{9E9F37BE-3CB5-4124-8B7C-E60C4AB90ECF}</Project>
+      <Name>MicrosoftAccountSDK.Windows</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

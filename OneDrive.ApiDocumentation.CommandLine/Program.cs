@@ -331,6 +331,14 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             {
                 FancyConsole.Write(ConsoleHeaderColor, "Checking \"{0}\" in {1}...", method.DisplayName, method.SourceFile.DisplayName);
 
+                if (string.IsNullOrEmpty(method.ExpectedResponse))
+                {
+                    FancyConsole.WriteLine();
+                    FancyConsole.WriteLine(ConsoleErrorColor, "  Error: response was null.");
+                    errorCount++;
+                    continue;
+                }
+
                 var parser = new HttpParser();
                 var expectedResponse = parser.ParseHttpResponse(method.ExpectedResponse);
                 ValidationError[] errors = ValidateHttpResponse(docset, method, expectedResponse);
