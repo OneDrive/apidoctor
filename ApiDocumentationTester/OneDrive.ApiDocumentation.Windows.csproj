@@ -171,7 +171,7 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\vroom-windows-client\MicrosoftAccountSDK.Windows\MicrosoftAccountSDK.Windows.csproj">
+    <ProjectReference Include="..\MicrosoftAccountSDK.Windows\MicrosoftAccountSDK.Windows.csproj">
       <Project>{9E9F37BE-3CB5-4124-8B7C-E60C4AB90ECF}</Project>
       <Name>MicrosoftAccountSDK.Windows</Name>
     </ProjectReference>
