@@ -13,16 +13,19 @@ namespace OneDrive.ApiDocumentation.Validation
     {
         public abstract string AuthenicationToken { get; internal set; }
 
-        public static BearerCredentials CreateBearerCredentials(string authenicationToken)
+        public static AuthenicationCredentials CreateBearerCredentials(string authenicationToken)
         {
+            if (String.IsNullOrEmpty(authenicationToken)) { return CreateNoCredentials(); }
             return new BearerCredentials { AuthenicationToken = "Bearer " + authenicationToken };
         }
 
-        public static WLIDCredentials CreateWLIDCredentials(string authenicationToken) {
+        public static AuthenicationCredentials CreateWLIDCredentials(string authenicationToken)
+        {
+            if (String.IsNullOrEmpty(authenicationToken)) { return CreateNoCredentials(); }
             return new WLIDCredentials { AuthenicationToken = "WLID 1.0 " + authenicationToken };
         }
 
-        public static NoCredentials CreateNoCredentials()
+        public static AuthenicationCredentials CreateNoCredentials()
         {
             return new NoCredentials();
         }
