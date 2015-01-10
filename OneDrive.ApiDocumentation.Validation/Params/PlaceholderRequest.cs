@@ -31,7 +31,7 @@
         /// <param name="baseUrl"></param>
         /// <param name="accessToken"></param>
         /// <returns></returns>
-        public async Task<ValidationResult<bool>> PopulateValuesFromRequestAsync(string baseUrl, string accessToken)
+        public async Task<ValidationResult<bool>> PopulateValuesFromRequestAsync(string baseUrl, AuthenicationCredentials credentials)
         {
             if (string.IsNullOrEmpty(HttpRequest))
             {
@@ -55,7 +55,7 @@
                 return new ValidationResult<bool>(false, new ValidationError(ValidationErrorCode.InvalidRequestFormat, SourceName, "Request was not parsed: {0}", ex.Message));
             }
 
-            MethodDefinition.AddAccessTokenToRequest(accessToken, request);
+            MethodDefinition.AddAccessTokenToRequest(credentials, request);
             try
             {
                 var webRequest = request.PrepareHttpWebRequest(baseUrl);

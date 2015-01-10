@@ -44,6 +44,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AuthenicationCredentials.cs" />
     <Compile Include="CodeBlockAnnotation.cs" />
     <Compile Include="DocFile.cs" />
     <Compile Include="DocSet.cs" />
