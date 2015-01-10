@@ -155,8 +155,9 @@ namespace OneDrive.ApiDocumentation.Windows
 
             string token = await EnsureAccessTokenAvailable();
             if (null == token) return;
+            var credentials = AuthenicationCredentials.CreateBearerCredentials(token);
 
-            var requestResult = await method.PreviewRequestAsync(Scenario, Properties.Settings.Default.ApiBaseRoot, token);
+            var requestResult = await method.PreviewRequestAsync(Scenario, Properties.Settings.Default.ApiBaseRoot, credentials);
             if (requestResult.IsWarningOrError)
             {
                 ErrorDisplayForm.ShowErrorDialog(requestResult.Messages);

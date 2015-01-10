@@ -87,9 +87,9 @@ namespace OneDrive.ApiDocumentation.Windows.TabPages
             }
 
             await MainForm.MostRecentInstance.SignInAsync();
-            var accessToken = MainForm.MostRecentInstance.AccessToken;
+            var credentials = AuthenicationCredentials.CreateBearerCredentials(MainForm.MostRecentInstance.AccessToken);
 
-            var buildRequestResult = await method.PreviewRequestAsync(requestParams, Properties.Settings.Default.ApiBaseRoot, accessToken);
+            var buildRequestResult = await method.PreviewRequestAsync(requestParams, Properties.Settings.Default.ApiBaseRoot, credentials);
             if (buildRequestResult.IsWarningOrError)
             {
                 ErrorDisplayForm.ShowErrorDialog(buildRequestResult.Messages);
@@ -282,7 +282,8 @@ namespace OneDrive.ApiDocumentation.Windows.TabPages
             }
 
             var baseUrl = Properties.Settings.Default.ApiBaseRoot;
-            var responseResult = await method.ApiResponseForMethod(baseUrl, ParentForm.AccessToken, requestParams);
+            AuthenicationCredentials credentials = AuthenicationCredentials.CreateBearerCredentials(ParentForm.AccessToken);
+            var responseResult = await method.ApiResponseForMethod(baseUrl, credentials, requestParams);
             if (responseResult.IsWarningOrError)
             {
                 return new MethodValidationResult { Errors = responseResult.Messages, Result = RunResult.Error };

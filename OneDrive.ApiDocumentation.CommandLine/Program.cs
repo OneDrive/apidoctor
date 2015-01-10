@@ -455,11 +455,12 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             foreach (var method in methods)
             {
                 FancyConsole.Write(ConsoleHeaderColor, "Calling method \"{0}\"...", method.DisplayName);
+                AuthenicationCredentials credentials = AuthenicationCredentials.CreateBearerCredentials(options.AccessToken);
                 var setsOfParameters = docset.TestScenarios.ScenariosForMethod(method);
                 if (setsOfParameters.Length == 0)
                 {
                     // If there are no parameters defined, we still try to call the request as-is.
-                    ValidationError[] errors = await TestMethodWithParameters(docset, method, null, options.ServiceRootUrl, options.AccessToken);
+                    ValidationError[] errors = await TestMethodWithParameters(docset, method, null, options.ServiceRootUrl, credentials);
                     if (errors.WereErrors())
                     {
                         errorCount++;
@@ -479,7 +480,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                     // Otherwise, if there are parameter sets, we call each of them and check the result.
                     foreach (var requestSettings in setsOfParameters)
                     {
-                        ValidationError[] errors = await TestMethodWithParameters(docset, method, requestSettings, options.ServiceRootUrl, options.AccessToken);
+                        ValidationError[] errors = await TestMethodWithParameters(docset, method, requestSettings, options.ServiceRootUrl, credentials);
                         if (errors.WereErrors())
                         {
                             errorCount++;
@@ -560,7 +561,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             }
         }
 
-        private static async Task<ValidationError[]> TestMethodWithParameters(DocSet docset, MethodDefinition method, ScenarioDefinition requestSettings, string rootUrl, string accessToken)
+        private static async Task<ValidationError[]> TestMethodWithParameters(DocSet docset, MethodDefinition method, ScenarioDefinition requestSettings, string rootUrl, AuthenicationCredentials credentials)
         {
             string indentLevel = "";
             if (requestSettings != null)
@@ -572,7 +573,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
             FancyConsole.VerboseWriteLine("");
             FancyConsole.VerboseWriteLineIndented(indentLevel, "Request:");
-            var requestPreviewResult = await method.PreviewRequestAsync(requestSettings, rootUrl, accessToken);
+            var requestPreviewResult = await method.PreviewRequestAsync(requestSettings, rootUrl, credentials);
             if (requestPreviewResult.IsWarningOrError)
             {
                 WriteOutErrors(requestPreviewResult.Messages, indentLevel + "  ");
