@@ -74,9 +74,7 @@ namespace MicrosoftAccountSDK.Windows
         private void CloseWindow()
         {
             const int interval = 100;
-            // For some reason the default browser is launched sometimes if we close the form
-            // too early.
-            new System.Threading.Timer(new System.Threading.TimerCallback((state) => 
+            var t = new System.Threading.Timer(new System.Threading.TimerCallback((state) => 
             {
                 this.DialogResult = System.Windows.Forms.DialogResult.OK;
                 this.BeginInvoke(new MethodInvoker(() => this.Close()));
@@ -147,6 +145,7 @@ namespace MicrosoftAccountSDK.Windows
             urlParam.Add("client_id", clientId);
             urlParam.Add("scope", GenerateScopeString(scopes));
             urlParam.Add("redirect_uri", msaDesktopUrl);
+            urlParam.Add("display", "popup");
 
             switch (flow)
             {

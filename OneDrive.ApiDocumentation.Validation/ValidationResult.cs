@@ -35,10 +35,10 @@ namespace OneDrive.ApiDocumentation.Validation
             Messages = new ValidationError[0];
         }
 
-        public ValidationResult(T result, ValidationError[] messages)
+        public ValidationResult(T result, IEnumerable<ValidationError> messages)
         {
             Value = result;
-            Messages = messages;
+            Messages = messages.ToArray();
         }
 
         public ValidationResult(T result, ValidationError error)

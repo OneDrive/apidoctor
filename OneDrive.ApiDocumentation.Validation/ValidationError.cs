@@ -52,7 +52,9 @@
         InvalidRequestFormat,
         UnsupportedContentType,
         RewriteRequestFailure,
-        HttpParserError
+        HttpParserError,
+        BadPathTargetValue,
+        ParameterParserError
 
     }
 

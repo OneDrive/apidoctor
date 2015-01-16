@@ -32,6 +32,9 @@ namespace OneDrive.ApiDocumentation.Windows
 
             var locations = Enum.GetNames(typeof(PlaceholderLocation));
             comboBoxLocation.Items.AddRange(locations);
+
+            var targets = Enum.GetNames(typeof(ResponseField));
+            comboBoxPathTarget.Items.AddRange(targets);
         }
 
         public void LoadPlaceholder(PlaceholderValue value, bool isRequestValue)
@@ -42,8 +45,23 @@ namespace OneDrive.ApiDocumentation.Windows
 
             textBoxName.Text = value.PlaceholderText;
             comboBoxLocation.SelectedItem = value.Location.ToString();
+            
             textBoxValueOrPath.Text = isRequestValue ? value.Path : value.Value;
             labelValueOrPath.Text = isRequestValue ? "Path:" : "Value:";
+
+            if (isRequestValue)
+            {
+                comboBoxPathTarget.SelectedItem = value.PathTarget.ToString();
+                comboBoxPathTarget.Enabled = true;
+                labelTarget.Enabled = true;
+            }
+            else
+            {
+                labelTarget.Enabled = false;
+                comboBoxPathTarget.Enabled = false;
+                comboBoxPathTarget.Text = "Static Value";
+            }
+
             m_loading = false;
         }
 
@@ -59,11 +77,13 @@ namespace OneDrive.ApiDocumentation.Windows
                 if (IsRequestValuePlaceholder)
                 {
                     v.Path = textBoxValueOrPath.Text;
+                    v.PathTarget = (ResponseField)Enum.Parse(typeof(ResponseField), comboBoxPathTarget.Text);
                     v.Value = null;
                 }
                 else
                 {
                     v.Path = null;
+                    v.PathTarget = ResponseField.None;
                     v.Value = textBoxValueOrPath.Text;
                 }
 

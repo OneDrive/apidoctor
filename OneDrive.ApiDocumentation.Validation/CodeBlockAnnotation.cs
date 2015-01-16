@@ -51,6 +51,11 @@ namespace OneDrive.ApiDocumentation.Validation
     public enum CodeBlockType
     {
         /// <summary>
+        /// Default value that indicates parsing failed.
+        /// </summary>
+        Unknown,
+
+        /// <summary>
         /// Resource type definition
         /// </summary>
         Resource,

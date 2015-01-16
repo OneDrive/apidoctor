@@ -41,6 +41,8 @@
         [JsonProperty("path", NullValueHandling = NullValueHandling.Ignore)]
         public string Path { get; set; }
 
+        [JsonProperty("target", DefaultValueHandling=DefaultValueHandling.Ignore), JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+        public ResponseField PathTarget { get; set; }
 
         #region INotifyPropertyChanged
 
@@ -58,5 +60,12 @@
         #endregion
 
         
+    }
+
+    public enum ResponseField
+    {
+        None,
+        Json,
+        Header
     }
 }
