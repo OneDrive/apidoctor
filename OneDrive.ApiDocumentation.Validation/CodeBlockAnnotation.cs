@@ -42,8 +42,12 @@ namespace OneDrive.ApiDocumentation.Validation
         [JsonProperty("expectError", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public bool ExpectError { get; set; }
 
+        [JsonProperty("disabled", DefaultValueHandling=DefaultValueHandling.Ignore)]
+        public bool Disabled { get; set; }
+
         public static CodeBlockAnnotation FromJson(string json)
         {
+            
             return JsonConvert.DeserializeObject<CodeBlockAnnotation>(json);
         }
     }
@@ -73,6 +77,11 @@ namespace OneDrive.ApiDocumentation.Validation
         /// <summary>
         /// Ignored code block. No processing is done
         /// </summary>
-        Ignored
+        Ignored,
+
+        /// <summary>
+        /// Example code block. Should be checked for JSON correctness and resources
+        /// </summary>
+        Example
     }
 }

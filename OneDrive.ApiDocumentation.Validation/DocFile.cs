@@ -215,6 +215,7 @@
                         break;
                     }
                 case CodeBlockType.Ignored:
+                case CodeBlockType.Example:
                     break;
                 default:
                     {

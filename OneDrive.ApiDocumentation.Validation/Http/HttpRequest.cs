@@ -60,6 +60,9 @@
                     case "content-type":
                         request.ContentType = Headers[key];
                         break;
+                    case "content-length":
+                        // Don't set these headers
+                        break;
                     default:
                         request.Headers.Add(key, Headers[key]);
                         break;

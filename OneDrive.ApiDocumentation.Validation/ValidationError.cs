@@ -54,7 +54,8 @@
         RewriteRequestFailure,
         HttpParserError,
         BadPathTargetValue,
-        ParameterParserError
+        ParameterParserError,
+        MethodDisabled
 
     }
 

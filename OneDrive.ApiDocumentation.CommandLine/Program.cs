@@ -454,13 +454,24 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             bool result = true;
             foreach (var method in methods)
             {
+                ValidationError[] errors = null;
+
                 FancyConsole.Write(ConsoleHeaderColor, "Calling method \"{0}\"...", method.DisplayName);
+                if (method.RequestMetadata.Disabled)
+                {
+                    errors = new ValidationError[] { new ValidationWarning(ValidationErrorCode.MethodDisabled, null, "Method was disabled: {0}", method.DisplayName) };
+                    FancyConsole.WriteLine();
+                    WriteOutErrors(errors, "  ");
+                    warningCount++;
+                    continue;
+                }
+                
                 AuthenicationCredentials credentials = AuthenicationCredentials.CreateBearerCredentials(options.AccessToken);
                 var setsOfParameters = docset.TestScenarios.ScenariosForMethod(method);
                 if (setsOfParameters.Length == 0)
                 {
                     // If there are no parameters defined, we still try to call the request as-is.
-                    ValidationError[] errors = await TestMethodWithParameters(docset, method, null, options.ServiceRootUrl, credentials);
+                    errors = await TestMethodWithParameters(docset, method, null, options.ServiceRootUrl, credentials);
                     if (errors.WereErrors())
                     {
                         errorCount++;
@@ -480,7 +491,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                     // Otherwise, if there are parameter sets, we call each of them and check the result.
                     foreach (var requestSettings in setsOfParameters)
                     {
-                        ValidationError[] errors = await TestMethodWithParameters(docset, method, requestSettings, options.ServiceRootUrl, credentials);
+                        errors = await TestMethodWithParameters(docset, method, requestSettings, options.ServiceRootUrl, credentials);
                         if (errors.WereErrors())
                         {
                             errorCount++;
