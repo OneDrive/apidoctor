@@ -133,7 +133,7 @@ namespace OneDrive.ApiDocumentation.Validation
         {
             var parameters = ScenariosForMethod(method);
             if (null != parameters)
-                return parameters.FirstOrDefault();
+                return parameters.FirstOrDefault(p => p.Enabled);
             else
                 return null;
         }
@@ -144,7 +144,7 @@ namespace OneDrive.ApiDocumentation.Validation
 
             var id = method.DisplayName;
             var query = from p in Definitions
-                        where p.Method == id && p.Enabled == true
+                        where p.Method == id
                         select p;
 
             return query.ToArray();

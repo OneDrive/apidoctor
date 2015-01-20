@@ -40,11 +40,6 @@
                 errors.Add(new ValidationError(ValidationErrorCode.RequestWasEmptyOrNull, SourceName, "Request was missing or null."));
                 return new ValidationResult<bool>(false, errors);
             }
-            if (null == Values || Values.Count == 0)
-            {
-                // No values are populated by the result, so we don't bother calling it
-                return new ValidationResult<bool>(true, errors);
-            }
 
             Http.HttpParser parser = new Http.HttpParser();
             Http.HttpRequest request = null;
@@ -70,15 +65,31 @@
 
                 if (response.WasSuccessful)
                 {
+                    if (string.IsNullOrEmpty(response.ContentType))
+                    {
+                        if (response.StatusCode==204)
+                        {
+                            return new ValidationResult<bool>(true);
+                        }
+                        else
+                        {
+                            return new ValidationResult<bool>(false, new ValidationError(ValidationErrorCode.UnsupportedContentType, SourceName, "No Content-Type found for a non-204 response"));
+                        }
+                    }
+
                     string expectedContentType = ExpectedContentType(Values);
-                    
                     if (expectedContentType == null || (response.ContentType != null && response.ContentType.StartsWith(expectedContentType)))
                     {
-                        foreach (var parameter in Values)
+                        if (null != Values)
                         {
-                            SetParameterValueFromResponse(parameter, response, errors);
+                            foreach (var parameter in Values)
+                            {
+                                SetParameterValueFromResponse(parameter, response, errors);
+                            }
                         }
+
                         return new ValidationResult<bool>(!errors.Any(x => x.IsError), errors);
+
                     }
                     else
                     {

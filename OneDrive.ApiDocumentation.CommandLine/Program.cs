@@ -45,6 +45,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             {
                 FancyConsole.WriteVerboseOutput = commandOptions.Verbose;
             }
+
             FancyConsole.LogFileName = verbOptions.LogFile;
 
             Nito.AsyncEx.AsyncContext.Run(() => RunInvokedMethodAsync(options, verbName, verbOptions));
@@ -466,7 +467,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                     continue;
                 }
                 
-                AuthenicationCredentials credentials = AuthenicationCredentials.CreateBearerCredentials(options.AccessToken);
+                AuthenicationCredentials credentials = AuthenicationCredentials.CreateAutoCredentials(options.AccessToken);
                 var setsOfParameters = docset.TestScenarios.ScenariosForMethod(method);
                 if (setsOfParameters.Length == 0)
                 {
@@ -489,7 +490,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 else
                 {
                     // Otherwise, if there are parameter sets, we call each of them and check the result.
-                    foreach (var requestSettings in setsOfParameters)
+                    foreach (var requestSettings in setsOfParameters.Where(s => s.Enabled))
                     {
                         errors = await TestMethodWithParameters(docset, method, requestSettings, options.ServiceRootUrl, credentials);
                         if (errors.WereErrors())
@@ -507,6 +508,8 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                         AddPause(options);
                     }
                 }
+
+                FancyConsole.WriteLine();
             }
 
             if (options.IgnoreWarnings)

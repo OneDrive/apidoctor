@@ -163,9 +163,17 @@ namespace OneDrive.ApiDocumentation.Validation
         {
             foreach (var parameter in parameters)
             {
-                string placeholder = string.Concat("{", parameter.PlaceholderText, "}");
-                url = url.Replace(placeholder, parameter.Value.ToString());
+                if (parameter.PlaceholderText == "*")
+                {
+                    url = parameter.Value;
+                }
+                else
+                {
+                    string placeholder = string.Concat("{", parameter.PlaceholderText, "}");
+                    url = url.Replace(placeholder, parameter.Value);
+                }
             }
+
             return url;
         }
 
@@ -243,7 +251,7 @@ namespace OneDrive.ApiDocumentation.Validation
                         detectedErrors.Add(new ValidationError(ValidationErrorCode.JsonParserException, null, "Invalid JSON format: {0}", ex.Message));
                     }
                 }
-                else if (request.ContentType.StartsWith("multipart/form-data"))
+                else if (request.ContentType.StartsWith("multipart/related"))
                 {
                     // TODO: Parse the multipart/form-data body to ensure it's properly formatted
                 }

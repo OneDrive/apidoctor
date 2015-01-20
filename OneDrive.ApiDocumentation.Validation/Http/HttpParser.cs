@@ -59,7 +59,11 @@
                         break;
 
                     case ParserMode.Body:
-                        request.Body = line + Environment.NewLine + reader.ReadToEnd();
+                        var restOfBody = reader.ReadToEnd() ?? string.Empty;
+
+                        // normalize line endings to CRLF, which is required for headers, etc.
+                        restOfBody = restOfBody.Replace("\r\n", "\n").Replace("\n", "\r\n");
+                        request.Body = line + Environment.NewLine + restOfBody;
                         break;
                 }
             }

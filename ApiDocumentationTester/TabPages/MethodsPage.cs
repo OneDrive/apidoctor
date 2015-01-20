@@ -87,7 +87,7 @@ namespace OneDrive.ApiDocumentation.Windows.TabPages
             }
 
             await MainForm.MostRecentInstance.SignInAsync();
-            var credentials = AuthenicationCredentials.CreateBearerCredentials(MainForm.MostRecentInstance.AccessToken);
+            var credentials = AuthenicationCredentials.CreateAutoCredentials(MainForm.MostRecentInstance.AccessToken);
 
             var buildRequestResult = await method.PreviewRequestAsync(requestParams, Properties.Settings.Default.ApiBaseRoot, credentials);
             if (buildRequestResult.IsWarningOrError)
@@ -282,7 +282,7 @@ namespace OneDrive.ApiDocumentation.Windows.TabPages
             }
 
             var baseUrl = Properties.Settings.Default.ApiBaseRoot;
-            AuthenicationCredentials credentials = AuthenicationCredentials.CreateBearerCredentials(ParentForm.AccessToken);
+            AuthenicationCredentials credentials = AuthenicationCredentials.CreateAutoCredentials(ParentForm.AccessToken);
             var responseResult = await method.ApiResponseForMethod(baseUrl, credentials, requestParams);
             if (responseResult.IsWarningOrError)
             {

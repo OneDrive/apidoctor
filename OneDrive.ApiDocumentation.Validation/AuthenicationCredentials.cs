@@ -12,6 +12,16 @@ namespace OneDrive.ApiDocumentation.Validation
     public abstract class AuthenicationCredentials
     {
         public abstract string AuthenicationToken { get; internal set; }
+        public static AuthenicationCredentials CreateAutoCredentials(string authenicationToken)
+        {
+            if (String.IsNullOrEmpty(authenicationToken)) { return CreateNoCredentials(); }
+            if (authenicationToken.StartsWith("t="))
+            {
+                return AuthenicationCredentials.CreateWLIDCredentials(authenicationToken);
+            }
+
+            return AuthenicationCredentials.CreateBearerCredentials(authenicationToken);
+        }
 
         public static AuthenicationCredentials CreateBearerCredentials(string authenicationToken)
         {
@@ -22,7 +32,7 @@ namespace OneDrive.ApiDocumentation.Validation
         public static AuthenicationCredentials CreateWLIDCredentials(string authenicationToken)
         {
             if (String.IsNullOrEmpty(authenicationToken)) { return CreateNoCredentials(); }
-            return new WLIDCredentials { AuthenicationToken = "WLID 1.0 " + authenicationToken };
+            return new WLIDCredentials { AuthenicationToken = "WLID1.1 " + authenicationToken };
         }
 
         public static AuthenicationCredentials CreateNoCredentials()
