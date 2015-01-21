@@ -557,6 +557,10 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                     FancyConsole.Write(", ");
                 if (warningCount > 0)
                     FancyConsole.Write(ConsoleWarningColor, "{0} warnings", warningCount);
+                if (warningCount > 0 || errorCount > 0 && successCount > 0)
+                    FancyConsole.Write(", ");
+                if (successCount > 0)
+                    FancyConsole.Write(ConsoleSuccessColor, "{0} successful", successCount);
                 FancyConsole.Write(")");
             }
             FancyConsole.WriteLine();
