@@ -47,7 +47,18 @@
 
         public HttpWebRequest PrepareHttpWebRequest(string baseUrl)
         {
-            HttpWebRequest request = HttpWebRequest.CreateHttp(baseUrl + Url);
+            var effectiveUrl = baseUrl;
+            if (this.Url.StartsWith(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
+            {
+                effectiveUrl = this.Url;
+            }
+            else
+            {
+                effectiveUrl += this.Url;
+            }
+
+            HttpWebRequest request = HttpWebRequest.CreateHttp(effectiveUrl);
+            request.AllowAutoRedirect = false;
             request.Method = Method;
             
             foreach (var key in Headers.AllKeys)

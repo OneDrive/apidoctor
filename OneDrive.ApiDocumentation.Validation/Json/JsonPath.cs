@@ -88,7 +88,9 @@ namespace OneDrive.ApiDocumentation.Validation.Json
         {
             var components = path.Split('.');
             if (components.Length < 1 || components[0] != "$")
-                throw new ArgumentException("Path doesn't appear to conform to JSONpath syntax.", "path");
+                throw new ArgumentException(
+                    string.Format("Path \"{0}\" doesn't appear to conform to JSONpath syntax.", path),
+                    "path");
 
             JsonPathPart root = JsonPathPart.Root;
             JsonPathPart currentPart = root;
@@ -203,7 +205,14 @@ namespace OneDrive.ApiDocumentation.Validation.Json
                 {
                     try
                     {
-                        container[PropertyName] = JToken.FromObject(value);
+                        if (null == value)
+                        {
+                            container[PropertyName] = null;
+                        }
+                        else
+                        {
+                            container[PropertyName] = JToken.FromObject(value);
+                        }
                     }
                     catch (Exception ex)
                     {
