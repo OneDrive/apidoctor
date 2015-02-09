@@ -146,6 +146,10 @@ namespace OneDrive.ApiDocumentation.Validation
                 {
                     url = parameter.Value;
                 }
+                else if (parameter.PlaceholderKey.StartsWith("{") && parameter.PlaceholderKey.EndsWith("}"))
+                {
+                    url = url.Replace(parameter.PlaceholderKey, parameter.Value);
+                }
                 else
                 {
                     string placeholder = string.Concat("{", parameter.PlaceholderKey, "}");
@@ -177,7 +181,11 @@ namespace OneDrive.ApiDocumentation.Validation
         {
             foreach (var param in headerParameters)
             {
-                request.Headers[param.PlaceholderKey] = param.Value;
+                string headerName = param.PlaceholderKey;
+                if (param.PlaceholderKey.EndsWith(":"))
+                    headerName = param.PlaceholderKey.Substring(0, param.PlaceholderKey.Length - 1);
+
+                request.Headers[headerName] = param.Value;
             }
         }
 

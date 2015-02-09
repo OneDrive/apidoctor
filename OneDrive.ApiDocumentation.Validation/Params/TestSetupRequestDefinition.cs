@@ -81,7 +81,7 @@
 
                 // Check to see if this request is "successful" or not
                 if ( (AllowedStatusCodes == null && response.WasSuccessful) ||
-                    AllowedStatusCodes.Contains(response.StatusCode))
+                    (AllowedStatusCodes != null && AllowedStatusCodes.Contains(response.StatusCode)))
                 {
                     string expectedContentType = ExpectedResponseContentType(OutputValues.Values);
 
@@ -102,7 +102,18 @@
                 }
                 else
                 {
-                    errors.Add(new ValidationError(ValidationErrorCode.HttpStatusCodeDifferent, SourceName, "Http response was not successful: {0}", response.ContentType));
+                    if ((AllowedStatusCodes != null && !AllowedStatusCodes.Contains(response.StatusCode)) || !response.WasSuccessful)
+                    {
+                        string expectedCodes = "200-299";
+                        if (AllowedStatusCodes != null)
+                            expectedCodes = AllowedStatusCodes.ComponentsJoinedByString(",");
+                        errors.Add(new ValidationError(ValidationErrorCode.HttpStatusCodeDifferent, SourceName, "Http response status code {0} didn't match expected values: {1}", response.StatusCode, expectedCodes));
+                    }
+                    else
+                    {
+                        errors.Add(new ValidationError(ValidationErrorCode.HttpStatusCodeDifferent, SourceName, "Http response content type was invalid: {0}", response.ContentType));
+                    }
+                    
                     return new ValidationResult<bool>(false, errors);
                 }
             }

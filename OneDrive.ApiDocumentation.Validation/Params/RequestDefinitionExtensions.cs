@@ -84,6 +84,9 @@ namespace OneDrive.ApiDocumentation.Validation
 
         public static PlaceholderValue[] ToPlaceholderValuesArray(this Dictionary<string, string> parameters, Dictionary<string, string> storedValues)
         {
+            if (parameters == null)
+                return new PlaceholderValue[0];
+
             var placeholderValues = from key in parameters.Keys
                                     select ConvertToPlaceholderValue(key, parameters[key], storedValues);
             return placeholderValues.ToArray();

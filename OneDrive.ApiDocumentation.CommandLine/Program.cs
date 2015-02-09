@@ -24,11 +24,6 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
         static void Main(string[] args)
         {
-#if DEBUG
-            System.Diagnostics.Debugger.Launch();
-#endif
-
-
             string verbName = null;
             BaseOptions verbOptions = null;
 
@@ -52,6 +47,11 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             }
 
             FancyConsole.LogFileName = verbOptions.LogFile;
+
+#if DEBUG
+            System.Diagnostics.Debugger.Launch();
+#endif
+
 
             Nito.AsyncEx.AsyncContext.Run(() => RunInvokedMethodAsync(options, verbName, verbOptions));
         }
@@ -590,7 +590,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             if (requestSettings != null)
             {
                 FancyConsole.WriteLine();
-                FancyConsole.Write(ConsoleHeaderColor, "  With configuration \"{1}\"...", method.DisplayName, requestSettings.Description);
+                FancyConsole.Write(ConsoleHeaderColor, "  With scenario \"{1}\"...", method.DisplayName, requestSettings.Description);
                 indentLevel = "  ";
             }
 
