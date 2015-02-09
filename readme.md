@@ -231,44 +231,89 @@ conforming to this schema:
 
 ```json
 {
-  "name": "scenario",
-  "method": "get-drive",
+  "name": "Copy test_copy_file to a new location",
+  "method": "copy-item",
   "enabled": true,
-  "values": [
+  "test-setup": [
     {
-      "placeholder": "drive-id",
-      "location": "url",
-      "value": "F04AA961744A"
+      "method": "upload-via-put",
+      "http-request": "PUT /drive/root:/test_copy_file.txt:/content\r\nContent-Type: application/octet-stream\r\n\r\nTest file that we will copy to another location",
+      "request-parameters":
+      {
+        "{path-to-file}": "/test_copy.file.txt",
+        "$body": "Test file that we will copy to another location",
+        "Content-Type:": "application/octet-stream"
+      },
+      "allowed-status-codes": [ 200 ],
+      "capture": {
+         "[source-file-id]": "$.id",
+         "[response-type]": "Content-Type:",
+         "[response-body]": "!body"
+         }
     }
   ],
-  "values-from-request": {
-    "request": "GET /drive",
-    "values": [
-      {
-        "placeholder": drive-id",
-        "location": "url"
-        "path": "$.values[0].id"
-      }
-    ]
+  "request-parameters":
+  {
+    "{item-id}": "[source-file-id]"
   }
 }
 ```
 
-| Property                                    | Type   | Description                                                                                                                                                                                                                                                        |
-|:--------------------------------------------|:-------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `name`                                      | string | The name of the scenario described.                                                                                                                                                                                                                                |
-| `method`                                    | string | The name of the method this scenario uses. Either defined in the documentation or a substitute name is auto-generated.                                                                                                                                             |
-| `enabled`                                   | bool   | Enable or disable the scenario.                                                                                                                                                                                                                                    |
-| `values`                                    | Array  | Array of static placeholder values.                                                                                                                                                                                                                                |
-| `values[#].placeholder`                     | string | The name of the placeholder. In `url` locations, the placeholder name is enclosed in braces `{drive-id}`.                                                                                                                                                          |
-| `values[#].location`                        | string | One of the following values: `url`, `json`, or `body`. For `json` the placeholder value is used as a jsonPath query to where in a request object the value should be inserted. For `body` the value of the placeholder is substituted for the body of the request. |
-| `values[#].value`                           | string | The value to use for the placeholder.                                                                                                                                                                                                                              |
-| `values-from-request`                       | object | Provides an HTTP request that will be used to populate the values of the placeholders.                                                                                                                                                                             |
-| `values-from-request.request`               | string | An HTTP request that is issued to the service. The request is parsed the same way that request methods are parsed. The service URL will be added to the root of the requested URL.                                                                                 |
-| `values-from-request.values`                | Array  | An array of placeholders.                                                                                                                                                                                                                                          |
-| `values-from-request.values[#].placeholder` | string | Same as `values[#].placeholder`                                                                                                                                                                                                                                    |
-| `values-from-request.values[#].location`    | string | Same as `values[#].location`                                                                                                                                                                                                                                       |
-| `values-from-request.values[#].path`        | string | A jsonPath query expression for the value to use in the placeholder.                                                                                                                                                                                               |
+| Property             | Type            | Description                                                                                                                                     |
+|:---------------------|:----------------|:------------------------------------------------------------------------------------------------------------------------------------------------|
+| `name`               | string          | The name of the scenario described.                                                                                                             |
+| `method`             | string          | The name of the method this scenario uses. Either defined in the documentation or a substitute name is auto-generated.                          |
+| `enabled`            | bool            | Enable or disable the scenario.                                                                                                                 |
+| `test-setup`         | array           | See below.                                                                                                                                      |
+| `request-parameters` | key-value pairs | Specify the key-value pairs for parameters for the request. The key is used as a placeholder name, and the value is subed into the placeholder. |
+
+
+### Test Setup
+The test-setup property allows you to define an array of calls that are made
+before the actual test method is executed. This allows you to pull values from
+other requests and store them to be used in the test method call. This also
+allows you to chain together multiple calls from the documentation to enable
+testing complex scenarios, like fragment uploads.
+
+Each object in the array of `test-setup` is a `PlaceholderRequest` instance.
+
+| Property               | Type            | Description                                                                                                                                                                                                   |
+|:-----------------------|:----------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `method`               | string          | The name of a method from the documentation that should be used as this test-setup call                                                                                                                       |
+| `http-request`         | string          | Instead of specifying a method from the docs, you can input a raw HTTP request to be used.                                                                                                                    |
+| `request-parameters`   | key-value pairs | Specify the key-value pairs for parameters for the request. The key is used as a placeholder name, and the value is subed into the placeholder.                                                               |
+| `allowed-status-codes` | array of int    | Normally the request is considered failed of the response is anything other than 2xx. Use this to allow error codes and other responses to be considered valid.                                               |
+| `capture`              | key-value pairs | Specify the key-value pairs of values that are read from this response and stored for another request under this scenario. Allows you to store values and use them in other requests under the same scenario. |
+
+
+### Placeholder Grammar
+
+When specifying a placeholder name or value, the following syntax is used:
+
+| Syntax        | Example            | Description                                                                                                                               |
+|:--------------|:-------------------|:------------------------------------------------------------------------------------------------------------------------------------------|
+| Curly Braces  | `{path-to-file}`   | Find and update a value in the URL matching the full string.                                                                              |
+| Square Braces | `[source-file-id]` | Look for a previous stored value that was output from a previous request within the same scenario.                                        |
+| JPath         | `$.id`             | Replace a property value in the JSON body of the request. If the content-type of the request is not application/json an error will occur. |
+| !body         | `!body`            | Replace the content stream of the request with the provided value                                                                         |
+| !url          | `!url`             | Replace the URL for the request with the provided value.                                                                                  |
+| Header:       | `Content-Type:`    | Replace the value of a header with the specified value. Note the header name must end with a colon to be valid.                           |
+
+
+
+### Capture Grammar
+
+The `key` of anything in the `capture` node MUST be wrapped in square
+brackets `[foobar]`. Otherwise the parameters will not be considered value.
+
+The output-value grammar follows the same syntax as the placeholder grammar:
+
+| Syntax  | Example         | Description                                           |
+|:--------|:----------------|:------------------------------------------------------|
+| JPath   | $.id            | Read and store the value at the JPath                 |
+| Header: | `Content-Type:` | Read and store the value of the specified HTTP header |
+| !body   | !body           | Read and store the complete body of the response      |
+
 
 ## Open Source
 The API Documentation Test Tool uses the following open source components:

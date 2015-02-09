@@ -53,7 +53,9 @@
     <Compile Include="Http\HttpRequest.cs" />
     <Compile Include="Http\HttpResponse.cs" />
     <Compile Include="DocumentPublisher.cs" />
-    <Compile Include="Params\PlaceholderRequest.cs" />
+    <Compile Include="Params\BasicRequestDefinition.cs" />
+    <Compile Include="Params\RequestDefinitionExtensions.cs" />
+    <Compile Include="Params\TestSetupRequestDefinition.cs" />
     <Compile Include="Params\PlaceholderValue.cs" />
     <Compile Include="Scenarios.cs" />
     <Compile Include="SchemaBuildException.cs" />
