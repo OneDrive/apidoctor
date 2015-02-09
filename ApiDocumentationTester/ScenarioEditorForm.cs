@@ -34,7 +34,7 @@ namespace OneDrive.ApiDocumentation.Windows
             if (null != node)
             {
                 var scenario = node.Tag as ScenarioDefinition;
-                node.Text = string.Format("[{0}] {1}", scenario.Enabled ? "X" : "  ", scenario.Name);;
+                node.Text = string.Format("[{0}] {1}", scenario.Enabled ? "X" : "  ", scenario.Description);;
             }
         }
 
@@ -111,7 +111,7 @@ namespace OneDrive.ApiDocumentation.Windows
 
         private static TreeNode AddScenarioNode(TreeNode methodNode, ScenarioDefinition scenario)
         {
-            var name = string.Format("[{0}] {1}", scenario.Enabled ? "X" : "  ", scenario.Name);
+            var name = string.Format("[{0}] {1}", scenario.Enabled ? "X" : "  ", scenario.Description);
             TreeNode node = new TreeNode(name) { Tag = scenario };
             methodNode.Nodes.Add(node);
             return node;
@@ -136,7 +136,7 @@ namespace OneDrive.ApiDocumentation.Windows
             else if ((node = GetSelectedNode<MethodDefinition>()) != null)
             {
                 var method = node.Tag as MethodDefinition;
-                newScenario = new ScenarioDefinition { Method = method.DisplayName, Name = "new scenario" };
+                newScenario = new ScenarioDefinition { Method = method.DisplayName, Description = "new scenario" };
             }
 
 

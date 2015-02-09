@@ -66,7 +66,7 @@ namespace OneDrive.ApiDocumentation.Validation
                 // Make sure we have consistent method names
                 foreach (var request in parameters)
                 {
-                    request.Method = ConvertPathSeparatorsToLocal(request.Method);
+                    request.MethodName = ConvertPathSeparatorsToLocal(request.MethodName);
                 }
                 _scenarios = parameters;
 
@@ -94,7 +94,7 @@ namespace OneDrive.ApiDocumentation.Validation
             var path = string.Concat(set.SourceFolderPath, relativePath);
             foreach (var request in parameters)
             {
-                request.Method = ConvertPathSeparatorsToGlobal(request.Method);
+                request.MethodName = ConvertPathSeparatorsToGlobal(request.MethodName);
             }
 
             bool result = false;
@@ -114,7 +114,7 @@ namespace OneDrive.ApiDocumentation.Validation
 
             foreach (var request in parameters)
             {
-                request.Method = ConvertPathSeparatorsToLocal(request.Method);
+                request.MethodName = ConvertPathSeparatorsToLocal(request.MethodName);
             }
             return result;
         }
@@ -144,7 +144,7 @@ namespace OneDrive.ApiDocumentation.Validation
 
             var id = method.DisplayName;
             var query = from p in Definitions
-                        where p.Method == id
+                        where p.MethodName == id
                         select p;
 
             return query.ToArray();

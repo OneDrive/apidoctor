@@ -43,6 +43,15 @@
             set { Headers["content-type"] = value; }
         }
 
+        public bool IsMatchingContentType(string expectedContentType)
+        {
+            if (string.IsNullOrEmpty(ContentType))
+                return false;
+
+            string[] contentTypeParts = ContentType.Split(new char[] { ';' });
+            return contentTypeParts.Length > 0 && contentTypeParts[0].Equals(expectedContentType, StringComparison.OrdinalIgnoreCase);
+        }
+
         public WebHeaderCollection Headers { get; private set; }
 
         public HttpWebRequest PrepareHttpWebRequest(string baseUrl)

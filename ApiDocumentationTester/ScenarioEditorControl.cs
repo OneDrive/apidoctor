@@ -45,7 +45,7 @@ namespace OneDrive.ApiDocumentation.Windows
             if (DocumentSet != docset)
                 DocumentSet = docset;
 
-            Scenario = new ScenarioDefinition { Method = method.DisplayName };
+            Scenario = new ScenarioDefinition { MethodName = method.DisplayName };
             LoadControlsWithData();
 
             return Scenario;
@@ -75,7 +75,7 @@ namespace OneDrive.ApiDocumentation.Windows
             comboBoxMethod.DisplayMember = "DisplayName";
             comboBoxMethod.Text = Scenario.Method;
 
-            textBoxScenarioName.Text = Scenario.Name;
+            textBoxScenarioName.Text = Scenario.Description;
             checkBoxEnabled.Checked = Scenario.Enabled;
 
             m_StaticPlaceholders = new BindingList<PlaceholderValue>(Scenario.StaticParameters);
@@ -173,7 +173,7 @@ namespace OneDrive.ApiDocumentation.Windows
         private void buttonNewParameter_Click(object sender, EventArgs e)
         {
             var newItem = new PlaceholderValue();
-            newItem.PlaceholderText = "new-placeholder";
+            newItem.PlaceholderKey = "new-placeholder";
             m_StaticPlaceholders.Add(newItem);
 
             listBoxStaticPlaceholders.SelectedItem = newItem;
@@ -219,13 +219,13 @@ namespace OneDrive.ApiDocumentation.Windows
             if (ignoreValueChanges) return;
 
             Scenario.Method = comboBoxMethod.Text;
-            Scenario.Name = textBoxScenarioName.Text;
+            Scenario.Description = textBoxScenarioName.Text;
             Scenario.Enabled = checkBoxEnabled.Checked;
 
             if (checkBoxEnableDynamicRequest.Checked)
             {
                 if (Scenario.DynamicParameters == null)
-                    Scenario.DynamicParameters = new PlaceholderRequest();
+                    Scenario.DynamicParameters = new TestSetupRequestDefinition();
                 var request = Scenario.DynamicParameters;
                 request.HttpRequest = textBoxHttpRequest.Text;
                 request.Values = m_DynamicPlaceholders.ToList();
@@ -257,7 +257,7 @@ namespace OneDrive.ApiDocumentation.Windows
         private void buttonNewDynmaicPlaceholder_Click(object sender, EventArgs e)
         {
             var newItem = new PlaceholderValue();
-            newItem.PlaceholderText = "new-placeholder";
+            newItem.PlaceholderKey = "new-placeholder";
             m_DynamicPlaceholders.Add(newItem);
 
             listBoxDynamicPlaceholders.SelectedItem = newItem;

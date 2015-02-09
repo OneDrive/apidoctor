@@ -18,8 +18,7 @@
 
         }
 
-        [JsonProperty("placeholder")]
-        public string PlaceholderText 
+        public string PlaceholderKey 
         {
             get { return _placeholderText; }
             set
@@ -32,17 +31,11 @@
             }
         }
 
-        [JsonProperty("location"), JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
         public PlaceholderLocation Location { get; set; }
 
-        [JsonProperty("value", NullValueHandling = NullValueHandling.Ignore)]
         public string Value { get; set; }
 
-        [JsonProperty("path", NullValueHandling = NullValueHandling.Ignore)]
-        public string Path { get; set; }
-
-        [JsonProperty("target", DefaultValueHandling=DefaultValueHandling.Ignore), JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-        public ResponseField PathTarget { get; set; }
+        public string DefinedValue { get; set; }
 
         #region INotifyPropertyChanged
 
@@ -62,10 +55,4 @@
         
     }
 
-    public enum ResponseField
-    {
-        None,
-        Json,
-        Header
-    }
 }

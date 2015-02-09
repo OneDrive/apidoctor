@@ -12,34 +12,29 @@
     /// Class represents information about a set of parameters that are used to make a request
     /// to the service.
     /// </summary>
-    public class ScenarioDefinition
+    public class ScenarioDefinition : BasicRequestDefinition
     {
         public ScenarioDefinition()
         {
-            this.StaticParameters = new List<PlaceholderValue>();
         }
 
+        #region Json-Fed Properties
         [JsonProperty("name")]
-        public string Name { get; set; }
-
-        [JsonProperty("method")]
-        public string Method  { get; set; }
+        public string Description { get; set; }
 
         [JsonProperty("enabled")]
         public bool Enabled { get; set; }
 
-        [JsonProperty("values", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        public List<PlaceholderValue> StaticParameters { get; set; }
-
-        [JsonProperty("values-from-request", DefaultValueHandling=DefaultValueHandling.Ignore)]
-        public PlaceholderRequest DynamicParameters { get ; set; }
+        [JsonProperty("test-setup", DefaultValueHandling=DefaultValueHandling.Ignore)]
+        public List<TestSetupRequestDefinition> TestSetupRequests { get; set; }
+        #endregion
 
         [JsonIgnore]
         public string DisplayText
         {
             get
             {
-                return string.Concat(Name, " (", Method, ")");
+                return string.Concat(Description, " (", MethodName, ")");
             }
         }
 
@@ -53,15 +48,18 @@
         {
             string json = JsonConvert.SerializeObject(this);
             ScenarioDefinition copy = JsonConvert.DeserializeObject<ScenarioDefinition>(json);
-            copy.Name = "Copy of " + copy.Name;
+            copy.Description = "Copy of " + copy.Description;
             return copy;
         }
     }
 
     public enum PlaceholderLocation
     {
+        Invalid,
         Url,
         Json,
-        Body
+        HttpHeader,
+        Body,
+        StoredValue
     }
 }

@@ -55,7 +55,12 @@
         HttpParserError,
         BadPathTargetValue,
         ParameterParserError,
-        MethodDisabled
+        MethodDisabled,
+        OutputValueKeyNameIncorrect,
+        HttpRequestAndMethodSpecified,
+        OutputValueValueIncorrect,
+        HttpRequestParameterInvalid,
+        HttpRequestMissingAllowedStatusCodes
 
     }
 

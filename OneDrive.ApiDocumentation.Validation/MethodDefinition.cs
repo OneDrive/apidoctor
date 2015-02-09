@@ -14,6 +14,10 @@ namespace OneDrive.ApiDocumentation.Validation
     /// </summary>
     public class MethodDefinition
     {
+        internal const string MimeTypeJson = "application/json";
+        internal const string MimeTypeMultipartRelated = "multipart/related";
+        internal const string MimeTypePlainText = "text/plain";
+
         public MethodDefinition()
         {
         }
@@ -93,19 +97,23 @@ namespace OneDrive.ApiDocumentation.Validation
 
             if (null != scenario)
             {
-
-                if (null != scenario.DynamicParameters)
+                var storedValuesForScenario = new Dictionary<string, string>();
+                if (null != scenario.TestSetupRequests)
                 {
-                    var result = await scenario.DynamicParameters.PopulateValuesFromRequestAsync(baseUrl, credentials);
-                    if (result.IsWarningOrError)
+                    foreach (var setupRequest in scenario.TestSetupRequests)
                     {
-                        return new ValidationResult<HttpRequest>(null, result.Messages);
+                        var result = await setupRequest.MakeSetupRequestAsync(baseUrl, credentials, storedValuesForScenario);
+                        if (result.IsWarningOrError)
+                        {
+                            return new ValidationResult<HttpRequest>(null, result.Messages);
+                        }
                     }
                 }
 
                 try 
                 {
-                    RewriteRequestForScenario(request, scenario);
+                    var placeholderValues = scenario.RequestParameters.ToPlaceholderValuesArray(storedValuesForScenario);
+                    request.RewriteRequestWithParameters(placeholderValues);
                 }
                 catch (Exception ex)
                 {
@@ -116,7 +124,7 @@ namespace OneDrive.ApiDocumentation.Validation
 
             if (string.IsNullOrEmpty(request.Accept))
             {
-                request.Accept = "application/json";
+                request.Accept = MimeTypeJson;
             }
 
             return new ValidationResult<HttpRequest>(request);
@@ -130,46 +138,21 @@ namespace OneDrive.ApiDocumentation.Validation
             }
         }
 
-        private static void RewriteRequestForScenario(HttpRequest request, ScenarioDefinition parameters)
-        {
-            List<PlaceholderValue> paramValues = new List<PlaceholderValue>();
-            paramValues.AddRange(parameters.StaticParameters);
-            if (null != parameters.DynamicParameters)
-            {
-                paramValues.AddRange(parameters.DynamicParameters.Values);
-            }
-
-            request.Url = RewriteUrlWithParameters(request.Url, from p in paramValues
-                                                              where p.Location == PlaceholderLocation.Url
-                                                              select p);
-
-            var bodyParameters = from p in paramValues
-                                          where p.Location == PlaceholderLocation.Body
-                                          select p;
-            var jsonBodyParameters = from p in paramValues
-                                              where p.Location == PlaceholderLocation.Json
-                                              select p;
-            if (jsonBodyParameters.FirstOrDefault() != null && request.ContentType.StartsWith("application/json"))
-            {
-                request.Body = RewriteJsonBodyWithParameters(request.Body, jsonBodyParameters);
-            }
-            else if (bodyParameters.FirstOrDefault() != null)
-            {
-                request.Body = bodyParameters.First().Value.ToString();
-            }
-        }
-
-        private static string RewriteUrlWithParameters(string url, IEnumerable<PlaceholderValue> parameters)
+        internal static string RewriteUrlWithParameters(string url, IEnumerable<PlaceholderValue> parameters)
         {
             foreach (var parameter in parameters)
             {
-                if (parameter.PlaceholderText == "*")
+                if (parameter.PlaceholderKey == "!url")
                 {
                     url = parameter.Value;
                 }
+                else if (parameter.PlaceholderKey.StartsWith("{") && parameter.PlaceholderKey.EndsWith("}"))
+                {
+                    url = url.Replace(parameter.PlaceholderKey, parameter.Value);
+                }
                 else
                 {
-                    string placeholder = string.Concat("{", parameter.PlaceholderText, "}");
+                    string placeholder = string.Concat("{", parameter.PlaceholderKey, "}");
                     url = url.Replace(placeholder, parameter.Value);
                 }
             }
@@ -177,7 +160,7 @@ namespace OneDrive.ApiDocumentation.Validation
             return url;
         }
 
-        private static string RewriteJsonBodyWithParameters(string jsonSource, IEnumerable<PlaceholderValue> parameters)
+        internal static string RewriteJsonBodyWithParameters(string jsonSource, IEnumerable<PlaceholderValue> parameters)
         {
             if (string.IsNullOrEmpty(jsonSource)) return jsonSource;
 
@@ -188,10 +171,22 @@ namespace OneDrive.ApiDocumentation.Validation
 
             foreach (var parameter in jsonParameters)
             {
-                jsonSource = Json.JsonPath.SetValueForJsonPath(jsonSource, parameter.PlaceholderText, parameter.Value);
+                jsonSource = Json.JsonPath.SetValueForJsonPath(jsonSource, parameter.PlaceholderKey, parameter.Value);
             }
 
             return jsonSource;
+        }
+
+        internal static void RewriteHeadersWithParameters(HttpRequest request, IEnumerable<PlaceholderValue> headerParameters)
+        {
+            foreach (var param in headerParameters)
+            {
+                string headerName = param.PlaceholderKey;
+                if (param.PlaceholderKey.EndsWith(":"))
+                    headerName = param.PlaceholderKey.Substring(0, param.PlaceholderKey.Length - 1);
+
+                request.Headers[headerName] = param.Value;
+            }
         }
 
         public async Task<ValidationResult<HttpResponse>> ApiResponseForMethod(string baseUrl, AuthenicationCredentials credentials, ScenarioDefinition scenario = null)
@@ -239,7 +234,7 @@ namespace OneDrive.ApiDocumentation.Validation
 
             if (null != request.ContentType)
             {
-                if (request.ContentType.StartsWith("application/json"))
+                if (request.IsMatchingContentType(MimeTypeJson))
                 {
                     // Verify that the request is valid JSON
                     try
@@ -251,11 +246,11 @@ namespace OneDrive.ApiDocumentation.Validation
                         detectedErrors.Add(new ValidationError(ValidationErrorCode.JsonParserException, null, "Invalid JSON format: {0}", ex.Message));
                     }
                 }
-                else if (request.ContentType.StartsWith("multipart/related"))
+                else if (request.IsMatchingContentType(MimeTypeMultipartRelated))
                 {
                     // TODO: Parse the multipart/form-data body to ensure it's properly formatted
                 }
-                else if (request.ContentType.StartsWith("text/plain"))
+                else if (request.IsMatchingContentType(MimeTypePlainText))
                 {
                     // Ignore this, because it isn't something we can verify
                 }
@@ -265,6 +260,8 @@ namespace OneDrive.ApiDocumentation.Validation
                 }
             }
         }
+
+
     }
 }
 
