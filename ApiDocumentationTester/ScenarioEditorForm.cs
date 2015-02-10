@@ -136,7 +136,7 @@ namespace OneDrive.ApiDocumentation.Windows
             else if ((node = GetSelectedNode<MethodDefinition>()) != null)
             {
                 var method = node.Tag as MethodDefinition;
-                newScenario = new ScenarioDefinition { Method = method.DisplayName, Description = "new scenario" };
+                newScenario = new ScenarioDefinition { MethodName = method.DisplayName, Description = "new scenario" };
             }
 
 

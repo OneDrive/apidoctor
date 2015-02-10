@@ -49,47 +49,47 @@ namespace OneDrive.ApiDocumentation.Windows
             textBoxValueOrPath.Text = value.Value;
             labelValueOrPath.Text = isRequestValue ? "Path:" : "Value:";
 
-            if (isRequestValue)
-            {
-                comboBoxPathTarget.SelectedItem = value.PathTarget.ToString();
-                comboBoxPathTarget.Enabled = true;
-                labelTarget.Enabled = true;
-            }
-            else
-            {
-                labelTarget.Enabled = false;
-                comboBoxPathTarget.Enabled = false;
-                comboBoxPathTarget.Text = "Static Value";
-            }
+            //if (isRequestValue)
+            //{
+            //    comboBoxPathTarget.SelectedItem = value.PathTarget.ToString();
+            //    comboBoxPathTarget.Enabled = true;
+            //    labelTarget.Enabled = true;
+            //}
+            //else
+            //{
+            //    labelTarget.Enabled = false;
+            //    comboBoxPathTarget.Enabled = false;
+            //    comboBoxPathTarget.Text = "Static Value";
+            //}
 
             m_loading = false;
         }
 
         private void ScenarioField_TextChanged(object sender, EventArgs e)
         {
-            if (m_loading) return;
+            //if (m_loading) return;
 
-            var v = Placeholder;
-            if (null != v)
-            {
-                v.PlaceholderKey = textBoxName.Text;
-                v.Location = (PlaceholderLocation)Enum.Parse(typeof(PlaceholderLocation), comboBoxLocation.Text);
-                if (IsRequestValuePlaceholder)
-                {
-                    v.Path = textBoxValueOrPath.Text;
-                    v.PathTarget = (ResponseField)Enum.Parse(typeof(ResponseField), comboBoxPathTarget.Text);
-                    v.Value = null;
-                }
-                else
-                {
-                    v.Path = null;
-                    v.PathTarget = ResponseField.None;
-                    v.Value = textBoxValueOrPath.Text;
-                }
+            //var v = Placeholder;
+            //if (null != v)
+            //{
+            //    v.PlaceholderKey = textBoxName.Text;
+            //    v.Location = (PlaceholderLocation)Enum.Parse(typeof(PlaceholderLocation), comboBoxLocation.Text);
+            //    if (IsRequestValuePlaceholder)
+            //    {
+            //        v.Path = textBoxValueOrPath.Text;
+            //        v.PathTarget = (ResponseField)Enum.Parse(typeof(ResponseField), comboBoxPathTarget.Text);
+            //        v.Value = null;
+            //    }
+            //    else
+            //    {
+            //        v.Path = null;
+            //        v.PathTarget = ResponseField.None;
+            //        v.Value = textBoxValueOrPath.Text;
+            //    }
 
-                var evt = PlaceholderChanged;
-                if (null != evt) evt(this, EventArgs.Empty);
-            }
+            //    var evt = PlaceholderChanged;
+            //    if (null != evt) evt(this, EventArgs.Empty);
+            //}
         }
     }
 }

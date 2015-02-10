@@ -73,34 +73,34 @@ namespace OneDrive.ApiDocumentation.Windows
 
             comboBoxMethod.DataSource = DocumentSet.Methods;
             comboBoxMethod.DisplayMember = "DisplayName";
-            comboBoxMethod.Text = Scenario.Method;
+            comboBoxMethod.Text = Scenario.MethodName;
 
             textBoxScenarioName.Text = Scenario.Description;
             checkBoxEnabled.Checked = Scenario.Enabled;
 
-            m_StaticPlaceholders = new BindingList<PlaceholderValue>(Scenario.StaticParameters);
-            listBoxStaticPlaceholders.DisplayMember = "PlaceholderText";
-            listBoxStaticPlaceholders.DataSource = m_StaticPlaceholders;
+            //m_StaticPlaceholders = new BindingList<PlaceholderValue>(Scenario.StaticParameters);
+            //listBoxStaticPlaceholders.DisplayMember = "PlaceholderText";
+            //listBoxStaticPlaceholders.DataSource = m_StaticPlaceholders;
 
-            if (Scenario.StaticParameters.Count > 0)
-                listBoxStaticPlaceholders.SelectedIndex = 0;
-            else
-                staticPlaceholderEditor.LoadPlaceholder(new PlaceholderValue(), false);
+            //if (Scenario.StaticParameters.Count > 0)
+            //    listBoxStaticPlaceholders.SelectedIndex = 0;
+            //else
+            //    staticPlaceholderEditor.LoadPlaceholder(new PlaceholderValue(), false);
 
 
-            if (null != Scenario.DynamicParameters)
-            {
-                checkBoxEnableDynamicRequest.Checked = true;
-                m_DynamicPlaceholders = new BindingList<PlaceholderValue>(Scenario.DynamicParameters.Values);
-                textBoxHttpRequest.Text = Scenario.DynamicParameters.HttpRequest;
-            }
-            else
-            {
-                checkBoxEnableDynamicRequest.Checked = false;
-                m_DynamicPlaceholders = new BindingList<PlaceholderValue>();
-                textBoxHttpRequest.Text = "";
-            }
-            checkBoxEnableDynamicRequest_CheckedChanged(checkBoxEnableDynamicRequest, EventArgs.Empty);
+            //if (null != Scenario.DynamicParameters)
+            //{
+            //    checkBoxEnableDynamicRequest.Checked = true;
+            //    m_DynamicPlaceholders = new BindingList<PlaceholderValue>(Scenario.DynamicParameters.Values);
+            //    textBoxHttpRequest.Text = Scenario.DynamicParameters.HttpRequest;
+            //}
+            //else
+            //{
+            //    checkBoxEnableDynamicRequest.Checked = false;
+            //    m_DynamicPlaceholders = new BindingList<PlaceholderValue>();
+            //    textBoxHttpRequest.Text = "";
+            //}
+            //checkBoxEnableDynamicRequest_CheckedChanged(checkBoxEnableDynamicRequest, EventArgs.Empty);
 
             listBoxDynamicPlaceholders.DisplayMember = "PlaceholderText";
             listBoxDynamicPlaceholders.DataSource = m_DynamicPlaceholders;
@@ -146,7 +146,7 @@ namespace OneDrive.ApiDocumentation.Windows
 
         private async void ShowRequestPreview()
         {
-            var method = (from m in DocumentSet.Methods where m.DisplayName == Scenario.Method select m).FirstOrDefault();
+            var method = (from m in DocumentSet.Methods where m.DisplayName == Scenario.MethodName select m).FirstOrDefault();
             if (null == method)
             {
                 MessageBox.Show("No matching method definition found.");
@@ -218,23 +218,23 @@ namespace OneDrive.ApiDocumentation.Windows
         {
             if (ignoreValueChanges) return;
 
-            Scenario.Method = comboBoxMethod.Text;
+            Scenario.MethodName = comboBoxMethod.Text;
             Scenario.Description = textBoxScenarioName.Text;
             Scenario.Enabled = checkBoxEnabled.Checked;
 
-            if (checkBoxEnableDynamicRequest.Checked)
-            {
-                if (Scenario.DynamicParameters == null)
-                    Scenario.DynamicParameters = new TestSetupRequestDefinition();
-                var request = Scenario.DynamicParameters;
-                request.HttpRequest = textBoxHttpRequest.Text;
-                request.Values = m_DynamicPlaceholders.ToList();
-            }
-            else
-            {
-                Scenario.DynamicParameters = null;
-            }
-            RaiseScenarioChanged();
+            //if (checkBoxEnableDynamicRequest.Checked)
+            //{
+            //    if (Scenario.DynamicParameters == null)
+            //        Scenario.DynamicParameters = new TestSetupRequestDefinition();
+            //    var request = Scenario.DynamicParameters;
+            //    request.HttpRequest = textBoxHttpRequest.Text;
+            //    request.Values = m_DynamicPlaceholders.ToList();
+            //}
+            //else
+            //{
+            //    Scenario.DynamicParameters = null;
+            //}
+            //RaiseScenarioChanged();
 
             listBoxDynamicPlaceholders.DataSource = listBoxDynamicPlaceholders.DataSource;
         }
