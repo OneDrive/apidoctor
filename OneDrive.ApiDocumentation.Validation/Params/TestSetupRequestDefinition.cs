@@ -83,7 +83,8 @@
                 if ( (AllowedStatusCodes == null && response.WasSuccessful) ||
                     (AllowedStatusCodes != null && AllowedStatusCodes.Contains(response.StatusCode)))
                 {
-                    string expectedContentType = ExpectedResponseContentType(OutputValues.Values);
+
+                    string expectedContentType = (null != OutputValues) ? ExpectedResponseContentType(OutputValues.Values) : null;
 
                     // Check for content type mismatch
                     if (string.IsNullOrEmpty(response.ContentType) && expectedContentType != null)
@@ -92,10 +93,13 @@
                     }
 
                     // Load requested values into stored values
-                    foreach (var outputKey in OutputValues.Keys)
+                    if (null != OutputValues)
                     {
-                        var source = OutputValues[outputKey];
-                        storedValues[outputKey] = response.ValueForKeyedIdentifier(source);
+                        foreach (var outputKey in OutputValues.Keys)
+                        {
+                            var source = OutputValues[outputKey];
+                            storedValues[outputKey] = response.ValueForKeyedIdentifier(source);
+                        }
                     }
 
                     return new ValidationResult<bool>(!errors.Any(x => x.IsError), errors);

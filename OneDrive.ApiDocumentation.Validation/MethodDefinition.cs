@@ -134,7 +134,13 @@ namespace OneDrive.ApiDocumentation.Validation
         {
             if (!(credentials is NoCredentials) && string.IsNullOrEmpty(request.Authorization))
             {
-                request.Authorization =  credentials.AuthenicationToken;
+                request.Authorization = credentials.AuthenicationToken;
+            }
+
+            if (!string.IsNullOrEmpty(credentials.FirstPartyApplicationHeaderValue) &&
+                request.Headers["Application"] == null)
+            {
+                request.Headers.Add("Application", credentials.FirstPartyApplicationHeaderValue);
             }
         }
 

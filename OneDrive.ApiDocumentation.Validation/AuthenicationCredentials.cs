@@ -12,6 +12,8 @@ namespace OneDrive.ApiDocumentation.Validation
     public abstract class AuthenicationCredentials
     {
         public abstract string AuthenicationToken { get; internal set; }
+        public string FirstPartyApplicationHeaderValue { get; protected set; }
+
         public static AuthenicationCredentials CreateAutoCredentials(string authenicationToken)
         {
             if (String.IsNullOrEmpty(authenicationToken)) { return CreateNoCredentials(); }
@@ -50,7 +52,10 @@ namespace OneDrive.ApiDocumentation.Validation
 
     public class WLIDCredentials : AuthenicationCredentials
     {
-        internal WLIDCredentials() { }
+        internal WLIDCredentials()
+        {
+            this.FirstPartyApplicationHeaderValue = "SaveToOneDriveWidget";
+        }
 
         public override string AuthenicationToken { get; internal set; }
     }

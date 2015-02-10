@@ -61,6 +61,9 @@ namespace OneDrive.ApiDocumentation.Validation
 
         public static PlaceholderLocation LocationForKey(string key)
         {
+            if (null == key)
+                return PlaceholderLocation.Invalid;
+
             if (key.StartsWith("{") && key.EndsWith("}") && key.Length > 2)
                 return PlaceholderLocation.Url;
             if (key.StartsWith("[") && key.EndsWith("]") && key.Length > 2)

@@ -78,7 +78,7 @@ namespace OneDrive.ApiDocumentation.Validation
             var jsonParams = from pv in placeholderValues where pv.Location == PlaceholderLocation.Json select pv;
             if (jsonParams.Count() > 0 && request.IsMatchingContentType("application/json"))
             {
-                MethodDefinition.RewriteJsonBodyWithParameters(request.Body, jsonParams);
+                request.Body = MethodDefinition.RewriteJsonBodyWithParameters(request.Body, jsonParams);
             }
         }
 
