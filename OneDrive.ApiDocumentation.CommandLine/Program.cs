@@ -671,6 +671,19 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
         private static async Task CheckServiceMetadata(CheckMetadataOptions options)
         {
+            if (string.IsNullOrEmpty(options.ServiceMetadataLocation))
+            {
+                if (!string.IsNullOrEmpty(SavedSettings.Default.ServiceUrl))
+                {
+                    options.ServiceMetadataLocation = SavedSettings.Default.ServiceUrl + "$metadata";
+                }
+                else
+                {
+                    FancyConsole.WriteLine(ConsoleErrorColor, "No service metadata file location specified. Cannot continue.");
+                    Exit(failure: true);
+                }
+            }
+            
             FancyConsole.WriteLine(ConsoleHeaderColor, "Loading service metadata from '{0}'...", options.ServiceMetadataLocation);
 
             Uri metadataUrl;
