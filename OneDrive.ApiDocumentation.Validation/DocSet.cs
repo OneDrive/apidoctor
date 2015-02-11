@@ -142,7 +142,7 @@
                 }
                 else
                 {
-                    if (!m_ResourceCollection.ValidateJson(method.ExpectedResponseMetadata, response.Body, out schemaErrors))
+                    if (!m_ResourceCollection.ValidateJsonExample(method.ExpectedResponseMetadata, response.Body, out schemaErrors))
                     {
                         detectedErrors.AddRange(schemaErrors);
                     }

@@ -29,7 +29,7 @@
         /// <param name="expectedJson"></param>
         /// <param name="actualJson"></param>
         /// <returns></returns>
-        public bool ValidateJson(CodeBlockAnnotation annotation, string json, out ValidationError[] errors)
+        public bool ValidateJsonExample(CodeBlockAnnotation annotation, string json, out ValidationError[] errors)
         {
             List<ValidationError> newErrors = new List<ValidationError>();
 

@@ -159,7 +159,7 @@
 
             if (!allowTruncation && missingProperties.Count > 0)
             {
-                detectedErrors.Add(new ValidationWarning(ValidationErrorCode.RequiredPropertiesMissing, null, "Missing properties: response was missing these required properties: {0}", missingProperties.ComponentsJoinedByString(",")));
+                detectedErrors.Add(new ValidationWarning(ValidationErrorCode.RequiredPropertiesMissing, null, "Missing properties: response was missing these required properties: {0}", missingProperties.ComponentsJoinedByString(", ")));
             }
         }
 

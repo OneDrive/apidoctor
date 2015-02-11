@@ -95,6 +95,9 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 case CommandLineOptions.VerbClean:
                     await PublishDocumentationAsync((PublishOptions)options);
                     break;
+                case CommandLineOptions.VerbMetadata:
+                    await CheckServiceMetadata((CheckMetadataOptions)options);
+                    break;
             }
         }
 
@@ -664,6 +667,71 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 return;
 
             WriteValidationError("", e);
+        }
+
+        private static async Task CheckServiceMetadata(CheckMetadataOptions options)
+        {
+            FancyConsole.WriteLine(ConsoleHeaderColor, "Loading service metadata from '{0}'...", options.ServiceMetadataLocation);
+
+            Uri metadataUrl;
+            List<OneDrive.ApiDocumentation.Validation.OData.Schema> schemas = null;
+            try
+            {
+                if (Uri.TryCreate(options.ServiceMetadataLocation, UriKind.Absolute, out metadataUrl))
+                {
+                    schemas = await OneDrive.ApiDocumentation.Validation.OData.ODataParser.ReadSchemaFromMetadataUrl(metadataUrl);
+                }
+                else
+                {
+                    schemas = await OneDrive.ApiDocumentation.Validation.OData.ODataParser.ReadSchemaFromFile(options.ServiceMetadataLocation);
+                }
+            }
+            catch (Exception ex)
+            {
+                FancyConsole.WriteLine(ConsoleErrorColor, "Error parsing metadata: {0}", ex.Message);
+                return;
+            }
+
+            FancyConsole.WriteLine(ConsoleSuccessColor, "  found {0} schema definitions: {1}", schemas.Count, (from s in schemas select s.Namespace).ComponentsJoinedByString(", "));
+
+            var docSet = GetDocSet(options);
+            
+            List<ResourceDefinition> foundResources = OneDrive.ApiDocumentation.Validation.OData.ODataParser.GenerateResourcesFromSchemas(schemas);
+            int successCount = 0, errorCount = 0, warningCount = 0;
+
+            foreach (var resource in foundResources)
+            {
+                FancyConsole.Write(ConsoleHeaderColor, "Checking resource: {0}...", resource.Metadata.ResourceType);
+
+                FancyConsole.VerboseWriteLine();
+                FancyConsole.VerboseWriteLine(resource.JsonExample);
+                FancyConsole.VerboseWriteLine();
+
+                // Verify that this resource matches the documentation
+                ValidationError[] errors;
+                docSet.ResourceCollection.ValidateJsonExample(resource.Metadata, resource.JsonExample, out errors);
+
+                if (!errors.WereErrors() && !errors.WereWarnings())
+                {
+                    FancyConsole.WriteLine(ConsoleSuccessColor, "  no errors.");
+                    successCount++;
+                }
+                else
+                {
+                    if (errors.WereWarnings() && !errors.WereErrors())
+                        warningCount++;
+                    else
+                        errorCount++;
+                    
+                    FancyConsole.WriteLine();
+                    WriteOutErrors(errors, "  ");
+                }
+                FancyConsole.WriteLine();
+            }
+
+            PrintStatusMessage(successCount, warningCount, errorCount);
+
+            Exit(failure: false);
         }
     }
 }

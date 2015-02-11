@@ -16,6 +16,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         public const string VerbDocs = "check-docs";
         public const string VerbService = "check-service";
         public const string VerbClean = "publish";
+        public const string VerbMetadata = "check-metadata";
 
         public CommandLineOptions()
         {
@@ -39,6 +40,10 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
         [VerbOption(VerbClean, HelpText="Publish a sanitized version of the documentation.")]
         public PublishOptions PublishVerb { get; set; }
+
+        [VerbOption(VerbMetadata, HelpText="Check service CSDL metadata against documentation.")]
+        public CheckMetadataOptions CheckMetadataVerb { get; set; }
+
 
         [HelpVerbOption]
         public string GetUsage(string verb)
@@ -145,6 +150,12 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             }
             return missingArguments.Length == 0;
         }
+    }
+
+    class CheckMetadataOptions : DocSetOptions
+    {
+        [Option("metadata", HelpText="Path or URL for the service metadata CSDL")]
+        public string ServiceMetadataLocation { get; set; }
     }
 
     class PrintOptions : DocSetOptions
