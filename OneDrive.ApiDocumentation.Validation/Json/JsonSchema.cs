@@ -95,10 +95,28 @@
                 else
                 {
                     var collectionMembers = obj[collectionPropertyName];
-                    if (collectionMembers.Count() == 0)
+                    if (!collectionMembers.Any())
                     {
-                        detectedErrors.Add(new ValidationWarning(ValidationErrorCode.CollectionArrayEmpty, null, "Property contained an empty array that was not validated: {0}", collectionPropertyName));
+                        if (!annotation.IsEmpty)
+                        {
+                            detectedErrors.Add(
+                                new ValidationWarning(
+                                    ValidationErrorCode.CollectionArrayEmpty,
+                                    null,
+                                    "Property contained an empty array that was not validated: {0}",
+                                    collectionPropertyName));
+                        }
                     }
+                    else if (annotation.IsEmpty)
+                    {
+                        detectedErrors.Add(
+                            new ValidationWarning(
+                                ValidationErrorCode.CollectionArrayNotEmpty,
+                                null,
+                                "Property contained a non-empty array that was expected to be empty: {0}",
+                                collectionPropertyName));
+                    }
+
                     foreach (JContainer container in collectionMembers)
                     {
                         ValidateJContainer(container, annotation, otherSchemas, detectedErrors);
@@ -143,10 +161,13 @@
 
             foreach (JToken token in obj)
             {
-                JsonProperty inputProperty = ParseProperty(token, this);
-                missingProperties.Remove(inputProperty.Name);
-                // This detects bad types, extra properties, etc.
-                ValidateProperty(inputProperty, otherSchemas, detectedErrors, allowTruncation);
+                JsonProperty inputProperty = ParseProperty(token, this, detectedErrors);
+                if (inputProperty != null)
+                {
+                    missingProperties.Remove(inputProperty.Name);
+                    // This detects bad types, extra properties, etc.
+                    ValidateProperty(inputProperty, otherSchemas, detectedErrors, allowTruncation);
+                }
             }
 
             if (null != OptionalProperties)
@@ -479,7 +500,7 @@
             return null;
         }
 
-        private static JsonProperty ParseProperty(JToken token, JsonSchema containerSchema)
+        private static JsonProperty ParseProperty(JToken token, JsonSchema containerSchema, List<ValidationError> detectedErrors = null)
         {
             JsonProperty propertyInfo = null;
             if (token.Type == JTokenType.Property)
@@ -489,7 +510,18 @@
             }
             else
             {
-                Console.WriteLine("Unhandled token type: " + token.Type);
+                if (detectedErrors != null)
+                {
+                    detectedErrors.Add(
+                        new ValidationWarning(
+                            ValidationErrorCode.JsonParserException,
+                            token.Path,
+                            "Unhandled token type: " + token.Type));
+                }
+                else
+                {
+                    Console.WriteLine("Unhandled token type: " + token.Type);
+                }
             }
             return propertyInfo;
         }

@@ -33,6 +33,9 @@ namespace OneDrive.ApiDocumentation.Validation
         [JsonProperty("isCollection", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public bool IsCollection { get; set; }
 
+        [JsonProperty("isEmpty", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public bool IsEmpty { get; set; }
+
         [JsonProperty("truncated", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public bool TruncatedResult { get; set; }
 
