@@ -12,6 +12,7 @@ namespace OneDrive.ApiDocumentation.Validation.Writers
     /// </summary>
     public class SwaggerWriter : DocumentPublisher
     {
+
         
 
         public string Title { get; set; }
@@ -38,11 +39,12 @@ namespace OneDrive.ApiDocumentation.Validation.Writers
                 host = ProductionHost,
                 schemes = new object[] { "https" },
                 produces = new object[] { "application/json" },
+                consumes = new object[] { "application/json" },
                 paths = GeneratePathsFromDocSet(),
                 definitions = GenerateResourcesFromDocSet(),
             };
 
-            string output = Newtonsoft.Json.JsonConvert.SerializeObject(swag);
+            string output = Newtonsoft.Json.JsonConvert.SerializeObject(swag, Formatting.Indented);
             using (var outputFile = System.IO.File.CreateText(System.IO.Path.Combine(outputFolder, "swagger.json")))
             {
                 outputFile.Write(output);
@@ -65,7 +67,7 @@ namespace OneDrive.ApiDocumentation.Validation.Writers
                     properties = props
                 };
 
-                definitions.Add(jsonSchema.ResourceName, definitions);
+                definitions.Add(jsonSchema.ResourceName, definition);
             }
             return definitions;
         }
@@ -81,26 +83,43 @@ namespace OneDrive.ApiDocumentation.Validation.Writers
             // "/products" -> "get" -> { SwaggerMethod }
             var paths = new Dictionary<string, Dictionary<string, SwaggerMethod>>();
 
+            Uri baseUri = new Uri("https://example.org");
             foreach (var method in Documents.Methods)
             {
                 var request = parser.ParseHttpRequest(method.Request);
                 string httpMethod = request.Method;
-                UriBuilder builder = new UriBuilder(request.Url);
-                string path = builder.Path;
-                string queryString = builder.Query;
 
-                if (!paths.ContainsKey(path))
+                int index = request.Url.IndexOf('?');
+                string relativePath, queryString;
+                if (index == -1)
                 {
-                    paths[path] = new Dictionary<string, SwaggerMethod>();
+                    relativePath = request.Url;
+                    queryString = null;
                 }
-
-                Dictionary<string, SwaggerMethod> methodPathDict = paths[path];
-                methodPathDict.Add(httpMethod, CreateSwaggerMethodFromRequest(method, queryString));
+                else
+                {
+                    relativePath = request.Url.Substring(0, index);
+                    queryString = request.Url.Substring(index + 1);
+                }
+                
+                if (!paths.ContainsKey(relativePath))
+                {
+                    paths[relativePath] = new Dictionary<string, SwaggerMethod>();
+                }
+                Dictionary<string, SwaggerMethod> methodPathDict = paths[relativePath];
+                if (!methodPathDict.ContainsKey(httpMethod))
+                {
+                    methodPathDict.Add(httpMethod, CreateSwaggerMethodFromRequest(method, relativePath, queryString));
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("Couldn't save repeated method {0} for path {1}", httpMethod, relativePath);
+                }
             }
             return paths;
         }
 
-        private SwaggerMethod CreateSwaggerMethodFromRequest(MethodDefinition method, string queryString)
+        private SwaggerMethod CreateSwaggerMethodFromRequest(MethodDefinition method, string relativePath, string queryString)
         {
             SwaggerMethod sm = new SwaggerMethod()
             {
@@ -108,10 +127,31 @@ namespace OneDrive.ApiDocumentation.Validation.Writers
                 Description = "TBD description"
             };
 
-            // TODO: Look at the queyr string to see if there are arguments we should plumb in
+            // Add path variables
+            var pathVariables = CapturePathVariables(relativePath);
+            sm.Parameters.AddRange(from pv in pathVariables select new SwaggerParameter { Name = pv, In = "path", Required = true, Type = "string" });
 
+            // TODO: add query string variables
+
+            // Add responses (right now we're just using a default)
             sm.Responses.Add("default", new SwaggerResponse() { Description = "Default response", Schema = new Dictionary<string,object>{ { "$ref", "#/definitions/" + method.ExpectedResponseMetadata.ResourceType}}});
+
             return sm;
+        }
+
+        private System.Text.RegularExpressions.Regex PathVariableRegex = new System.Text.RegularExpressions.Regex("{(?<var>.*)}");
+
+        private string[] CapturePathVariables(string relativePath)
+        {
+            var matches = PathVariableRegex.Matches(relativePath);
+            List<string> variables = new List<string>();
+            for(int i=0; i<matches.Count; i++)
+            {
+                var match = matches[i];
+                var capture = match.Groups["var"].Value;
+                variables.Add(capture);
+            }
+            return variables.ToArray();
         }
 
         class SwaggerResource
@@ -121,7 +161,7 @@ namespace OneDrive.ApiDocumentation.Validation.Writers
 
         class SwaggerMethod 
         {
-            [JsonProperty("sumnmary")]
+            [JsonProperty("summary")]
             public string Summary { get; set; }
             [JsonProperty("description")]
             public string Description { get; set; }
