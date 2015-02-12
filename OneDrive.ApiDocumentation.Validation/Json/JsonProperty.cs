@@ -43,9 +43,10 @@
         Boolean,
         Number,
         String,
+        Array,
+
         ODataType,
-        Custom,
-        Array
+        Custom
     }
 
 }

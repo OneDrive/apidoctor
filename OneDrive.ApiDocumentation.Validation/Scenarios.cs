@@ -142,7 +142,7 @@ namespace OneDrive.ApiDocumentation.Validation
         {
             if (null == Definitions) return null;
 
-            var id = method.DisplayName;
+            var id = method.Identifier;
             var query = from p in Definitions
                         where p.MethodName == id
                         select p;

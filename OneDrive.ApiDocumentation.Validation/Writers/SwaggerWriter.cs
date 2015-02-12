@@ -4,6 +4,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using RestPath = System.String;
+using HttpMethod = System.String;
+using ResourceName = System.String;
 
 namespace OneDrive.ApiDocumentation.Validation.Writers
 {
@@ -12,17 +15,19 @@ namespace OneDrive.ApiDocumentation.Validation.Writers
     /// </summary>
     public class SwaggerWriter : DocumentPublisher
     {
-
-        
-
         public string Title { get; set; }
         public string Description { get; set; }
         public string Version { get; set; }
         public string ProductionHost { get; set; }
+        public string BaseUrl { get; set; }
 
         public SwaggerWriter(DocSet docs) : base(docs)
         {
-            
+            Title = "OneDrive API";
+            Description = "A modern REST API for files and folders";
+            Version = "1.0.0";
+            ProductionHost = "api.onedrive.com";
+            BaseUrl = "/v1.0";
         }
 
         public override async Task PublishToFolderAsync(string outputFolder)
@@ -37,11 +42,15 @@ namespace OneDrive.ApiDocumentation.Validation.Writers
                     version = Version
                 },
                 host = ProductionHost,
+                basePath = BaseUrl,
                 schemes = new object[] { "https" },
                 produces = new object[] { "application/json" },
                 consumes = new object[] { "application/json" },
                 paths = GeneratePathsFromDocSet(),
                 definitions = GenerateResourcesFromDocSet(),
+                security = new object[] { new Dictionary<string, object> { { "microsoftAccount", new object[0] } } },
+                securityDefinitions = BuildSecurityDefinition()
+
             };
 
             string output = Newtonsoft.Json.JsonConvert.SerializeObject(swag, Formatting.Indented);
@@ -51,26 +60,70 @@ namespace OneDrive.ApiDocumentation.Validation.Writers
             }
         }
 
+        private object BuildSecurityDefinition()
+        {
+            return new {
+                microsoftAccount = new { 
+                    type = "oauth2",
+                    scopes = new Dictionary<string, object> {
+                        { "onedrive.readonly", "Grants read-only access to all files in OneDrive" },
+                        { "onedrive.readwrite", "Grants read-write access to all files in OneDrive" },
+                        { "onedrive.appfolder", "Grants read-write access to files in the application's folder in OneDrive" }
+                    },
+                    flow = "implicit",
+                    authorizationUrl = "https://login.live.com/oauth20_authorize.srf"
+                }
+            };
+
+        }
+
+        /// <summary>
+        /// Generate the swagger-compatible property type based on the internal object model type
+        /// </summary>
+        /// <returns>The property type.</returns>
+        /// <param name="type">Type.</param>
+        /// <param name="odataTypeName">Odata type name.</param>
+
+        /// <summary>
+        /// Build a set of "schema" for the resources in the doc set
+        /// </summary>
+        /// <returns>The resources from document set.</returns>
         private object GenerateResourcesFromDocSet()
         {
-            var definitions = new Dictionary<string, object>();
+            var swaggerDefinitions = new Dictionary<string, object>();
             foreach (var jsonSchema in Documents.ResourceCollection.RegisteredSchema)
             {
-                var props = new Dictionary<string, object>();
+                var resourceName = jsonSchema.ResourceName.SwaggerResourceName();
+
+                var propertiesForThisResource = new Dictionary<ResourceName, object>();
+
                 foreach (var property in jsonSchema.Properties)
                 {
-                    props.Add(property.Name, new { type = property.Type.ToString().ToLower(), description = "No description available" });
+                    propertiesForThisResource.Add(
+                        property.Name.SwaggerResourceName(), 
+                        property.AsSwaggerProperty()
+                    );
                 }
                 
                 var definition = new
                 {
-                    properties = props
+                    properties = propertiesForThisResource
                 };
+                            
+                if (!swaggerDefinitions.ContainsKey(resourceName))
+                {
+                    swaggerDefinitions.Add(resourceName, definition);
+                }
+                else
+                {
+                    Console.WriteLine("Found a duplicate resource type: " + resourceName);
+                }
 
-                definitions.Add(jsonSchema.ResourceName, definition);
             }
-            return definitions;
+            return swaggerDefinitions;
         }
+
+
 
         /// <summary>
         /// Convert our method defintions into the REST paths and methods expected by swagger
@@ -81,50 +134,44 @@ namespace OneDrive.ApiDocumentation.Validation.Writers
             Http.HttpParser parser = new Http.HttpParser();
 
             // "/products" -> "get" -> { SwaggerMethod }
-            var paths = new Dictionary<string, Dictionary<string, SwaggerMethod>>();
+            var swaggerPathObject = new Dictionary<RestPath, Dictionary<HttpMethod, SwaggerMethod>>();
 
-            Uri baseUri = new Uri("https://example.org");
             foreach (var method in Documents.Methods)
             {
-                var request = parser.ParseHttpRequest(method.Request);
-                string httpMethod = request.Method;
+                string relativePath, queryString, httpMethod;
+                method.SplitRequestUrl(out relativePath, out queryString, out httpMethod);
 
-                int index = request.Url.IndexOf('?');
-                string relativePath, queryString;
-                if (index == -1)
+                // Skip things that look wrong
+                if (relativePath.StartsWith("https://"))
+                    continue;
+
+                // Create a node for the REST path if it doesn't exist
+                if (!swaggerPathObject.ContainsKey(relativePath))
                 {
-                    relativePath = request.Url;
-                    queryString = null;
+                    swaggerPathObject[relativePath] = new Dictionary<string, SwaggerMethod>();
                 }
-                else
+                var restPathNode = swaggerPathObject[relativePath];
+
+                // Add the HTTP Method to the restPathNode if we need to
+                httpMethod = httpMethod.ToLower();
+                if (!restPathNode.ContainsKey(httpMethod))
                 {
-                    relativePath = request.Url.Substring(0, index);
-                    queryString = request.Url.Substring(index + 1);
-                }
-                
-                if (!paths.ContainsKey(relativePath))
-                {
-                    paths[relativePath] = new Dictionary<string, SwaggerMethod>();
-                }
-                Dictionary<string, SwaggerMethod> methodPathDict = paths[relativePath];
-                if (!methodPathDict.ContainsKey(httpMethod))
-                {
-                    methodPathDict.Add(httpMethod, CreateSwaggerMethodFromRequest(method, relativePath, queryString));
+                    restPathNode.Add(httpMethod, method.ToSwaggerMethod());
                 }
                 else
                 {
                     System.Diagnostics.Debug.WriteLine("Couldn't save repeated method {0} for path {1}", httpMethod, relativePath);
                 }
             }
-            return paths;
+            return swaggerPathObject;
         }
 
         private SwaggerMethod CreateSwaggerMethodFromRequest(MethodDefinition method, string relativePath, string queryString)
         {
             SwaggerMethod sm = new SwaggerMethod()
             {
-                Summary = "TBD summary",
-                Description = "TBD description"
+                Summary = method.Title,
+                Description = method.Description
             };
 
             // Add path variables
@@ -154,60 +201,7 @@ namespace OneDrive.ApiDocumentation.Validation.Writers
             return variables.ToArray();
         }
 
-        class SwaggerResource
-        {
-            
-        }
-
-        class SwaggerMethod 
-        {
-            [JsonProperty("summary")]
-            public string Summary { get; set; }
-            [JsonProperty("description")]
-            public string Description { get; set; }
-            [JsonProperty("parameters")]
-            public List<SwaggerParameter> Parameters { get; set; }
-            [JsonProperty("tags")]
-            public List<string> Tags { get; set; }
-
-            /// <summary>
-            /// Key is either the response status "200" or "default"
-            /// </summary>
-            [JsonProperty("responses")]
-            public Dictionary<string, SwaggerResponse> Responses { get; set; }
-
-            public SwaggerMethod()
-            {
-                Parameters = new List<SwaggerParameter>();
-                Tags = new List<string>();
-                Responses = new Dictionary<string, SwaggerResponse>();
-            }
-
-        }
-
-        class SwaggerParameter
-        {
-            [JsonProperty("name")]
-            public string Name { get; set; }
-            [JsonProperty("in")]
-            public string In { get; set; }
-            [JsonProperty("description")]
-            public string Description { get; set; }
-            [JsonProperty("required")]
-            public bool Required { get; set; }
-            [JsonProperty("type")]
-            public string Type { get; set; }
-            [JsonProperty("format")]
-            public string Format { get; set; }
-        }
-
-        class SwaggerResponse
-        {
-            [JsonProperty("description")]
-            public string Description { get; set; }
-            [JsonProperty("schema")]
-            public Dictionary<string, object> Schema { get; set; }
-        }
+       
 
     }
 }

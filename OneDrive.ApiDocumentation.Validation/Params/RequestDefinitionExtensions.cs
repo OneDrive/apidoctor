@@ -35,7 +35,7 @@ namespace OneDrive.ApiDocumentation.Validation
         private static Http.HttpRequest LookupHttpRequestForMethod(string methodName, string baseUrl, DocSet docset)
         {
             var queryForMethod = from m in docset.Methods
-                                 where m.DisplayName == methodName
+                                 where m.Identifier == methodName
                                  select m;
 
             var foundMethod = queryForMethod.FirstOrDefault();

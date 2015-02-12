@@ -202,8 +202,8 @@
                 case CodeBlockType.Request:
                     {
                         var method = MethodDefinition.FromRequest(code.Content, annotation, this);
-                        if (string.IsNullOrEmpty(method.DisplayName))
-                            method.DisplayName = string.Format("{0} #{1}", DisplayName, m_Requests.Count);
+                        if (string.IsNullOrEmpty(method.Identifier))
+                            method.Identifier = string.Format("{0} #{1}", DisplayName, m_Requests.Count);
                         m_Requests.Add(method);
                         break;
                     }

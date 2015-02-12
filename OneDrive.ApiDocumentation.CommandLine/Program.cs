@@ -49,7 +49,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             FancyConsole.LogFileName = verbOptions.LogFile;
 
 #if DEBUG
-            System.Diagnostics.Debugger.Launch();
+//            System.Diagnostics.Debugger.Launch();
 #endif
 
 
@@ -292,7 +292,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
             foreach (var method in docset.Methods)
             {
-                FancyConsole.WriteLine(ConsoleHeaderColor, "Method '{0}' in file '{1}'", method.DisplayName, method.SourceFile.DisplayName);
+                FancyConsole.WriteLine(ConsoleHeaderColor, "Method '{0}' in file '{1}'", method.Identifier, method.SourceFile.DisplayName);
 
                 if (!options.ShortForm)
                 {
@@ -321,7 +321,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         private static MethodDefinition LookUpMethod(DocSet docset, string methodName)
         {
             var query = from m in docset.Methods
-                        where m.DisplayName.Equals(methodName, StringComparison.OrdinalIgnoreCase)
+                        where m.Identifier.Equals(methodName, StringComparison.OrdinalIgnoreCase)
                         select m;
 
             return query.FirstOrDefault();
@@ -338,7 +338,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             int successCount = 0, errorCount = 0, warningCount = 0;
             foreach (var method in methods)
             {
-                FancyConsole.Write(ConsoleHeaderColor, "Checking \"{0}\" in {1}...", method.DisplayName, method.SourceFile.DisplayName);
+                FancyConsole.Write(ConsoleHeaderColor, "Checking \"{0}\" in {1}...", method.Identifier, method.SourceFile.DisplayName);
 
                 if (string.IsNullOrEmpty(method.ExpectedResponse))
                 {
@@ -465,10 +465,10 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             {
                 ValidationError[] errors = null;
 
-                FancyConsole.Write(ConsoleHeaderColor, "Calling method \"{0}\"...", method.DisplayName);
+                FancyConsole.Write(ConsoleHeaderColor, "Calling method \"{0}\"...", method.Identifier);
                 if (method.RequestMetadata.Disabled)
                 {
-                    errors = new ValidationError[] { new ValidationWarning(ValidationErrorCode.MethodDisabled, null, "Method was disabled: {0}", method.DisplayName) };
+                    errors = new ValidationError[] { new ValidationWarning(ValidationErrorCode.MethodDisabled, null, "Method was disabled: {0}", method.Identifier) };
                     FancyConsole.WriteLine();
                     WriteOutErrors(errors, "  ");
                     warningCount++;
@@ -593,7 +593,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             if (requestSettings != null)
             {
                 FancyConsole.WriteLine();
-                FancyConsole.Write(ConsoleHeaderColor, "  With scenario \"{1}\"...", method.DisplayName, requestSettings.Description);
+                FancyConsole.Write(ConsoleHeaderColor, "  With scenario \"{1}\"...", method.Identifier, requestSettings.Description);
                 indentLevel = "  ";
             }
 

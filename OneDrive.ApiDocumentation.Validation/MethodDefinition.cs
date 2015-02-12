@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using OneDrive.ApiDocumentation.Validation.Json;
 
 namespace OneDrive.ApiDocumentation.Validation
 {
@@ -20,39 +21,46 @@ namespace OneDrive.ApiDocumentation.Validation
 
         public MethodDefinition()
         {
+            Title = "Method Title Missing";
+            Description = "Method Description Missing";
+            Parameters = new List<MethodParameter>();
         }
 
         public static MethodDefinition FromRequest(string request, CodeBlockAnnotation annotation, DocFile source)
         {
             var method = new MethodDefinition { Request = request, RequestMetadata = annotation };
-            method.DisplayName = annotation.MethodName;
+            method.Identifier = annotation.MethodName;
             method.SourceFile = source;
+            method.Title = method.Identifier;
             return method;
         }
 
 
         /// <summary>
-        /// Friendly name of this request/response pair
+        /// Method identifier for the request/response pair. Used to connect 
+        /// scenario tests to this method
         /// </summary>
-        public string DisplayName { get; set; }
+        public string Identifier { get; set; }
 
         /// <summary>
-        /// The raw request data from the documentation (fenced code block with annotation)
+        /// The raw request data from the documentation (fenced code block with 
+        /// annotation)
         /// </summary>
         public string Request {get; private set;}
 
         /// <summary>
-        /// Properties about the Request
+        /// Properties about the Request populated from the documentation
         /// </summary>
         public CodeBlockAnnotation RequestMetadata { get; private set; }
 
         /// <summary>
-        /// The raw response data from the documentation (fenced code block with annotation)
+        /// The raw response data from the documentation (fenced code block with 
+        /// annotation)
         /// </summary>
         public string ExpectedResponse { get; private set; }
 
         /// <summary>
-        /// Properties about the Response
+        /// Metadata from the expected / example response in the documentation.
         /// </summary>
         public CodeBlockAnnotation ExpectedResponseMetadata { get; set; }
 
@@ -68,8 +76,31 @@ namespace OneDrive.ApiDocumentation.Validation
             ExpectedResponseMetadata = annotation;
         }
 
+        /// <summary>
+        /// The raw HTTP response from the actual service
+        /// </summary>
+        /// <value>The actual response.</value>
         public string ActualResponse { get; set; }
 
+        /// <summary>
+        /// The title or summary of the method call
+        /// </summary>
+        /// <value>The title.</value>
+        public string Title { get; set; }
+
+        /// <summary>
+        /// A verbose description of this method.
+        /// </summary>
+        /// <value>The description.</value>
+        public string Description { get; set; }
+
+
+        public List<MethodParameter> Parameters { get; set; }
+
+
+
+
+        #region Validation / Request Methods
         /// <summary>
         /// Converts the raw HTTP request in Request into a callable HttpWebRequest
         /// </summary>
@@ -266,8 +297,83 @@ namespace OneDrive.ApiDocumentation.Validation
                 }
             }
         }
+        #endregion
 
+        #region Parameter Parsing
+        public void ParseParameters()
+        {
+            // Get the path parameters
+
+            string relativePath, queryString, httpMethod;
+            SplitRequestUrl(out relativePath, out queryString, out httpMethod);
+
+            Parameters.AddRange(from pv in CapturePathVariables(relativePath)
+                                            select new MethodParameter() { 
+                  Name = pv, 
+                  Location = ParameterLocation.Path,
+                  Type = JsonDataType.String,
+                  Required = true
+                });
+        }
+
+        public void SplitRequestUrl(out string relativePath, out string queryString, out string httpMethod)
+        {
+            var parser = new Http.HttpParser();
+            var request = parser.ParseHttpRequest(Request);
+            httpMethod = request.Method;
+
+            int index = request.Url.IndexOf('?');
+            if (index == -1)
+            {
+                relativePath = request.Url;
+                queryString = null;
+            }
+            else
+            {
+                relativePath = request.Url.Substring(0, index);
+                queryString = request.Url.Substring(index + 1);
+            }
+        }
+
+        private static System.Text.RegularExpressions.Regex PathVariableRegex = new System.Text.RegularExpressions.Regex("{(?<var>.*)}");
+
+        /// <summary>
+        /// Scan a relative path sequence of the URL for variables in curly
+        /// braces {foo}
+        /// </summary>
+        /// <returns>The path variables.</returns>
+        /// <param name="relativePath">Relative path.</param>
+        private static string[] CapturePathVariables(string relativePath)
+        {
+            var matches = PathVariableRegex.Matches(relativePath);
+            List<string> variables = new List<string>();
+            for(int i=0; i<matches.Count; i++)
+            {
+                var match = matches[i];
+                var capture = match.Groups["var"].Value;
+                variables.Add(capture);
+            }
+            return variables.ToArray();
+        }
+
+        #endregion
 
     }
+
+    public class MethodParameter
+    {
+        public string Name {get;set;}
+        public JsonDataType Type {get;set;}
+        public ParameterLocation Location {get;set;}
+        public bool Required {get;set;}
+
+    }
+
+    public enum ParameterLocation
+    {
+        Path,
+        QueryString
+    }
+
 }
 

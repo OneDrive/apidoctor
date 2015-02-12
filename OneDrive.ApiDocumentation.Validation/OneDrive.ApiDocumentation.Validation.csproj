@@ -88,6 +88,8 @@
     <Compile Include="ValidationResult.cs" />
     <Compile Include="ValidationWarning.cs" />
     <Compile Include="Writers\SwaggerWriter.cs" />
+    <Compile Include="Writers\SwaggerExtensionMethods.cs" />
+    <Compile Include="Writers\SwaggerClasses.cs" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
