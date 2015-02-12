@@ -13,6 +13,11 @@
         public event EventHandler<ValidationError> NewMessage;
 
         /// <summary>
+        /// The document set that is the source for the publisher
+        /// </summary>
+        public DocSet Documents { get; private set; }
+
+        /// <summary>
         /// Comma separated list of file extensions that should be scanned for internal content
         /// </summary>
         public string SourceFileExtensions { get; set; }
@@ -46,11 +51,10 @@
         protected List<string> scannableExtensions;
         protected List<string> ignoredPaths;
 
-		public DocumentPublisher(string sourceFolder)
+		public DocumentPublisher(DocSet docset)
 		{
-            sourceFolder = DocSet.ResolvePathWithUserRoot(sourceFolder);
-
-            RootPath = new DirectoryInfo(sourceFolder).FullName;
+            Documents = docset;
+            RootPath = new DirectoryInfo(docset.SourceFolderPath).FullName;
             if (!RootPath.EndsWith(Path.DirectorySeparatorChar.ToString()))
                 RootPath = string.Concat(RootPath, Path.DirectorySeparatorChar);
 
@@ -78,7 +82,7 @@
         /// </summary>
         /// <param name="outputFolder"></param>
         /// <returns></returns>
-		public async Task PublishToFolderAsync(string outputFolder)
+		public virtual async Task PublishToFolderAsync(string outputFolder)
 		{
             Messages.Clear();
 

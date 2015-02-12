@@ -630,14 +630,18 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
             FancyConsole.WriteLine("Publishing documentation to {0}", outputPath);
 
+            DocSet docs = GetDocSet(options);
             DocumentPublisher publisher = null;
             switch (options.Format)
             {
                 case PublishOptions.SanitizedFormat.Markdown:
-                    publisher = new DocumentPublisher(inputPath);
+                    publisher = new DocumentPublisher(docs);
                     break;
                 case PublishOptions.SanitizedFormat.Html:
-                    publisher = new DocumentPublisherHtml(inputPath);
+                    publisher = new DocumentPublisherHtml(docs);
+                    break;
+                case PublishOptions.SanitizedFormat.Swagger2:
+                    publisher = new OneDrive.ApiDocumentation.Validation.Writers.SwaggerWriter(docs);
                     break;
                 default:
                     throw new NotSupportedException("Unsupported format: " + options.Format.ToString());

@@ -87,6 +87,7 @@
     <Compile Include="ValidationMessage.cs" />
     <Compile Include="ValidationResult.cs" />
     <Compile Include="ValidationWarning.cs" />
+    <Compile Include="Writers\SwaggerWriter.cs" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>

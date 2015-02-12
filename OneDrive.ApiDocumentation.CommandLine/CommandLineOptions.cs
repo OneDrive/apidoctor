@@ -44,7 +44,6 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         [VerbOption(VerbMetadata, HelpText="Check service CSDL metadata against documentation.")]
         public CheckMetadataOptions CheckMetadataVerb { get; set; }
 
-
         [HelpVerbOption]
         public string GetUsage(string verb)
         {
@@ -261,7 +260,8 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         public enum SanitizedFormat
         {
             Markdown,
-            Html
+            Html,
+            Swagger2
         }
     }
 }

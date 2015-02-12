@@ -41,7 +41,7 @@ namespace OneDrive.ApiDocumentation.Windows
 
             var annotation = new CodeBlockAnnotation { ResourceType = comboBoxSchema.Text, IsCollection = checkBoxCollection.Checked };
             ValidationError[] errors;
-            bool result = ResourceCollection.ValidateJson(annotation, textBoxJsonToValidate.Text, out errors);
+            bool result = ResourceCollection.ValidateJsonExample(annotation, textBoxJsonToValidate.Text, out errors);
 
             if (result)
             {

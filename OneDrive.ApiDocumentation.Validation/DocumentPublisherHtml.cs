@@ -7,8 +7,8 @@ namespace OneDrive.ApiDocumentation.Validation
 {
     public class DocumentPublisherHtml : DocumentPublisher
     {
-        public DocumentPublisherHtml(string sourceFolder) 
-            : base(sourceFolder)
+        public DocumentPublisherHtml(DocSet docs) 
+            : base(docs)
         {
 
         }
