@@ -14,6 +14,7 @@
         JsonErrorObject,
         MissingCollectionProperty,
         CollectionArrayEmpty,
+        CollectionArrayNotEmpty,
         RequiredPropertiesMissing,
         AdditionalPropertyDetected,
         ExpectedTypeDifferent,
