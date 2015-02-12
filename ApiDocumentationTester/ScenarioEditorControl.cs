@@ -45,7 +45,7 @@ namespace OneDrive.ApiDocumentation.Windows
             if (DocumentSet != docset)
                 DocumentSet = docset;
 
-            Scenario = new ScenarioDefinition { MethodName = method.DisplayName };
+            Scenario = new ScenarioDefinition { MethodName = method.Identifier };
             LoadControlsWithData();
 
             return Scenario;
@@ -146,7 +146,7 @@ namespace OneDrive.ApiDocumentation.Windows
 
         private async void ShowRequestPreview()
         {
-            var method = (from m in DocumentSet.Methods where m.DisplayName == Scenario.MethodName select m).FirstOrDefault();
+            var method = (from m in DocumentSet.Methods where m.Identifier == Scenario.MethodName select m).FirstOrDefault();
             if (null == method)
             {
                 MessageBox.Show("No matching method definition found.");

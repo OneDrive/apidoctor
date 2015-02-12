@@ -41,7 +41,7 @@ namespace OneDrive.ApiDocumentation.Windows.TabPages
             listViewMethods.BeginUpdate();
             listViewMethods.Items.Clear();
             var listViewItems = from m in docset.Methods
-                                select new ListViewItem() { Text = m.DisplayName, Tag = m, StateImageIndex = -1 };
+                select new ListViewItem() { Text = m.Identifier, Tag = m, StateImageIndex = -1 };
             listViewMethods.Items.AddRange(listViewItems.ToArray());
             listViewMethods.EndUpdate();
         }

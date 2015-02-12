@@ -95,7 +95,7 @@ namespace OneDrive.ApiDocumentation.Windows
         {
             foreach (var method in methodDefinition)
             {
-                TreeNode node = new TreeNode(method.DisplayName) { Tag = method };
+                TreeNode node = new TreeNode(method.Identifier) { Tag = method };
                 AddScenarioNodes(node, CurrentDocSet.TestScenarios.ScenariosForMethod(method));
                 fileNode.Nodes.Add(node);
             }
@@ -136,7 +136,7 @@ namespace OneDrive.ApiDocumentation.Windows
             else if ((node = GetSelectedNode<MethodDefinition>()) != null)
             {
                 var method = node.Tag as MethodDefinition;
-                newScenario = new ScenarioDefinition { MethodName = method.DisplayName, Description = "new scenario" };
+                newScenario = new ScenarioDefinition { MethodName = method.Identifier, Description = "new scenario" };
             }
 
 

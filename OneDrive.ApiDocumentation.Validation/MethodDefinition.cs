@@ -1,8 +1,5 @@
 ﻿using System.Collections.Generic;
-<<<<<<< HEAD
 using OneDrive.ApiDocumentation.Validation.Json;
-=======
->>>>>>> 09c6d6ee641014e5069c880444258173ac17cc8b
 
 namespace OneDrive.ApiDocumentation.Validation
 {
@@ -24,31 +21,22 @@ namespace OneDrive.ApiDocumentation.Validation
 
         public MethodDefinition()
         {
-<<<<<<< HEAD
             Title = "Method Title Missing";
             Description = "Method Description Missing";
             Parameters = new List<MethodParameter>();
-=======
->>>>>>> 09c6d6ee641014e5069c880444258173ac17cc8b
         }
 
         public static MethodDefinition FromRequest(string request, CodeBlockAnnotation annotation, DocFile source)
         {
             var method = new MethodDefinition { Request = request, RequestMetadata = annotation };
-<<<<<<< HEAD
             method.Identifier = annotation.MethodName;
             method.SourceFile = source;
             method.Title = method.Identifier;
-=======
-            method.DisplayName = annotation.MethodName;
-            method.SourceFile = source;
->>>>>>> 09c6d6ee641014e5069c880444258173ac17cc8b
             return method;
         }
 
 
         /// <summary>
-<<<<<<< HEAD
         /// Method identifier for the request/response pair. Used to connect 
         /// scenario tests to this method
         /// </summary>
@@ -57,42 +45,22 @@ namespace OneDrive.ApiDocumentation.Validation
         /// <summary>
         /// The raw request data from the documentation (fenced code block with 
         /// annotation)
-=======
-        /// Friendly name of this request/response pair
-        /// </summary>
-        public string DisplayName { get; set; }
-
-        /// <summary>
-        /// The raw request data from the documentation (fenced code block with annotation)
->>>>>>> 09c6d6ee641014e5069c880444258173ac17cc8b
         /// </summary>
         public string Request {get; private set;}
 
         /// <summary>
-<<<<<<< HEAD
         /// Properties about the Request populated from the documentation
-=======
-        /// Properties about the Request
->>>>>>> 09c6d6ee641014e5069c880444258173ac17cc8b
         /// </summary>
         public CodeBlockAnnotation RequestMetadata { get; private set; }
 
         /// <summary>
-<<<<<<< HEAD
         /// The raw response data from the documentation (fenced code block with 
         /// annotation)
-=======
-        /// The raw response data from the documentation (fenced code block with annotation)
->>>>>>> 09c6d6ee641014e5069c880444258173ac17cc8b
         /// </summary>
         public string ExpectedResponse { get; private set; }
 
         /// <summary>
-<<<<<<< HEAD
         /// Metadata from the expected / example response in the documentation.
-=======
-        /// Properties about the Response
->>>>>>> 09c6d6ee641014e5069c880444258173ac17cc8b
         /// </summary>
         public CodeBlockAnnotation ExpectedResponseMetadata { get; set; }
 
@@ -108,7 +76,6 @@ namespace OneDrive.ApiDocumentation.Validation
             ExpectedResponseMetadata = annotation;
         }
 
-<<<<<<< HEAD
         /// <summary>
         /// The raw HTTP response from the actual service
         /// </summary>
@@ -135,11 +102,6 @@ namespace OneDrive.ApiDocumentation.Validation
 
         #region Validation / Request Methods
         /// <summary>
-=======
-        public string ActualResponse { get; set; }
-
-        /// <summary>
->>>>>>> 09c6d6ee641014e5069c880444258173ac17cc8b
         /// Converts the raw HTTP request in Request into a callable HttpWebRequest
         /// </summary>
         /// <param name="baseUrl"></param>
@@ -335,7 +297,6 @@ namespace OneDrive.ApiDocumentation.Validation
                 }
             }
         }
-<<<<<<< HEAD
         #endregion
 
         #region Parameter Parsing
@@ -414,10 +375,5 @@ namespace OneDrive.ApiDocumentation.Validation
         QueryString
     }
 
-=======
-
-
-    }
->>>>>>> 09c6d6ee641014e5069c880444258173ac17cc8b
 }
 
