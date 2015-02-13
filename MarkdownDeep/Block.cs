@@ -493,8 +493,21 @@ namespace MarkdownDeep
 		internal object data;			// content depends on block type
 		internal List<Block> children;
 
-
+        #region RGregg Extensions
         public BlockType BlockType { get { return blockType; } }
+
         public string CodeLanguage { get; set; }
+
+        public IMarkdownTable Table 
+        {
+            get 
+            {
+                if (BlockType != BlockType.table_spec)
+                    return null;
+
+                return data as IMarkdownTable;
+            }
+        }
+        #endregion
     }
 }

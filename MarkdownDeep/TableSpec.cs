@@ -19,6 +19,14 @@ using System.Text;
 
 namespace MarkdownDeep
 {
+
+    public interface IMarkdownTable
+    {
+        string[] ColumnHeaders { get; }
+        string[][] RowValues { get; }
+    }
+
+
 	internal enum ColumnAlignment
 	{
 		NA,
@@ -26,7 +34,8 @@ namespace MarkdownDeep
 		Right,
 		Center,
 	}
-	internal class TableSpec
+
+    internal class TableSpec : IMarkdownTable
 	{
 		public TableSpec()
 		{
@@ -215,5 +224,23 @@ namespace MarkdownDeep
 				// Next column
 			}
 		}
+
+        #region RGregg extensions
+
+        public string[] ColumnHeaders { get { return Headers.ToArray(); } }
+
+        public string[][] RowValues
+        { 
+            get
+            { 
+                var rowArrays = from row in Rows
+                                select row.ToArray();
+                return rowArrays.ToArray();
+            }
+        }
+
+
+
+        #endregion
 	}
 }

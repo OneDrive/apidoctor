@@ -141,8 +141,8 @@ This link goes [up one level](../anotherfile.md)
         public new bool Scan(out ValidationError[] errors)
         {
             m_hasScanRun = true;
-            ParseMarkdownForBlocksAndLinks(m_Markdown);
-            return ParseCodeBlocks(out errors);
+            TransformMarkdownIntoBlocksAndLinks(m_Markdown);
+            return ParseMarkdownBlocks(out errors);
         }
 
         public Func<string, bool> IsLinkValid { get; set; }

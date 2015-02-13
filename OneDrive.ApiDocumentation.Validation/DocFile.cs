@@ -18,7 +18,7 @@
         protected List<MarkdownDeep.Block> m_CodeBlocks = new List<MarkdownDeep.Block>();
         protected List<ResourceDefinition> m_Resources = new List<ResourceDefinition>();
         protected List<MethodDefinition> m_Requests = new List<MethodDefinition>();
-        protected List<MarkdownDeep.LinkInfo> m_Links = new List<MarkdownDeep.LinkInfo>();
+//        protected List<MarkdownDeep.LinkInfo> m_Links = new List<MarkdownDeep.LinkInfo>();
         #endregion
 
         #region Properties
@@ -51,7 +51,7 @@
         {
             get
             {
-                var query = from p in m_Links
+                var query = from p in MarkdownLinks
                             select p.def.url;
                 return query.ToArray();
             }
@@ -60,8 +60,9 @@
         /// <summary>
         /// Raw Markdown parsed blocks
         /// </summary>
-        protected MarkdownDeep.Block[] Blocks { get; set; }
+        protected MarkdownDeep.Block[] OriginalMarkdownBlocks { get; set; }
 
+        protected List<MarkdownDeep.LinkInfo> MarkdownLinks {get;set;}
         #endregion
 
         #region Constructor
@@ -81,15 +82,17 @@
 
         #region Markdown Parsing
 
-        protected void ParseMarkdownForBlocksAndLinks(string inputMarkdown)
+        protected void TransformMarkdownIntoBlocksAndLinks(string inputMarkdown)
         {
             MarkdownDeep.Markdown md = new MarkdownDeep.Markdown();
             md.SafeMode = false;
             md.ExtraMode = true;
 
             HtmlContent = md.Transform(inputMarkdown);
-            Blocks = md.Blocks;
-            m_Links = new List<MarkdownDeep.LinkInfo>(md.FoundLinks);
+            OriginalMarkdownBlocks = md.Blocks;
+
+
+            MarkdownLinks = new List<MarkdownDeep.LinkInfo>(md.FoundLinks);
         }
 
 
@@ -105,7 +108,7 @@
             {
                 using (StreamReader reader = File.OpenText(this.FullPath))
                 {
-                    ParseMarkdownForBlocksAndLinks(reader.ReadToEnd());
+                    TransformMarkdownIntoBlocksAndLinks(reader.ReadToEnd());
                 }
             }
             catch (IOException ioex)
@@ -121,15 +124,21 @@
                 return false;
             }
 
-            return ParseCodeBlocks(out errors);
+            return ParseMarkdownBlocks(out errors);
         }
 
-        protected bool ParseCodeBlocks(out ValidationError[] errors)
+        /// <summary>
+        /// Parse through the markdown blocks and intprerate the documents into
+        /// our internal object model.
+        /// </summary>
+        /// <returns><c>true</c>, if code blocks was parsed, <c>false</c> otherwise.</returns>
+        /// <param name="errors">Errors.</param>
+        protected bool ParseMarkdownBlocks(out ValidationError[] errors)
         {
             List<ValidationError> detectedErrors = new List<ValidationError>();
 
             // Scan through the blocks to find something interesting
-            m_CodeBlocks = FindCodeBlocks(Blocks);
+            m_CodeBlocks = FindCodeBlocks(OriginalMarkdownBlocks);
 
             for (int i = 0; i < m_CodeBlocks.Count; )
             {
@@ -159,6 +168,12 @@
             return detectedErrors.Count == 0;
         }
 
+        /// <summary>
+        /// Filters the blocks to just a collection of blocks that may be
+        /// relevent for our purposes
+        /// </summary>
+        /// <returns>The code blocks.</returns>
+        /// <param name="blocks">Blocks.</param>
         protected static List<MarkdownDeep.Block> FindCodeBlocks(MarkdownDeep.Block[] blocks)
         {
             var blockList = new List<MarkdownDeep.Block>();
@@ -243,7 +258,7 @@
                 throw new InvalidOperationException("Cannot validate links until Scan() is called.");
 
             var foundErrors = new List<ValidationError>();
-            foreach (var link in m_Links)
+            foreach (var link in MarkdownLinks)
             {
                 if (null == link.def)
                 {
