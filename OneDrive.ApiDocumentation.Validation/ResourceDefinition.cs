@@ -6,7 +6,7 @@
     /// <summary>
     /// Represents an entity resource in the API.
     /// </summary>
-    public class ResourceDefinition
+    public class ResourceDefinition : ItemDefinition
     {
         public ResourceDefinition(CodeBlockAnnotation annotation, string jsonContent, DocFile source)
         {
@@ -23,6 +23,9 @@
         /// </summary>
         public CodeBlockAnnotation Metadata { get; private set; }
 
+        /// <summary>
+        /// The type identifier for the resource defined in this class
+        /// </summary>
         public string ResourceType { get { return Metadata.ResourceType; } }
 
         /// <summary>

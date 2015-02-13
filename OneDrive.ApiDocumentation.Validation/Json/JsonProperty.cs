@@ -29,7 +29,7 @@
                 {
                     case JsonDataType.ODataType:
                         return ODataTypeName;
-                    case JsonDataType.Custom:
+                    case JsonDataType.Object:
                         return "Object";
                     default:
                         return Type.ToString();
@@ -42,11 +42,12 @@
     {
         Boolean,
         Number,
+        Integer = Number,
         String,
         Array,
 
         ODataType,
-        Custom
+        Object
     }
 
 }

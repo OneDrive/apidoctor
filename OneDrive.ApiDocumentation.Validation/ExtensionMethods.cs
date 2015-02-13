@@ -98,5 +98,80 @@
         {
             return errors.Any(x => x.IsWarning);
         }
+
+
+        public static string ValueForColumn(this string[] rowValues, MarkdownDeep.IMarkdownTable table, params string[] possibleHeaderNames)
+        {
+            var headers = table.ColumnHeaders;
+
+            foreach (var headerName in possibleHeaderNames)
+            {
+                int index = headers.IndexOf(headerName);
+                if (index >= 0 && index < rowValues.Length)
+                {
+                    // Check to see if we need to clean up / remove any ` marks
+                    string tableCellContents = rowValues[index];
+                    if (null != tableCellContents)
+                        return tableCellContents.Trim(new char[] { ' ', '`' });
+                    else
+                        return null;
+                }
+            }
+
+            System.Diagnostics.Debug.WriteLine("Failed to find header matching '{0}' in table with headers: {1}", 
+                possibleHeaderNames.ComponentsJoinedByString(","),
+                table.ColumnHeaders.ComponentsJoinedByString(","));
+            return null;
+        }
+
+        public static int IndexOf(this string[] array, string value, StringComparison comparison = StringComparison.OrdinalIgnoreCase)
+        {
+            for (int i = 0; i < array.Length; i++)
+            {
+                if (value.Equals(array[i], comparison))
+                    return i;
+            }
+            return -1;
+        }
+
+        public static Json.JsonDataType ToDataType(this string value)
+        {
+            Json.JsonDataType output;
+            if (Enum.TryParse<Json.JsonDataType>(value, true, out output))
+                return output;
+
+            if (value.ToLower().Contains("string"))
+                return Json.JsonDataType.String;
+            if (value.Equals("etag", StringComparison.OrdinalIgnoreCase))
+                return Json.JsonDataType.String;
+            if (value.Equals("range", StringComparison.OrdinalIgnoreCase))
+                return Json.JsonDataType.String;
+            if (value.ToLower().Contains("timestamp"))
+                return Json.JsonDataType.String;
+
+            Console.WriteLine(string.Format("Couldn't convert '{0}' into Json.JsonDataType enumeration. Assuming Object type.", value));
+            return Json.JsonDataType.Object;
+        }
+
+        public static bool IsRequired(this string description)
+        {
+            return description.StartsWith("required.", StringComparison.OrdinalIgnoreCase);
+        }
+
+        public static bool IsHeaderBlock(this MarkdownDeep.Block block)
+        {
+            switch (block.BlockType)
+            {
+                case MarkdownDeep.BlockType.h1:
+                case MarkdownDeep.BlockType.h2:
+                case MarkdownDeep.BlockType.h3:
+                case MarkdownDeep.BlockType.h4:
+                case MarkdownDeep.BlockType.h5:
+                case MarkdownDeep.BlockType.h6:
+                    return true;
+                default:
+                    return false;
+            }
+        }
     }
 }

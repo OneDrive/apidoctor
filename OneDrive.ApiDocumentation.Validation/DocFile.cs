@@ -18,6 +18,8 @@
         protected List<MarkdownDeep.Block> m_CodeBlocks = new List<MarkdownDeep.Block>();
         protected List<ResourceDefinition> m_Resources = new List<ResourceDefinition>();
         protected List<MethodDefinition> m_Requests = new List<MethodDefinition>();
+        protected List<ResourceDefinition> m_JsonExamples = new List<ResourceDefinition>();
+
 //        protected List<MarkdownDeep.LinkInfo> m_Links = new List<MarkdownDeep.LinkInfo>();
         #endregion
 
@@ -90,8 +92,6 @@
 
             HtmlContent = md.Transform(inputMarkdown);
             OriginalMarkdownBlocks = md.Blocks;
-
-
             MarkdownLinks = new List<MarkdownDeep.LinkInfo>(md.FoundLinks);
         }
 
@@ -127,13 +127,96 @@
             return ParseMarkdownBlocks(out errors);
         }
 
+        private static TextWriter datawriter;
+        private static TextWriter GetWriter()
+        {
+            if (null == datawriter)
+            {
+                datawriter = new StreamWriter("doc-schema.txt") { AutoFlush = true };
+            }
+            return datawriter;
+        }
+
+        protected bool ParseMarkdownBlocks(out ValidationError[] errors)
+        {
+            
+            List<ValidationError> detectedErrors = new List<ValidationError>();
+
+            var writer = GetWriter();
+            writer.WriteLine();
+            writer.WriteLine("### " + this.DisplayName + " ###");
+
+            string pageTitle = null;
+            string pageDescription = null;
+
+            MarkdownDeep.Block previousHeaderBlock = null;
+
+            for (int i = 0; i < OriginalMarkdownBlocks.Length; i++)
+            {
+                var block = OriginalMarkdownBlocks[i];
+
+                // Capture the first h1 and/or p element to be used as the title and description for items on this page
+                if (block.BlockType == MarkdownDeep.BlockType.h1 && pageTitle == null)
+                {
+                    pageTitle = block.Content;
+                }
+                else if (block.BlockType == MarkdownDeep.BlockType.p && pageDescription == null)
+                {
+                    pageDescription = block.Content;
+                }
+                else if (block.BlockType == MarkdownDeep.BlockType.html)
+                {
+                    // If the next block is a codeblock we've found a metadata + codeblock pair
+                    MarkdownDeep.Block nextBlock = null;
+                    if (i + 1 < OriginalMarkdownBlocks.Length)
+                    {
+                        nextBlock = OriginalMarkdownBlocks[i + 1];
+                    }
+                    if (null != nextBlock && nextBlock.BlockType == MarkdownDeep.BlockType.codeblock)
+                    {
+                        // html + codeblock = likely request or response!
+                        var definition = ParseCodeBlock(block, nextBlock);
+                        if (null != definition)
+                        {
+                            definition.Title = pageTitle;
+                            definition.Description = pageDescription;
+                        }
+                    }
+                }
+                else if (block.BlockType == MarkdownDeep.BlockType.table_spec)
+                {
+                    MarkdownDeep.Block blockBeforeTable = (i - 1 >= 0) ? OriginalMarkdownBlocks[i - 1] : null;
+                    if (null == blockBeforeTable) continue;
+
+                    ItemDefinition[] rows;
+                    ValidationError[] parseErrors;
+                    var tableType = TableSpecConverter.ParseTableSpec(block, previousHeaderBlock, out rows, out parseErrors);
+                    if (null != parseErrors) detectedErrors.AddRange(parseErrors);
+
+                    Console.WriteLine("Table: {0}", tableType);
+                    Console.WriteLine("  Values: [ {0} ]", (from r in rows select Newtonsoft.Json.JsonConvert.SerializeObject(r, Newtonsoft.Json.Formatting.Indented)).ComponentsJoinedByString(" ,\r\n    "));
+
+                    // TODO: Attach the table to something meaningful in this DocFile. Ideally to a MethodDefinition or ResourceDefinition
+
+                }
+
+                if (block.IsHeaderBlock())
+                {
+                    previousHeaderBlock = block;
+                }
+            }
+
+            errors = detectedErrors.ToArray();
+            return detectedErrors.Count == 0;
+        }
+
         /// <summary>
         /// Parse through the markdown blocks and intprerate the documents into
         /// our internal object model.
         /// </summary>
         /// <returns><c>true</c>, if code blocks was parsed, <c>false</c> otherwise.</returns>
         /// <param name="errors">Errors.</param>
-        protected bool ParseMarkdownBlocks(out ValidationError[] errors)
+        protected bool ParseMarkdownBlocksOld(out ValidationError[] errors)
         {
             List<ValidationError> detectedErrors = new List<ValidationError>();
 
@@ -193,14 +276,16 @@
         }
 
         /// <summary>
-        /// Convert an annotation and fenced code block in the documentation into something usable
+        /// Convert an annotation and fenced code block in the documentation into something usable. Adds
+        /// the detected object into one of the internal collections of resources, methods, or examples.
         /// </summary>
         /// <param name="metadata"></param>
         /// <param name="code"></param>
-        public void ParseCodeBlock(MarkdownDeep.Block metadata, MarkdownDeep.Block code)
+        public ItemDefinition ParseCodeBlock(MarkdownDeep.Block metadata, MarkdownDeep.Block code)
         {
             if (metadata.BlockType != MarkdownDeep.BlockType.html)
                 throw new ArgumentException("metadata block does not appear to be metadata");
+
             if (code.BlockType != MarkdownDeep.BlockType.codeblock)
                 throw new ArgumentException("code block does not appear to be code");
 
@@ -211,8 +296,9 @@
             {
                 case CodeBlockType.Resource:
                     {
-                        m_Resources.Add(new ResourceDefinition(annotation, code.Content, this));
-                        break;
+                        var resource = new ResourceDefinition(annotation, code.Content, this);
+                        m_Resources.Add(resource);
+                        return resource;
                     }
                 case CodeBlockType.Request:
                     {
@@ -220,22 +306,25 @@
                         if (string.IsNullOrEmpty(method.Identifier))
                             method.Identifier = string.Format("{0} #{1}", DisplayName, m_Requests.Count);
                         m_Requests.Add(method);
-                        break;
+                        return method;
                     }
 
                 case CodeBlockType.Response:
                     {
                         var method = m_Requests.Last();
                         method.AddExpectedResponse(code.Content, annotation);
-                        break;
+                        return method;
+                    }
+                case CodeBlockType.Example:
+                    {
+                        var example = new ExampleDefinition(annotation, code.Content, this);
+                        m_JsonExamples.Add(example);
+                        return example;
                     }
                 case CodeBlockType.Ignored:
-                case CodeBlockType.Example:
-                    break;
+                    return null;
                 default:
-                    {
-                        throw new NotSupportedException("Unsupported block type: " + annotation.BlockType);
-                    }
+                    throw new NotSupportedException("Unsupported block type: " + annotation.BlockType);
             }
         }
 
@@ -375,4 +464,6 @@
         Resource,
         MethodRequest
     }
+
+
 }

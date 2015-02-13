@@ -13,17 +13,18 @@ namespace OneDrive.ApiDocumentation.Validation
     /// <summary>
     /// Definition of a request / response pair for the API
     /// </summary>
-    public class MethodDefinition
+    public class MethodDefinition : ItemDefinition
     {
+        #region Constants
         internal const string MimeTypeJson = "application/json";
         internal const string MimeTypeMultipartRelated = "multipart/related";
         internal const string MimeTypePlainText = "text/plain";
+        #endregion
 
+        #region Constructors / Class Factory
         public MethodDefinition()
         {
-            Title = "Method Title Missing";
-            Description = "Method Description Missing";
-            Parameters = new List<MethodParameter>();
+            Parameters = new List<ParameterDefinition>();
         }
 
         public static MethodDefinition FromRequest(string request, CodeBlockAnnotation annotation, DocFile source)
@@ -34,8 +35,9 @@ namespace OneDrive.ApiDocumentation.Validation
             method.Title = method.Identifier;
             return method;
         }
+        #endregion
 
-
+        #region Properties
         /// <summary>
         /// Method identifier for the request/response pair. Used to connect 
         /// scenario tests to this method
@@ -69,6 +71,16 @@ namespace OneDrive.ApiDocumentation.Validation
         /// </summary>
         /// <value>The source file.</value>
         public DocFile SourceFile {get; private set;}
+        
+        /// <summary>
+        /// The raw HTTP response from the actual service
+        /// </summary>
+        /// <value>The actual response.</value>
+        public string ActualResponse { get; set; }
+
+
+        public List<ParameterDefinition> Parameters { get; set; }
+        #endregion
 
         public void AddExpectedResponse(string rawResponse, CodeBlockAnnotation annotation)
         {
@@ -76,26 +88,6 @@ namespace OneDrive.ApiDocumentation.Validation
             ExpectedResponseMetadata = annotation;
         }
 
-        /// <summary>
-        /// The raw HTTP response from the actual service
-        /// </summary>
-        /// <value>The actual response.</value>
-        public string ActualResponse { get; set; }
-
-        /// <summary>
-        /// The title or summary of the method call
-        /// </summary>
-        /// <value>The title.</value>
-        public string Title { get; set; }
-
-        /// <summary>
-        /// A verbose description of this method.
-        /// </summary>
-        /// <value>The description.</value>
-        public string Description { get; set; }
-
-
-        public List<MethodParameter> Parameters { get; set; }
 
 
 
@@ -308,7 +300,8 @@ namespace OneDrive.ApiDocumentation.Validation
             SplitRequestUrl(out relativePath, out queryString, out httpMethod);
 
             Parameters.AddRange(from pv in CapturePathVariables(relativePath)
-                                            select new MethodParameter() { 
+                                select new ParameterDefinition()
+                                { 
                   Name = pv, 
                   Location = ParameterLocation.Path,
                   Type = JsonDataType.String,
@@ -360,20 +353,7 @@ namespace OneDrive.ApiDocumentation.Validation
 
     }
 
-    public class MethodParameter
-    {
-        public string Name {get;set;}
-        public JsonDataType Type {get;set;}
-        public ParameterLocation Location {get;set;}
-        public bool Required {get;set;}
 
-    }
-
-    public enum ParameterLocation
-    {
-        Path,
-        QueryString
-    }
 
 }
 

@@ -28,7 +28,7 @@ namespace OneDrive.ApiDocumentation.Validation
             {
                 case OneDrive.ApiDocumentation.Validation.Json.JsonDataType.ODataType:
                     throw new ArgumentException();
-                case OneDrive.ApiDocumentation.Validation.Json.JsonDataType.Custom:
+                case OneDrive.ApiDocumentation.Validation.Json.JsonDataType.Object:
                     return "object";
                 default:
                     return datatype.ToString().ToLower();
@@ -67,7 +67,7 @@ namespace OneDrive.ApiDocumentation.Validation
                 return null;
         }
 
-        internal static SwaggerParameter ToSwaggerParameter(this OneDrive.ApiDocumentation.Validation.MethodParameter parameter)
+        internal static SwaggerParameter ToSwaggerParameter(this OneDrive.ApiDocumentation.Validation.ParameterDefinition parameter)
         {
             SwaggerParameter p = new SwaggerParameter()
             {
