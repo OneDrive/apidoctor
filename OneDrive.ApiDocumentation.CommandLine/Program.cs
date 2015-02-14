@@ -663,6 +663,8 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             await publisher.PublishToFolderAsync(outputPath);
 
             FancyConsole.WriteLine(ConsoleSuccessColor, "Finished publishing documentation to: {0}", outputPath);
+
+            Exit(failure: false);
         }
 
         static void publisher_NewMessage(object sender, ValidationError e)

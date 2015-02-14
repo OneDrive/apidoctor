@@ -61,7 +61,8 @@
         HttpRequestAndMethodSpecified,
         OutputValueValueIncorrect,
         HttpRequestParameterInvalid,
-        HttpRequestMissingAllowedStatusCodes
+        HttpRequestMissingAllowedStatusCodes,
+        TypeConversionFailure
 
     }
 

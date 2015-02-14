@@ -56,6 +56,7 @@
     <Compile Include="Http\HttpRequest.cs" />
     <Compile Include="Http\HttpResponse.cs" />
     <Compile Include="ParameterDefinition.cs" />
+    <Compile Include="TableSpec\TableDefinition.cs" />
     <Compile Include="Writers\DocumentPublisher.cs" />
     <Compile Include="ItemDefinition.cs" />
     <Compile Include="OData\Action.cs" />

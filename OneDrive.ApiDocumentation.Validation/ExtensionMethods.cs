@@ -89,12 +89,12 @@
             return reader.ReadLine();
         }
 
-        public static bool WereErrors(this ValidationError[] errors)
+        public static bool WereErrors(this IEnumerable<ValidationError> errors)
         {
             return errors.Any(x => x.IsError);
         }
 
-        public static bool WereWarnings(this ValidationError[] errors)
+        public static bool WereWarnings(this IEnumerable<ValidationError> errors)
         {
             return errors.Any(x => x.IsWarning);
         }
@@ -134,7 +134,7 @@
             return -1;
         }
 
-        public static Json.JsonDataType ToDataType(this string value)
+        public static Json.JsonDataType ToDataType(this string value, Action<ValidationError> addErrorAction = null)
         {
             Json.JsonDataType output;
             if (Enum.TryParse<Json.JsonDataType>(value, true, out output))
@@ -149,7 +149,10 @@
             if (value.ToLower().Contains("timestamp"))
                 return Json.JsonDataType.String;
 
-            Console.WriteLine(string.Format("Couldn't convert '{0}' into Json.JsonDataType enumeration. Assuming Object type.", value));
+            if (null != addErrorAction)
+            {
+                addErrorAction(new ValidationWarning(ValidationErrorCode.TypeConversionFailure, "Couldn't convert '{0}' into Json.JsonDataType enumeration. Assuming Object type.", value));
+            }
             return Json.JsonDataType.Object;
         }
 

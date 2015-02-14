@@ -20,7 +20,7 @@ namespace OneDrive.ApiDocumentation.Validation
         /// <param name="lastHeaderBlock"></param>
         /// <param name="data"></param>
         /// <returns></returns>
-        public static TableBlockType ParseTableSpec(MarkdownDeep.Block tableSpecBlock, MarkdownDeep.Block lastHeaderBlock, out ItemDefinition[] data, out ValidationError[] errors)
+        public static TableDefinition ParseTableSpec(MarkdownDeep.Block tableSpecBlock, MarkdownDeep.Block lastHeaderBlock, out ValidationError[] errors)
         {
             List<ValidationError> discoveredErrors = new List<ValidationError>();
             List<ItemDefinition> items = new List<ItemDefinition>();
@@ -65,6 +65,10 @@ namespace OneDrive.ApiDocumentation.Validation
                     items.AddRange(ParseParameterTable(tableShape, ParameterLocation.QueryString));
                     break;
 
+                case TableBlockType.EnumerationValues:
+                    items.AddRange(ParseEnumerationTable(tableShape));
+                    break;
+
                 case TableBlockType.Unknown:
                     discoveredErrors.Add(new ValidationMessage(null, "Ignored unclassified table: headerText='{0}', tableHeaders='{1}'", headerText, tableShape.ColumnHeaders.ComponentsJoinedByString(",")));
                     break;
@@ -73,9 +77,9 @@ namespace OneDrive.ApiDocumentation.Validation
                     break;
             }
 
-            data = items.ToArray();
             errors = discoveredErrors.ToArray();
-            return discoveredTableType;
+
+            return new TableDefinition(discoveredTableType, items, headerText);
         }
 
         /// <summary>
@@ -124,6 +128,17 @@ namespace OneDrive.ApiDocumentation.Validation
             return records;
         }
 
+        private static IEnumerable<EnumerationDefinition> ParseEnumerationTable(MarkdownDeep.IMarkdownTable table)
+        {
+            var records = from r in table.RowValues
+                          select new EnumerationDefinition
+                          {
+                              Value = r.ValueForColumn(table, "Value"),
+                              Description = r.ValueForColumn(table, "Description")
+                          };
+            return records;
+        }
+
         public static Dictionary<string, TableBlockType> CommonHeaderContentMap = new Dictionary<string, TableBlockType>
         {
             { "Error Response", TableBlockType.ErrorCodes },
@@ -156,7 +171,7 @@ namespace OneDrive.ApiDocumentation.Validation
     }
 
 
-    internal enum TableBlockType
+    public enum TableBlockType
     {
 
         /// <summary>

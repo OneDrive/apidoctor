@@ -139,7 +139,6 @@
 
         protected bool ParseMarkdownBlocks(out ValidationError[] errors)
         {
-            
             List<ValidationError> detectedErrors = new List<ValidationError>();
 
             var writer = GetWriter();
@@ -151,6 +150,8 @@
 
             MarkdownDeep.Block previousHeaderBlock = null;
 
+            List<object> StuffFoundInThisDoc = new List<object>();
+
             for (int i = 0; i < OriginalMarkdownBlocks.Length; i++)
             {
                 var block = OriginalMarkdownBlocks[i];
@@ -159,10 +160,12 @@
                 if (block.BlockType == MarkdownDeep.BlockType.h1 && pageTitle == null)
                 {
                     pageTitle = block.Content;
+                    detectedErrors.Add(new ValidationMessage(null, "Found page title: {0}", pageTitle));
                 }
                 else if (block.BlockType == MarkdownDeep.BlockType.p && pageDescription == null)
                 {
                     pageDescription = block.Content;
+                    detectedErrors.Add(new ValidationMessage(null, "Found page description: {0}", pageDescription));
                 }
                 else if (block.BlockType == MarkdownDeep.BlockType.html)
                 {
@@ -178,8 +181,14 @@
                         var definition = ParseCodeBlock(block, nextBlock);
                         if (null != definition)
                         {
+                            detectedErrors.Add(new ValidationMessage(null, "Found code block: {0} [{1}]", definition.Title, definition.GetType().Name));
                             definition.Title = pageTitle;
                             definition.Description = pageDescription;
+
+                            if (!StuffFoundInThisDoc.Contains(definition))
+                            {
+                                StuffFoundInThisDoc.Add(definition);
+                            }
                         }
                     }
                 }
@@ -190,14 +199,14 @@
 
                     ItemDefinition[] rows;
                     ValidationError[] parseErrors;
-                    var tableType = TableSpecConverter.ParseTableSpec(block, previousHeaderBlock, out rows, out parseErrors);
+                    var table = TableSpecConverter.ParseTableSpec(block, previousHeaderBlock, out parseErrors);
                     if (null != parseErrors) detectedErrors.AddRange(parseErrors);
 
-                    Console.WriteLine("Table: {0}", tableType);
-                    Console.WriteLine("  Values: [ {0} ]", (from r in rows select Newtonsoft.Json.JsonConvert.SerializeObject(r, Newtonsoft.Json.Formatting.Indented)).ComponentsJoinedByString(" ,\r\n    "));
+                    detectedErrors.Add(new ValidationMessage(null, "Found table: {0}. Rows:\r\n{1}", table.Type,
+                        (from r in table.Rows select Newtonsoft.Json.JsonConvert.SerializeObject(r, Newtonsoft.Json.Formatting.Indented)).ComponentsJoinedByString(" ,\r\n")));
 
                     // TODO: Attach the table to something meaningful in this DocFile. Ideally to a MethodDefinition or ResourceDefinition
-
+                    StuffFoundInThisDoc.Add(table);
                 }
 
                 if (block.IsHeaderBlock())
@@ -206,8 +215,72 @@
                 }
             }
 
+            ValidationError[] postProcessingErrors;
+            PostProcessFoundElements(StuffFoundInThisDoc, out postProcessingErrors);
+            detectedErrors.AddRange(postProcessingErrors);
+            
             errors = detectedErrors.ToArray();
-            return detectedErrors.Count == 0;
+            return !detectedErrors.Any(x => x.IsError);
+        }
+
+        private void PostProcessFoundElements(List<object> StuffFoundInThisDoc, out ValidationError[] postProcessingErrors)
+        {
+            /*
+            if FoundMethods == 1 then
+              Attach all tables found in the document to the method.
+
+            else if FoundMethods > 1 then
+              Table.Type == ErrorCodes
+                - Attach errors to all methods in the file
+              Table.Type == PathParameters
+                - Find request with matching parameters
+              Table.Type == Query String Parameters
+                - Request may not have matching parameters, because query string parameters may not be part of the request
+              Table.Type == Header Parameters
+                - Find request with matching parameters
+              Table.Type == Body Parameters
+                - Find request with matching parameters
+             */
+
+            var foundMethods = from s in StuffFoundInThisDoc
+                               where s is MethodDefinition
+                               select (MethodDefinition)s;
+
+            var foundTables = from s in StuffFoundInThisDoc
+                                   where s is TableDefinition
+                                   select (TableDefinition)s;
+
+            if (foundMethods.Count() == 1)
+            {
+                var onlyMethod = foundMethods.Single();
+                foreach (var table in foundTables)
+                {
+                    switch (table.Type)
+                    {
+                        case TableBlockType.EnumerationValues:
+                            // TODO: Support enumeration values
+                            break;
+                        case TableBlockType.ErrorCodes:
+                            onlyMethod.Errors = table.Rows.Cast<ErrorDefinition>().ToArray();
+                            break;
+
+                        case TableBlockType.HttpHeaders:
+                        case TableBlockType.PathParameters:
+                        case TableBlockType.QueryStringParameters:
+                            List<ParameterDefinition> parameters = new List<ParameterDefinition>(onlyMethod.Parameters);
+                            parameters.AddRange(table.Rows.Cast<ParameterDefinition>());
+                            onlyMethod.Parameters = parameters.ToArray();
+                            break;
+
+                        case TableBlockType.RequestObjectProperties:
+                        case TableBlockType.ResourcePropertyDescriptions:
+                        case TableBlockType.ResponseObjectProperties:
+                            break;
+                    }
+                }
+            }
+
+            postProcessingErrors = new ValidationError[0];
         }
 
         /// <summary>

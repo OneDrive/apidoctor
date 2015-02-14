@@ -92,7 +92,7 @@ namespace OneDrive.ApiDocumentation.Validation
                 output.Description = method.Description;
 
 
-            method.ParseParameters();
+            //method.ParseParameters();
 
             output.Parameters.AddRange(from p in method.Parameters
                 select p.ToSwaggerParameter());
