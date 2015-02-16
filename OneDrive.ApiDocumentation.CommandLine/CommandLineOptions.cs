@@ -57,6 +57,12 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         [Option("log", HelpText="Write the console output to file.")]
         public string LogFile { get; set; }
 
+#if DEBUG
+        [Option("debug", HelpText="Launch the debugger before doing anything interesting")]
+#endif
+        public bool AttachDebugger { get; set; }
+
+
         public virtual bool HasRequiredProperties(out string[] missingArguments)
         {
             missingArguments = new string[0];

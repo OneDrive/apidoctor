@@ -40,6 +40,11 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 Exit(failure: true);
             }
 
+            if (verbOptions.AttachDebugger)
+            {
+                System.Diagnostics.Debugger.Launch();
+            }
+
             var commandOptions = verbOptions as DocSetOptions;
             if (null != commandOptions)
             {
@@ -47,11 +52,6 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             }
 
             FancyConsole.LogFileName = verbOptions.LogFile;
-
-#if DEBUG
-//            System.Diagnostics.Debugger.Launch();
-#endif
-
 
             Nito.AsyncEx.AsyncContext.Run(() => RunInvokedMethodAsync(options, verbName, verbOptions));
         }
