@@ -21,7 +21,7 @@ namespace OneDrive.ApiDocumentation.Validation.Writers
         public SwaggerAuth AuthenticationParameters { get; set; }
         
 
-        public SwaggerWriter(DocSet docs) : base(docs)
+        public SwaggerWriter(DocSet docs, string baseUrl) : base(docs)
         {
             AuthenticationParameters = new SwaggerAuth
             {
@@ -31,6 +31,13 @@ namespace OneDrive.ApiDocumentation.Validation.Writers
                 AuthorizationEndPoint = "https://login.live.com/oauth20_authorize.srf",
                 TokenEndPoint = "https://login.live.com/oauth20_token.srf"
             };
+
+            if (!string.IsNullOrEmpty(baseUrl))
+            {
+                Uri baseUri = new Uri(baseUrl);
+                ProductionHost = baseUri.Host;
+                BaseUrl = baseUri.PathAndQuery;
+            }
 
         }
 
@@ -267,6 +274,8 @@ namespace OneDrive.ApiDocumentation.Validation.Writers
         }
 
         private System.Text.RegularExpressions.Regex PathVariableRegex = new System.Text.RegularExpressions.Regex("{(?<var>.*)}");
+        private DocSet docs;
+        private string p;
 
         private string[] CapturePathVariables(string relativePath)
         {

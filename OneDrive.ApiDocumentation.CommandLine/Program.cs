@@ -641,7 +641,13 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                     publisher = new DocumentPublisherHtml(docs);
                     break;
                 case PublishOptions.PublishFormat.Swagger2:
-                    publisher = new OneDrive.ApiDocumentation.Validation.Writers.SwaggerWriter(docs);
+                    publisher = new OneDrive.ApiDocumentation.Validation.Writers.SwaggerWriter(docs, SavedSettings.Default.ServiceUrl)
+                    {
+                        Title = options.Title,
+                        Description = options.Description,
+                        Version = options.Version
+                    };
+                    
                     break;
                 default:
                     throw new NotSupportedException("Unsupported format: " + options.Format.ToString());
