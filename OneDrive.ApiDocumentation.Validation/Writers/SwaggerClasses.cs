@@ -1,6 +1,7 @@
 ﻿using System;
 using Newtonsoft.Json;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace OneDrive.ApiDocumentation.Validation
 {
@@ -39,7 +40,15 @@ namespace OneDrive.ApiDocumentation.Validation
             Responses = new Dictionary<string, SwaggerResponse>();
 
             Security = new List<Dictionary<string, string[]>>();
-            Security.Add(new Dictionary<string, string[]> { { "microsoftAccount", new string[] { "onedrive.readonly", "onedrive.readwrite" } } });
+        }
+
+        public void AddRequiredSecurityRoles(string provider, IEnumerable<string> roles)
+        {
+            Security.Add(new Dictionary<string, string[]> 
+            { 
+                { provider, roles.ToArray() }
+            });
+
         }
 
     }

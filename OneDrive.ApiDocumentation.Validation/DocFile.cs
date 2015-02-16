@@ -49,6 +49,10 @@
             get { return m_Requests.ToArray(); }
         }
 
+        public AuthScopeDefinition[] AuthScopes { get; private set; }
+
+        public ErrorDefinition[] ErrorCodes { get; private set; }
+
         public string[] LinkDestinations
         {
             get
@@ -211,7 +215,6 @@
                     detectedErrors.Add(new ValidationMessage(null, "Found table: {0}. Rows:\r\n{1}", table.Type,
                         (from r in table.Rows select Newtonsoft.Json.JsonConvert.SerializeObject(r, Newtonsoft.Json.Formatting.Indented)).ComponentsJoinedByString(" ,\r\n")));
 
-                    // TODO: Attach the table to something meaningful in this DocFile. Ideally to a MethodDefinition or ResourceDefinition
                     StuffFoundInThisDoc.Add(table);
                 }
 
@@ -229,7 +232,7 @@
             return !detectedErrors.Any(x => x.IsError);
         }
 
-        private void PostProcessFoundElements(List<object> StuffFoundInThisDoc, out ValidationError[] postProcessingErrors)
+        private void PostProcessFoundElements(List<object> elementsFoundInDocument, out ValidationError[] postProcessingErrors)
         {
             /*
             if FoundMethods == 1 then
@@ -248,22 +251,37 @@
                 - Find request with matching parameters
              */
 
-            var foundMethods = from s in StuffFoundInThisDoc
+            var foundMethods = from s in elementsFoundInDocument
                                where s is MethodDefinition
                                select (MethodDefinition)s;
 
-            var foundResources = from s in StuffFoundInThisDoc
+            var foundResources = from s in elementsFoundInDocument
                                  where s is ResourceDefinition
                                  select (ResourceDefinition)s;
 
-            var foundTables = from s in StuffFoundInThisDoc
+            var foundTables = from s in elementsFoundInDocument
                                    where s is TableDefinition
                                    select (TableDefinition)s;
 
+            PostProcessAuthScopes(elementsFoundInDocument);
             PostProcessResources(foundResources, foundTables);
             PostProcessMethods(foundMethods, foundTables);
-
+            
             postProcessingErrors = new ValidationError[0];
+        }
+
+        private void PostProcessAuthScopes(List<object> StuffFoundInThisDoc)
+        {
+            var authScopeTables = (from s in StuffFoundInThisDoc
+                                   where s is TableDefinition && ((TableDefinition)s).Type == TableBlockType.AuthScopes
+                                   select ((TableDefinition)s));
+
+            List<AuthScopeDefinition> foundScopes = new List<AuthScopeDefinition>();
+            foreach (var table in authScopeTables)
+            {
+                foundScopes.AddRange(table.Rows.Cast<AuthScopeDefinition>());
+            }
+            AuthScopes = foundScopes.ToArray();
         }
 
         private static void PostProcessResources(IEnumerable<ResourceDefinition> foundResources, IEnumerable<TableDefinition> foundTables)
@@ -283,43 +301,77 @@
             }
         }
 
-        private static void PostProcessMethods(IEnumerable<MethodDefinition> foundMethods, IEnumerable<TableDefinition> foundTables)
+        private void PostProcessMethods(IEnumerable<MethodDefinition> foundMethods, IEnumerable<TableDefinition> foundTables)
         {
-            if (foundMethods.Count() == 1)
+            var totalMethods = foundMethods.Count();
+            var totalTables = foundTables.Count();
+
+            if (totalTables == 0)
+                return;
+
+            if (totalMethods == 0)
+            {
+                StoreOnFile(foundTables);
+            }
+            else if (totalMethods == 1)
             {
                 var onlyMethod = foundMethods.Single();
-                foreach (var table in foundTables)
+                StoreOnMethod(foundTables, onlyMethod);
+            }
+            else
+            {
+                // TODO: Figure out how to map stuff when more than one method exists
+                Console.WriteLine("Failed to map elements in file {0}", DisplayName);
+                Console.WriteLine(" Methods:\r\n  {0}", (from m in foundMethods select m.RequestMetadata.MethodName).ComponentsJoinedByString("\r\n  "));
+                Console.WriteLine(" Tables:\r\n  {0}", (from t in foundTables select string.Format("{0} - {1}", t.Title, t.Type)).ComponentsJoinedByString("\r\n  "));
+            }
+        }
+
+        private static void StoreOnMethod(IEnumerable<TableDefinition> foundTables, MethodDefinition onlyMethod)
+        {
+            foreach (var table in foundTables)
+            {
+                switch (table.Type)
                 {
-                    switch (table.Type)
-                    {
-                        case TableBlockType.Unknown:
-                            // Unknown table format, nothing we can do with it.
-                            break;
-                        case TableBlockType.EnumerationValues:
-                            // TODO: Support enumeration values
-                            System.Diagnostics.Debug.WriteLine("Enumeration that wasn't handled.");
-                            break;
-                        case TableBlockType.ErrorCodes:
-                            onlyMethod.Errors = table.Rows.Cast<ErrorDefinition>().ToList();
-                            break;
+                    case TableBlockType.Unknown:
+                        // Unknown table format, nothing we can do with it.
+                        break;
+                    case TableBlockType.EnumerationValues:
+                        // TODO: Support enumeration values
+                        Console.WriteLine("Enumeration that wasn't handled: {0} on method {1} ", table.Title, onlyMethod.RequestMetadata.MethodName);
+                        break;
+                    case TableBlockType.ErrorCodes:
+                        onlyMethod.Errors = table.Rows.Cast<ErrorDefinition>().ToList();
+                        break;
+                    case TableBlockType.HttpHeaders:
+                    case TableBlockType.PathParameters:
+                    case TableBlockType.QueryStringParameters:
+                        onlyMethod.Parameters.AddRange(table.Rows.Cast<ParameterDefinition>());
+                        break;
+                    case TableBlockType.RequestObjectProperties:
+                        onlyMethod.RequestBodyParameters.AddRange(table.Rows.Cast<ParameterDefinition>());
+                        break;
+                    case TableBlockType.ResourcePropertyDescriptions:
+                    case TableBlockType.ResponseObjectProperties:
+                        Console.WriteLine("Object description that wasn't handled: {0} on method {1}", table.Title, onlyMethod.RequestMetadata.MethodName);
+                        break;
+                    default:
+                        Console.WriteLine("Something else that wasn't handled: type:{0}, title:{1} on method {2}", table.Type, table.Title, onlyMethod.RequestMetadata.MethodName);
+                        break;
+                }
+            }
+        }
 
-                        case TableBlockType.HttpHeaders:
-                        case TableBlockType.PathParameters:
-                        case TableBlockType.QueryStringParameters:
-
-                            onlyMethod.Parameters.AddRange(table.Rows.Cast<ParameterDefinition>());
-                            break;
-                        case TableBlockType.RequestObjectProperties:
-                            onlyMethod.RequestBodyParameters.AddRange(table.Rows.Cast<ParameterDefinition>());
-                            break;
-                        case TableBlockType.ResourcePropertyDescriptions:
-                        case TableBlockType.ResponseObjectProperties:
-                            System.Diagnostics.Debug.WriteLine("Object description that wasn't handled.");
-                            break;
-                        default:
-                            System.Diagnostics.Debug.WriteLine("Something else that wasn't handled: " + table.Type.ToString());
-                            break;
-                    }
+        private void StoreOnFile(IEnumerable<TableDefinition> foundTables)
+        {
+            // Assume anything we found is a global resource
+            foreach (var table in foundTables)
+            {
+                switch (table.Type)
+                {
+                    case TableBlockType.ErrorCodes:
+                        ErrorCodes = table.Rows.Cast<ErrorDefinition>().ToArray();
+                        break;
                 }
             }
         }

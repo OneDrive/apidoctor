@@ -317,6 +317,10 @@
             {
                 return PropertyValidationOutcome.OK;
             }
+            else if (expectedProperty.IsArray && actualProperty.IsArray && actualProperty.OriginalValue == "[]")
+            {
+                return PropertyValidationOutcome.OK;
+            }
             else
             {
                 detectedErrors.Add(new ValidationError(ValidationErrorCode.ArrayTypeMismatch, null, "Array expected members to be of type {0} but found: {1}", expectedProperty.Type, actualProperty.Type));

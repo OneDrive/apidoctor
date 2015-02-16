@@ -192,5 +192,19 @@
                 queryString = inputUrl.Substring(index + 1);
             }
         }
+
+        public static bool ToBoolean(this string input)
+        {
+            bool output;
+            if (bool.TryParse(input, out output))
+                return output;
+
+            if (input.Equals("no", StringComparison.OrdinalIgnoreCase))
+                return false;
+            if (input.Equals("yes", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            throw new NotSupportedException(string.Format("Couldn't convert this value to a boolean: {0}", input));
+        }
     }
 }

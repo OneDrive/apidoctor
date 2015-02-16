@@ -35,6 +35,23 @@
         
         public Scenarios TestScenarios {get; set;}
 
+        public IEnumerable<AuthScopeDefinition> AuthScopes
+        {
+            get
+            {
+                return ListFromFiles<AuthScopeDefinition>(x => x.AuthScopes);
+            }
+        }
+
+        public IEnumerable<ErrorDefinition> ErrorCodes
+        {
+            get
+            {
+                return ListFromFiles<ErrorDefinition>(x => x.ErrorCodes);
+            }
+        }
+
+
         #endregion
 
         #region Constructors
@@ -205,7 +222,19 @@
             var relativePath = fileFullName.Substring(SourceFolderPath.Length);
             return relativePath;
         }
+        private IEnumerable<T> ListFromFiles<T>(Func<DocFile, IEnumerable<T>> perFileSource)
+        {
+            List<T> collected = new List<T>();
+            foreach (var file in Files)
+            {
+                var data = perFileSource(file);
+                if (null != data)
+                    collected.AddRange(data);
+            }
+            return collected;
+        }
 
+        
         
 
 

@@ -69,6 +69,10 @@ namespace OneDrive.ApiDocumentation.Validation
                     items.AddRange(ParseEnumerationTable(tableShape));
                     break;
 
+                case TableBlockType.AuthScopes:
+                    items.AddRange(ParseAuthScopeTable(tableShape));
+                    break;
+
                 case TableBlockType.Unknown:
                     discoveredErrors.Add(new ValidationMessage(null, "Ignored unclassified table: headerText='{0}', tableHeaders='{1}'", headerText, tableShape.ColumnHeaders.ComponentsJoinedByString(",")));
                     break;
@@ -139,6 +143,19 @@ namespace OneDrive.ApiDocumentation.Validation
             return records;
         }
 
+        private static IEnumerable<AuthScopeDefinition> ParseAuthScopeTable(MarkdownDeep.IMarkdownTable table)
+        {
+            var records = from r in table.RowValues
+                          select new AuthScopeDefinition
+                          {
+                              Scope = r.ValueForColumn(table, "Scope Name"),
+                              Title = r.ValueForColumn(table, "Title"),
+                              Description = r.ValueForColumn(table, "Description"),
+                              Required = r.ValueForColumn(table, "Required").ToBoolean()
+                          };
+            return records;
+        }
+
         public static Dictionary<string, TableBlockType> CommonHeaderContentMap = new Dictionary<string, TableBlockType>
         {
             { "Error Response", TableBlockType.ErrorCodes },
@@ -147,6 +164,8 @@ namespace OneDrive.ApiDocumentation.Validation
             { "Request Body", TableBlockType.RequestObjectProperties },
             { "Query String Parameters", TableBlockType.QueryStringParameters },
             { "Request Headers", TableBlockType.HttpHeaders },
+            { "Authentication Scopes", TableBlockType.AuthScopes },
+            { "Enumeration", TableBlockType.EnumerationValues }
         };
 
         private static TableBlockType CommonHeaderMatch(string lastHeader)
@@ -217,7 +236,8 @@ namespace OneDrive.ApiDocumentation.Validation
         /// <summary>
         /// Collection of ParameterDefinition objects for the URL path
         /// </summary>
-        PathParameters
+        PathParameters,
+        AuthScopes
 
     }
 }

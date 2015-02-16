@@ -634,13 +634,13 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             DocumentPublisher publisher = null;
             switch (options.Format)
             {
-                case PublishOptions.SanitizedFormat.Markdown:
+                case PublishOptions.PublishFormat.Markdown:
                     publisher = new DocumentPublisher(docs);
                     break;
-                case PublishOptions.SanitizedFormat.Html:
+                case PublishOptions.PublishFormat.Html:
                     publisher = new DocumentPublisherHtml(docs);
                     break;
-                case PublishOptions.SanitizedFormat.Swagger2:
+                case PublishOptions.PublishFormat.Swagger2:
                     publisher = new OneDrive.ApiDocumentation.Validation.Writers.SwaggerWriter(docs);
                     break;
                 default:

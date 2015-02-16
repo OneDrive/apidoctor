@@ -18,13 +18,20 @@ namespace OneDrive.ApiDocumentation.Validation.Writers
         public string ProductionHost { get; set; }
         public string BaseUrl { get; set; }
 
+        public SwaggerAuth AuthenticationParameters { get; set; }
+        
+
         public SwaggerWriter(DocSet docs) : base(docs)
         {
-            Title = "OneDrive API";
-            Description = "REST API for OneDrive files and folders";
-            Version = "1.0";
-            ProductionHost = "api.onedrive.com";
-            BaseUrl = "/v1.0";
+            AuthenticationParameters = new SwaggerAuth
+            {
+                ProviderName = "microsoftAccount",
+                OAuthFlow = "implicit",
+                AuthType = "oauth2",
+                AuthorizationEndPoint = "https://login.live.com/oauth20_authorize.srf",
+                TokenEndPoint = "https://login.live.com/oauth20_token.srf"
+            };
+
         }
 
         public override async Task PublishToFolderAsync(string outputFolder)
@@ -33,7 +40,7 @@ namespace OneDrive.ApiDocumentation.Validation.Writers
 
             var swag = new
             {
-                swagger = "2.0",
+                swagger = "2.0",    // Swagger version #
                 info = new
                 {
                     title = Title,
@@ -65,19 +72,15 @@ namespace OneDrive.ApiDocumentation.Validation.Writers
 
         private object BuildSecurityDefinition()
         {
-            return new {
-                microsoftAccount = new { 
-                    type = "oauth2",
-                    scopes = new Dictionary<string, object> {
-                        { "onedrive.readonly", "Grants read-only access to all files in OneDrive" },
-                        { "onedrive.readwrite", "Grants read-write access to all files in OneDrive" },
-                        { "onedrive.appfolder", "Grants read-write access to files in the application's folder in OneDrive" }
-                    },
-                    flow = "implicit",
-                    authorizationUrl = "https://login.live.com/oauth20_authorize.srf"
-                }
-            };
+            var foundScopes = Documents.AuthScopes;
 
+            return new Dictionary<string, object> { 
+                { AuthenticationParameters.ProviderName, new { 
+                    type = AuthenticationParameters.AuthType,
+                    scopes = foundScopes.ToDictionary(x => x.Scope, x => x.Description),
+                    flow = AuthenticationParameters.OAuthFlow,
+                    authorizationUrl = AuthenticationParameters.AuthorizationEndPoint
+            }}};
         }
 
         /// <summary>
@@ -229,7 +232,10 @@ namespace OneDrive.ApiDocumentation.Validation.Writers
                 httpMethod = httpMethod.ToLower();
                 if (!restPathNode.ContainsKey(httpMethod))
                 {
-                    restPathNode.Add(httpMethod, method.ToSwaggerMethod());
+                    var swaggerMethod = method.ToSwaggerMethod();
+                    var defaultRoles = from r in Documents.AuthScopes where r.Required == true select r.Scope;
+                    swaggerMethod.AddRequiredSecurityRoles(AuthenticationParameters.ProviderName, defaultRoles);
+                    restPathNode.Add(httpMethod, swaggerMethod);
                 }
                 else
                 {
@@ -276,6 +282,20 @@ namespace OneDrive.ApiDocumentation.Validation.Writers
         }
 
        
+
+    }
+
+    public class SwaggerAuth
+    {
+        public string ProviderName { get; set; }
+
+        public string AuthType { get; set; }
+
+        public string OAuthFlow { get; set; }
+
+        public string AuthorizationEndPoint { get; set; }
+
+        public string TokenEndPoint { get; set; }
 
     }
 }
