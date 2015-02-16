@@ -520,6 +520,8 @@
                         return new JsonProperty { Name = name, Type = propertyType, ODataTypeName = odataTypeName, IsArray = true,
                             OriginalValue = value.ToString(), CustomMembers = members };
                     }
+                case JTokenType.Null:
+                    return new JsonProperty { Name = name, Type = JsonDataType.Object, IsArray = false, OriginalValue = null };
                 default:
                     Console.WriteLine("Unhandled token type: " + value.Type);
                     break;
@@ -562,8 +564,8 @@
                 string name = prop.Key;
                 JToken value = prop.Value;
                 JsonProperty propertyInfo = ParseProperty(name, value, null);
-                schema[propertyInfo.Name] = propertyInfo;
-                
+                if (null != propertyInfo && null != propertyInfo.Name)
+                    schema[propertyInfo.Name] = propertyInfo;
             }
             return schema;
         }
