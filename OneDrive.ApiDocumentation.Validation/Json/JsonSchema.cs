@@ -523,8 +523,8 @@
                 case JTokenType.Null:
                     return new JsonProperty { Name = name, Type = JsonDataType.Object, IsArray = false, OriginalValue = null };
                 default:
-                    Console.WriteLine("Unhandled token type: " + value.Type);
-                    break;
+                    Console.WriteLine("Unsupported: Property {0} is of type {1} which is not currently supported.", name, value.Type);
+                    throw new NotSupportedException(string.Format("Unsupported: Property {0} is of type {1} which is not currently supported.", name, value.Type));
             }
 
             return null;
