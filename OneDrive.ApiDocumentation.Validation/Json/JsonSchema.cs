@@ -10,6 +10,8 @@
 
     public class JsonSchema
     {
+        
+
         #region Properties
         public string ResourceName { get { return Metadata.ResourceType; } }
 
@@ -18,6 +20,8 @@
         protected CodeBlockAnnotation Metadata { get; private set; }
 
         public string[] OptionalProperties { get { return (null == Metadata) ? null : Metadata.OptionalProperties; } }
+
+        public ResourceDefinition OriginalResource { get; set; }
 
         public JsonProperty[] Properties
         {
@@ -31,6 +35,13 @@
         {
             Metadata = annotation;
             ExpectedProperties = BuildSchemaFromJson(json);
+        }
+
+        public JsonSchema(ResourceDefinition resource)
+        {
+            Metadata = resource.Metadata;
+            ExpectedProperties = BuildSchemaFromJson(resource.JsonExample, resource.Parameters);
+            OriginalResource = resource;
         }
         #endregion
 
@@ -386,7 +397,7 @@
         #endregion
 
         #region Schema Building
-        private Dictionary<string, JsonProperty> BuildSchemaFromJson(string json)
+        private Dictionary<string, JsonProperty> BuildSchemaFromJson(string json, IEnumerable<ParameterDefinition> parameters = null)
         {
             Dictionary<string, JsonProperty> schema = new Dictionary<string, JsonProperty>();
             try
@@ -395,6 +406,7 @@
                 foreach (JToken token in obj)
                 {
                     JsonProperty propertyInfo = ParseProperty(token, null);
+                    AddParameterDataToProperty(parameters, propertyInfo);
                     schema[propertyInfo.Name] = propertyInfo;
                 }
             }
@@ -403,6 +415,22 @@
                 throw new SchemaBuildException(ex.Message, ex);
             }
             return schema;
+        }
+
+        private static void AddParameterDataToProperty(IEnumerable<ParameterDefinition> parameters, JsonProperty propertyInfo)
+        {
+            if (null != propertyInfo && null != parameters)
+            {
+                // See if we can look up more data for this new property
+                var findParameterQuery = from p in parameters
+                                         where p.Name == propertyInfo.Name
+                                         select p;
+                var parameterData = findParameterQuery.FirstOrDefault();
+                if (null != parameterData)
+                {
+                    propertyInfo.Description = parameterData.Description;
+                }
+            }
         }
 
         private static JsonProperty ParseProperty(string name, JToken value, JsonSchema containerSchema)

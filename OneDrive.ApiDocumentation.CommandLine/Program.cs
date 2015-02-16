@@ -647,6 +647,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                     throw new NotSupportedException("Unsupported format: " + options.Format.ToString());
             }
 
+            FancyConsole.WriteLineIndented("  ", "Format: {0}", publisher.GetType().Name);
             publisher.VerboseLogging = options.Verbose;
             publisher.SourceFileExtensions = options.TextFileExtensions;
             FancyConsole.WriteLineIndented("  ", "File extensions: {0}", publisher.SourceFileExtensions);

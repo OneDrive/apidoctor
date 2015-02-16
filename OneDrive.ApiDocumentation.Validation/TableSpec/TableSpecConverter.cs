@@ -120,7 +120,7 @@ namespace OneDrive.ApiDocumentation.Validation
             var records = from r in table.RowValues
                           select new ParameterDefinition
                           {
-                              Name = r.ValueForColumn(table, "Name"),
+                              Name = r.ValueForColumn(table, "Name", "Header Name"),
                               Type = Json.JsonDataType.String,
                               Description = r.ValueForColumn(table, "Description"),
                               Location = ParameterLocation.Header

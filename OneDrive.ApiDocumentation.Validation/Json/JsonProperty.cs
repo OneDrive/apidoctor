@@ -20,6 +20,8 @@
 
         public bool IsArray { get; set; }
 
+        public string Description { get; set; }
+
 
         public string TypeDescription
         {

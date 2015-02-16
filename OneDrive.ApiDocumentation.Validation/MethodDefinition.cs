@@ -24,7 +24,9 @@ namespace OneDrive.ApiDocumentation.Validation
         #region Constructors / Class Factory
         public MethodDefinition()
         {
-            Parameters = new List<ParameterDefinition>();
+            Errors = new List<ErrorDefinition>();
+            Enumerations = new Dictionary<string, List<ParameterDefinition>>();
+            RequestBodyParameters = new List<ParameterDefinition>();
         }
 
         public static MethodDefinition FromRequest(string request, CodeBlockAnnotation annotation, DocFile source)
@@ -307,24 +309,14 @@ namespace OneDrive.ApiDocumentation.Validation
         //        });
         //}
 
-        //public void SplitRequestUrl(out string relativePath, out string queryString, out string httpMethod)
-        //{
-        //    var parser = new Http.HttpParser();
-        //    var request = parser.ParseHttpRequest(Request);
-        //    httpMethod = request.Method;
+        public void SplitRequestUrl(out string relativePath, out string queryString, out string httpMethod)
+        {
+            var parser = new Http.HttpParser();
+            var request = parser.ParseHttpRequest(Request);
+            httpMethod = request.Method;
 
-        //    int index = request.Url.IndexOf('?');
-        //    if (index == -1)
-        //    {
-        //        relativePath = request.Url;
-        //        queryString = null;
-        //    }
-        //    else
-        //    {
-        //        relativePath = request.Url.Substring(0, index);
-        //        queryString = request.Url.Substring(index + 1);
-        //    }
-        //}
+            request.Url.SplitUrlComponents(out relativePath, out queryString);
+        }
 
         //private static System.Text.RegularExpressions.Regex PathVariableRegex = new System.Text.RegularExpressions.Regex("{(?<var>.*)}");
 
@@ -351,16 +343,17 @@ namespace OneDrive.ApiDocumentation.Validation
 
         #region Deep extraction properties
 
+        public List<ErrorDefinition> Errors { get; set; }
 
-        public ErrorDefinition[] Errors { get; set; }
+        public Dictionary<string, List<ParameterDefinition>> Enumerations { get; set; }
 
-        public ParameterDefinition[] Parameters { get; set; }
-
-        public Dictionary<string, ParameterDefinition[]> Enumerations { get; set; }
+        public List<ParameterDefinition> RequestBodyParameters { get; set; }
 
         #endregion
 
 
+
+        
     }
 
 

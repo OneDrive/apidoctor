@@ -11,7 +11,7 @@ namespace OneDrive.ApiDocumentation.Validation
 
     internal class SwaggerMethod 
     {
-        [JsonProperty("summary")]
+        [JsonProperty("summary", NullValueHandling=NullValueHandling.Ignore)]
         public string Summary { get; set; }
 
         [JsonProperty("description", NullValueHandling=NullValueHandling.Ignore)]
@@ -58,11 +58,21 @@ namespace OneDrive.ApiDocumentation.Validation
         public string Type { get; set; }
         [JsonProperty("format", NullValueHandling=NullValueHandling.Ignore)]
         public string Format { get; set; }
+
+
+
+        //[JsonProperty("default", NullValueHandling = NullValueHandling.Ignore)]
+        //public object DefaultValue { get; set; }
+        //[JsonProperty("minimum", NullValueHandling = NullValueHandling.Ignore)]
+        //public object Minimum { get; set; }
+        //[JsonProperty("maximum", NullValueHandling = NullValueHandling.Ignore)]
+        //public object Maximum { get; set; }
+
     }
 
     internal class SwaggerResponse
     {
-        [JsonProperty("description")]
+        [JsonProperty("description", NullValueHandling=NullValueHandling.Ignore)]
         public string Description { get; set; }
         [JsonProperty("schema", NullValueHandling = NullValueHandling.Ignore)]
         public object Schema { get; set; }

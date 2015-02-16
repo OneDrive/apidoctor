@@ -7,6 +7,7 @@
     using System.Diagnostics;
     using System.ComponentModel;
     using MarkdownDeep;
+    using System.Linq;
 
 	public class DocumentPublisher
 	{
@@ -49,7 +50,7 @@
         public bool VerboseLogging { get; set; }
 
         protected List<string> scannableExtensions;
-        protected List<string> ignoredPaths;
+        private List<string> ignoredPaths;
 
 		public DocumentPublisher(DocSet docset)
 		{
@@ -87,11 +88,16 @@
             Messages.Clear();
 
             DirectoryInfo destination = new DirectoryInfo(outputFolder);
-            scannableExtensions = new List<string>(SourceFileExtensions.Split(','));
-            ignoredPaths = new List<string>(SkipPaths.Split(';'));
+            SnapVariables();
 
 			await PublishFromDirectory(new DirectoryInfo(RootPath), destination);
 		}
+
+        protected void SnapVariables()
+        {
+            scannableExtensions = new List<string>(SourceFileExtensions.Split(','));
+            ignoredPaths = new List<string>(SkipPaths.Split(';'));
+        }
 
 		/// <summary>
 		/// Returns the relative directory for the passed directory based on the
@@ -289,8 +295,18 @@
 			var pathComponents = relativePath.Split(new char[] {Path.DirectorySeparatorChar},
 				StringSplitOptions.RemoveEmptyEntries);
 			var pathSyntax = "\\" + pathComponents.ComponentsJoinedByString("\\");
-			return ignoredPaths.Contains(pathSyntax);
+
+            var query = from p in ignoredPaths
+                        where pathSyntax.StartsWith(p)
+                        select p;
+
+            return query.FirstOrDefault() != null;
 		}
+
+        protected bool IsDocFileInternal(DocFile file)
+        {
+            return IsRelativePathInternal(file.DisplayName);
+        }
 
 		#endregion
 

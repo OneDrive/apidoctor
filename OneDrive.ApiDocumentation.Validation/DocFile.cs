@@ -137,6 +137,10 @@
             return datawriter;
         }
 
+        private static bool IsHeaderBlock(MarkdownDeep.Block block)
+        {
+            return block.BlockType == MarkdownDeep.BlockType.h1 || block.BlockType == MarkdownDeep.BlockType.h2;
+        }
         protected bool ParseMarkdownBlocks(out ValidationError[] errors)
         {
             List<ValidationError> detectedErrors = new List<ValidationError>();
@@ -145,8 +149,8 @@
             writer.WriteLine();
             writer.WriteLine("### " + this.DisplayName + " ###");
 
-            string pageTitle = null;
-            string pageDescription = null;
+            string methodTitle = null;
+            string methodDescription = null;
 
             MarkdownDeep.Block previousHeaderBlock = null;
 
@@ -154,18 +158,20 @@
 
             for (int i = 0; i < OriginalMarkdownBlocks.Length; i++)
             {
+                var previousBlock = (i > 0) ? OriginalMarkdownBlocks[i - 1] : null;
                 var block = OriginalMarkdownBlocks[i];
 
                 // Capture the first h1 and/or p element to be used as the title and description for items on this page
-                if (block.BlockType == MarkdownDeep.BlockType.h1 && pageTitle == null)
+                if (IsHeaderBlock(block))
                 {
-                    pageTitle = block.Content;
-                    detectedErrors.Add(new ValidationMessage(null, "Found page title: {0}", pageTitle));
+                    methodTitle = block.Content;
+                    methodDescription = null;       // Clear this because we don't want new title + old description
+                    detectedErrors.Add(new ValidationMessage(null, "Found title: {0}", methodTitle));
                 }
-                else if (block.BlockType == MarkdownDeep.BlockType.p && pageDescription == null)
+                else if (block.BlockType == MarkdownDeep.BlockType.p && IsHeaderBlock(previousBlock))
                 {
-                    pageDescription = block.Content;
-                    detectedErrors.Add(new ValidationMessage(null, "Found page description: {0}", pageDescription));
+                    methodDescription = block.Content;
+                    detectedErrors.Add(new ValidationMessage(null, "Found description: {0}", methodDescription));
                 }
                 else if (block.BlockType == MarkdownDeep.BlockType.html)
                 {
@@ -182,8 +188,8 @@
                         if (null != definition)
                         {
                             detectedErrors.Add(new ValidationMessage(null, "Found code block: {0} [{1}]", definition.Title, definition.GetType().Name));
-                            definition.Title = pageTitle;
-                            definition.Description = pageDescription;
+                            definition.Title = methodTitle;
+                            definition.Description = methodDescription;
 
                             if (!StuffFoundInThisDoc.Contains(definition))
                             {
@@ -246,10 +252,39 @@
                                where s is MethodDefinition
                                select (MethodDefinition)s;
 
+            var foundResources = from s in StuffFoundInThisDoc
+                                 where s is ResourceDefinition
+                                 select (ResourceDefinition)s;
+
             var foundTables = from s in StuffFoundInThisDoc
                                    where s is TableDefinition
                                    select (TableDefinition)s;
 
+            PostProcessResources(foundResources, foundTables);
+            PostProcessMethods(foundMethods, foundTables);
+
+            postProcessingErrors = new ValidationError[0];
+        }
+
+        private static void PostProcessResources(IEnumerable<ResourceDefinition> foundResources, IEnumerable<TableDefinition> foundTables)
+        {
+            if (foundResources.Count() == 1)
+            {
+                var onlyResource = foundResources.Single();
+                foreach (var table in foundTables)
+                {
+                    switch (table.Type)
+                    {
+                        case TableBlockType.ResourcePropertyDescriptions:
+                            onlyResource.Parameters.AddRange(table.Rows.Cast<ParameterDefinition>());
+                            break;
+                    }
+                }
+            }
+        }
+
+        private static void PostProcessMethods(IEnumerable<MethodDefinition> foundMethods, IEnumerable<TableDefinition> foundTables)
+        {
             if (foundMethods.Count() == 1)
             {
                 var onlyMethod = foundMethods.Single();
@@ -257,72 +292,78 @@
                 {
                     switch (table.Type)
                     {
+                        case TableBlockType.Unknown:
+                            // Unknown table format, nothing we can do with it.
+                            break;
                         case TableBlockType.EnumerationValues:
                             // TODO: Support enumeration values
+                            System.Diagnostics.Debug.WriteLine("Enumeration that wasn't handled.");
                             break;
                         case TableBlockType.ErrorCodes:
-                            onlyMethod.Errors = table.Rows.Cast<ErrorDefinition>().ToArray();
+                            onlyMethod.Errors = table.Rows.Cast<ErrorDefinition>().ToList();
                             break;
 
                         case TableBlockType.HttpHeaders:
                         case TableBlockType.PathParameters:
                         case TableBlockType.QueryStringParameters:
-                            List<ParameterDefinition> parameters = new List<ParameterDefinition>(onlyMethod.Parameters);
-                            parameters.AddRange(table.Rows.Cast<ParameterDefinition>());
-                            onlyMethod.Parameters = parameters.ToArray();
-                            break;
 
+                            onlyMethod.Parameters.AddRange(table.Rows.Cast<ParameterDefinition>());
+                            break;
                         case TableBlockType.RequestObjectProperties:
+                            onlyMethod.RequestBodyParameters.AddRange(table.Rows.Cast<ParameterDefinition>());
+                            break;
                         case TableBlockType.ResourcePropertyDescriptions:
                         case TableBlockType.ResponseObjectProperties:
+                            System.Diagnostics.Debug.WriteLine("Object description that wasn't handled.");
+                            break;
+                        default:
+                            System.Diagnostics.Debug.WriteLine("Something else that wasn't handled: " + table.Type.ToString());
                             break;
                     }
                 }
             }
-
-            postProcessingErrors = new ValidationError[0];
         }
 
-        /// <summary>
-        /// Parse through the markdown blocks and intprerate the documents into
-        /// our internal object model.
-        /// </summary>
-        /// <returns><c>true</c>, if code blocks was parsed, <c>false</c> otherwise.</returns>
-        /// <param name="errors">Errors.</param>
-        protected bool ParseMarkdownBlocksOld(out ValidationError[] errors)
-        {
-            List<ValidationError> detectedErrors = new List<ValidationError>();
+        ///// <summary>
+        ///// Parse through the markdown blocks and intprerate the documents into
+        ///// our internal object model.
+        ///// </summary>
+        ///// <returns><c>true</c>, if code blocks was parsed, <c>false</c> otherwise.</returns>
+        ///// <param name="errors">Errors.</param>
+        //protected bool ParseMarkdownBlocksOld(out ValidationError[] errors)
+        //{
+        //    List<ValidationError> detectedErrors = new List<ValidationError>();
 
-            // Scan through the blocks to find something interesting
-            m_CodeBlocks = FindCodeBlocks(OriginalMarkdownBlocks);
+        //    // Scan through the blocks to find something interesting
+        //    m_CodeBlocks = FindCodeBlocks(OriginalMarkdownBlocks);
 
-            for (int i = 0; i < m_CodeBlocks.Count; )
-            {
-                // We're looking for pairs of html + code blocks. The HTML block contains metadata about the block.
-                // If we don't find an HTML block, then we skip the code block.
-                var htmlComment = m_CodeBlocks[i];
-                if (htmlComment.BlockType != MarkdownDeep.BlockType.html)
-                {
-                    detectedErrors.Add(new ValidationMessage(FullPath, "Block skipped - expected HTML comment, found: {0}", htmlComment.BlockType, htmlComment.Content));
-                    i++;
-                    continue;
-                }
+        //    for (int i = 0; i < m_CodeBlocks.Count; )
+        //    {
+        //        // We're looking for pairs of html + code blocks. The HTML block contains metadata about the block.
+        //        // If we don't find an HTML block, then we skip the code block.
+        //        var htmlComment = m_CodeBlocks[i];
+        //        if (htmlComment.BlockType != MarkdownDeep.BlockType.html)
+        //        {
+        //            detectedErrors.Add(new ValidationMessage(FullPath, "Block skipped - expected HTML comment, found: {0}", htmlComment.BlockType, htmlComment.Content));
+        //            i++;
+        //            continue;
+        //        }
 
-                try
-                {
-                    var codeBlock = m_CodeBlocks[i + 1];
-                    ParseCodeBlock(htmlComment, codeBlock);
-                }
-                catch (Exception ex)
-                {
-                    detectedErrors.Add(new ValidationError(ValidationErrorCode.MarkdownParserError, FullPath, "Exception while parsing code blocks: {0}.", ex.Message));
-                }
-                i += 2;
-            }
+        //        try
+        //        {
+        //            var codeBlock = m_CodeBlocks[i + 1];
+        //            ParseCodeBlock(htmlComment, codeBlock);
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            detectedErrors.Add(new ValidationError(ValidationErrorCode.MarkdownParserError, FullPath, "Exception while parsing code blocks: {0}.", ex.Message));
+        //        }
+        //        i += 2;
+        //    }
 
-            errors = detectedErrors.ToArray();
-            return detectedErrors.Count == 0;
-        }
+        //    errors = detectedErrors.ToArray();
+        //    return detectedErrors.Count == 0;
+        //}
 
         /// <summary>
         /// Filters the blocks to just a collection of blocks that may be

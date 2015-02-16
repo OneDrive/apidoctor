@@ -176,5 +176,21 @@
                     return false;
             }
         }
+
+
+        public static void SplitUrlComponents(this string inputUrl, out string path, out string queryString)
+        {
+            int index = inputUrl.IndexOf('?');
+            if (index == -1)
+            {
+                path = inputUrl;
+                queryString = null;
+            }
+            else
+            {
+                path = inputUrl.Substring(0, index);
+                queryString = inputUrl.Substring(index + 1);
+            }
+        }
     }
 }

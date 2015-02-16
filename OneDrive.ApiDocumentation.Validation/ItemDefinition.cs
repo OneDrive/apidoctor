@@ -11,5 +11,12 @@ namespace OneDrive.ApiDocumentation.Validation
         public string Title { get; set; }
         public string Description { get; set; }
 
+        public List<ParameterDefinition> Parameters { get; set; }
+
+        public ItemDefinition()
+        {
+            Parameters = new List<ParameterDefinition>();
+        }
+
     }
 }
