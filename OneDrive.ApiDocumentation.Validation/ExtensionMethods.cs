@@ -9,6 +9,14 @@
     public static class ExtensionMethods
     {
 
+        public static bool ContainsIgnoreCase(this string target, string value)
+        {
+            var target_lower = target.ToLowerInvariant();
+            var value_lower = value.ToLowerInvariant();
+            return target_lower.Contains(value_lower);
+        }
+
+
         public static string ComponentsJoinedByString(this IEnumerable<string> source, string separator, int startIndex = 0)
         {
             StringBuilder sb = new StringBuilder();

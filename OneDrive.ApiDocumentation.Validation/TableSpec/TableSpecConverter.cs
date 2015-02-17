@@ -167,12 +167,12 @@ namespace OneDrive.ApiDocumentation.Validation
             { "Authentication Scopes", TableBlockType.AuthScopes },
             { "Enumeration", TableBlockType.EnumerationValues }
         };
-
+            
         private static TableBlockType CommonHeaderMatch(string lastHeader)
         {
             foreach (var key in CommonHeaderContentMap.Keys)
             {
-                if (lastHeader.Contains(key))
+                if (lastHeader.ContainsIgnoreCase(key))
                     return CommonHeaderContentMap[key];
             }
 
