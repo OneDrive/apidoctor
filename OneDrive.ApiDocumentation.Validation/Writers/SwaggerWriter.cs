@@ -18,7 +18,11 @@ namespace OneDrive.ApiDocumentation.Validation.Writers
         public string ProductionHost { get; set; }
         public string BaseUrl { get; set; }
 
+        public string DefaultAuthScope { get; set; }
+
         public SwaggerAuth AuthenticationParameters { get; set; }
+
+
         
 
         public SwaggerWriter(DocSet docs, string baseUrl) : base(docs)
@@ -197,6 +201,7 @@ namespace OneDrive.ApiDocumentation.Validation.Writers
                 Get = 0,
                 Put,
                 Patch,
+                Post,
                 Delete,
                 Unknown = 999
             }
@@ -213,7 +218,6 @@ namespace OneDrive.ApiDocumentation.Validation.Writers
 
             // "/products" -> "get" -> { SwaggerMethod }
             var swaggerPathObject = new SortedDictionary<string, IDictionary<string, SwaggerMethod>>(new PathLengthSorter());
-            //var swaggerPathObject = new Dictionary<string, IDictionary<string, SwaggerMethod>>();
             foreach (var method in Documents.Methods)
             {
                 if (IsDocFileInternal(method.SourceFile))
@@ -240,8 +244,17 @@ namespace OneDrive.ApiDocumentation.Validation.Writers
                 if (!restPathNode.ContainsKey(httpMethod))
                 {
                     var swaggerMethod = method.ToSwaggerMethod();
-                    var defaultRoles = from r in Documents.AuthScopes where r.Required == true select r.Scope;
-                    swaggerMethod.AddRequiredSecurityRoles(AuthenticationParameters.ProviderName, defaultRoles);
+                    IEnumerable<string> requiredScopes;
+                    if (DefaultAuthScope != null)
+                    {
+                        requiredScopes = new string[] { DefaultAuthScope };
+                    }
+                    else
+                    {
+                        requiredScopes = from r in Documents.AuthScopes where r.Required == true select r.Scope;
+                    }
+
+                    swaggerMethod.AddRequiredSecurityRoles(AuthenticationParameters.ProviderName, requiredScopes);
                     restPathNode.Add(httpMethod, swaggerMethod);
                 }
                 else

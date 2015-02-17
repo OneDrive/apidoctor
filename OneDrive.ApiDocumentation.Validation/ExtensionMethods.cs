@@ -199,6 +199,9 @@
             if (bool.TryParse(input, out output))
                 return output;
 
+            if (string.IsNullOrEmpty(input))
+                return false;
+
             if (input.Equals("no", StringComparison.OrdinalIgnoreCase))
                 return false;
             if (input.Equals("yes", StringComparison.OrdinalIgnoreCase))

@@ -81,6 +81,11 @@ namespace OneDrive.ApiDocumentation.Validation
 
     internal class SwaggerResponse
     {
+        public SwaggerResponse()
+        {
+            Description = string.Empty;
+        }
+
         [JsonProperty("description", NullValueHandling=NullValueHandling.Ignore)]
         public string Description { get; set; }
         [JsonProperty("schema", NullValueHandling = NullValueHandling.Ignore)]
