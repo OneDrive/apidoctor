@@ -447,7 +447,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             }
             else
             {
-                if (response.CallDuration > TimeSpan.MinValue)
+                if (response.CallDuration > TimeSpan.Zero)
                 {
                     FancyConsole.Write(ConsoleSuccessColor, " no errors ");
                     FancyConsole.WriteLine(ConsoleSuccessColor, " ({0} ms)", response.CallDuration.TotalMilliseconds);
