@@ -263,6 +263,8 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         [Option("include-all", DefaultValue=true, HelpText="Include all content files, not just scanned text files.")]
         public bool PublishAllFiles { get; set; }
 
+        [Option("auth-scope", HelpText="Override the auth scope detection with a default auth scope on every method")]
+        public string AuthScopeDefault { get; set; }
 
         #region Output Controls
 
