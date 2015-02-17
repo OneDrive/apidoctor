@@ -107,6 +107,11 @@
             return errors.Any(x => x.IsWarning);
         }
 
+        public static bool WereWarningsOrErrors(this IEnumerable<ValidationError> errors)
+        {
+            return errors.Any(x => x.IsError || x.IsWarning);
+        }
+
 
         public static string ValueForColumn(this string[] rowValues, MarkdownDeep.IMarkdownTable table, params string[] possibleHeaderNames)
         {

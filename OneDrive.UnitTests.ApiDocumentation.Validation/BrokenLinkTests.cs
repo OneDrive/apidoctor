@@ -149,8 +149,10 @@ This link goes [up one level](../anotherfile.md)
 
         public Func<string, bool> IsLinkValid { get; set; }
 
-        protected override LinkValidationResult VerifyRelativeLink(System.IO.FileInfo sourceFile, string linkUrl, string docSetBasePath)
+
+        protected override DocFile.LinkValidationResult VerifyRelativeLink(System.IO.FileInfo sourceFile, string linkUrl, string docSetBasePath, out string relativeFileName)
         {
+            relativeFileName = null;
             if (null != IsLinkValid)
             {
                 return IsLinkValid(linkUrl) ? LinkValidationResult.Valid : LinkValidationResult.FileNotFound;

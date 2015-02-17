@@ -224,6 +224,10 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             }
         }
 
+        /// <summary>
+        /// Validate that all links in the documentation are unbroken.
+        /// </summary>
+        /// <param name="options"></param>
         private static void CheckLinks(DocSetOptions options)
         {
             var docset = GetDocSet(options);
@@ -233,7 +237,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             if (null != errors && errors.Length > 0)
             {
                 WriteOutErrors(errors);
-                if (errors.All(x => !x.IsWarning && !x.IsError))
+                if (!errors.WereWarningsOrErrors())
                 {
                     FancyConsole.WriteLine(ConsoleSuccessColor, "No link errors detected.");
                     Exit(failure: false);

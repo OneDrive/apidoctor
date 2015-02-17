@@ -62,7 +62,8 @@
         OutputValueValueIncorrect,
         HttpRequestParameterInvalid,
         HttpRequestMissingAllowedStatusCodes,
-        TypeConversionFailure
+        TypeConversionFailure,
+        OrphanedDocumentPage
 
     }
 

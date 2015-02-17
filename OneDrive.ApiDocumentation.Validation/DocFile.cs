@@ -69,6 +69,8 @@
         protected MarkdownDeep.Block[] OriginalMarkdownBlocks { get; set; }
 
         protected List<MarkdownDeep.LinkInfo> MarkdownLinks {get;set;}
+
+        public DocSet Parent { get; private set; }
         #endregion
 
         #region Constructor
@@ -78,11 +80,12 @@
 
         }
 
-        public DocFile(string basePath, string relativePath)
+        public DocFile(string basePath, string relativePath, DocSet parent)
         {
             m_BasePath = basePath;
             FullPath = Path.Combine(basePath, relativePath.Substring(1));
             DisplayName = relativePath;
+            Parent = parent;
         }
         #endregion
 
@@ -501,15 +504,24 @@
 
         #region Link Verification
 
+        public bool ValidateNoBrokenLinks(bool includeWarnings, out ValidationError[] errors)
+        {
+            string[] files;
+            return ValidateNoBrokenLinks(includeWarnings, out errors, out files);
+        }
+
         /// <summary>
         /// Checks all links detected in the source document to make sure they are valid.
         /// </summary>
         /// <param name="errors">Information about broken links</param>
         /// <returns>True if all links are valid. Otherwise false</returns>
-        public bool ValidateNoBrokenLinks(bool includeWarnings, out ValidationError[] errors)
+        public bool ValidateNoBrokenLinks(bool includeWarnings, out ValidationError[] errors, out string[] linkedDocFiles)
         {
             if (!m_hasScanRun)
                 throw new InvalidOperationException("Cannot validate links until Scan() is called.");
+
+            List<string> linkedPages = new List<string>();
+            string relativeFileName = null;
 
             var foundErrors = new List<ValidationError>();
             foreach (var link in MarkdownLinks)
@@ -520,7 +532,7 @@
                     continue;
                 }
 
-                var result = VerifyLink(FullPath, link.def.url, m_BasePath);
+                var result = VerifyLink(FullPath, link.def.url, m_BasePath, out relativeFileName);
                 switch (result)
                 {
                     case LinkValidationResult.BookmarkSkipped:
@@ -539,15 +551,20 @@
                         break;
                     case LinkValidationResult.Valid:
                         foundErrors.Add(new ValidationMessage(this.DisplayName, "Link to URL '{0}' is valid.", link.def.url, link.link_text));
+                        if (null != relativeFileName)
+                        {
+                            linkedPages.Add(relativeFileName);
+                        }
                         break;
                     default:
                         foundErrors.Add(new ValidationError(ValidationErrorCode.Unknown, this.DisplayName, "{2}: for link '{1}' to URL '{0}'", link.def.url, link.link_text, result));
                         break;
 
                 }
+                
             }
-
             errors = foundErrors.ToArray();
+            linkedDocFiles = linkedPages.Distinct().ToArray();
             return !(errors.WereErrors() || errors.WereWarnings());
         }
 
@@ -561,8 +578,9 @@
             ParentAboveDocSetPath
         }
 
-        protected LinkValidationResult VerifyLink(string docFilePath, string linkUrl, string docSetBasePath)
+        protected LinkValidationResult VerifyLink(string docFilePath, string linkUrl, string docSetBasePath, out string relativeFileName)
         {
+            relativeFileName = null;
             Uri parsedUri;
             var validUrl = Uri.TryCreate(linkUrl, UriKind.RelativeOrAbsolute, out parsedUri);
 
@@ -582,7 +600,7 @@
                 }
                 else
                 {
-                    return VerifyRelativeLink(sourceFile, linkUrl, docSetBasePath);
+                    return VerifyRelativeLink(sourceFile, linkUrl, docSetBasePath, out relativeFileName);
                 }
             }
             else
@@ -591,9 +609,11 @@
             }
         }
 
-        protected virtual LinkValidationResult VerifyRelativeLink(FileInfo sourceFile, string linkUrl, string docSetBasePath)
+        protected virtual LinkValidationResult VerifyRelativeLink(FileInfo sourceFile, string linkUrl, string docSetBasePath, out string relativeFileName)
         {
+            relativeFileName = null;
             var rootPath = sourceFile.DirectoryName;
+
             if (linkUrl.Contains("#"))
             {
                 linkUrl = linkUrl.Substring(0, linkUrl.IndexOf("#"));
@@ -611,11 +631,13 @@
             }
 
             var pathToFile = Path.Combine(rootPath, linkUrl);
-            if (!File.Exists(pathToFile))
+            FileInfo info = new FileInfo(pathToFile);
+            if (!info.Exists)
             {
                 return LinkValidationResult.FileNotFound;
             }
 
+            relativeFileName = Parent.RelativePathToFile(info.FullName, true);
             return LinkValidationResult.Valid;
         }
 
