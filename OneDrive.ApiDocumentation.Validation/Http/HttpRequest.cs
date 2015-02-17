@@ -69,7 +69,9 @@
             HttpWebRequest request = HttpWebRequest.CreateHttp(effectiveUrl);
             request.AllowAutoRedirect = false;
             request.Method = Method;
-            
+            request.KeepAlive = true;
+            request.ServicePoint.Expect100Continue = false;
+
             foreach (var key in Headers.AllKeys)
             {
                 switch (key.ToLower())
