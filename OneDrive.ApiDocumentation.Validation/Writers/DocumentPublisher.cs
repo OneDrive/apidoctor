@@ -60,7 +60,7 @@
                 RootPath = string.Concat(RootPath, Path.DirectorySeparatorChar);
 
             SourceFileExtensions = ".md,.mdown";
-            SkipPaths = "\\internal;\\.git;\\legacy;\\generate_html_docs;\\.gitignore";
+            SkipPaths = "\\internal;\\.git;\\legacy;\\generate_html_docs;\\.gitignore;\\.gitattributes";
             Messages = new BindingList<ValidationError>();
 		}
 
