@@ -13,19 +13,17 @@
     {
         public string HttpVersion { get; set; }
         public int StatusCode { get; set; }
-
         public string StatusMessage { get; set; }
-
         public System.Net.WebHeaderCollection Headers { get; set; }
-
         public string Body { get; set; }
-
+        public TimeSpan CallDuration { get; set; }
         public bool WasSuccessful { get { return StatusCode >= 200 && StatusCode < 300; } }
-
         public string ContentType { get { return Headers["content-type"]; } }
 
         public static async Task<HttpResponse> ResponseFromHttpWebResponseAsync(HttpWebRequest request)
         {
+            long requestStartTicks = DateTime.UtcNow.Ticks;
+
             HttpWebResponse webResponse;
             try
             {
@@ -50,18 +48,27 @@
                 };
             }
 
-            return await ConvertToResponse(webResponse);
+            long requestFinalTicks = DateTime.UtcNow.Ticks;
+            TimeSpan callDuration = new TimeSpan(requestFinalTicks - requestStartTicks);
+
+            return await ConvertToResponse(webResponse, callDuration);
         }
 
-        private static async Task<HttpResponse> ConvertToResponse(HttpWebResponse webresp)
+        private static async Task<HttpResponse> ConvertToResponse(HttpWebResponse webresp, TimeSpan? duration = null )
         {
             HttpResponse resp;
-            resp = new HttpResponse();
-            resp.HttpVersion = string.Format("HTTP/{0}.{1}", webresp.ProtocolVersion.Major, webresp.ProtocolVersion.Minor);
-            resp.StatusCode = (int)webresp.StatusCode;
-            resp.StatusMessage = webresp.StatusDescription;
+            resp = new HttpResponse()
+            {
+                    HttpVersion = string.Format("HTTP/{0}.{1}", webresp.ProtocolVersion.Major, webresp.ProtocolVersion.Minor),
+                    StatusCode = (int)webresp.StatusCode,
+                    StatusMessage = webresp.StatusDescription,
+                    Headers = webresp.Headers
+            };
 
-            resp.Headers = webresp.Headers;
+            if (duration.HasValue)
+            {
+                resp.CallDuration = duration.Value;
+            }
 
             using (StreamReader reader = new StreamReader(webresp.GetResponseStream()))
             {

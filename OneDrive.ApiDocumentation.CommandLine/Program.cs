@@ -443,7 +443,15 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             }
             else
             {
-                FancyConsole.WriteLine(ConsoleSuccessColor, " no errors.");
+                if (response.CallDuration > TimeSpan.MinValue)
+                {
+                    FancyConsole.Write(ConsoleSuccessColor, " no errors ");
+                    FancyConsole.WriteLine(ConsoleSuccessColor, " ({0} ms)", response.CallDuration.TotalMilliseconds);
+                }
+                else
+                {
+                    FancyConsole.WriteLine(ConsoleSuccessColor, " no errors.");
+                }
             }
             return errors;
         }
