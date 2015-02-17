@@ -35,6 +35,23 @@
         
         public Scenarios TestScenarios {get; set;}
 
+        public IEnumerable<AuthScopeDefinition> AuthScopes
+        {
+            get
+            {
+                return ListFromFiles<AuthScopeDefinition>(x => x.AuthScopes);
+            }
+        }
+
+        public IEnumerable<ErrorDefinition> ErrorCodes
+        {
+            get
+            {
+                return ListFromFiles<ErrorDefinition>(x => x.ErrorCodes);
+            }
+        }
+
+
         #endregion
 
         #region Constructors
@@ -154,24 +171,36 @@
         }
 
         /// <summary>
-        /// Scan through the document set looking for any broken links
+        /// Scan through the document set looking for any broken links.
         /// </summary>
         /// <param name="errors"></param>
         /// <returns></returns>
         public bool ValidateLinks(bool includeWarnings, out ValidationError[] errors)
         {
             List<ValidationError> foundErrors = new List<ValidationError>();
+
+            Dictionary<string, bool> orphanedPageIndex = Files.ToDictionary(x => RelativePathToFile(x, true), x => true);
+
             foreach (var file in Files)
             {
                 ValidationError[] localErrors;
-                if (!file.ValidateNoBrokenLinks(includeWarnings, out localErrors))
+                string [] linkedPages;
+                if (!file.ValidateNoBrokenLinks(includeWarnings, out localErrors, out linkedPages))
                 {
                     foundErrors.AddRange(localErrors);
                 }
+                foreach (string pageName in linkedPages)
+                {
+                    orphanedPageIndex[pageName] = false;
+                }
             }
 
+            foundErrors.AddRange(from o in orphanedPageIndex
+                                 where o.Value == true
+                                 select new ValidationWarning(ValidationErrorCode.OrphanedDocumentPage, null, "Page {0} has no incoming links.", o.Key));
+
             errors = foundErrors.ToArray();
-            return errors.Length == 0;
+            return !errors.WereWarningsOrErrors();
         }
 
 
@@ -189,23 +218,45 @@
             var fileInfos = sourceFolder.GetFiles(DocumentationFileExtension, SearchOption.AllDirectories);
 
             var relativeFilePaths = from fi in fileInfos
-                                    select new DocFile(SourceFolderPath, RelativePathToFile(fi.FullName));
+                                    select new DocFile(SourceFolderPath, RelativePathToFile(fi.FullName), this);
             Files = relativeFilePaths.ToArray();
         }
 
+        internal string RelativePathToFile(DocFile file, bool urlStyle)
+        {
+            return RelativePathToFile(file.FullPath, urlStyle);
+        }
+
         /// <summary>
-        /// Generate a relative URL from the base path of the documentation
+        /// Generate a relative file path from the base path of the documentation
         /// </summary>
         /// <param name="fileFullName"></param>
         /// <returns></returns>
-        private string RelativePathToFile(string fileFullName)
+        internal string RelativePathToFile(string fileFullName, bool urlStyle = false)
         {
             System.Diagnostics.Debug.Assert(fileFullName.StartsWith(SourceFolderPath), "fileFullName doesn't start with the source folder path");
-
-            var relativePath = fileFullName.Substring(SourceFolderPath.Length);
-            return relativePath;
+            var path = fileFullName.Substring(SourceFolderPath.Length);
+            if (urlStyle)
+            {
+                // Should look like this "items/foobar.md" instead of @"\items\foobar.md"
+                string[] components = path.Split(Path.DirectorySeparatorChar);
+                path = components.ComponentsJoinedByString("/");
+            }
+            return path;
+        }
+        private IEnumerable<T> ListFromFiles<T>(Func<DocFile, IEnumerable<T>> perFileSource)
+        {
+            List<T> collected = new List<T>();
+            foreach (var file in Files)
+            {
+                var data = perFileSource(file);
+                if (null != data)
+                    collected.AddRange(data);
+            }
+            return collected;
         }
 
+        
         
 
 

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace OneDrive.ApiDocumentation.Validation
 {
+    [Serializable]
     public class SchemaBuildException : Exception
     {
         public SchemaBuildException(string message, Exception innerException)

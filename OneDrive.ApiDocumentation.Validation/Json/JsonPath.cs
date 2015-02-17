@@ -228,6 +228,7 @@ namespace OneDrive.ApiDocumentation.Validation.Json
 
     }
 
+    [Serializable]
     public class JsonPathException : Exception
     {
         public JsonPathException(string message)

@@ -329,7 +329,6 @@
             this.dynamicPlaceholderEditor.Name = "dynamicPlaceholderEditor";
             this.dynamicPlaceholderEditor.Size = new System.Drawing.Size(568, 184);
             this.dynamicPlaceholderEditor.TabIndex = 20;
-            this.dynamicPlaceholderEditor.PlaceholderChanged += new System.EventHandler(this.dynamicPlaceholderEditor_PlaceholderChanged);
             // 
             // ScenarioEditorControl
             // 

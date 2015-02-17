@@ -83,7 +83,7 @@ namespace OneDrive.ApiDocumentation.Windows.TabPages
             ScenarioDefinition requestParams = null;
             if (checkBoxUseParameters.Checked)
             {
-                requestParams = CurrentDocSet.TestScenarios.FirstScenarioForMethod(originalMethod);
+                requestParams = CurrentDocSet.TestScenarios.ScenariosForMethod(originalMethod).FirstOrDefault();
             }
 
             await MainForm.MostRecentInstance.SignInAsync();
@@ -278,7 +278,7 @@ namespace OneDrive.ApiDocumentation.Windows.TabPages
             ScenarioDefinition requestParams = null;
             if (applyParameters)
             {
-                requestParams = CurrentDocSet.TestScenarios.FirstScenarioForMethod(method);
+                requestParams = CurrentDocSet.TestScenarios.ScenariosForMethod(method).FirstOrDefault();
             }
 
             var baseUrl = Properties.Settings.Default.ApiBaseRoot;

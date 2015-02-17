@@ -40,6 +40,11 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 Exit(failure: true);
             }
 
+            if (verbOptions.AttachDebugger)
+            {
+                System.Diagnostics.Debugger.Launch();
+            }
+
             var commandOptions = verbOptions as DocSetOptions;
             if (null != commandOptions)
             {
@@ -47,11 +52,6 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             }
 
             FancyConsole.LogFileName = verbOptions.LogFile;
-
-#if DEBUG
-//            System.Diagnostics.Debugger.Launch();
-#endif
-
 
             Nito.AsyncEx.AsyncContext.Run(() => RunInvokedMethodAsync(options, verbName, verbOptions));
         }
@@ -81,13 +81,13 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                     PrintDocInformation((PrintOptions)options);
                     break;
                 case CommandLineOptions.VerbCheckLinks:
-                    VerifyLinks((DocSetOptions)options);
+                    CheckLinks((DocSetOptions)options);
                     break;
                 case CommandLineOptions.VerbDocs:
-                    CheckMethodExamples((ConsistencyCheckOptions)options);
+                    CheckDocs((ConsistencyCheckOptions)options);
                     break;
                 case CommandLineOptions.VerbService:
-                    await CheckMethodsAgainstService((ServiceConsistencyOptions)options);
+                    await CheckService((ServiceConsistencyOptions)options);
                     break;
                 case CommandLineOptions.VerbSet:
                     SetDefaultValues((SetCommandOptions)options);
@@ -224,7 +224,11 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             }
         }
 
-        private static void VerifyLinks(DocSetOptions options)
+        /// <summary>
+        /// Validate that all links in the documentation are unbroken.
+        /// </summary>
+        /// <param name="options"></param>
+        private static void CheckLinks(DocSetOptions options)
         {
             var docset = GetDocSet(options);
             ValidationError[] errors;
@@ -233,7 +237,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             if (null != errors && errors.Length > 0)
             {
                 WriteOutErrors(errors);
-                if (errors.All(x => !x.IsWarning && !x.IsError))
+                if (!errors.WereWarningsOrErrors())
                 {
                     FancyConsole.WriteLine(ConsoleSuccessColor, "No link errors detected.");
                     Exit(failure: false);
@@ -327,7 +331,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             return query.FirstOrDefault();
         }
 
-        private static void CheckMethodExamples(ConsistencyCheckOptions options)
+        private static void CheckDocs(ConsistencyCheckOptions options)
         {
             var docset = GetDocSet(options);
             FancyConsole.WriteLine();
@@ -443,7 +447,15 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             }
             else
             {
-                FancyConsole.WriteLine(ConsoleSuccessColor, " no errors");
+                if (response.CallDuration > TimeSpan.Zero)
+                {
+                    FancyConsole.Write(ConsoleSuccessColor, " no errors ");
+                    FancyConsole.WriteLine(ConsoleSuccessColor, " ({0} ms)", response.CallDuration.TotalMilliseconds);
+                }
+                else
+                {
+                    FancyConsole.WriteLine(ConsoleSuccessColor, " no errors.");
+                }
             }
             return errors;
         }
@@ -453,7 +465,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         /// </summary>
         /// <param name="options"></param>
         /// <returns></returns>
-        private static async Task CheckMethodsAgainstService(ServiceConsistencyOptions options)
+        private static async Task CheckService(ServiceConsistencyOptions options)
         {
             var docset = GetDocSet(options);
             FancyConsole.WriteLine();
@@ -463,24 +475,15 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             bool result = true;
             foreach (var method in methods)
             {
-                ValidationError[] errors = null;
-
                 FancyConsole.Write(ConsoleHeaderColor, "Calling method \"{0}\"...", method.Identifier);
-                if (method.RequestMetadata.Disabled)
-                {
-                    errors = new ValidationError[] { new ValidationWarning(ValidationErrorCode.MethodDisabled, null, "Method was disabled: {0}", method.Identifier) };
-                    FancyConsole.WriteLine();
-                    WriteOutErrors(errors, "  ");
-                    warningCount++;
-                    continue;
-                }
-                
+
                 AuthenicationCredentials credentials = AuthenicationCredentials.CreateAutoCredentials(options.AccessToken);
-                var setsOfParameters = docset.TestScenarios.ScenariosForMethod(method);
-                if (setsOfParameters.Length == 0)
+                var testScenarios = docset.TestScenarios.ScenariosForMethod(method);
+                if (testScenarios.Length == 0)
                 {
                     // If there are no parameters defined, we still try to call the request as-is.
-                    errors = await TestMethodWithParameters(docset, method, null, options.ServiceRootUrl, credentials);
+                    FancyConsole.WriteLine(ConsoleCodeColor, "\r\n  Method {0} has no scenario defined. Running as-is from docs.", method.RequestMetadata.MethodName);
+                    var errors = await TestMethodWithParameters(docset, method, null, options.ServiceRootUrl, credentials);
                     if (errors.WereErrors())
                     {
                         errorCount++;
@@ -498,22 +501,30 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 else
                 {
                     // Otherwise, if there are parameter sets, we call each of them and check the result.
-                    foreach (var requestSettings in setsOfParameters.Where(s => s.Enabled))
+                    var enabledScenarios = testScenarios.Where(s => s.Enabled);
+                    if (enabledScenarios.FirstOrDefault() == null)
                     {
-                        errors = await TestMethodWithParameters(docset, method, requestSettings, options.ServiceRootUrl, credentials);
-                        if (errors.WereErrors())
+                        FancyConsole.WriteLine(ConsoleWarningColor, " skipped.");
+                    }
+                    else
+                    {
+                        foreach (var requestSettings in testScenarios.Where(s => s.Enabled))
                         {
-                            errorCount++;
+                            var errors = await TestMethodWithParameters(docset, method, requestSettings, options.ServiceRootUrl, credentials);
+                            if (errors.WereErrors())
+                            {
+                                errorCount++;
+                            }
+                            else if (errors.WereWarnings())
+                            {
+                                warningCount++;
+                            }
+                            else
+                            {
+                                successCount++;
+                            }
+                            AddPause(options);
                         }
-                        else if (errors.WereWarnings())
-                        {
-                            warningCount++;
-                        }
-                        else
-                        {
-                            successCount++;
-                        }
-                        AddPause(options);
                     }
                 }
 
@@ -634,19 +645,26 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             DocumentPublisher publisher = null;
             switch (options.Format)
             {
-                case PublishOptions.SanitizedFormat.Markdown:
+                case PublishOptions.PublishFormat.Markdown:
                     publisher = new DocumentPublisher(docs);
                     break;
-                case PublishOptions.SanitizedFormat.Html:
+                case PublishOptions.PublishFormat.Html:
                     publisher = new DocumentPublisherHtml(docs);
                     break;
-                case PublishOptions.SanitizedFormat.Swagger2:
-                    publisher = new OneDrive.ApiDocumentation.Validation.Writers.SwaggerWriter(docs);
+                case PublishOptions.PublishFormat.Swagger2:
+                    publisher = new OneDrive.ApiDocumentation.Validation.Writers.SwaggerWriter(docs, SavedSettings.Default.ServiceUrl)
+                    {
+                        Title = options.Title,
+                        Description = options.Description,
+                        Version = options.Version
+                    };
+                    
                     break;
                 default:
                     throw new NotSupportedException("Unsupported format: " + options.Format.ToString());
             }
 
+            FancyConsole.WriteLineIndented("  ", "Format: {0}", publisher.GetType().Name);
             publisher.VerboseLogging = options.Verbose;
             publisher.SourceFileExtensions = options.TextFileExtensions;
             FancyConsole.WriteLineIndented("  ", "File extensions: {0}", publisher.SourceFileExtensions);
@@ -663,14 +681,17 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             await publisher.PublishToFolderAsync(outputPath);
 
             FancyConsole.WriteLine(ConsoleSuccessColor, "Finished publishing documentation to: {0}", outputPath);
+
+            Exit(failure: false);
         }
 
-        static void publisher_NewMessage(object sender, ValidationError e)
+        static void publisher_NewMessage(object sender, ValidationMessageEventArgs e)
         {
-            if (!FancyConsole.WriteVerboseOutput && !e.IsError && !e.IsWarning)
+            var msg = e.Message;
+            if (!FancyConsole.WriteVerboseOutput && !msg.IsError && !msg.IsWarning)
                 return;
 
-            WriteValidationError("", e);
+            WriteValidationError("", msg);
         }
 
         private static async Task CheckServiceMetadata(CheckMetadataOptions options)

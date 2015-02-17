@@ -14,6 +14,7 @@ namespace OneDrive.ApiDocumentation.Validation.OData
 
 
         public static string ElementName { get { return "Property"; } }
+
         public static Property FromXml(XElement xml)
         {
             if (xml.Name.LocalName != Property.ElementName) throw new ArgumentException("xml wasn't a Property element");

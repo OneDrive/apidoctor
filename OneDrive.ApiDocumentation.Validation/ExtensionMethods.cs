@@ -9,6 +9,14 @@
     public static class ExtensionMethods
     {
 
+        public static bool ContainsIgnoreCase(this string target, string value)
+        {
+            var target_lower = target.ToLowerInvariant();
+            var value_lower = value.ToLowerInvariant();
+            return target_lower.Contains(value_lower);
+        }
+
+
         public static string ComponentsJoinedByString(this IEnumerable<string> source, string separator, int startIndex = 0)
         {
             StringBuilder sb = new StringBuilder();
@@ -89,14 +97,130 @@
             return reader.ReadLine();
         }
 
-        public static bool WereErrors(this ValidationError[] errors)
+        public static bool WereErrors(this IEnumerable<ValidationError> errors)
         {
             return errors.Any(x => x.IsError);
         }
 
-        public static bool WereWarnings(this ValidationError[] errors)
+        public static bool WereWarnings(this IEnumerable<ValidationError> errors)
         {
             return errors.Any(x => x.IsWarning);
+        }
+
+        public static bool WereWarningsOrErrors(this IEnumerable<ValidationError> errors)
+        {
+            return errors.Any(x => x.IsError || x.IsWarning);
+        }
+
+
+        public static string ValueForColumn(this string[] rowValues, MarkdownDeep.IMarkdownTable table, params string[] possibleHeaderNames)
+        {
+            var headers = table.ColumnHeaders;
+
+            foreach (var headerName in possibleHeaderNames)
+            {
+                int index = headers.IndexOf(headerName);
+                if (index >= 0 && index < rowValues.Length)
+                {
+                    // Check to see if we need to clean up / remove any ` marks
+                    string tableCellContents = rowValues[index];
+                    if (null != tableCellContents)
+                        return tableCellContents.Trim(new char[] { ' ', '`' });
+                    else
+                        return null;
+                }
+            }
+
+            System.Diagnostics.Debug.WriteLine("Failed to find header matching '{0}' in table with headers: {1}", 
+                possibleHeaderNames.ComponentsJoinedByString(","),
+                table.ColumnHeaders.ComponentsJoinedByString(","));
+            return null;
+        }
+
+        public static int IndexOf(this string[] array, string value, StringComparison comparison = StringComparison.OrdinalIgnoreCase)
+        {
+            for (int i = 0; i < array.Length; i++)
+            {
+                if (value.Equals(array[i], comparison))
+                    return i;
+            }
+            return -1;
+        }
+
+        public static Json.JsonDataType ToDataType(this string value, Action<ValidationError> addErrorAction = null)
+        {
+            Json.JsonDataType output;
+            if (Enum.TryParse<Json.JsonDataType>(value, true, out output))
+                return output;
+
+            if (value.ToLower().Contains("string"))
+                return Json.JsonDataType.String;
+            if (value.Equals("etag", StringComparison.OrdinalIgnoreCase))
+                return Json.JsonDataType.String;
+            if (value.Equals("range", StringComparison.OrdinalIgnoreCase))
+                return Json.JsonDataType.String;
+            if (value.ToLower().Contains("timestamp"))
+                return Json.JsonDataType.String;
+
+            if (null != addErrorAction)
+            {
+                addErrorAction(new ValidationWarning(ValidationErrorCode.TypeConversionFailure, "Couldn't convert '{0}' into Json.JsonDataType enumeration. Assuming Object type.", value));
+            }
+            return Json.JsonDataType.Object;
+        }
+
+        public static bool IsRequired(this string description)
+        {
+            return description.StartsWith("required.", StringComparison.OrdinalIgnoreCase);
+        }
+
+        public static bool IsHeaderBlock(this MarkdownDeep.Block block)
+        {
+            switch (block.BlockType)
+            {
+                case MarkdownDeep.BlockType.h1:
+                case MarkdownDeep.BlockType.h2:
+                case MarkdownDeep.BlockType.h3:
+                case MarkdownDeep.BlockType.h4:
+                case MarkdownDeep.BlockType.h5:
+                case MarkdownDeep.BlockType.h6:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+
+        public static void SplitUrlComponents(this string inputUrl, out string path, out string queryString)
+        {
+            int index = inputUrl.IndexOf('?');
+            if (index == -1)
+            {
+                path = inputUrl;
+                queryString = null;
+            }
+            else
+            {
+                path = inputUrl.Substring(0, index);
+                queryString = inputUrl.Substring(index + 1);
+            }
+        }
+
+        public static bool ToBoolean(this string input)
+        {
+            bool output;
+            if (bool.TryParse(input, out output))
+                return output;
+
+            if (string.IsNullOrEmpty(input))
+                return false;
+
+            if (input.Equals("no", StringComparison.OrdinalIgnoreCase))
+                return false;
+            if (input.Equals("yes", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            throw new NotSupportedException(string.Format("Couldn't convert this value to a boolean: {0}", input));
         }
     }
 }

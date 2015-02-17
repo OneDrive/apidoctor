@@ -20,9 +20,6 @@ namespace OneDrive.ApiDocumentation.Windows
         public ScenarioDefinition Scenario { get; private set; }
         public DocSet DocumentSet {get; set;}
 
-        private BindingList<PlaceholderValue> m_StaticPlaceholders;
-        private BindingList<PlaceholderValue> m_DynamicPlaceholders;
-
         public ScenarioEditorControl()
         {
             InitializeComponent();
@@ -60,8 +57,6 @@ namespace OneDrive.ApiDocumentation.Windows
 
         private void UpdateTabPageNames()
         {
-            tabPageStaticValues.Text = string.Format("Static Values ({0})", m_StaticPlaceholders.Count);
-            tabPageRequestValues.Text = string.Format("Requested Values ({0})", m_DynamicPlaceholders.Count);
         }
 
         private void LoadControlsWithData()
@@ -102,19 +97,19 @@ namespace OneDrive.ApiDocumentation.Windows
             //}
             //checkBoxEnableDynamicRequest_CheckedChanged(checkBoxEnableDynamicRequest, EventArgs.Empty);
 
-            listBoxDynamicPlaceholders.DisplayMember = "PlaceholderText";
-            listBoxDynamicPlaceholders.DataSource = m_DynamicPlaceholders;
+            //listBoxDynamicPlaceholders.DisplayMember = "PlaceholderText";
+            //listBoxDynamicPlaceholders.DataSource = m_DynamicPlaceholders;
 
-            if (m_DynamicPlaceholders.Count > 0)
-            {
-                listBoxDynamicPlaceholders.SelectedIndex = 0;
-                tabControlPlaceholders.SelectedIndex = 1;
-            }
-            else
-            {
-                tabControlPlaceholders.SelectedIndex = 0;
-                dynamicPlaceholderEditor.LoadPlaceholder(new PlaceholderValue(), false);
-            }
+            //if (m_DynamicPlaceholders.Count > 0)
+            //{
+            //    listBoxDynamicPlaceholders.SelectedIndex = 0;
+            //    tabControlPlaceholders.SelectedIndex = 1;
+            //}
+            //else
+            //{
+            //    tabControlPlaceholders.SelectedIndex = 0;
+            //    dynamicPlaceholderEditor.LoadPlaceholder(new PlaceholderValue(), false);
+            //}
 
             UpdateTabPageNames();
 
@@ -172,22 +167,22 @@ namespace OneDrive.ApiDocumentation.Windows
 
         private void buttonNewParameter_Click(object sender, EventArgs e)
         {
-            var newItem = new PlaceholderValue();
-            newItem.PlaceholderKey = "new-placeholder";
-            m_StaticPlaceholders.Add(newItem);
+            //var newItem = new PlaceholderValue();
+            //newItem.PlaceholderKey = "new-placeholder";
+            //m_StaticPlaceholders.Add(newItem);
 
-            listBoxStaticPlaceholders.SelectedItem = newItem;
-            UpdateTabPageNames();
+            //listBoxStaticPlaceholders.SelectedItem = newItem;
+            //UpdateTabPageNames();
         }
 
         private void buttonDeleteParameter_Click(object sender, EventArgs e)
         {
-            var selectedValue = SelectedStaticPlaceholder;
-            if (selectedValue != null)
-            {
-                m_StaticPlaceholders.Remove(selectedValue);
-            }
-            UpdateTabPageNames();
+            //var selectedValue = SelectedStaticPlaceholder;
+            //if (selectedValue != null)
+            //{
+            //    m_StaticPlaceholders.Remove(selectedValue);
+            //}
+            //UpdateTabPageNames();
         }
 
         private void buttonPreviewMethod_Click(object sender, EventArgs e)
@@ -256,22 +251,22 @@ namespace OneDrive.ApiDocumentation.Windows
 
         private void buttonNewDynmaicPlaceholder_Click(object sender, EventArgs e)
         {
-            var newItem = new PlaceholderValue();
-            newItem.PlaceholderKey = "new-placeholder";
-            m_DynamicPlaceholders.Add(newItem);
+            //var newItem = new PlaceholderValue();
+            //newItem.PlaceholderKey = "new-placeholder";
+            //m_DynamicPlaceholders.Add(newItem);
 
-            listBoxDynamicPlaceholders.SelectedItem = newItem;
-            UpdateTabPageNames();
+            //listBoxDynamicPlaceholders.SelectedItem = newItem;
+            //UpdateTabPageNames();
         }
 
         private void buttonDeleteDynamicPlaceholder_Click(object sender, EventArgs e)
         {
-            var selectedValue = SelectedDynamicPlaceholder;
-            if (selectedValue != null)
-            {
-                m_DynamicPlaceholders.Remove(selectedValue);
-            }
-            UpdateTabPageNames();
+            //var selectedValue = SelectedDynamicPlaceholder;
+            //if (selectedValue != null)
+            //{
+            //    m_DynamicPlaceholders.Remove(selectedValue);
+            //}
+            //UpdateTabPageNames();
         }
 
         private void checkBoxEnableDynamicRequest_CheckedChanged(object sender, EventArgs e)

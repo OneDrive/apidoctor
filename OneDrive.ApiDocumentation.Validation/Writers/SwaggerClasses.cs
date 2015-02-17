@@ -1,6 +1,7 @@
 ﻿using System;
 using Newtonsoft.Json;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace OneDrive.ApiDocumentation.Validation
 {
@@ -11,7 +12,7 @@ namespace OneDrive.ApiDocumentation.Validation
 
     internal class SwaggerMethod 
     {
-        [JsonProperty("summary")]
+        [JsonProperty("summary", NullValueHandling=NullValueHandling.Ignore)]
         public string Summary { get; set; }
 
         [JsonProperty("description", NullValueHandling=NullValueHandling.Ignore)]
@@ -39,7 +40,15 @@ namespace OneDrive.ApiDocumentation.Validation
             Responses = new Dictionary<string, SwaggerResponse>();
 
             Security = new List<Dictionary<string, string[]>>();
-            Security.Add(new Dictionary<string, string[]> { { "microsoftAccount", new string[] { "onedrive.readonly", "onedrive.readwrite" } } });
+        }
+
+        public void AddRequiredSecurityRoles(string provider, IEnumerable<string> roles)
+        {
+            Security.Add(new Dictionary<string, string[]> 
+            { 
+                { provider, roles.ToArray() }
+            });
+
         }
 
     }
@@ -58,11 +67,26 @@ namespace OneDrive.ApiDocumentation.Validation
         public string Type { get; set; }
         [JsonProperty("format", NullValueHandling=NullValueHandling.Ignore)]
         public string Format { get; set; }
+
+
+
+        //[JsonProperty("default", NullValueHandling = NullValueHandling.Ignore)]
+        //public object DefaultValue { get; set; }
+        //[JsonProperty("minimum", NullValueHandling = NullValueHandling.Ignore)]
+        //public object Minimum { get; set; }
+        //[JsonProperty("maximum", NullValueHandling = NullValueHandling.Ignore)]
+        //public object Maximum { get; set; }
+
     }
 
     internal class SwaggerResponse
     {
-        [JsonProperty("description")]
+        public SwaggerResponse()
+        {
+            Description = string.Empty;
+        }
+
+        [JsonProperty("description", NullValueHandling=NullValueHandling.Ignore)]
         public string Description { get; set; }
         [JsonProperty("schema", NullValueHandling = NullValueHandling.Ignore)]
         public object Schema { get; set; }

@@ -16,7 +16,7 @@ namespace OneDrive.ApiDocumentation.Validation.OData
             if (Boolean.TryParse(source, out value))
                 return value;
 
-            throw new ArgumentException(string.Format("Failed to convert {0} into a boolean"), source);
+            throw new ArgumentException(string.Format("Failed to convert {0} into a boolean", source));
         }
 
         internal static string AttributeValue(this System.Xml.Linq.XElement xml, System.Xml.Linq.XName attributeName)

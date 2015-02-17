@@ -22,9 +22,7 @@ namespace OneDrive.ApiDocumentation.Windows
 
         public bool IsRequestValuePlaceholder { get; private set; }
 
-        public event EventHandler PlaceholderChanged;
-
-        private bool m_loading;
+        //private bool m_loading;
 
         public ScenarioPlaceholderEditor()
         {
@@ -39,7 +37,7 @@ namespace OneDrive.ApiDocumentation.Windows
 
         public void LoadPlaceholder(PlaceholderValue value, bool isRequestValue)
         {
-            m_loading = true;
+            //m_loading = true;
             Placeholder = value;
             IsRequestValuePlaceholder = isRequestValue;
 
@@ -62,7 +60,7 @@ namespace OneDrive.ApiDocumentation.Windows
             //    comboBoxPathTarget.Text = "Static Value";
             //}
 
-            m_loading = false;
+            //m_loading = false;
         }
 
         private void ScenarioField_TextChanged(object sender, EventArgs e)

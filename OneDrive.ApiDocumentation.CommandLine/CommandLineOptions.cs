@@ -57,6 +57,12 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         [Option("log", HelpText="Write the console output to file.")]
         public string LogFile { get; set; }
 
+#if DEBUG
+        [Option("debug", HelpText="Launch the debugger before doing anything interesting")]
+#endif
+        public bool AttachDebugger { get; set; }
+
+
         public virtual bool HasRequiredProperties(out string[] missingArguments)
         {
             missingArguments = new string[0];
@@ -245,8 +251,8 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         [Option("output", Required=true, HelpText="Output directory for sanitized documentation.")]
         public string OutputDirectory { get; set; }
 
-        [Option("format", DefaultValue=SanitizedFormat.Markdown, HelpText="Format of the output documentation.")]
-        public SanitizedFormat Format { get; set; }
+        [Option("format", DefaultValue=PublishFormat.Markdown, HelpText="Format of the output documentation.")]
+        public PublishFormat Format { get; set; }
 
         [Option("extensions", HelpText="File extensions to scan for internal content.", DefaultValue=".md,.mdown")]
         public string TextFileExtensions { get; set; }
@@ -257,7 +263,23 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         [Option("include-all", DefaultValue=true, HelpText="Include all content files, not just scanned text files.")]
         public bool PublishAllFiles { get; set; }
 
-        public enum SanitizedFormat
+        [Option("auth-scope", HelpText="Override the auth scope detection with a default auth scope on every method")]
+        public string AuthScopeDefault { get; set; }
+
+        #region Output Controls
+
+        [Option("title", DefaultValue=null, HelpText="Title to include in the published documentation")]
+        public string Title { get; set; }
+        [Option("description", DefaultValue = null, HelpText = "Description to include in the published documentation")]
+        public string Description { get; set; }
+        [Option("version", DefaultValue=null, HelpText="Api Version information to include in documentation")]
+        public string Version { get; set; }
+
+
+        #endregion
+
+
+        public enum PublishFormat
         {
             Markdown,
             Html,

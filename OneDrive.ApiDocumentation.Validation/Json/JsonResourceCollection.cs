@@ -19,7 +19,7 @@
 
         public void RegisterJsonResource(ResourceDefinition resource)
         {
-            var schema = new JsonSchema(resource.JsonExample, resource.Metadata);
+            var schema = new JsonSchema(resource);
             m_RegisteredSchema[resource.Metadata.ResourceType] = schema;
         }
         

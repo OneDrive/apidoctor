@@ -10,6 +10,8 @@
 
     public class JsonSchema
     {
+        
+
         #region Properties
         public string ResourceName { get { return Metadata.ResourceType; } }
 
@@ -18,6 +20,8 @@
         protected CodeBlockAnnotation Metadata { get; private set; }
 
         public string[] OptionalProperties { get { return (null == Metadata) ? null : Metadata.OptionalProperties; } }
+
+        public ResourceDefinition OriginalResource { get; set; }
 
         public JsonProperty[] Properties
         {
@@ -31,6 +35,13 @@
         {
             Metadata = annotation;
             ExpectedProperties = BuildSchemaFromJson(json);
+        }
+
+        public JsonSchema(ResourceDefinition resource)
+        {
+            Metadata = resource.Metadata;
+            ExpectedProperties = BuildSchemaFromJson(resource.JsonExample, resource.Parameters);
+            OriginalResource = resource;
         }
         #endregion
 
@@ -231,7 +242,7 @@
 
                     return ValidateArrayProperty(inputProperty, schemas, detectedErrors, isTruncated);
                 }
-                else if (schemaPropertyDef.Type == JsonDataType.ODataType && (inputProperty.Type == JsonDataType.Custom || inputProperty.Type == JsonDataType.ODataType))
+                else if (schemaPropertyDef.Type == JsonDataType.ODataType && (inputProperty.Type == JsonDataType.Object || inputProperty.Type == JsonDataType.ODataType))
                 {
                     // Compare the ODataType schema to the custom schema
                     if (!schemas.ContainsKey(schemaPropertyDef.ODataTypeName))
@@ -239,7 +250,7 @@
                         detectedErrors.Add(new ValidationError(ValidationErrorCode.ResourceTypeNotFound, null, "Missing resource: resource [0] was not found (property name '{1}').", schemaPropertyDef.ODataTypeName, inputProperty.Name));
                         return PropertyValidationOutcome.MissingResourceType;
                     }
-                    else if (inputProperty.Type == JsonDataType.Custom)
+                    else if (inputProperty.Type == JsonDataType.Object)
                     {
                         var odataSchema = schemas[schemaPropertyDef.ODataTypeName];
                         ValidationError[] odataErrors;
@@ -266,7 +277,7 @@
                         return PropertyValidationOutcome.OK;
                     }
                 }
-                else if (schemaPropertyDef.Type == JsonDataType.Custom)
+                else if (schemaPropertyDef.Type == JsonDataType.Object)
                 {
                     detectedErrors.Add(new ValidationWarning(ValidationErrorCode.CustomValidationNotSupported, null, "Schema type was 'Custom' which is not supported. Add a resource type to the definition of property: {0}", inputProperty.Name));
                     return PropertyValidationOutcome.MissingResourceType;
@@ -287,7 +298,7 @@
 
         private bool SimpleValueTypes(params JsonDataType[] types)
         {
-            return types.All(type => type != JsonDataType.ODataType && type != JsonDataType.Custom);
+            return types.All(type => type != JsonDataType.ODataType && type != JsonDataType.Object);
         }
 
         private bool AllFalse(params bool[] input)
@@ -302,7 +313,11 @@
                 throw new SchemaBuildException("Cannot use simple array valiation without array types", null);
             }
 
-            if (actualProperty.Type == expectedProperty.Type && expectedProperty.Type != JsonDataType.Custom && expectedProperty.Type != JsonDataType.ODataType)
+            if (actualProperty.Type == expectedProperty.Type && expectedProperty.Type != JsonDataType.Object && expectedProperty.Type != JsonDataType.ODataType)
+            {
+                return PropertyValidationOutcome.OK;
+            }
+            else if (expectedProperty.IsArray && actualProperty.IsArray && actualProperty.OriginalValue == "[]")
             {
                 return PropertyValidationOutcome.OK;
             }
@@ -386,7 +401,7 @@
         #endregion
 
         #region Schema Building
-        private Dictionary<string, JsonProperty> BuildSchemaFromJson(string json)
+        private Dictionary<string, JsonProperty> BuildSchemaFromJson(string json, IEnumerable<ParameterDefinition> parameters = null)
         {
             Dictionary<string, JsonProperty> schema = new Dictionary<string, JsonProperty>();
             try
@@ -395,6 +410,7 @@
                 foreach (JToken token in obj)
                 {
                     JsonProperty propertyInfo = ParseProperty(token, null);
+                    AddParameterDataToProperty(parameters, propertyInfo);
                     schema[propertyInfo.Name] = propertyInfo;
                 }
             }
@@ -403,6 +419,22 @@
                 throw new SchemaBuildException(ex.Message, ex);
             }
             return schema;
+        }
+
+        private static void AddParameterDataToProperty(IEnumerable<ParameterDefinition> parameters, JsonProperty propertyInfo)
+        {
+            if (null != propertyInfo && null != parameters)
+            {
+                // See if we can look up more data for this new property
+                var findParameterQuery = from p in parameters
+                                         where p.Name == propertyInfo.Name
+                                         select p;
+                var parameterData = findParameterQuery.FirstOrDefault();
+                if (null != parameterData)
+                {
+                    propertyInfo.Description = parameterData.Description;
+                }
+            }
         }
 
         private static JsonProperty ParseProperty(string name, JToken value, JsonSchema containerSchema)
@@ -433,7 +465,7 @@
                         {
                             // See if we can infer type from the parent scehma
                             JsonProperty schemaProperty;
-                            JsonDataType propertyType = JsonDataType.Custom;
+                            JsonDataType propertyType = JsonDataType.Object;
                             string odataTypeName = null;
                             if (null != containerSchema && containerSchema.ExpectedProperties.TryGetValue(name, out schemaProperty))
                             {
@@ -469,7 +501,7 @@
                         }
 
                         // See if we can do better than just Custom
-                        if (propertyType == JsonDataType.Custom)
+                        if (propertyType == JsonDataType.Object)
                         {
                             if (null != containerSchema && containerSchema.ExpectedProperties.TryGetValue(name, out schemaProperty))
                             {
@@ -480,7 +512,7 @@
                         }
 
                         Dictionary<string, JsonProperty> members = null;
-                        if (propertyType == JsonDataType.Custom || propertyType == JsonDataType.Array)
+                        if (propertyType == JsonDataType.Object || propertyType == JsonDataType.Array)
                         {
                             var firstValue = (JObject)value.First;
                             if (firstValue != null)
@@ -492,12 +524,12 @@
                         return new JsonProperty { Name = name, Type = propertyType, ODataTypeName = odataTypeName, IsArray = true,
                             OriginalValue = value.ToString(), CustomMembers = members };
                     }
+                case JTokenType.Null:
+                    return new JsonProperty { Name = name, Type = JsonDataType.Object, IsArray = false, OriginalValue = null };
                 default:
-                    Console.WriteLine("Unhandled token type: " + value.Type);
-                    break;
+                    Console.WriteLine("Unsupported: Property {0} is of type {1} which is not currently supported.", name, value.Type);
+                    throw new NotSupportedException(string.Format("Unsupported: Property {0} is of type {1} which is not currently supported.", name, value.Type));
             }
-
-            return null;
         }
 
         private static JsonProperty ParseProperty(JToken token, JsonSchema containerSchema, List<ValidationError> detectedErrors = null)
@@ -534,8 +566,8 @@
                 string name = prop.Key;
                 JToken value = prop.Value;
                 JsonProperty propertyInfo = ParseProperty(name, value, null);
-                schema[propertyInfo.Name] = propertyInfo;
-                
+                if (null != propertyInfo && null != propertyInfo.Name)
+                    schema[propertyInfo.Name] = propertyInfo;
             }
             return schema;
         }

@@ -128,16 +128,7 @@ namespace OneDrive.ApiDocumentation.Validation
         {
             return p.Replace(Path.DirectorySeparatorChar, '/');
         }
-
-        public ScenarioDefinition FirstScenarioForMethod(MethodDefinition method)
-        {
-            var parameters = ScenariosForMethod(method);
-            if (null != parameters)
-                return parameters.FirstOrDefault(p => p.Enabled);
-            else
-                return null;
-        }
-
+            
         public ScenarioDefinition[] ScenariosForMethod(MethodDefinition method)
         {
             if (null == Definitions) return null;
