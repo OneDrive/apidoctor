@@ -10,8 +10,8 @@ namespace OneDrive.ApiDocumentation.Validation.OData
     {
         public bool ContainsTarget { get; set; }
 
-        public static string ElementName { get { return "NavigationProperty"; } }
-        public static NavigationProperty FromXml(XElement xml)
+        public static new string ElementName { get { return "NavigationProperty"; } }
+        public static new NavigationProperty FromXml(XElement xml)
         {
             if (xml.Name.LocalName != NavigationProperty.ElementName) throw new ArgumentException("xml wasn't a Property element");
 

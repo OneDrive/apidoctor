@@ -530,8 +530,6 @@
                     Console.WriteLine("Unsupported: Property {0} is of type {1} which is not currently supported.", name, value.Type);
                     throw new NotSupportedException(string.Format("Unsupported: Property {0} is of type {1} which is not currently supported.", name, value.Type));
             }
-
-            return null;
         }
 
         private static JsonProperty ParseProperty(JToken token, JsonSchema containerSchema, List<ValidationError> detectedErrors = null)

@@ -21,8 +21,6 @@ namespace OneDrive.ApiDocumentation.Validation.Writers
         public string DefaultAuthScope { get; set; }
 
         public SwaggerAuth AuthenticationParameters { get; set; }
-
-
         
 
         public SwaggerWriter(DocSet docs, string baseUrl) : base(docs)
@@ -45,6 +43,7 @@ namespace OneDrive.ApiDocumentation.Validation.Writers
 
         }
 
+#pragma warning disable 1998
         public override async Task PublishToFolderAsync(string outputFolder)
         {
             SnapVariables();
@@ -80,6 +79,7 @@ namespace OneDrive.ApiDocumentation.Validation.Writers
                 outputFile.Write(output);
             }
         }
+#pragma warning restore 1998
 
         private object BuildSecurityDefinition()
         {
@@ -287,8 +287,6 @@ namespace OneDrive.ApiDocumentation.Validation.Writers
         }
 
         private System.Text.RegularExpressions.Regex PathVariableRegex = new System.Text.RegularExpressions.Regex("{(?<var>.*)}");
-        private DocSet docs;
-        private string p;
 
         private string[] CapturePathVariables(string relativePath)
         {

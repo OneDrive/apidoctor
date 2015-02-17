@@ -11,7 +11,7 @@
 
 	public class DocumentPublisher
 	{
-        public event EventHandler<ValidationError> NewMessage;
+        public event EventHandler<ValidationMessageEventArgs> NewMessage;
 
         /// <summary>
         /// The document set that is the source for the publisher
@@ -73,7 +73,7 @@
             var eventHandler = NewMessage;
             if (null != eventHandler)
             {
-                eventHandler(this, message);
+                eventHandler(this, new ValidationMessageEventArgs(message));
             }
             Messages.Add(message);
         }
@@ -321,6 +321,16 @@
 			this.Target = target;
 		}
 	}
+
+    public class ValidationMessageEventArgs : EventArgs
+    {
+        public ValidationError Message { get; private set; }
+
+        public ValidationMessageEventArgs(ValidationError message)
+        {
+            Message = message;
+        }
+    }
 
 	public enum ScanRuleTarget
 	{

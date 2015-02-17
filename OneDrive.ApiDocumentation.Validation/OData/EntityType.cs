@@ -17,8 +17,8 @@ namespace OneDrive.ApiDocumentation.Validation.OData
 
         public List<NavigationProperty> NavigationProperties { get; set; }
 
-        public static string ElementName { get { return "EntityType"; } }
-        public static EntityType FromXml(XElement xml)
+        public static new string ElementName { get { return "EntityType"; } }
+        public static new EntityType FromXml(XElement xml)
         {
             if (xml.Name.LocalName != EntityType.ElementName) throw new ArgumentException("xml is not an EntityType element");
 

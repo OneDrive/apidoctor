@@ -207,7 +207,6 @@
                     MarkdownDeep.Block blockBeforeTable = (i - 1 >= 0) ? OriginalMarkdownBlocks[i - 1] : null;
                     if (null == blockBeforeTable) continue;
 
-                    ItemDefinition[] rows;
                     ValidationError[] parseErrors;
                     var table = TableSpecConverter.ParseTableSpec(block, previousHeaderBlock, out parseErrors);
                     if (null != parseErrors) detectedErrors.AddRange(parseErrors);

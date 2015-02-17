@@ -128,7 +128,6 @@ namespace OneDrive.ApiDocumentation.Validation
                     break;
                 default:
                     throw new NotSupportedException(string.Format("Unsupported parameter location: {0}", parameter.Location));
-                    break;
             }
 
             return p;

@@ -681,12 +681,13 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             Exit(failure: false);
         }
 
-        static void publisher_NewMessage(object sender, ValidationError e)
+        static void publisher_NewMessage(object sender, ValidationMessageEventArgs e)
         {
-            if (!FancyConsole.WriteVerboseOutput && !e.IsError && !e.IsWarning)
+            var msg = e.Message;
+            if (!FancyConsole.WriteVerboseOutput && !msg.IsError && !msg.IsWarning)
                 return;
 
-            WriteValidationError("", e);
+            WriteValidationError("", msg);
         }
 
         private static async Task CheckServiceMetadata(CheckMetadataOptions options)
