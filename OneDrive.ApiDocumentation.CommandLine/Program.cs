@@ -81,13 +81,13 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                     PrintDocInformation((PrintOptions)options);
                     break;
                 case CommandLineOptions.VerbCheckLinks:
-                    VerifyLinks((DocSetOptions)options);
+                    CheckLinks((DocSetOptions)options);
                     break;
                 case CommandLineOptions.VerbDocs:
-                    CheckMethodExamples((ConsistencyCheckOptions)options);
+                    CheckDocs((ConsistencyCheckOptions)options);
                     break;
                 case CommandLineOptions.VerbService:
-                    await CheckMethodsAgainstService((ServiceConsistencyOptions)options);
+                    await CheckService((ServiceConsistencyOptions)options);
                     break;
                 case CommandLineOptions.VerbSet:
                     SetDefaultValues((SetCommandOptions)options);
@@ -224,7 +224,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             }
         }
 
-        private static void VerifyLinks(DocSetOptions options)
+        private static void CheckLinks(DocSetOptions options)
         {
             var docset = GetDocSet(options);
             ValidationError[] errors;
@@ -327,7 +327,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             return query.FirstOrDefault();
         }
 
-        private static void CheckMethodExamples(ConsistencyCheckOptions options)
+        private static void CheckDocs(ConsistencyCheckOptions options)
         {
             var docset = GetDocSet(options);
             FancyConsole.WriteLine();
@@ -461,7 +461,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         /// </summary>
         /// <param name="options"></param>
         /// <returns></returns>
-        private static async Task CheckMethodsAgainstService(ServiceConsistencyOptions options)
+        private static async Task CheckService(ServiceConsistencyOptions options)
         {
             var docset = GetDocSet(options);
             FancyConsole.WriteLine();
