@@ -548,7 +548,7 @@
             }
 
             errors = foundErrors.ToArray();
-            return errors.Length == 0;
+            return !(errors.WereErrors() || errors.WereWarnings());
         }
 
         protected enum LinkValidationResult
