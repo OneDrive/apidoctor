@@ -443,7 +443,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             }
             else
             {
-                FancyConsole.WriteLine(ConsoleSuccessColor, " no errors");
+                FancyConsole.WriteLine(ConsoleSuccessColor, " no errors.");
             }
             return errors;
         }
@@ -463,24 +463,15 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             bool result = true;
             foreach (var method in methods)
             {
-                ValidationError[] errors = null;
-
                 FancyConsole.Write(ConsoleHeaderColor, "Calling method \"{0}\"...", method.Identifier);
-                if (method.RequestMetadata.Disabled)
-                {
-                    errors = new ValidationError[] { new ValidationWarning(ValidationErrorCode.MethodDisabled, null, "Method was disabled: {0}", method.Identifier) };
-                    FancyConsole.WriteLine();
-                    WriteOutErrors(errors, "  ");
-                    warningCount++;
-                    continue;
-                }
-                
+
                 AuthenicationCredentials credentials = AuthenicationCredentials.CreateAutoCredentials(options.AccessToken);
-                var setsOfParameters = docset.TestScenarios.ScenariosForMethod(method);
-                if (setsOfParameters.Length == 0)
+                var testScenarios = docset.TestScenarios.ScenariosForMethod(method);
+                if (testScenarios.Length == 0)
                 {
                     // If there are no parameters defined, we still try to call the request as-is.
-                    errors = await TestMethodWithParameters(docset, method, null, options.ServiceRootUrl, credentials);
+                    FancyConsole.WriteLine(ConsoleCodeColor, "\r\n  Method {0} has no scenario defined. Running as-is from docs.", method.RequestMetadata.MethodName);
+                    var errors = await TestMethodWithParameters(docset, method, null, options.ServiceRootUrl, credentials);
                     if (errors.WereErrors())
                     {
                         errorCount++;
@@ -498,22 +489,30 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 else
                 {
                     // Otherwise, if there are parameter sets, we call each of them and check the result.
-                    foreach (var requestSettings in setsOfParameters.Where(s => s.Enabled))
+                    var enabledScenarios = testScenarios.Where(s => s.Enabled);
+                    if (enabledScenarios.FirstOrDefault() == null)
                     {
-                        errors = await TestMethodWithParameters(docset, method, requestSettings, options.ServiceRootUrl, credentials);
-                        if (errors.WereErrors())
+                        FancyConsole.WriteLine(ConsoleWarningColor, " skipped.");
+                    }
+                    else
+                    {
+                        foreach (var requestSettings in testScenarios.Where(s => s.Enabled))
                         {
-                            errorCount++;
+                            var errors = await TestMethodWithParameters(docset, method, requestSettings, options.ServiceRootUrl, credentials);
+                            if (errors.WereErrors())
+                            {
+                                errorCount++;
+                            }
+                            else if (errors.WereWarnings())
+                            {
+                                warningCount++;
+                            }
+                            else
+                            {
+                                successCount++;
+                            }
+                            AddPause(options);
                         }
-                        else if (errors.WereWarnings())
-                        {
-                            warningCount++;
-                        }
-                        else
-                        {
-                            successCount++;
-                        }
-                        AddPause(options);
                     }
                 }
 
