@@ -167,18 +167,23 @@
         /// <param name="detectedErrors"></param>
         private void ValidateJContainer(JContainer obj, bool allowTruncation, Dictionary<string, JsonSchema> otherSchemas, List<ValidationError> detectedErrors)
         {
+            
+            var containerProperties = from p in obj
+                                      select ParseProperty(p, this, detectedErrors);
+
+            ValidateObjectProperties(containerProperties.Where(x => null != x), allowTruncation, otherSchemas, detectedErrors);
+        }
+
+        private void ValidateObjectProperties(IEnumerable<JsonProperty> propertiesOnObject, bool allowTruncation, Dictionary<string, JsonSchema> otherSchemas, List<ValidationError> detectedErrors)
+        {
             List<string> missingProperties = new List<string>();
             missingProperties.AddRange(from m in ExpectedProperties select m.Key);
 
-            foreach (JToken token in obj)
+            foreach(var property in propertiesOnObject)
             {
-                JsonProperty inputProperty = ParseProperty(token, this, detectedErrors);
-                if (inputProperty != null)
-                {
-                    missingProperties.Remove(inputProperty.Name);
-                    // This detects bad types, extra properties, etc.
-                    ValidateProperty(inputProperty, otherSchemas, detectedErrors, allowTruncation);
-                }
+                missingProperties.Remove(property.Name);
+                // This detects bad types, extra properties, etc.
+                ValidateProperty(property, otherSchemas, detectedErrors, allowTruncation);
             }
 
             if (null != OptionalProperties)
@@ -270,10 +275,8 @@
                     else
                     {
 //                        // TODO: Verify that the property value matches the resource schema
-//                        var odataSchema = schemas[schemaPropertyDef.ODataTypeName];
-//                        odataSchema.ValidateJContainer(
-//
-//
+                        var odataSchema = schemas[schemaPropertyDef.ODataTypeName];
+                        odataSchema.ValidateObjectProperties(inputProperty.CustomMembers.Values, isTruncated, schemas, detectedErrors);
                         return PropertyValidationOutcome.OK;
                     }
                 }
