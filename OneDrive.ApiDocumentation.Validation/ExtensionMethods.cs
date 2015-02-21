@@ -152,7 +152,8 @@
             Json.JsonDataType output;
             if (Enum.TryParse<Json.JsonDataType>(value, true, out output))
                 return output;
-
+            if (null == value)
+                return Json.JsonDataType.Object;
             if (value.ToLower().Contains("string"))
                 return Json.JsonDataType.String;
             if (value.Equals("etag", StringComparison.OrdinalIgnoreCase))
@@ -171,6 +172,8 @@
 
         public static bool IsRequired(this string description)
         {
+            if (null == description) 
+                return false;
             return description.StartsWith("required.", StringComparison.OrdinalIgnoreCase);
         }
 
