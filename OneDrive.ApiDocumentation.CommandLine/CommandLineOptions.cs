@@ -15,7 +15,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         public const string VerbSet = "set";
         public const string VerbDocs = "check-docs";
         public const string VerbService = "check-service";
-        public const string VerbClean = "publish";
+        public const string VerbPublish = "publish";
         public const string VerbMetadata = "check-metadata";
 
         public CommandLineOptions()
@@ -38,7 +38,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         [VerbOption(VerbSet, HelpText = "Save or reset default parameter values.")]
         public SetCommandOptions SetVerb { get; set; }
 
-        [VerbOption(VerbClean, HelpText="Publish a sanitized version of the documentation.")]
+        [VerbOption(VerbPublish, HelpText="Publish a version of the documentation, optionally converting it into other formats.")]
         public PublishOptions PublishVerb { get; set; }
 
         [VerbOption(VerbMetadata, HelpText="Check service CSDL metadata against documentation.")]
@@ -265,6 +265,9 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
         [Option("auth-scope", HelpText="Override the auth scope detection with a default auth scope on every method")]
         public string AuthScopeDefault { get; set; }
+
+        [Option("html-template", HelpText="Specify the folder where HTML template files are read. Expects to find a template.htm file and other supporting files.")]
+        public string HtmlTemplateFolder { get; set; }
 
         #region Output Controls
 

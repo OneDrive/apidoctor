@@ -92,7 +92,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 case CommandLineOptions.VerbSet:
                     SetDefaultValues((SetCommandOptions)options);
                     break;
-                case CommandLineOptions.VerbClean:
+                case CommandLineOptions.VerbPublish:
                     await PublishDocumentationAsync((PublishOptions)options);
                     break;
                 case CommandLineOptions.VerbMetadata:
@@ -649,7 +649,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                     publisher = new DocumentPublisher(docs);
                     break;
                 case PublishOptions.PublishFormat.Html:
-                    publisher = new DocumentPublisherHtml(docs);
+                    publisher = new DocumentPublisherHtml(docs, options.HtmlTemplateFolder);
                     break;
                 case PublishOptions.PublishFormat.Swagger2:
                     publisher = new OneDrive.ApiDocumentation.Validation.Writers.SwaggerWriter(docs, SavedSettings.Default.ServiceUrl)

@@ -183,7 +183,7 @@ namespace OneDrive.ApiDocumentation.Validation
         }
 
 
-        private static System.Text.RegularExpressions.Regex PathVariableRegex = new System.Text.RegularExpressions.Regex(@"\{(?<var>.+?)\}", System.Text.RegularExpressions.RegexOptions.Compiled);
+        internal static System.Text.RegularExpressions.Regex PathVariableRegex = new System.Text.RegularExpressions.Regex(@"\{(?<var>.+?)\}", System.Text.RegularExpressions.RegexOptions.Compiled);
 
         internal static string FlattenVariableNames(this string input)
         {

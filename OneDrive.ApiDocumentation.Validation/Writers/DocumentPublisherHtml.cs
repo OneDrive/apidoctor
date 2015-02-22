@@ -2,15 +2,55 @@
 using System.Threading.Tasks;
 using System.IO;
 using System.Linq;
+using System.Collections.Generic;
+using System.Text;
 
 namespace OneDrive.ApiDocumentation.Validation
 {
     public class DocumentPublisherHtml : DocumentPublisher
     {
-        public DocumentPublisherHtml(DocSet docs) 
+        private string _templateFolderPath;
+        private string _templateHtml;
+
+        public DocumentPublisherHtml(DocSet docs, string templateFolderPath) 
             : base(docs)
         {
+            _templateFolderPath = templateFolderPath;
+        }
 
+        private void LoadTemplate()
+        {
+            if (string.IsNullOrEmpty(_templateFolderPath)) return;
+
+            DirectoryInfo dir = new DirectoryInfo(_templateFolderPath);
+            if (!dir.Exists) return;
+
+            _templateFolderPath = dir.FullName;
+
+            var templateFilePath = Path.Combine(dir.FullName, "template.htm");
+            if (!File.Exists(templateFilePath))
+                return;
+
+            Console.WriteLine("Using template: {0}", templateFilePath);
+
+            _templateHtml = File.ReadAllText(templateFilePath);
+        }
+
+        protected override void ConfigureOutputDirectory(DirectoryInfo destinationRoot)
+        {
+            // Copy everything in the template folder to the output folder except template.htm
+            DirectoryInfo templateFolder = new DirectoryInfo(_templateFolderPath);
+
+            var templateFiles = templateFolder.GetFiles();
+            foreach (var file in templateFiles)
+            {
+                if (!file.Name.Equals("template.htm"))
+                {
+                    file.CopyTo(Path.Combine(destinationRoot.FullName, file.Name), true);
+                }
+            }
+
+            LoadTemplate();
         }
 
         protected override async Task PublishFileToDestination(FileInfo sourceFile, DirectoryInfo destinationRoot)
@@ -56,22 +96,53 @@ namespace OneDrive.ApiDocumentation.Validation
                         return url.Substring(0, url.Length - extension.Length) + ".htm";
                     }
                 }
-
                 return url;
             };
 
             var html = converter.Transform(writer.ToString());
 
             var title = (from b in converter.Blocks
-                                      where b.BlockType == MarkdownDeep.BlockType.h1
-                select b.Content).FirstOrDefault();
+                         where b.BlockType == MarkdownDeep.BlockType.h1
+                         select b.Content).FirstOrDefault();
 
+            await WriteHtmlDocumentAsync(html, title, destinationPath, destinationRoot.FullName);
+        }
 
-            using (var outputWriter = new StreamWriter(destinationPath))
+        private async Task WriteHtmlDocumentAsync(string bodyHtml, string pageTitle, string destinationFile, string rootDestinationFolder)
+        {
+            List<string> variablesToReplace = new List<string>();
+            if (_templateHtml != null)
             {
-                outputWriter.Write(htmlHeader, title, htmlStyles);
-                outputWriter.Write(html);
-                outputWriter.Write(htmlFooter);
+                var matches = SwaggerExtensionMethods.PathVariableRegex.Matches(_templateHtml);
+                foreach(System.Text.RegularExpressions.Match match in matches)
+                {
+                    variablesToReplace.Add(match.Groups[0].Value);
+                }
+            }
+
+            string templateHtmlForThisPage = _templateHtml;
+
+            foreach (var key in variablesToReplace.ToArray())
+            {
+                if (key == "{page.title}")
+                {
+                    templateHtmlForThisPage = templateHtmlForThisPage.Replace(key, pageTitle);
+                }
+                else if (key == "{body.html}")
+                {
+                    templateHtmlForThisPage = templateHtmlForThisPage.Replace(key, bodyHtml);
+                }
+                else
+                {
+                    string filename = key.Substring(1, key.Length - 2);
+                    string value  = DocSet.RelativePathToRootFromFile(destinationFile, Path.Combine(rootDestinationFolder, filename));
+                    templateHtmlForThisPage = templateHtmlForThisPage.Replace(key, value);
+                }
+            }
+
+            using (var outputWriter = new StreamWriter(destinationFile))
+            {
+                await outputWriter.WriteAsync(templateHtmlForThisPage);
             }
         }
 

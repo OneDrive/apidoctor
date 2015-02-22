@@ -153,6 +153,8 @@
 				}
 			}
 
+            ConfigureOutputDirectory(destinationRoot);
+
 			foreach (var file in filesInDirectory)
 			{
 				if (IsInternalPath(file))
@@ -190,6 +192,11 @@
 				}
 			}
 		}
+
+        protected virtual void ConfigureOutputDirectory(DirectoryInfo destinationRoot)
+        {
+            // Nothing to do
+        }
 
         /// <summary>
         /// Convert an input file into a path in the destinationRoot. Optionally

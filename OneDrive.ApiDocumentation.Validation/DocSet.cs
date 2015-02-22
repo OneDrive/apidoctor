@@ -222,9 +222,9 @@
             Files = relativeFilePaths.ToArray();
         }
 
-        internal string RelativePathToFile(DocFile file, bool urlStyle)
+        internal string RelativePathToFile(DocFile file, bool urlStyle = false)
         {
-            return RelativePathToFile(file.FullPath, urlStyle);
+            return RelativePathToFile(file.FullPath, SourceFolderPath, urlStyle);
         }
 
         /// <summary>
@@ -234,8 +234,14 @@
         /// <returns></returns>
         internal string RelativePathToFile(string fileFullName, bool urlStyle = false)
         {
-            System.Diagnostics.Debug.Assert(fileFullName.StartsWith(SourceFolderPath), "fileFullName doesn't start with the source folder path");
-            var path = fileFullName.Substring(SourceFolderPath.Length);
+            return RelativePathToFile(fileFullName, SourceFolderPath, urlStyle);
+        }
+
+        internal static string RelativePathToFile(string fileFullName, string rootFolderPath, bool urlStyle = false)
+        {
+            System.Diagnostics.Debug.Assert(fileFullName.StartsWith(rootFolderPath), "fileFullName doesn't start with the source folder path");
+
+            var path = fileFullName.Substring(rootFolderPath.Length);
             if (urlStyle)
             {
                 // Should look like this "items/foobar.md" instead of @"\items\foobar.md"
@@ -244,6 +250,51 @@
             }
             return path;
         }
+
+        /// <summary>
+        /// Generates a relative path from deepFilePath to shallowFilePath.
+        /// </summary>
+        /// <param name="fileFullName"></param>
+        /// <param name="rootFolderPath"></param>
+        /// <param name="urlStyle"></param>
+        /// <returns></returns>
+        internal static string RelativePathToRootFromFile(string deepFilePath, string shallowFilePath, bool urlStyle = false)
+        {
+            // example:
+            // deep file path "/auth/auth_msa.md"
+            // shallow file path "template/stylesheet.css"
+            // returns "../template/stylesheet.css"
+
+            List<string> deepPathComponents = new List<string>(deepFilePath.Split(new char[] { '/', '\\' }, StringSplitOptions.RemoveEmptyEntries));
+            List<string> shallowPathComponents = new List<string>(shallowFilePath.Split(new char[] { '/', '\\' }, StringSplitOptions.RemoveEmptyEntries));
+
+            while(deepPathComponents.Count > 0 && shallowPathComponents.Count > 0 && deepPathComponents[0].Equals(shallowPathComponents[0], StringComparison.OrdinalIgnoreCase))
+            {
+                deepPathComponents.RemoveAt(0);
+                shallowPathComponents.RemoveAt(0);
+            }
+            
+            int depth = Math.Max(0, deepPathComponents.Count - 1);
+
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < depth; i++)
+            {
+                if (sb.Length > 0)
+                {
+                    sb.Append(urlStyle ? "/" : "\\");
+                }
+                sb.Append("..");
+            }
+
+            if (sb.Length > 0)
+            {
+                sb.Append(urlStyle ? "/" : "\\");
+            }
+            sb.Append(shallowPathComponents.ComponentsJoinedByString(urlStyle ? "/" : "\\"));
+
+            return sb.ToString();
+        }
+
         private IEnumerable<T> ListFromFiles<T>(Func<DocFile, IEnumerable<T>> perFileSource)
         {
             List<T> collected = new List<T>();
