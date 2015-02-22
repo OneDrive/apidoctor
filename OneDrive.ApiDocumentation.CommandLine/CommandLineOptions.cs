@@ -216,7 +216,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         [Option('u', ServiceUrlArgument, HelpText = "Root URL for API calls, like https://api.example.org/v1.0. Required if not default value is set.")]
         public string ServiceRootUrl { get; set; }
 
-        [Option('s', ParameterFileArgument, DefaultValue = "/internal/test-scenarios.json", HelpText = "Test scenarios configuration file")]
+        [Option('s', ParameterFileArgument, DefaultValue = "/tests/test-scenarios.json", HelpText = "Test scenarios configuration file")]
         public string ScenarioFilePath { get; set; }
 
         [Option("pause", HelpText="Pause between method requests.")]
