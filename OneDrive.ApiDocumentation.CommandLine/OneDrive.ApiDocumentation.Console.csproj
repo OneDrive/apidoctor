@@ -75,10 +75,6 @@
       <Project>{33B10320-3802-49CF-8965-3510AE66D5EC}</Project>
       <Name>OneDrive.ApiDocumentation.Validation</Name>
     </ProjectReference>
-    <ProjectReference Include="..\MicrosoftAccountSDK.Windows\MicrosoftAccountSDK.Windows.csproj">
-      <Project>{9E9F37BE-3CB5-4124-8B7C-E60C4AB90ECF}</Project>
-      <Name>MicrosoftAccountSDK.Windows</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />

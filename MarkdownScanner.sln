@@ -5,10 +5,6 @@ VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MarkdownDeep", "MarkdownDeep\MarkdownDeep.csproj", "{1569ED47-C7C9-4261-B6F4-7445BD0F2C95}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OneDrive.ApiDocumentation.Windows", "ApiDocumentationTester\OneDrive.ApiDocumentation.Windows.csproj", "{53A12F19-7C03-4E61-A34E-ADC5C211DE6E}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MicrosoftAccountSDK.Windows", "MicrosoftAccountSDK.Windows\MicrosoftAccountSDK.Windows.csproj", "{9E9F37BE-3CB5-4124-8B7C-E60C4AB90ECF}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OneDrive.ApiDocumentation.Validation", "OneDrive.ApiDocumentation.Validation\OneDrive.ApiDocumentation.Validation.csproj", "{33B10320-3802-49CF-8965-3510AE66D5EC}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OneDrive.ApiDocumentation.Console", "OneDrive.ApiDocumentation.CommandLine\OneDrive.ApiDocumentation.Console.csproj", "{A6F3993F-59C6-4985-ACF1-4D837D61E98F}"
@@ -49,26 +45,6 @@ Global
 		{1569ED47-C7C9-4261-B6F4-7445BD0F2C95}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{1569ED47-C7C9-4261-B6F4-7445BD0F2C95}.Release|x86.ActiveCfg = Release|Any CPU
 		{1569ED47-C7C9-4261-B6F4-7445BD0F2C95}.Release|x86.Build.0 = Release|Any CPU
-		{53A12F19-7C03-4E61-A34E-ADC5C211DE6E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{53A12F19-7C03-4E61-A34E-ADC5C211DE6E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{53A12F19-7C03-4E61-A34E-ADC5C211DE6E}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
-		{53A12F19-7C03-4E61-A34E-ADC5C211DE6E}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
-		{53A12F19-7C03-4E61-A34E-ADC5C211DE6E}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{53A12F19-7C03-4E61-A34E-ADC5C211DE6E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{53A12F19-7C03-4E61-A34E-ADC5C211DE6E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{53A12F19-7C03-4E61-A34E-ADC5C211DE6E}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
-		{53A12F19-7C03-4E61-A34E-ADC5C211DE6E}.Release|Mixed Platforms.Build.0 = Release|Any CPU
-		{53A12F19-7C03-4E61-A34E-ADC5C211DE6E}.Release|x86.ActiveCfg = Release|Any CPU
-		{9E9F37BE-3CB5-4124-8B7C-E60C4AB90ECF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9E9F37BE-3CB5-4124-8B7C-E60C4AB90ECF}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{9E9F37BE-3CB5-4124-8B7C-E60C4AB90ECF}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
-		{9E9F37BE-3CB5-4124-8B7C-E60C4AB90ECF}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
-		{9E9F37BE-3CB5-4124-8B7C-E60C4AB90ECF}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{9E9F37BE-3CB5-4124-8B7C-E60C4AB90ECF}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{9E9F37BE-3CB5-4124-8B7C-E60C4AB90ECF}.Release|Any CPU.Build.0 = Release|Any CPU
-		{9E9F37BE-3CB5-4124-8B7C-E60C4AB90ECF}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
-		{9E9F37BE-3CB5-4124-8B7C-E60C4AB90ECF}.Release|Mixed Platforms.Build.0 = Release|Any CPU
-		{9E9F37BE-3CB5-4124-8B7C-E60C4AB90ECF}.Release|x86.ActiveCfg = Release|Any CPU
 		{33B10320-3802-49CF-8965-3510AE66D5EC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{33B10320-3802-49CF-8965-3510AE66D5EC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{33B10320-3802-49CF-8965-3510AE66D5EC}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
