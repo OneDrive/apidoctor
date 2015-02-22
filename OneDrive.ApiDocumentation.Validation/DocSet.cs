@@ -256,6 +256,19 @@
             return collected;
         }
 
+
+        internal DocFile LookupFileForPath(string path)
+        {
+            // Translate path into what we're looking for
+            string[] pathComponents = path.Split(new char[] { '/', '\\' });
+            string displayName = @"\" + pathComponents.ComponentsJoinedByString(@"\");
+
+            var query = from f in Files
+                        where f.DisplayName.Equals(displayName, StringComparison.OrdinalIgnoreCase)
+                        select f;
+
+            return query.FirstOrDefault();
+        }
         
         
 

@@ -19,6 +19,7 @@
         protected List<ResourceDefinition> m_Resources = new List<ResourceDefinition>();
         protected List<MethodDefinition> m_Requests = new List<MethodDefinition>();
         protected List<ResourceDefinition> m_JsonExamples = new List<ResourceDefinition>();
+        protected List<string> m_Bookmarks = new List<string>();
 
 //        protected List<MarkdownDeep.LinkInfo> m_Links = new List<MarkdownDeep.LinkInfo>();
         #endregion
@@ -74,7 +75,6 @@
         #endregion
 
         #region Constructor
-
         protected DocFile()
         {
 
@@ -86,6 +86,8 @@
             FullPath = Path.Combine(basePath, relativePath.Substring(1));
             DisplayName = relativePath;
             Parent = parent;
+            
+            m_Bookmarks = new List<string>();
         }
         #endregion
 
@@ -144,10 +146,38 @@
             return datawriter;
         }
 
-        private static bool IsHeaderBlock(MarkdownDeep.Block block)
+        private static bool IsHeaderBlock(MarkdownDeep.Block block, int maxDepth = 2)
         {
-            return block.BlockType == MarkdownDeep.BlockType.h1 || block.BlockType == MarkdownDeep.BlockType.h2;
+            var blockType = block.BlockType;
+            if (maxDepth >= 1 && blockType == MarkdownDeep.BlockType.h1) 
+                return true;
+            if (maxDepth >= 2 && blockType == MarkdownDeep.BlockType.h2)
+                return true;
+            if (maxDepth >= 3 && blockType == MarkdownDeep.BlockType.h3)
+                return true;
+            if (maxDepth >= 4 && blockType == MarkdownDeep.BlockType.h4)
+                return true;
+            if (maxDepth >= 5 && blockType == MarkdownDeep.BlockType.h5)
+                return true;
+            if (maxDepth >= 6 && blockType == MarkdownDeep.BlockType.h6)
+                return true;
+                    
+            return false;
         }
+
+
+        protected string PreviewOfBlockContent(MarkdownDeep.Block block)
+        {
+            if (block == null) return string.Empty;
+            if (block.Content == null) return string.Empty;
+
+            const int PreviewLength = 35;
+
+            string contentPreview = block.Content.Length > PreviewLength ? block.Content.Substring(0, PreviewLength) : block.Content;
+            contentPreview = contentPreview.Replace('\n', ' ').Replace('\r', ' ');
+            return contentPreview;
+        }
+
         protected bool ParseMarkdownBlocks(out ValidationError[] errors)
         {
             List<ValidationError> detectedErrors = new List<ValidationError>();
@@ -168,7 +198,17 @@
                 var previousBlock = (i > 0) ? OriginalMarkdownBlocks[i - 1] : null;
                 var block = OriginalMarkdownBlocks[i];
 
-                // Capture the first h1 and/or p element to be used as the title and description for items on this page
+                writer.Write(block.BlockType.ToString());
+                writer.Write(" - ");
+                writer.WriteLine(PreviewOfBlockContent(block));
+
+                // Capture GitHub Flavored Markdown Bookmarks
+                if (IsHeaderBlock(block, 6))
+                {
+                    AddBookmarkForHeader(block.Content);
+                }
+
+                // Capture h1 and/or p element to be used as the title and description for items on this page
                 if (IsHeaderBlock(block))
                 {
                     methodTitle = block.Content;
@@ -232,6 +272,12 @@
             
             errors = detectedErrors.ToArray();
             return !detectedErrors.Any(x => x.IsError);
+        }
+
+        private void AddBookmarkForHeader(string headerText)
+        {
+ 	        string bookmark = headerText.ToLowerInvariant().Replace(' ', '-');
+            m_Bookmarks.Add(bookmark);
         }
 
         private void PostProcessFoundElements(List<object> elementsFoundInDocument, out ValidationError[] postProcessingErrors)
@@ -575,7 +621,10 @@
             UrlFormatInvalid,
             ExternalSkipped,
             BookmarkSkipped,
-            ParentAboveDocSetPath
+            ParentAboveDocSetPath,
+            BookmarkMissing,
+            FileExistsBookmarkValidationSkipped,
+            BookmarkSkippedDocFileNotFound
         }
 
         protected LinkValidationResult VerifyLink(string docFilePath, string linkUrl, string docSetBasePath, out string relativeFileName)
@@ -596,7 +645,15 @@
                 else if (linkUrl.StartsWith("#"))
                 {
                     // TODO: bookmark link within the same document
-                    return LinkValidationResult.BookmarkSkipped;
+                    string bookmarkName = linkUrl.Substring(1);
+                    if (m_Bookmarks.Contains(bookmarkName))
+                    {
+                        return LinkValidationResult.Valid;
+                    }
+                    else 
+                    {
+                        return LinkValidationResult.BookmarkMissing;
+                    }
                 }
                 else
                 {
@@ -613,11 +670,14 @@
         {
             relativeFileName = null;
             var rootPath = sourceFile.DirectoryName;
-
+            string bookmarkName = null;
             if (linkUrl.Contains("#"))
             {
-                linkUrl = linkUrl.Substring(0, linkUrl.IndexOf("#"));
+                int indexOfHash = linkUrl.IndexOf('#');
+                bookmarkName = linkUrl.Substring(indexOfHash + 1);
+                linkUrl = linkUrl.Substring(0, indexOfHash);
             }
+
             while (linkUrl.StartsWith(".." + Path.DirectorySeparatorChar))
             {
                 var nextLevelParent = new DirectoryInfo(rootPath).Parent;
@@ -637,7 +697,22 @@
                 return LinkValidationResult.FileNotFound;
             }
 
-            relativeFileName = Parent.RelativePathToFile(info.FullName, true);
+            relativeFileName = Parent.RelativePathToFile(info.FullName, urlStyle: true);
+
+            if (bookmarkName != null)
+            {
+                // See if that bookmark exists in the target document, assuming we know about it
+                var otherDocFile = Parent.LookupFileForPath(relativeFileName);
+                if (otherDocFile == null)
+                {
+                    return LinkValidationResult.BookmarkSkippedDocFileNotFound;
+                }
+                else if (!otherDocFile.m_Bookmarks.Contains(bookmarkName))
+                {
+                    return LinkValidationResult.BookmarkMissing;
+                }
+            }
+
             return LinkValidationResult.Valid;
         }
 
