@@ -100,14 +100,6 @@
     <Compile Include="Writers\SwaggerClasses.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="html-template\template.htm">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="html-template\stylesheet.css">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
