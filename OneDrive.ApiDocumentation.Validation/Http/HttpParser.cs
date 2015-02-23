@@ -63,7 +63,7 @@
 
                         // normalize line endings to CRLF, which is required for headers, etc.
                         restOfBody = restOfBody.Replace("\r\n", "\n").Replace("\n", "\r\n");
-                        request.Body = line + Environment.NewLine + restOfBody;
+                        request.Body = string.Concat(line, "\r\n", restOfBody);
                         break;
                 }
             }
