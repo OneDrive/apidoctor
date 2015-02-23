@@ -162,7 +162,7 @@ namespace MarkdownDeep
 				case BlockType.h4:
 				case BlockType.h5:
 				case BlockType.h6:
-					if (m.ExtraMode && !m.SafeMode)
+					if (m.ExtraMode)
 					{
 						b.Append("<" + blockType.ToString());
 						string id = ResolveHeaderID(m);
