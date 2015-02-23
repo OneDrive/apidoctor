@@ -312,7 +312,8 @@
         {
             // Translate path into what we're looking for
             string[] pathComponents = path.Split(new char[] { '/', '\\' });
-            string displayName = @"\" + pathComponents.ComponentsJoinedByString(@"\");
+            string pathSeperator = System.IO.Path.DirectorySeparatorChar.ToString();
+            string displayName = pathSeperator + pathComponents.ComponentsJoinedByString(pathSeperator);
 
             var query = from f in Files
                         where f.DisplayName.Equals(displayName, StringComparison.OrdinalIgnoreCase)
