@@ -265,6 +265,11 @@
             // shallow file path "template/stylesheet.css"
             // returns "../template/stylesheet.css"
 
+            if (deepFilePath.Equals(shallowFilePath, StringComparison.OrdinalIgnoreCase))
+            {
+                return urlStyle ? "#" : Path.GetFileName(shallowFilePath);
+            }
+
             List<string> deepPathComponents = new List<string>(deepFilePath.Split(new char[] { '/', '\\' }, StringSplitOptions.RemoveEmptyEntries));
             List<string> shallowPathComponents = new List<string>(shallowFilePath.Split(new char[] { '/', '\\' }, StringSplitOptions.RemoveEmptyEntries));
 
@@ -291,6 +296,9 @@
                 sb.Append(urlStyle ? "/" : "\\");
             }
             sb.Append(shallowPathComponents.ComponentsJoinedByString(urlStyle ? "/" : "\\"));
+
+            if (sb.Length == 0)
+                Console.WriteLine("Failed to resolve link for {0}", shallowFilePath);
 
             return sb.ToString();
         }

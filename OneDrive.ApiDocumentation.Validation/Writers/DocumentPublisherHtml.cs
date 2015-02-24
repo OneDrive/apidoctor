@@ -132,10 +132,15 @@ namespace OneDrive.ApiDocumentation.Validation
                 {
                     templateHtmlForThisPage = templateHtmlForThisPage.Replace(key, bodyHtml);
                 }
+                else if (key.StartsWith("{if "))
+                {
+                    string value = ParseDocumentIfStatement(key, destinationFile);
+                    templateHtmlForThisPage = templateHtmlForThisPage.Replace(key, value);
+                }
                 else
                 {
                     string filename = key.Substring(1, key.Length - 2);
-                    string value  = DocSet.RelativePathToRootFromFile(destinationFile, Path.Combine(rootDestinationFolder, filename));
+                    string value = DocSet.RelativePathToRootFromFile(destinationFile, Path.Combine(rootDestinationFolder, filename), true);
                     templateHtmlForThisPage = templateHtmlForThisPage.Replace(key, value);
                 }
             }
@@ -144,6 +149,44 @@ namespace OneDrive.ApiDocumentation.Validation
             {
                 await outputWriter.WriteAsync(templateHtmlForThisPage);
             }
+        }
+
+        private string ParseDocumentIfStatement(string key, string containingFilePath)
+        {
+            // {if file.name="readme.htm" then class="active"}
+            bool looksValid = key.StartsWith("{if [") && key.EndsWith("]}");
+            if (!looksValid)
+                throw new ArgumentException("key doesn't look like a valid if query");
+
+            string query = key.Substring(5, key.Length - 7);
+            IfQueryData data = Newtonsoft.Json.JsonConvert.DeserializeObject<IfQueryData>("{" + query + "}");
+
+            string returnValue = string.Empty;
+            switch (data.field)
+            {
+                case "filename":
+                    bool filenameMatches = data.value.Equals(Path.GetFileName(containingFilePath), StringComparison.OrdinalIgnoreCase);
+                    if (data.invert)
+                        filenameMatches = !filenameMatches;
+                    if (filenameMatches)
+                    {
+                        returnValue = data.output;
+                    }
+                    break;
+                default:
+                    throw new NotSupportedException("Unsupported query on field named " + data.field);
+            }
+
+            return returnValue;
+
+        }
+
+        class IfQueryData
+        {
+            public string field { get; set; }
+            public string value { get; set; }
+            public string output { get; set; }
+            public bool invert { get; set; }
         }
 
         private const string htmlHeader = @"<html>
