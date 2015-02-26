@@ -639,12 +639,11 @@
             {
                 if (parsedUri.IsAbsoluteUri && (parsedUri.Scheme == "http" || parsedUri.Scheme == "https"))
                 {
-                    // TODO: verify the URL is valid
+                    // TODO: verify an external URL is valid by making a HEAD request
                     return LinkValidationResult.ExternalSkipped;
                 }
                 else if (linkUrl.StartsWith("#"))
                 {
-                    // TODO: bookmark link within the same document
                     string bookmarkName = linkUrl.Substring(1);
                     if (m_Bookmarks.Contains(bookmarkName))
                     {

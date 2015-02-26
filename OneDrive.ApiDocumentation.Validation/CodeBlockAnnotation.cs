@@ -47,8 +47,14 @@ namespace OneDrive.ApiDocumentation.Validation
 
         public static CodeBlockAnnotation FromJson(string json)
         {
-            
-            return JsonConvert.DeserializeObject<CodeBlockAnnotation>(json);
+            try
+            {
+                return JsonConvert.DeserializeObject<CodeBlockAnnotation>(json);
+            }
+            catch (Exception ex)
+            {
+                return new CodeBlockAnnotation() { BlockType = CodeBlockType.Ignored };
+            }
         }
     }
 

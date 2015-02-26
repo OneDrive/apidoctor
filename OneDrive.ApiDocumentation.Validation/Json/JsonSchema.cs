@@ -274,7 +274,6 @@
                     }
                     else
                     {
-//                        // TODO: Verify that the property value matches the resource schema
                         var odataSchema = schemas[schemaPropertyDef.ODataTypeName];
                         odataSchema.ValidateObjectProperties(inputProperty.CustomMembers.Values, isTruncated, schemas, detectedErrors);
                         return PropertyValidationOutcome.OK;

@@ -99,9 +99,9 @@ namespace OneDrive.ApiDocumentation.Validation
         /// <param name="baseUrl"></param>
         /// <param name="accessToken"></param>
         /// <returns></returns>
-        public async Task<ValidationResult<HttpWebRequest>> BuildRequestAsync(string baseUrl, AuthenicationCredentials credentials, ScenarioDefinition scenario = null)
+        public async Task<ValidationResult<HttpWebRequest>> BuildRequestAsync(string baseUrl, AuthenicationCredentials credentials, DocSet documents, ScenarioDefinition scenario = null)
         {
-            var previewResult = await PreviewRequestAsync(scenario, baseUrl, credentials);
+            var previewResult = await PreviewRequestAsync(scenario, baseUrl, credentials, documents);
             if (previewResult.IsWarningOrError)
             {
                 return new ValidationResult<HttpWebRequest>(null, previewResult.Messages);
@@ -112,7 +112,7 @@ namespace OneDrive.ApiDocumentation.Validation
             return new ValidationResult<HttpWebRequest>(request);
         }
 
-        public async Task<ValidationResult<HttpRequest>> PreviewRequestAsync(ScenarioDefinition scenario, string baseUrl, AuthenicationCredentials credentials)
+        public async Task<ValidationResult<HttpRequest>> PreviewRequestAsync(ScenarioDefinition scenario, string baseUrl, AuthenicationCredentials credentials, DocSet documents)
         {
             var parser = new HttpParser();
             var request = parser.ParseHttpRequest(Request);
@@ -125,7 +125,7 @@ namespace OneDrive.ApiDocumentation.Validation
                 {
                     foreach (var setupRequest in scenario.TestSetupRequests)
                     {
-                        var result = await setupRequest.MakeSetupRequestAsync(baseUrl, credentials, storedValuesForScenario);
+                        var result = await setupRequest.MakeSetupRequestAsync(baseUrl, credentials, storedValuesForScenario, documents);
                         if (result.IsWarningOrError)
                         {
                             return new ValidationResult<HttpRequest>(null, result.Messages);
@@ -218,17 +218,17 @@ namespace OneDrive.ApiDocumentation.Validation
             }
         }
 
-        public async Task<ValidationResult<HttpResponse>> ApiResponseForMethod(string baseUrl, AuthenicationCredentials credentials, ScenarioDefinition scenario = null)
-        {
-            var buildResult = await BuildRequestAsync(baseUrl, credentials, scenario);
-            if (buildResult.IsWarningOrError)
-            {
-                return new ValidationResult<HttpResponse>(null, buildResult.Messages);
-            }
+        //public async Task<ValidationResult<HttpResponse>> ApiResponseForMethod(string baseUrl, AuthenicationCredentials credentials, DocSet documents, ScenarioDefinition scenario = null)
+        //{
+        //    var buildResult = await BuildRequestAsync(baseUrl, credentials, documents, scenario);
+        //    if (buildResult.IsWarningOrError)
+        //    {
+        //        return new ValidationResult<HttpResponse>(null, buildResult.Messages);
+        //    }
 
-            var response = await HttpResponse.ResponseFromHttpWebResponseAsync(buildResult.Value);
-            return new ValidationResult<HttpResponse>(response);
-        }
+        //    var response = await HttpResponse.ResponseFromHttpWebResponseAsync(buildResult.Value);
+        //    return new ValidationResult<HttpResponse>(response);
+        //}
 
 
         class DynamicBinder : System.Dynamic.SetMemberBinder

@@ -610,7 +610,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
             FancyConsole.VerboseWriteLine("");
             FancyConsole.VerboseWriteLineIndented(indentLevel, "Request:");
-            var requestPreviewResult = await method.PreviewRequestAsync(requestSettings, rootUrl, credentials);
+            var requestPreviewResult = await method.PreviewRequestAsync(requestSettings, rootUrl, credentials, docset);
             if (requestPreviewResult.IsWarningOrError)
             {
                 WriteOutErrors(requestPreviewResult.Messages, indentLevel + "  ");
