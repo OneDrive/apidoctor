@@ -12,6 +12,8 @@ namespace OneDrive.ApiDocumentation.Validation
         private string _templateFolderPath;
         private string _templateHtml;
 
+        private const string HtmlOutputExtension = ".htm";
+
         public DocumentPublisherHtml(DocSet docs, string templateFolderPath) 
             : base(docs)
         {
@@ -39,25 +41,44 @@ namespace OneDrive.ApiDocumentation.Validation
         protected override void ConfigureOutputDirectory(DirectoryInfo destinationRoot)
         {
             // Copy everything in the template folder to the output folder except template.htm
-            DirectoryInfo templateFolder = new DirectoryInfo(_templateFolderPath);
-
-            var templateFiles = templateFolder.GetFiles();
-            foreach (var file in templateFiles)
+            if (null != _templateFolderPath)
             {
-                if (!file.Name.Equals("template.htm"))
-                {
-                    file.CopyTo(Path.Combine(destinationRoot.FullName, file.Name), true);
-                }
-            }
 
-            LoadTemplate();
+                DirectoryInfo templateFolder = new DirectoryInfo(_templateFolderPath);
+
+                var templateFiles = templateFolder.GetFiles();
+                foreach (var file in templateFiles)
+                {
+                    if (!file.Name.Equals("template.htm"))
+                    {
+                        file.CopyTo(Path.Combine(destinationRoot.FullName, file.Name), true);
+                    }
+                }
+
+                LoadTemplate();
+            }
+        }
+
+        private static void SplitUrlPathAndBookmark(string input, out string url, out string bookmark)
+        {
+            int position = input.IndexOf('#');
+            if (position < 0)
+            {
+                bookmark = string.Empty;
+                url = input;
+            }
+            else
+            {
+                url = input.Substring(0, position);
+                bookmark = input.Substring(position);
+            }
         }
 
         protected override async Task PublishFileToDestination(FileInfo sourceFile, DirectoryInfo destinationRoot)
         {
             LogMessage(new ValidationMessage(sourceFile.Name, "Publishing file to HTML"));
 
-            var destinationPath = PublishedFilePath(sourceFile, destinationRoot, ".htm");
+            var destinationPath = PublishedFilePath(sourceFile, destinationRoot, HtmlOutputExtension);
 
             StringWriter writer = new StringWriter();
             StreamReader reader = new StreamReader(sourceFile.OpenRead());
@@ -87,13 +108,13 @@ namespace OneDrive.ApiDocumentation.Validation
                 if (MarkdownDeep.Utils.IsUrlFullyQualified(url))
                     return url;
 
-                // if the URL is a relative URL to a SourceFileExtension
-                // we rewrite the URL to be to an .htm file.
+                string filePath, bookmark;
+                SplitUrlPathAndBookmark(url, out filePath, out bookmark);
                 foreach(var extension in scannableExtensions)
                 {
-                    if (url.EndsWith(extension))
+                    if (filePath.EndsWith(extension))
                     {
-                        return url.Substring(0, url.Length - extension.Length) + ".htm";
+                        return filePath.Substring(0, filePath.Length - extension.Length) + HtmlOutputExtension + bookmark;
                     }
                 }
                 return url;
@@ -111,43 +132,50 @@ namespace OneDrive.ApiDocumentation.Validation
         private async Task WriteHtmlDocumentAsync(string bodyHtml, string pageTitle, string destinationFile, string rootDestinationFolder)
         {
             List<string> variablesToReplace = new List<string>();
+            string pageHtml = null;
             if (_templateHtml != null)
             {
                 var matches = SwaggerExtensionMethods.PathVariableRegex.Matches(_templateHtml);
-                foreach(System.Text.RegularExpressions.Match match in matches)
+                foreach (System.Text.RegularExpressions.Match match in matches)
                 {
                     variablesToReplace.Add(match.Groups[0].Value);
                 }
+
+                string templateHtmlForThisPage = _templateHtml;
+
+                foreach (var key in variablesToReplace.ToArray())
+                {
+                    if (key == "{page.title}")
+                    {
+                        templateHtmlForThisPage = templateHtmlForThisPage.Replace(key, pageTitle);
+                    }
+                    else if (key == "{body.html}")
+                    {
+                        templateHtmlForThisPage = templateHtmlForThisPage.Replace(key, bodyHtml);
+                    }
+                    else if (key.StartsWith("{if "))
+                    {
+                        string value = ParseDocumentIfStatement(key, destinationFile);
+                        templateHtmlForThisPage = templateHtmlForThisPage.Replace(key, value);
+                    }
+                    else
+                    {
+                        string filename = key.Substring(1, key.Length - 2);
+                        string value = DocSet.RelativePathToRootFromFile(destinationFile, Path.Combine(rootDestinationFolder, filename), true);
+                        templateHtmlForThisPage = templateHtmlForThisPage.Replace(key, value);
+                    }
+                }
+
+                pageHtml = templateHtmlForThisPage;
             }
-
-            string templateHtmlForThisPage = _templateHtml;
-
-            foreach (var key in variablesToReplace.ToArray())
+            else
             {
-                if (key == "{page.title}")
-                {
-                    templateHtmlForThisPage = templateHtmlForThisPage.Replace(key, pageTitle);
-                }
-                else if (key == "{body.html}")
-                {
-                    templateHtmlForThisPage = templateHtmlForThisPage.Replace(key, bodyHtml);
-                }
-                else if (key.StartsWith("{if "))
-                {
-                    string value = ParseDocumentIfStatement(key, destinationFile);
-                    templateHtmlForThisPage = templateHtmlForThisPage.Replace(key, value);
-                }
-                else
-                {
-                    string filename = key.Substring(1, key.Length - 2);
-                    string value = DocSet.RelativePathToRootFromFile(destinationFile, Path.Combine(rootDestinationFolder, filename), true);
-                    templateHtmlForThisPage = templateHtmlForThisPage.Replace(key, value);
-                }
+                pageHtml = string.Concat(string.Format(htmlHeader, pageTitle, htmlStyles), bodyHtml, htmlFooter);
             }
 
             using (var outputWriter = new StreamWriter(destinationFile))
             {
-                await outputWriter.WriteAsync(templateHtmlForThisPage);
+                await outputWriter.WriteAsync(pageHtml);
             }
         }
 
