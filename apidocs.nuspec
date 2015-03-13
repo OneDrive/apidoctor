@@ -14,6 +14,6 @@
     </frameworkAssemblies>
   </metadata>
   <files>
-    <file src="OneDrive.ApiDocumentation.CommandLine/bin/debug/*" target="tools" />
+    <file src="OneDrive.ApiDocumentation.CommandLine\bin\debug\*" target="tools" />
   </files>
 </package>

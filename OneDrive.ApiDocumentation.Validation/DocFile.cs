@@ -40,6 +40,11 @@
         /// </summary>
         public string HtmlContent { get; protected set; }
 
+        /// <summary>
+        /// Contains information on the headers and content blocks found in this document.
+        /// </summary>
+        public List<string> ContentOutline { get; set; }
+
         public ResourceDefinition[] Resources
         {
             get { return m_Resources.ToArray(); }
@@ -77,7 +82,7 @@
         #region Constructor
         protected DocFile()
         {
-
+            ContentOutline = new List<string>();
         }
 
         public DocFile(string basePath, string relativePath, DocSet parent)
@@ -86,7 +91,8 @@
             FullPath = Path.Combine(basePath, relativePath.Substring(1));
             DisplayName = relativePath;
             Parent = parent;
-            
+            ContentOutline = new List<string>();
+
             m_Bookmarks = new List<string>();
         }
         #endregion
@@ -136,16 +142,6 @@
             return ParseMarkdownBlocks(out errors);
         }
 
-        private static TextWriter datawriter;
-        private static TextWriter GetWriter()
-        {
-            if (null == datawriter)
-            {
-                datawriter = new StreamWriter("doc-schema.txt") { AutoFlush = true };
-            }
-            return datawriter;
-        }
-
         private static bool IsHeaderBlock(MarkdownDeep.Block block, int maxDepth = 2)
         {
             var blockType = block.BlockType;
@@ -182,10 +178,6 @@
         {
             List<ValidationError> detectedErrors = new List<ValidationError>();
 
-            var writer = GetWriter();
-            writer.WriteLine();
-            writer.WriteLine("### " + this.DisplayName + " ###");
-
             string methodTitle = null;
             string methodDescription = null;
 
@@ -198,9 +190,7 @@
                 var previousBlock = (i > 0) ? OriginalMarkdownBlocks[i - 1] : null;
                 var block = OriginalMarkdownBlocks[i];
 
-                writer.Write(block.BlockType.ToString());
-                writer.Write(" - ");
-                writer.WriteLine(PreviewOfBlockContent(block));
+                ContentOutline.Add(string.Format("{0} - {1}", block.BlockType, PreviewOfBlockContent(block)));
 
                 // Capture GitHub Flavored Markdown Bookmarks
                 if (IsHeaderBlock(block, 6))

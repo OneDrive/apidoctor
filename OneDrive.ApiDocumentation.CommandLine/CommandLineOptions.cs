@@ -286,7 +286,8 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         {
             Markdown,
             Html,
-            Swagger2
+            Swagger2,
+            Outline
         }
     }
 }

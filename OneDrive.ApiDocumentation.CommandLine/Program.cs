@@ -657,7 +657,9 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                         Description = options.Description,
                         Version = options.Version
                     };
-                    
+                    break;
+                case PublishOptions.PublishFormat.Outline:
+                    publisher = new OutlinePublisher(docs);
                     break;
                 default:
                     throw new NotSupportedException("Unsupported format: " + options.Format.ToString());

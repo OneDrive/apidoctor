@@ -95,6 +95,7 @@
     <Compile Include="Error\ValidationMessage.cs" />
     <Compile Include="Error\ValidationResult.cs" />
     <Compile Include="Error\ValidationWarning.cs" />
+    <Compile Include="Writers\OutlinePublisher.cs" />
     <Compile Include="Writers\SwaggerWriter.cs" />
     <Compile Include="Writers\SwaggerExtensionMethods.cs" />
     <Compile Include="Writers\SwaggerClasses.cs" />
