@@ -338,7 +338,6 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
             MethodDefinition[] methods = FindTestMethods(options, docset);
 
-            bool result = true;
             int successCount = 0, errorCount = 0, warningCount = 0;
             foreach (var method in methods)
             {
@@ -355,7 +354,6 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 var parser = new HttpParser();
                 var expectedResponse = parser.ParseHttpResponse(method.ExpectedResponse);
                 ValidationError[] errors = ValidateHttpResponse(docset, method, expectedResponse);
-                result &= errors.WereErrors();
 
                 if (errors.WereErrors())
                 {
@@ -379,7 +377,8 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
             PrintStatusMessage(successCount, warningCount, errorCount);
 
-            Exit(failure: !result);
+            bool wasFailure = errorCount > 0;
+            Exit(failure: wasFailure);
         }
 
         private static MethodDefinition[] FindTestMethods(ConsistencyCheckOptions options, DocSet docset)
