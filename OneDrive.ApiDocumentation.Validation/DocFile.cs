@@ -289,6 +289,8 @@
                 - Find request with matching parameters
              */
 
+            List<ValidationError> detectedErrors = new List<ValidationError>();
+
             var foundMethods = from s in elementsFoundInDocument
                                where s is MethodDefinition
                                select (MethodDefinition)s;
@@ -303,9 +305,9 @@
 
             PostProcessAuthScopes(elementsFoundInDocument);
             PostProcessResources(foundResources, foundTables);
-            PostProcessMethods(foundMethods, foundTables);
-            
-            postProcessingErrors = new ValidationError[0];
+            PostProcessMethods(foundMethods, foundTables, detectedErrors);
+
+            postProcessingErrors = detectedErrors.ToArray();
         }
 
         private void PostProcessAuthScopes(List<object> StuffFoundInThisDoc)
@@ -339,7 +341,7 @@
             }
         }
 
-        private void PostProcessMethods(IEnumerable<MethodDefinition> foundMethods, IEnumerable<TableDefinition> foundTables)
+        private void PostProcessMethods(IEnumerable<MethodDefinition> foundMethods, IEnumerable<TableDefinition> foundTables, List<ValidationError> errors)
         {
             var totalMethods = foundMethods.Count();
             var totalTables = foundTables.Count();
@@ -359,9 +361,18 @@
             else
             {
                 // TODO: Figure out how to map stuff when more than one method exists
-                Console.WriteLine("Failed to map elements in file {0}", DisplayName);
-                Console.WriteLine(" Methods:\r\n  {0}", (from m in foundMethods select m.RequestMetadata.MethodName).ComponentsJoinedByString("\r\n  "));
-                Console.WriteLine(" Tables:\r\n  {0}", (from t in foundTables select string.Format("{0} - {1}", t.Title, t.Type)).ComponentsJoinedByString("\r\n  "));
+                if (null != errors)
+                {
+                    errors.Add(new ValidationWarning(ValidationErrorCode.UnmappedDocumentElements, "Unable to map elements in file {0}", DisplayName));
+                    
+                    var unmappedMethods = (from m in foundMethods select m.RequestMetadata.MethodName).ComponentsJoinedByString("\r\n");
+                    if (!string.IsNullOrEmpty(unmappedMethods)) 
+                        errors.Add(new ValidationMessage("Unmapped methods", unmappedMethods));
+
+                    var unmappedTables = (from t in foundTables select string.Format("{0} - {1}", t.Title, t.Type)).ComponentsJoinedByString("\r\n");
+                    if (!string.IsNullOrEmpty(unmappedTables)) 
+                        errors.Add(new ValidationMessage("Unmapped tables", unmappedTables));
+                }
             }
         }
 

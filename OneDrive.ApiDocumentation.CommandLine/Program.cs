@@ -744,7 +744,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             {
                 if (!string.IsNullOrEmpty(Program.DefaultSettings.ServiceUrl))
                 {
-                    options.ServiceMetadataLocation = Program.DefaultSettings.ServiceUrl + "$metadata";
+                    options.ServiceMetadataLocation = Program.DefaultSettings.ServiceUrl + "/$metadata";
                 }
                 else
                 {
@@ -793,17 +793,20 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 ValidationError[] errors;
                 docSet.ResourceCollection.ValidateJsonExample(resource.Metadata, resource.JsonExample, out errors);
 
-                if (!errors.WereErrors() && !errors.WereWarnings())
+                var wereErrors = errors.WereErrors() || (!options.SilenceWarnings && errors.WereWarnings());
+                if (!wereErrors)
                 {
                     FancyConsole.WriteLine(ConsoleSuccessColor, "  no errors.");
                     successCount++;
                 }
                 else
                 {
-                    if (errors.WereWarnings() && !errors.WereErrors())
+                    if (errors.WereErrors())
+                        errorCount++;
+                    else if ((!options.IgnoreWarnings && !options.SilenceWarnings) && errors.WereWarnings())
                         warningCount++;
                     else
-                        errorCount++;
+                        successCount++;
                     
                     FancyConsole.WriteLine();
                     WriteOutErrors(errors, options.SilenceWarnings, "  ");

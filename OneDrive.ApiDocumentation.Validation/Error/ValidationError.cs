@@ -63,7 +63,8 @@
         HttpRequestParameterInvalid,
         HttpRequestMissingAllowedStatusCodes,
         TypeConversionFailure,
-        OrphanedDocumentPage
+        OrphanedDocumentPage,
+        UnmappedDocumentElements
 
     }
 
