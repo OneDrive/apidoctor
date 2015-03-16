@@ -22,6 +22,8 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         private const ConsoleColor ConsoleWarningColor = ConsoleColor.Yellow;
         private const ConsoleColor ConsoleSuccessColor = ConsoleColor.Green;
 
+        public static readonly SavedSettings DefaultSettings = new SavedSettings("ApiTestTool", "settings.json");
+
         static void Main(string[] args)
         {
             string verbName = null;
@@ -66,12 +68,12 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                     // Just print out the current values of the set parameters
                     FancyConsole.WriteLine(origCommandLineOpts.GetUsage(invokedVerb));
                     FancyConsole.WriteLine();
-                    WriteSavedValues(SavedSettings.Default);
+                    WriteSavedValues(Program.DefaultSettings);
                     Exit(failure: true);
                 }
                 var error = new ValidationError(ValidationErrorCode.MissingRequiredArguments, null, "Command line is missing required arguments: {0}", missingProps.ComponentsJoinedByString(", "));
                 FancyConsole.WriteLine(origCommandLineOpts.GetUsage(invokedVerb));
-                WriteOutErrors(new ValidationError[] { error });
+                WriteOutErrors(new ValidationError[] { error }, options.SilenceWarnings);
                 Exit(failure: true);
             }
 
@@ -104,7 +106,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
         private static void SetDefaultValues(SetCommandOptions setCommandOptions)
         {
-            var settings = SavedSettings.Default;
+            var settings = Program.DefaultSettings;
             if (setCommandOptions.ResetStoredValues)
             {
                 settings.AccessToken = null;
@@ -164,7 +166,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             ValidationError[] loadErrors;
             if (!set.ScanDocumentation(out loadErrors) && options.ShowLoadWarnings)
             {
-                WriteOutErrors(loadErrors);
+                WriteOutErrors(loadErrors, options.SilenceWarnings);
             }
 
             var serviceOptions = options as ServiceConsistencyOptions;
@@ -236,7 +238,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
             if (null != errors && errors.Length > 0)
             {
-                WriteOutErrors(errors);
+                WriteOutErrors(errors, options.SilenceWarnings);
                 if (!errors.WereWarningsOrErrors())
                 {
                     FancyConsole.WriteLine(ConsoleSuccessColor, "No link errors detected.");
@@ -353,7 +355,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
                 var parser = new HttpParser();
                 var expectedResponse = parser.ParseHttpResponse(method.ExpectedResponse);
-                ValidationError[] errors = ValidateHttpResponse(docset, method, expectedResponse);
+                ValidationError[] errors = ValidateHttpResponse(docset, method, expectedResponse, options.SilenceWarnings);
 
                 if (errors.WereErrors())
                 {
@@ -412,12 +414,18 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             return methods;
         }
 
-        private static void WriteOutErrors(IEnumerable<ValidationError> errors, string indent = "")
+        private static void WriteOutErrors(IEnumerable<ValidationError> errors, bool silenceWarnings, string indent = "")
         {
             foreach (var error in errors)
             {
+                // Skip messages if verbose output is off
                 if (!error.IsWarning && !error.IsError && !FancyConsole.WriteVerboseOutput)
                     continue;
+
+                // Skip warnings if silence warnings is enabled.
+                if (silenceWarnings && error.IsWarning)
+                    continue;
+
                 WriteValidationError(indent, error);
             }
         }
@@ -435,13 +443,14 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             FancyConsole.WriteLineIndented(indent, color, error.ErrorText);
         }
 
-        private static ValidationError[] ValidateHttpResponse(DocSet docset, MethodDefinition method, HttpResponse response, HttpResponse expectedResponse = null, string indentLevel = "")
+        private static ValidationError[] ValidateHttpResponse(DocSet docset, MethodDefinition method, HttpResponse response, bool silenceWarnings, HttpResponse expectedResponse = null, string indentLevel = "")
         {
             ValidationError[] errors;
-            if (!docset.ValidateApiMethod(method, response, expectedResponse, out errors))
+            bool errorsOccured = !docset.ValidateApiMethod(method, response, expectedResponse, out errors, silenceWarnings);
+            if (errorsOccured)
             {
                 FancyConsole.WriteLine();
-                WriteOutErrors(errors, indentLevel + "  ");
+                WriteOutErrors(errors, silenceWarnings, indentLevel + "  ");
                 FancyConsole.WriteLine();
             }
             else
@@ -469,6 +478,19 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             var docset = GetDocSet(options);
             FancyConsole.WriteLine();
 
+            if (options.UseEnvironmentVariables)
+            {
+                // Generate a new auth token from environment variables
+                var token = await OAuthTokenGenerator.RedeemRefreshTokenFromEnvironment();
+                if (token == null)
+                {
+                    FancyConsole.WriteLine(ConsoleErrorColor, "Unable to retrieve access token from environment variables");
+                    Exit(failure: true);
+                    return;
+                }
+                options.AccessToken = token.AccessToken;
+            }
+
             var methods = FindTestMethods(options, docset);
             int successCount = 0, warningCount = 0, errorCount = 0;
             bool result = true;
@@ -482,7 +504,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 {
                     // If there are no parameters defined, we still try to call the request as-is.
                     FancyConsole.WriteLine(ConsoleCodeColor, "\r\n  Method {0} has no scenario defined. Running as-is from docs.", method.RequestMetadata.MethodName);
-                    var errors = await TestMethodWithParameters(docset, method, null, options.ServiceRootUrl, credentials);
+                    var errors = await TestMethodWithParameters(docset, method, null, options.ServiceRootUrl, credentials, options.SilenceWarnings);
                     if (errors.WereErrors())
                     {
                         errorCount++;
@@ -509,7 +531,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                     {
                         foreach (var requestSettings in testScenarios.Where(s => s.Enabled))
                         {
-                            var errors = await TestMethodWithParameters(docset, method, requestSettings, options.ServiceRootUrl, credentials);
+                            var errors = await TestMethodWithParameters(docset, method, requestSettings, options.ServiceRootUrl, credentials, options.SilenceWarnings);
                             if (errors.WereErrors())
                             {
                                 errorCount++;
@@ -530,7 +552,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 FancyConsole.WriteLine();
             }
 
-            if (options.IgnoreWarnings)
+            if (options.IgnoreWarnings || options.SilenceWarnings)
             {
                 successCount += warningCount;
                 warningCount = 0;
@@ -597,7 +619,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             }
         }
 
-        private static async Task<ValidationError[]> TestMethodWithParameters(DocSet docset, MethodDefinition method, ScenarioDefinition requestSettings, string rootUrl, AuthenicationCredentials credentials)
+        private static async Task<ValidationError[]> TestMethodWithParameters(DocSet docset, MethodDefinition method, ScenarioDefinition requestSettings, string rootUrl, AuthenicationCredentials credentials, bool silenceWarnings)
         {
             string indentLevel = "";
             if (requestSettings != null)
@@ -612,7 +634,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             var requestPreviewResult = await method.PreviewRequestAsync(requestSettings, rootUrl, credentials, docset);
             if (requestPreviewResult.IsWarningOrError)
             {
-                WriteOutErrors(requestPreviewResult.Messages, indentLevel + "  ");
+                WriteOutErrors(requestPreviewResult.Messages, silenceWarnings, indentLevel + "  ");
                 return requestPreviewResult.Messages;
             }
             
@@ -630,7 +652,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             FancyConsole.VerboseWriteLine();
             
             FancyConsole.VerboseWriteLineIndented(indentLevel, "Validation results:");
-            return ValidateHttpResponse(docset, method, actualResponse, expectedResponse, indentLevel);
+            return ValidateHttpResponse(docset, method, actualResponse, silenceWarnings, expectedResponse, indentLevel);
         }
 
         private static async Task PublishDocumentationAsync(PublishOptions options)
@@ -651,7 +673,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                     publisher = new DocumentPublisherHtml(docs, options.HtmlTemplateFolder);
                     break;
                 case PublishOptions.PublishFormat.Swagger2:
-                    publisher = new OneDrive.ApiDocumentation.Validation.Writers.SwaggerWriter(docs, SavedSettings.Default.ServiceUrl)
+                    publisher = new OneDrive.ApiDocumentation.Validation.Writers.SwaggerWriter(docs, Program.DefaultSettings.ServiceUrl)
                     {
                         Title = options.Title,
                         Description = options.Description,
@@ -699,9 +721,9 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         {
             if (string.IsNullOrEmpty(options.ServiceMetadataLocation))
             {
-                if (!string.IsNullOrEmpty(SavedSettings.Default.ServiceUrl))
+                if (!string.IsNullOrEmpty(Program.DefaultSettings.ServiceUrl))
                 {
-                    options.ServiceMetadataLocation = SavedSettings.Default.ServiceUrl + "$metadata";
+                    options.ServiceMetadataLocation = Program.DefaultSettings.ServiceUrl + "$metadata";
                 }
                 else
                 {
@@ -763,7 +785,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                         errorCount++;
                     
                     FancyConsole.WriteLine();
-                    WriteOutErrors(errors, "  ");
+                    WriteOutErrors(errors, options.SilenceWarnings, "  ");
                 }
                 FancyConsole.WriteLine();
             }

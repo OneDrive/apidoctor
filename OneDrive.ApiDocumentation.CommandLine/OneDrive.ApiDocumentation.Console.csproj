@@ -60,6 +60,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Auth\OAuthTokenGenerator.cs" />
     <Compile Include="CommandLineOptions.cs" />
     <Compile Include="FancyConsole.cs" />
     <Compile Include="Program.cs" />

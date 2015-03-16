@@ -10,9 +10,6 @@
 
     public class SavedSettings
     {
-        private const string AppName = "ApiTestTool";
-        private const string DataFilename = "settings.json";
-
         [JsonProperty("path")]
         public string DocumentationPath { get; set; }
         [JsonProperty("access-token")]
@@ -20,21 +17,17 @@
         [JsonProperty("url")]
         public string ServiceUrl { get; set; }
 
-        private static SavedSettings DefaultInstance;
-        public static SavedSettings Default
-        {
-            get
-            {
-                if (null == DefaultInstance)
-                {
-                    DefaultInstance = new SavedSettings();
-                }
-                return DefaultInstance;
-            }
-        }
+        [JsonIgnore()]
+        public string AppName { get; private set; }
+        [JsonIgnore()]
+        public string DataFilename { get; private set; }
 
-        public SavedSettings()
+
+        public SavedSettings(string appname, string dataFilename)
         {
+            AppName = appname;
+            DataFilename = dataFilename;
+
             Load();
         }
 

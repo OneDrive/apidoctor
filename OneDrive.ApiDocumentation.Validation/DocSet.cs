@@ -126,7 +126,7 @@
         /// <param name="response"></param>
         /// <param name="expectedResponse"></param>
         /// <returns></returns>
-        public bool ValidateApiMethod(MethodDefinition method, Http.HttpResponse response, Http.HttpResponse expectedResponse, out ValidationError[] errors)
+        public bool ValidateApiMethod(MethodDefinition method, Http.HttpResponse response, Http.HttpResponse expectedResponse, out ValidationError[] errors, bool silenceWarnings)
         {
             if (null == method) throw new ArgumentNullException("method");
             if (null == response) throw new ArgumentNullException("response");
@@ -167,7 +167,15 @@
             }
 
             errors = detectedErrors.ToArray();
-            return errors.Length == 0;
+
+            if (silenceWarnings)
+            {
+                return errors.Where(x => x.IsError).Count() == 0;
+            }
+            else
+            {
+                return errors.Length == 0;
+            }
         }
 
         /// <summary>

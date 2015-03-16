@@ -18,6 +18,8 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         public const string VerbPublish = "publish";
         public const string VerbMetadata = "check-metadata";
 
+        
+
         public CommandLineOptions()
         {
 
@@ -56,6 +58,13 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
         [Option("log", HelpText="Write the console output to file.")]
         public string LogFile { get; set; }
+
+        [Option("ignore-warnings", HelpText = "Ignore warnings as errors for pass rate.")]
+        public bool IgnoreWarnings { get; set; }
+
+        [Option("silence-warnings", HelpText = "Don't print warnings to the screen or consider them errors")]
+        public bool SilenceWarnings { get; set; }
+
 
 #if DEBUG
         [Option("debug", HelpText="Launch the debugger before doing anything interesting")]
@@ -111,7 +120,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             List<string> props = new List<string>();
 
             string value = PathToDocSet;
-            if (!MakePropertyValid(ref value, SavedSettings.Default.DocumentationPath))
+            if (!MakePropertyValid(ref value, Program.DefaultSettings.DocumentationPath))
             {
                 props.Add(PathArgument);
             }
@@ -200,8 +209,6 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         [Option("file", HelpText="Name of the doc file to test. If missing, all methods are tested.", MutuallyExclusiveSet="fileOrMethod")]
         public string FileName { get; set; }
 
-        [Option("ignore-warnings", HelpText="Ignore warnings as critical errors")]
-        public bool IgnoreWarnings { get; set; }
     }
 
     class ServiceConsistencyOptions : ConsistencyCheckOptions
@@ -222,21 +229,43 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         [Option("pause", HelpText="Pause between method requests.")]
         public bool PauseBetweenRequests { get; set; }
 
+
+        // OAuth 2 Token Generator Properties
+        [Option("refresh-token", HelpText="Refresh token for authentication.")]
+        public string RefreshToken { get; set; }
+        [Option("token-service", HelpText = "OAuth 2 token service to exchange refresh token for access token")]
+        public string TokenServiceUrl { get; set; }
+        [Option("client-id", HelpText = "Client ID used in token generation")]
+        public string ClientId { get; set; }
+        [Option("client-secret", HelpText = "Client secret for token generation")]
+        public string ClientSecret { get; set; }
+        [Option("redirect-uri", HelpText = "Redirect URI used with refresh token")]
+        public string RedirectUri { get; set; }
+
+        [Option("use-environment-variables", HelpText="Read OAuth values from environment variables")]
+        public bool UseEnvironmentVariables { get; set; }
+
+
         public override bool HasRequiredProperties(out string[] missingArguments)
         {
             bool result = base.HasRequiredProperties(out missingArguments);
             if (!result) return result;
 
             List<string> props = new List<string>(missingArguments);
-            
-            string checkValue = AccessToken;
-            if (!MakePropertyValid(ref checkValue, SavedSettings.Default.AccessToken))
-                props.Add(AccessTokenArgument);
-            else
-                AccessToken = checkValue;
+
+            string checkValue = null;
+
+            if (!UseEnvironmentVariables)
+            {
+                checkValue = AccessToken;
+                if (!MakePropertyValid(ref checkValue, Program.DefaultSettings.AccessToken))
+                    props.Add(AccessTokenArgument);
+                else
+                    AccessToken = checkValue;
+            }
 
             checkValue = ServiceRootUrl;
-            if (!MakePropertyValid(ref checkValue, SavedSettings.Default.ServiceUrl))
+            if (!MakePropertyValid(ref checkValue, Program.DefaultSettings.ServiceUrl))
                 props.Add(ServiceUrlArgument);
             ServiceRootUrl = checkValue;
 
