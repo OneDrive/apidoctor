@@ -493,7 +493,6 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
             var methods = FindTestMethods(options, docset);
             int successCount = 0, warningCount = 0, errorCount = 0;
-            bool result = true;
             foreach (var method in methods)
             {
                 FancyConsole.Write(ConsoleHeaderColor, "Calling method \"{0}\"...", method.Identifier);
@@ -559,8 +558,8 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             }
 
             PrintStatusMessage(successCount, warningCount, errorCount);
-            result = (errorCount > 0) || (warningCount > 0);
-            Exit(!result);
+            bool wereFailures = (errorCount > 0) || (warningCount > 0);
+            Exit(failure: wereFailures);
         }
 
         private static void Exit(bool failure)
