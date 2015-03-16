@@ -100,7 +100,29 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 case CommandLineOptions.VerbMetadata:
                     await CheckServiceMetadata((CheckMetadataOptions)options);
                     break;
+                case CommandLineOptions.VerbAbout:
+                    PrintAboutMessage();
+                    Exit(failure: false);
+                    break;
             }
+        }
+
+        private static void PrintAboutMessage()
+        {
+            FancyConsole.WriteLine();
+            FancyConsole.WriteLine(ConsoleColor.Cyan, "apidocs.exe - API Documentation Test Tool");
+            FancyConsole.WriteLine(ConsoleColor.Cyan, "Copyright (c) 2015");
+            FancyConsole.WriteLine();
+            FancyConsole.WriteLine(ConsoleColor.Cyan, "For more information see http://github.com/onedrive/markdown-scanner/");
+            FancyConsole.WriteLine();
+            FancyConsole.WriteLine(ConsoleColor.Cyan, "Includes or links with OSS code from:");
+            FancyConsole.WriteLine();
+            FancyConsole.WriteLine(ConsoleColor.Cyan, "MarkdownDeep - http://www.toptensoftware.com/markdowndeep");
+            FancyConsole.WriteLine(ConsoleColor.Cyan, "Copyright (C) 2010-2011 Topten Software");
+            FancyConsole.WriteLine();
+            FancyConsole.WriteLine(ConsoleColor.Cyan, "Nito.AsyncEx - https://github.com/StephenCleary/AsyncEx");
+            FancyConsole.WriteLine(ConsoleColor.Cyan, "Copyright (c) 2014 StephenCleary");
+            FancyConsole.WriteLine();
         }
 
 

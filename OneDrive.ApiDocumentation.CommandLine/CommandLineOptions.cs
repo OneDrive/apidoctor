@@ -17,7 +17,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         public const string VerbService = "check-service";
         public const string VerbPublish = "publish";
         public const string VerbMetadata = "check-metadata";
-
+        public const string VerbAbout = "about";
         
 
         public CommandLineOptions()
@@ -45,6 +45,9 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
         [VerbOption(VerbMetadata, HelpText="Check service CSDL metadata against documentation.")]
         public CheckMetadataOptions CheckMetadataVerb { get; set; }
+
+        [VerbOption(VerbAbout, HelpText="Print about information for this application.")]
+        public BaseOptions AboutVerb { get; set; }
 
         [HelpVerbOption]
         public string GetUsage(string verb)
