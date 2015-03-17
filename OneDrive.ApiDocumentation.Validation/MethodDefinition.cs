@@ -292,23 +292,6 @@ namespace OneDrive.ApiDocumentation.Validation
         #endregion
 
         #region Parameter Parsing
-        //public void ParseParameters()
-        //{
-        //    // Get the path parameters
-
-        //    string relativePath, queryString, httpMethod;
-        //    SplitRequestUrl(out relativePath, out queryString, out httpMethod);
-
-        //    Parameters.AddRange(from pv in CapturePathVariables(relativePath)
-        //                        select new ParameterDefinition()
-        //                        { 
-        //          Name = pv, 
-        //          Location = ParameterLocation.Path,
-        //          Type = JsonDataType.String,
-        //          Required = true
-        //        });
-        //}
-
         public void SplitRequestUrl(out string relativePath, out string queryString, out string httpMethod)
         {
             var parser = new Http.HttpParser();
@@ -317,28 +300,6 @@ namespace OneDrive.ApiDocumentation.Validation
 
             request.Url.SplitUrlComponents(out relativePath, out queryString);
         }
-
-        //private static System.Text.RegularExpressions.Regex PathVariableRegex = new System.Text.RegularExpressions.Regex("{(?<var>.*)}");
-
-        ///// <summary>
-        ///// Scan a relative path sequence of the URL for variables in curly
-        ///// braces {foo}
-        ///// </summary>
-        ///// <returns>The path variables.</returns>
-        ///// <param name="relativePath">Relative path.</param>
-        //private static string[] CapturePathVariables(string relativePath)
-        //{
-        //    var matches = PathVariableRegex.Matches(relativePath);
-        //    List<string> variables = new List<string>();
-        //    for(int i=0; i<matches.Count; i++)
-        //    {
-        //        var match = matches[i];
-        //        var capture = match.Groups["var"].Value;
-        //        variables.Add(capture);
-        //    }
-        //    return variables.ToArray();
-        //}
-
         #endregion
 
         #region Deep extraction properties
