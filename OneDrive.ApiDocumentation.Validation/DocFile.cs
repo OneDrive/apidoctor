@@ -18,7 +18,7 @@
         protected List<MarkdownDeep.Block> m_CodeBlocks = new List<MarkdownDeep.Block>();
         protected List<ResourceDefinition> m_Resources = new List<ResourceDefinition>();
         protected List<MethodDefinition> m_Requests = new List<MethodDefinition>();
-        protected List<ResourceDefinition> m_JsonExamples = new List<ResourceDefinition>();
+        protected List<ExampleDefinition> m_JsonExamples = new List<ExampleDefinition>();
         protected List<string> m_Bookmarks = new List<string>();
 
 //        protected List<MarkdownDeep.LinkInfo> m_Links = new List<MarkdownDeep.LinkInfo>();
@@ -54,6 +54,8 @@
         {
             get { return m_Requests.ToArray(); }
         }
+
+        public ExampleDefinition[] Examples { get { return m_JsonExamples.ToArray(); } }
 
         public AuthScopeDefinition[] AuthScopes { get; private set; }
 

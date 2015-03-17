@@ -111,7 +111,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         {
             FancyConsole.WriteLine();
             FancyConsole.WriteLine(ConsoleColor.Cyan, "apidocs.exe - API Documentation Test Tool");
-            FancyConsole.WriteLine(ConsoleColor.Cyan, "Copyright (c) 2015");
+            FancyConsole.WriteLine(ConsoleColor.Cyan, "Copyright (c) 2015 Microsoft Corporation");
             FancyConsole.WriteLine();
             FancyConsole.WriteLine(ConsoleColor.Cyan, "For more information see http://github.com/onedrive/markdown-scanner/");
             FancyConsole.WriteLine();
@@ -360,38 +360,10 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             var docset = GetDocSet(options);
             FancyConsole.WriteLine();
 
-            MethodDefinition[] methods = FindTestMethods(options, docset);
-
             int successCount = 0, errorCount = 0, warningCount = 0;
-            foreach (var method in methods)
-            {
-                FancyConsole.Write(ConsoleHeaderColor, "Checking \"{0}\" in {1}...", method.Identifier, method.SourceFile.DisplayName);
 
-                if (string.IsNullOrEmpty(method.ExpectedResponse))
-                {
-                    FancyConsole.WriteLine();
-                    FancyConsole.WriteLine(ConsoleErrorColor, "  Error: response was null.");
-                    errorCount++;
-                    continue;
-                }
-
-                var parser = new HttpParser();
-                var expectedResponse = parser.ParseHttpResponse(method.ExpectedResponse);
-                ValidationError[] errors = ValidateHttpResponse(docset, method, expectedResponse, options.SilenceWarnings);
-
-                if (errors.WereErrors())
-                {
-                    errorCount++;
-                }
-                else if (errors.WereWarnings())
-                {
-                    warningCount++;
-                }
-                else
-                {
-                    successCount++;
-                }
-            }
+            CheckMethods(options, docset, ref successCount, ref errorCount, ref warningCount);
+            CheckExamples(options, docset, ref successCount, ref errorCount, ref warningCount);
 
             if (options.IgnoreWarnings)
             {
@@ -403,6 +375,68 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
             bool wasFailure = errorCount > 0;
             Exit(failure: wasFailure);
+        }
+
+        private static void CheckExamples(ConsistencyCheckOptions options, DocSet docset, ref int successCount, ref int errorCount, ref int warningCount)
+        {
+            foreach (var doc in docset.Files)
+            {
+                if (doc.Examples.Length == 0)
+                    continue;
+
+                FancyConsole.WriteLine(ConsoleHeaderColor, "Checking examples in \"{0}\"...", doc.DisplayName);
+
+                foreach (var example in doc.Examples)
+                {
+                    if (example.Metadata == null)
+                        continue;
+
+                    FancyConsole.Write("  Example: {0} [{1}]", example.Metadata.MethodName, example.Metadata.ResourceType);
+                    var resourceType = example.Metadata.ResourceType;
+                    ValidationError[] errors;
+                    docset.ResourceCollection.ValidateJsonExample(example.Metadata, example.OriginalExample, out errors);
+                    if (errors.WereErrors())
+                        errorCount++;
+                    else if (errors.WereWarnings())
+                        warningCount++;
+                    else
+                        successCount++;
+
+                    WriteOutErrors(errors, options.SilenceWarnings, "    ", " no errors.", true);
+                }
+            }
+        }
+
+        private static void CheckMethods(ConsistencyCheckOptions options, DocSet docset, ref int successCount, ref int errorCount, ref int warningCount)
+        {
+            MethodDefinition[] methods = FindTestMethods(options, docset);
+            foreach (var method in methods)
+            {
+                FancyConsole.Write(ConsoleHeaderColor, "Checking \"{0}\" in {1}...", method.Identifier, method.SourceFile.DisplayName);
+                if (string.IsNullOrEmpty(method.ExpectedResponse))
+                {
+                    FancyConsole.WriteLine();
+                    FancyConsole.WriteLine(ConsoleErrorColor, "  Error: response was null.");
+                    errorCount++;
+                    continue;
+                }
+                var parser = new HttpParser();
+                var expectedResponse = parser.ParseHttpResponse(method.ExpectedResponse);
+                ValidationError[] errors = ValidateHttpResponse(docset, method, expectedResponse, options.SilenceWarnings);
+                if (errors.WereErrors())
+                {
+                    errorCount++;
+                }
+                else
+                    if (errors.WereWarnings())
+                    {
+                        warningCount++;
+                    }
+                    else
+                    {
+                        successCount++;
+                    }
+            }
         }
 
         private static MethodDefinition[] FindTestMethods(ConsistencyCheckOptions options, DocSet docset)
@@ -436,8 +470,9 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             return methods;
         }
 
-        private static void WriteOutErrors(IEnumerable<ValidationError> errors, bool silenceWarnings, string indent = "")
+        private static void WriteOutErrors(IEnumerable<ValidationError> errors, bool silenceWarnings, string indent = "", string successMessage = null, bool endLine = false)
         {
+            bool writeSuccessMessage = true;
             foreach (var error in errors)
             {
                 // Skip messages if verbose output is off
@@ -448,7 +483,15 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 if (silenceWarnings && error.IsWarning)
                     continue;
 
+                writeSuccessMessage = false;
+                if (endLine)
+                    FancyConsole.WriteLine();
                 WriteValidationError(indent, error);
+            }
+
+            if (writeSuccessMessage && successMessage != null)
+            {
+                FancyConsole.WriteLine(ConsoleSuccessColor, successMessage);
             }
         }
 
