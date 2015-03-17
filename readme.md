@@ -104,9 +104,10 @@ format or you can convert the output to another supported format.
 |:---------------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `--output <path>`          | Required. Output directory for sanitized documentation.                                                                                                                               |
 | `--extensions <value>`     | Specify a common separated list of file extensions that are considered "documentation files" and should be processed. Default is `.md,.mdown`.                                        |
-| `--format [markdown,html]` | Specify the format for the output documentation. Either `markdown` (default) or `html`.                                                                                               |
+| `--format [markdown,html,swagger2]` | Specify the format for the output documentation. Either `markdown` (default) or `html`.                                                                                               |
 | `--ignore-path <value>`    | Specify a semicolon separated list of paths in the documentation that should never be copied to output. Default is `\internal;\.git;\.gitignore;\generate_html_output`.               |
 | `--include-all`            | Default: true. Specify that all files, even those which are not in the extension list, are copied to the output location. This allows graphics and other non-text files to be copied. |
+| `--html-template <value`   | Specify the path to a folder that contains HTML template content. The tool expects to find template.htm in this folder, and copies all other files and folders from the folder to the output folder |
 
 Example: `apidocs --path ~/github/api-docs --output ~/documents/docs`
 
