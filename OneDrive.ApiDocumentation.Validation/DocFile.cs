@@ -351,12 +351,12 @@
 
             if (totalMethods == 0)
             {
-                StoreOnFile(foundTables);
+                SetFoundTablesForFile(foundTables);
             }
             else if (totalMethods == 1)
             {
                 var onlyMethod = foundMethods.Single();
-                StoreOnMethod(foundTables, onlyMethod);
+                SetFoundTablesOnMethod(foundTables, onlyMethod);
             }
             else
             {
@@ -376,7 +376,7 @@
             }
         }
 
-        private static void StoreOnMethod(IEnumerable<TableDefinition> foundTables, MethodDefinition onlyMethod)
+        private static void SetFoundTablesOnMethod(IEnumerable<TableDefinition> foundTables, MethodDefinition onlyMethod)
         {
             foreach (var table in foundTables)
             {
@@ -411,7 +411,7 @@
             }
         }
 
-        private void StoreOnFile(IEnumerable<TableDefinition> foundTables)
+        private void SetFoundTablesForFile(IEnumerable<TableDefinition> foundTables)
         {
             // Assume anything we found is a global resource
             foreach (var table in foundTables)
@@ -424,47 +424,6 @@
                 }
             }
         }
-
-        ///// <summary>
-        ///// Parse through the markdown blocks and intprerate the documents into
-        ///// our internal object model.
-        ///// </summary>
-        ///// <returns><c>true</c>, if code blocks was parsed, <c>false</c> otherwise.</returns>
-        ///// <param name="errors">Errors.</param>
-        //protected bool ParseMarkdownBlocksOld(out ValidationError[] errors)
-        //{
-        //    List<ValidationError> detectedErrors = new List<ValidationError>();
-
-        //    // Scan through the blocks to find something interesting
-        //    m_CodeBlocks = FindCodeBlocks(OriginalMarkdownBlocks);
-
-        //    for (int i = 0; i < m_CodeBlocks.Count; )
-        //    {
-        //        // We're looking for pairs of html + code blocks. The HTML block contains metadata about the block.
-        //        // If we don't find an HTML block, then we skip the code block.
-        //        var htmlComment = m_CodeBlocks[i];
-        //        if (htmlComment.BlockType != MarkdownDeep.BlockType.html)
-        //        {
-        //            detectedErrors.Add(new ValidationMessage(FullPath, "Block skipped - expected HTML comment, found: {0}", htmlComment.BlockType, htmlComment.Content));
-        //            i++;
-        //            continue;
-        //        }
-
-        //        try
-        //        {
-        //            var codeBlock = m_CodeBlocks[i + 1];
-        //            ParseCodeBlock(htmlComment, codeBlock);
-        //        }
-        //        catch (Exception ex)
-        //        {
-        //            detectedErrors.Add(new ValidationError(ValidationErrorCode.MarkdownParserError, FullPath, "Exception while parsing code blocks: {0}.", ex.Message));
-        //        }
-        //        i += 2;
-        //    }
-
-        //    errors = detectedErrors.ToArray();
-        //    return detectedErrors.Count == 0;
-        //}
 
         /// <summary>
         /// Filters the blocks to just a collection of blocks that may be
@@ -719,13 +678,5 @@
         #endregion
 
     }
-
-    public enum DocType
-    {
-        Unknown = 0,
-        Resource,
-        MethodRequest
-    }
-
 
 }
