@@ -13,6 +13,7 @@ namespace OneDrive.ApiDocumentation.Validation
         private string _templateHtml;
 
         private const string HtmlOutputExtension = ".htm";
+        private const string TemplateHtmlFilename = "template.htm";
 
         public DocumentPublisherHtml(DocSet docs, string templateFolderPath) 
             : base(docs)
@@ -22,19 +23,27 @@ namespace OneDrive.ApiDocumentation.Validation
 
         private void LoadTemplate()
         {
-            if (string.IsNullOrEmpty(_templateFolderPath)) return;
+            if (string.IsNullOrEmpty(_templateFolderPath) ||
+                !string.IsNullOrEmpty(_templateHtml))
+            {
+                return;
+            }
 
             DirectoryInfo dir = new DirectoryInfo(_templateFolderPath);
-            if (!dir.Exists) return;
+            if (!dir.Exists)
+            {
+                return;
+            }
 
             _templateFolderPath = dir.FullName;
 
-            var templateFilePath = Path.Combine(dir.FullName, "template.htm");
+            var templateFilePath = Path.Combine(dir.FullName, TemplateHtmlFilename);
             if (!File.Exists(templateFilePath))
+            {
                 return;
+            }
 
             Console.WriteLine("Using template: {0}", templateFilePath);
-
             _templateHtml = File.ReadAllText(templateFilePath);
         }
 
@@ -43,19 +52,60 @@ namespace OneDrive.ApiDocumentation.Validation
             // Copy everything in the template folder to the output folder except template.htm
             if (null != _templateFolderPath)
             {
-
                 DirectoryInfo templateFolder = new DirectoryInfo(_templateFolderPath);
 
                 var templateFiles = templateFolder.GetFiles();
                 foreach (var file in templateFiles)
                 {
-                    if (!file.Name.Equals("template.htm"))
+                    if (!file.Name.Equals(TemplateHtmlFilename))
                     {
                         file.CopyTo(Path.Combine(destinationRoot.FullName, file.Name), true);
                     }
                 }
+                var templateFolders = templateFolder.GetDirectories();
+                foreach (var folder in templateFolders)
+                {
+                    DirectoryCopy(folder, Path.Combine(destinationRoot.FullName, folder.Name), true);
+                }
 
                 LoadTemplate();
+            }
+        }
+
+        private static void DirectoryCopy(DirectoryInfo sourceDir, string destDirName, bool copySubDirs)
+        {
+            // Get the subdirectories for the specified directory.
+            DirectoryInfo[] dirs = sourceDir.GetDirectories();
+
+            if (!sourceDir.Exists)
+            {
+                throw new DirectoryNotFoundException(
+                    "Source directory does not exist or could not be found: "
+                    + sourceDir.FullName);
+            }
+
+            // If the destination directory doesn't exist, create it. 
+            if (!Directory.Exists(destDirName))
+            {
+                Directory.CreateDirectory(destDirName);
+            }
+
+            // Get the files in the directory and copy them to the new location.
+            FileInfo[] files = sourceDir.GetFiles();
+            foreach (FileInfo file in files)
+            {
+                string temppath = Path.Combine(destDirName, file.Name);
+                file.CopyTo(temppath, true);
+            }
+
+            // If copying subdirectories, copy them and their contents to new location. 
+            if (copySubDirs)
+            {
+                foreach (DirectoryInfo subdir in dirs)
+                {
+                    string temppath = Path.Combine(destDirName, subdir.Name);
+                    DirectoryCopy(subdir, temppath, copySubDirs);
+                }
             }
         }
 
