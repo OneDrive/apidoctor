@@ -64,7 +64,8 @@
         HttpRequestMissingAllowedStatusCodes,
         TypeConversionFailure,
         OrphanedDocumentPage,
-        UnmappedDocumentElements
+        UnmappedDocumentElements,
+        MissingCustomMembers
 
     }
 

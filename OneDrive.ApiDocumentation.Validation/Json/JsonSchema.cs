@@ -76,7 +76,6 @@
             {
                 string code = errorObject.code;
                 string message = errorObject.message;
-//                string odataError = errorObject["@error.details"];
 
                 detectedErrors.Clear();
                 detectedErrors.Add(new ValidationError(ValidationErrorCode.JsonErrorObject, null, "Error response received. Code: {0}, Message: {1}", code, message));
@@ -252,7 +251,7 @@
                     // Compare the ODataType schema to the custom schema
                     if (!schemas.ContainsKey(schemaPropertyDef.ODataTypeName))
                     {
-                        detectedErrors.Add(new ValidationError(ValidationErrorCode.ResourceTypeNotFound, null, "Missing resource: resource [0] was not found (property name '{1}').", schemaPropertyDef.ODataTypeName, inputProperty.Name));
+                        detectedErrors.Add(new ValidationError(ValidationErrorCode.ResourceTypeNotFound, null, "Missing resource: resource {0} was not found (property name '{1}').", schemaPropertyDef.ODataTypeName, inputProperty.Name));
                         return PropertyValidationOutcome.MissingResourceType;
                     }
                     else if (inputProperty.Type == JsonDataType.Object)
@@ -275,8 +274,16 @@
                     else
                     {
                         var odataSchema = schemas[schemaPropertyDef.ODataTypeName];
-                        odataSchema.ValidateObjectProperties(inputProperty.CustomMembers.Values, isTruncated, schemas, detectedErrors);
-                        return PropertyValidationOutcome.OK;
+                        if (inputProperty.CustomMembers == null)
+                        {
+                            detectedErrors.Add(new ValidationError(ValidationErrorCode.MissingCustomMembers, null, "Property {0} is missing custom members and cannot be validated.", inputProperty.Name));
+                            return PropertyValidationOutcome.InvalidType;
+                        }
+                        else
+                        {
+                            odataSchema.ValidateObjectProperties(inputProperty.CustomMembers.Values, isTruncated, schemas, detectedErrors);
+                            return PropertyValidationOutcome.OK;
+                        }
                     }
                 }
                 else if (schemaPropertyDef.Type == JsonDataType.Object)
@@ -520,6 +527,10 @@
                             if (firstValue != null)
                             {
                                 members = ObjectToSchema(firstValue);
+                            }
+                            else
+                            {
+                                members = new Dictionary<string, JsonProperty>();
                             }
                         }
 

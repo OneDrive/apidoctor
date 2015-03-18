@@ -298,7 +298,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 }
                 else
                 {
-                    FancyConsole.WriteLineIndented("  ", resource.ResourceType);
+                    FancyConsole.WriteLineIndented("  ", ConsoleHeaderColor, resource.ResourceType);
                 }
 
                 if (!options.ShortForm)
