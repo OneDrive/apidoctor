@@ -95,19 +95,38 @@ apidocs set --access-token "asdkljasdkj..." -url https://api.example.org/v1.0
 apidocs check-service --parameter-file requests.json --method search
 ```
 
+#### Refresh Tokens
+Instead of using an access token on the command line, you can use the following
+environment variables to provide a refresh token and token service to generate
+access tokens. This enables the tool to be used in automation scripts and other
+scenarios where it may not be possible to have user-interaction to generate an
+access token.
+
+| Variable Name           | Description                                                                |
+|:------------------------|:---------------------------------------------------------------------------|
+| **oauth-token-service** | URL for the OAuth 2.0 token service to be used to retrieve an access token |
+| **oauth-client-id**     | Client ID that is passed to the token service                              |
+| **oauth-client-secret** | Client Secret that is passed to the token service                          |
+| **oauth-redirect-uri**  | Redirect URI used to generate the refresh token                            |
+| **oauth-refresh-token** | Refresh token that is used to generate an access token                     |
+
+If these environment variables are set, it is not necessary to pass an access
+token using the `--access-token` command line parameter. The tool will call the
+token service to retrieve an access token when necessary.
+
 ### Publish Command
 The publish command creates a "clean" copy of the documentation set by running
 it through a simple set of processing rules. The output can either be the original
 format or you can convert the output to another supported format.
 
-| Option                     | Description                                                                                                                                                                           |
-|:---------------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `--output <path>`          | Required. Output directory for sanitized documentation.                                                                                                                               |
-| `--extensions <value>`     | Specify a common separated list of file extensions that are considered "documentation files" and should be processed. Default is `.md,.mdown`.                                        |
-| `--format [markdown,html,swagger2]` | Specify the format for the output documentation. Either `markdown` (default) or `html`.                                                                                               |
-| `--ignore-path <value>`    | Specify a semicolon separated list of paths in the documentation that should never be copied to output. Default is `\internal;\.git;\.gitignore;\generate_html_output`.               |
-| `--include-all`            | Default: true. Specify that all files, even those which are not in the extension list, are copied to the output location. This allows graphics and other non-text files to be copied. |
-| `--html-template <value`   | Specify the path to a folder that contains HTML template content. The tool expects to find template.htm in this folder, and copies all other files and folders from the folder to the output folder |
+| Option                              | Description                                                                                                                                                                                         |
+|:------------------------------------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `--output <path>`                   | Required. Output directory for sanitized documentation.                                                                                                                                             |
+| `--extensions <value>`              | Specify a common separated list of file extensions that are considered "documentation files" and should be processed. Default is `.md,.mdown`.                                                      |
+| `--format [markdown,html,swagger2]` | Specify the format for the output documentation. Either `markdown` (default) or `html`.                                                                                                             |
+| `--ignore-path <value>`             | Specify a semicolon separated list of paths in the documentation that should never be copied to output. Default is `\internal;\.git;\.gitignore;\generate_html_output`.                             |
+| `--include-all`                     | Default: true. Specify that all files, even those which are not in the extension list, are copied to the output location. This allows graphics and other non-text files to be copied.               |
+| `--html-template <value`            | Specify the path to a folder that contains HTML template content. The tool expects to find template.htm in this folder, and copies all other files and folders from the folder to the output folder |
 
 Example: `apidocs --path ~/github/api-docs --output ~/documents/docs`
 
