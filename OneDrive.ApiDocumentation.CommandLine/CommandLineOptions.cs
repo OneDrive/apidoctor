@@ -125,7 +125,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             string value = PathToDocSet;
             if (!MakePropertyValid(ref value, Program.DefaultSettings.DocumentationPath))
             {
-                props.Add(PathArgument);
+                PathToDocSet = Environment.CurrentDirectory;
             }
             else
             {
