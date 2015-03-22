@@ -12,6 +12,9 @@ namespace OneDrive.ApiDocumentation.Validation
     /// </summary>
     public class DocFile
     {
+
+        private const string PageAnnotationType = "#page.annotation";
+
         #region Instance Variables
         protected bool m_hasScanRun;
         protected string m_BasePath;
@@ -194,6 +197,8 @@ namespace OneDrive.ApiDocumentation.Validation
 
             List<object> StuffFoundInThisDoc = new List<object>();
 
+            PageAnnotation pageAnnotation = null;
+
             for (int i = 0; i < OriginalMarkdownBlocks.Length; i++)
             {
                 var previousBlock = (i > 0) ? OriginalMarkdownBlocks[i - 1] : null;
@@ -243,6 +248,13 @@ namespace OneDrive.ApiDocumentation.Validation
                             }
                         }
                     }
+                    else if (null == Annotation)
+                    {
+                        // See if this is the page-level annotation
+                        var annotation = ParsePageAnnotation(block);
+                        if (null != annotation)
+                            Annotation = annotation;
+                    }
                 }
                 else if (block.BlockType == MarkdownDeep.BlockType.table_spec)
                 {
@@ -271,6 +283,35 @@ namespace OneDrive.ApiDocumentation.Validation
             
             errors = detectedErrors.ToArray();
             return !detectedErrors.Any(x => x.IsError);
+        }
+
+
+        /// <summary>
+        /// Remove <!-- and --> from the content string
+        /// </summary>
+        /// <param name="content"></param>
+        /// <returns></returns>
+        private static string StripHtmlCommentTags(string content)
+        {
+            const string StartComment = "<!--";
+            const string EndComment = "-->";
+
+            int index = content.IndexOf(StartComment);
+            if (index >= 0)
+                content = content.Substring(index + StartComment.Length);
+            index = content.IndexOf(EndComment);
+            if (index >= 0)
+                content = content.Substring(0, index);
+
+            return content;
+        }
+
+        private PageAnnotation ParsePageAnnotation(MarkdownDeep.Block block)
+        {
+            var response = Newtonsoft.Json.JsonConvert.DeserializeObject<PageAnnotation>(StripHtmlCommentTags(block.Content));
+            if (null != response && response.Type.Equals(PageAnnotationType, StringComparison.OrdinalIgnoreCase))
+                return response;
+            return null;
         }
 
         private void AddBookmarkForHeader(string headerText)

@@ -12,6 +12,9 @@ namespace OneDrive.ApiDocumentation.Validation
     /// </summary>
     public class PageAnnotation
     {
+        [JsonProperty("type")]
+        public string Type { get; set; }
+
         [JsonProperty("title")]
         public string Title { get; set; }
 

@@ -12,7 +12,7 @@ namespace OneDrive.ApiDocumentation.Publishing
     public class FileTagDefinition : TagDefinition
     {
         public FileTagDefinition()
-            : base("file")
+            : base("url")
         {
         }
 
@@ -40,7 +40,7 @@ namespace OneDrive.ApiDocumentation.Publishing
 
         public override IEnumerable<TagParameter> GetChildContextParameters()
         {
-            return new TagParameter[0];
+            return new TagParameter[] { new TagParameter("filename") };
         }
     }
 }

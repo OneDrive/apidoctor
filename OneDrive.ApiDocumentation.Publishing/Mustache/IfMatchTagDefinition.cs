@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 
 namespace OneDrive.ApiDocumentation.Publishing
 {
-    public class SectionTagDefinition : TagDefinition
+    public class IfMatchTagDefinition : TagDefinition
     {
-        public SectionTagDefinition()
+        public IfMatchTagDefinition()
             : base("ifmatch")
         {
 
@@ -40,9 +40,41 @@ namespace OneDrive.ApiDocumentation.Publishing
             return true;
         }
 
+        protected override IEnumerable<string> GetChildTags()
+        {
+            return new string[] { "else", "elif" };
+        }
+
+        public override bool ShouldCreateSecondaryGroup(TagDefinition definition)
+        {
+            return GetChildTags().Contains(definition.Name);
+        }
+
         public override IEnumerable<TagParameter> GetChildContextParameters()
         {
             return new TagParameter[0];
         }
     }
+
+    public class ExtendedElseTagDefinition : ElseTagDefinition
+    {
+        protected override IEnumerable<string> GetClosingTags()
+        {
+            List<string> tags = new List<string>(base.GetClosingTags());
+            tags.Add("ifmatch");
+            return tags;
+        }
+    }
+
+    public class ExtendedElseIfTagDefinition : ElifTagDefinition
+    {
+        protected override IEnumerable<string> GetClosingTags()
+        {
+            List<string> tags = new List<string>(base.GetClosingTags());
+            tags.Add("ifmatch");
+            return tags;
+        }
+    }
+
+   
 }
