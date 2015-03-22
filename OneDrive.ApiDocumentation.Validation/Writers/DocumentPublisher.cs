@@ -54,6 +54,7 @@
 
         protected List<string> scannableExtensions;
         protected List<string> ignoredPaths;
+        protected string _outputFolder;
 
         #region Constructors
 
@@ -97,6 +98,8 @@
 		public virtual async Task PublishToFolderAsync(string outputFolder)
 		{
             Messages.Clear();
+
+            _outputFolder = outputFolder;
 
             DirectoryInfo destination = new DirectoryInfo(outputFolder);
             SnapVariables();
