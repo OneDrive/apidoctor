@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -58,9 +58,11 @@
     <Compile Include="Http\HttpResponse.cs" />
     <Compile Include="Json\JsonExample.cs" />
     <Compile Include="Json\ValidationOptions.cs" />
+    <Compile Include="PageAnnotation.cs" />
     <Compile Include="ParameterDefinition.cs" />
     <Compile Include="TableSpec\TableDefinition.cs" />
     <Compile Include="ValidationConfig.cs" />
+    <Compile Include="Writers\MarkdownPublisher.cs.cs" />
     <Compile Include="Writers\DocumentPublisher.cs" />
     <Compile Include="ItemDefinition.cs" />
     <Compile Include="OData\Action.cs" />
@@ -92,16 +94,12 @@
     <Compile Include="MethodDefinition.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ResourceDefinition.cs" />
-    <Compile Include="Writers\DocumentPublisherHtml.cs" />
     <Compile Include="Params\ScenarioDefinition.cs" />
     <Compile Include="Json\JsonPath.cs" />
     <Compile Include="Error\ValidationMessage.cs" />
     <Compile Include="Error\ValidationResult.cs" />
     <Compile Include="Error\ValidationWarning.cs" />
     <Compile Include="Writers\OutlinePublisher.cs" />
-    <Compile Include="Writers\SwaggerWriter.cs" />
-    <Compile Include="Writers\SwaggerExtensionMethods.cs" />
-    <Compile Include="Writers\SwaggerClasses.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

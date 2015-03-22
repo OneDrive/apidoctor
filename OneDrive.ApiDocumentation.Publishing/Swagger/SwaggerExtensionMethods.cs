@@ -183,12 +183,7 @@ namespace OneDrive.ApiDocumentation.Validation
         }
 
 
-        internal static System.Text.RegularExpressions.Regex PathVariableRegex = new System.Text.RegularExpressions.Regex(@"\{(?<var>.+?)\}", System.Text.RegularExpressions.RegexOptions.Compiled);
-
-        internal static string FlattenVariableNames(this string input)
-        {
-            return PathVariableRegex.Replace(input, "{}");
-        }
+   
 
         internal static IEnumerable<ParameterDefinition> MissingRequestParameters(this MethodDefinition method, bool queryStringOnly = false)
         {
@@ -229,11 +224,9 @@ namespace OneDrive.ApiDocumentation.Validation
             return existingParameter.FirstOrDefault() != null;
         }
 
-        
-
-        private static List<ResourceName> FindVariablesInString(string path)
+        public static List<ResourceName> FindVariablesInString(string path)
         {
-            var matches = PathVariableRegex.Matches(path);
+            var matches = ExtensionMethods.PathVariableRegex.Matches(path);
             List<string> variables = new List<string>();
             for (int i = 0; i < matches.Count; i++)
             {
@@ -243,6 +236,9 @@ namespace OneDrive.ApiDocumentation.Validation
             }
             return variables;
         }
+
+
+
 
 
 

@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using OneDrive.ApiDocumentation.Publishing;
 using OneDrive.ApiDocumentation.Validation;
 using OneDrive.ApiDocumentation.Validation.Http;
 using System;
@@ -26,6 +27,12 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
         static void Main(string[] args)
         {
+            FancyConsole.WriteLine(ConsoleColor.Green, "apidocs.exe Copyright (c) 2015 Microsoft Corporation.");
+            FancyConsole.WriteLine();
+            if (args.Length > 0)
+                FancyConsole.WriteLine("Command line: " + args.ComponentsJoinedByString(" "));
+            
+
             string verbName = null;
             BaseOptions verbOptions = null;
 
@@ -357,6 +364,8 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
         private static void CheckDocs(ConsistencyCheckOptions options)
         {
+
+
             var docset = GetDocSet(options);
             FancyConsole.WriteLine();
 
@@ -732,10 +741,13 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             switch (options.Format)
             {
                 case PublishOptions.PublishFormat.Markdown:
-                    publisher = new DocumentPublisher(docs);
+                    publisher = new MarkdownPublisher(docs);
                     break;
                 case PublishOptions.PublishFormat.Html:
                     publisher = new DocumentPublisherHtml(docs, options.HtmlTemplateFolder);
+                    break;
+                case PublishOptions.PublishFormat.Mustache:
+                    publisher = new HtmlMustacheWriter(docs, options.HtmlTemplateFolder);
                     break;
                 case PublishOptions.PublishFormat.Swagger2:
                     publisher = new OneDrive.ApiDocumentation.Validation.Writers.SwaggerWriter(docs, Program.DefaultSettings.ServiceUrl)

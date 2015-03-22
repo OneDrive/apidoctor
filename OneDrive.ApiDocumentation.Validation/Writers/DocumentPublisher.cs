@@ -9,10 +9,11 @@
     using MarkdownDeep;
     using System.Linq;
 
-	public class DocumentPublisher
+	public abstract class DocumentPublisher
 	{
-        public event EventHandler<ValidationMessageEventArgs> NewMessage;
+        
 
+        #region Properties
         /// <summary>
         /// The document set that is the source for the publisher
         /// </summary>
@@ -49,10 +50,14 @@
         /// </summary>
         public bool VerboseLogging { get; set; }
 
-        protected List<string> scannableExtensions;
-        private List<string> ignoredPaths;
+        #endregion
 
-		public DocumentPublisher(DocSet docset)
+        protected List<string> scannableExtensions;
+        protected List<string> ignoredPaths;
+
+        #region Constructors
+
+        public DocumentPublisher(DocSet docset)
 		{
             Documents = docset;
             RootPath = new DirectoryInfo(docset.SourceFolderPath).FullName;
@@ -63,6 +68,11 @@
             SkipPaths = "\\internal;\\.git;\\legacy;\\generate_html_docs;\\.gitignore;\\.gitattributes";
             Messages = new BindingList<ValidationError>();
 		}
+        #endregion
+
+        #region Logging
+        
+        public event EventHandler<ValidationMessageEventArgs> NewMessage;
 
         /// <summary>
         /// Logs out a validation message.
@@ -77,9 +87,10 @@
             }
             Messages.Add(message);
         }
+        #endregion
 
         /// <summary>
-        /// Sanitizes document formats and outputs them to the outputFolder.
+        /// Main entry point - publish the documentation set to the output folder.
         /// </summary>
         /// <param name="outputFolder"></param>
         /// <returns></returns>
@@ -130,8 +141,8 @@
 		}
 
 		/// <summary>
-		/// Recursively Scan the contents of a directory and remove any
-		/// internal comments in the markdown documents
+        /// PublishFromDirectory iterates over every file in the documentation set root folder and below
+        /// and calls IsInternalPath, IsScannableFile, CopyToOutput, or PublishFileToDetination.
 		/// </summary>
 		/// <param name="directory">Directory.</param>
 		protected virtual async Task PublishFromDirectory(DirectoryInfo directory, DirectoryInfo destinationRoot)
@@ -163,7 +174,14 @@
 				}
 				else if (IsScannableFile(file))
 				{
-					await PublishFileToDestination(file, destinationRoot);
+                    var docFile = Documents.Files.Where(x => x.FullPath.Equals(file.FullName)).FirstOrDefault();
+                    PageAnnotation annotation = null;
+                    if (null != docFile)
+                    {
+                        annotation = docFile.Annotation;
+                    }
+
+					await PublishFileToDestination(file, destinationRoot, annotation);
 				}
 				else if (CopyToOutput(file))
 				{
@@ -193,6 +211,10 @@
 			}
 		}
 
+        /// <summary>
+        /// Called before anything happens to configure the root destination folder
+        /// </summary>
+        /// <param name="destinationRoot"></param>
         protected virtual void ConfigureOutputDirectory(DirectoryInfo destinationRoot)
         {
             // Nothing to do
@@ -206,7 +228,7 @@
         /// <param name="file">File.</param>
         /// <param name="destinationRoot">Destination root.</param>
         /// <param name="newExtension">New extension.</param>
-        protected virtual string PublishedFilePath(FileInfo sourceFile, DirectoryInfo destinationRoot, string changeFileExtension = null)
+        protected virtual string GetPublishedFilePath(FileInfo sourceFile, DirectoryInfo destinationRoot, string changeFileExtension = null)
 		{
 			var relativePath = RelativeDirectoryPath(sourceFile.Directory, false);
 
@@ -221,11 +243,16 @@
 			return outputPath;
 		}
 
+        /// <summary>
+        /// Copies a file contained in the documentation set to the destination root at the same level of hierarchy.
+        /// </summary>
+        /// <param name="file"></param>
+        /// <param name="destinationRoot"></param>
 		protected virtual void CopyFileToDestination(FileInfo file, DirectoryInfo destinationRoot)
 		{
 			try
 			{
-				var outPath = PublishedFilePath(file, destinationRoot);
+				var outPath = GetPublishedFilePath(file, destinationRoot);
                 LogMessage(new ValidationMessage(file.Name, "Copying to output directory without scanning."));
                 file.CopyTo(outPath, true);
 			}
@@ -239,29 +266,9 @@
 		/// Scans the text content of a file and removes any "internal" comments/references
 		/// </summary>
 		/// <param name="file">File.</param>
-		protected virtual async Task PublishFileToDestination(FileInfo sourceFile, DirectoryInfo destinationRoot)
+		protected virtual async Task PublishFileToDestination(FileInfo sourceFile, DirectoryInfo destinationRoot, PageAnnotation pageData)
 		{
-            LogMessage(new ValidationMessage(sourceFile.Name, "Scanning text file for internal content."));
-
-            var outputPath = PublishedFilePath(sourceFile, destinationRoot);
-            var writer = new StreamWriter(outputPath, false, System.Text.Encoding.UTF8) { AutoFlush = true };
-
-			StreamReader reader = new StreamReader(sourceFile.OpenRead());
-
-			long lineNumber = 0;
-			string nextLine;
-			while ( (nextLine = await reader.ReadLineAsync()) != null)
-			{
-				lineNumber++;
-				if (IsDoubleBlockQuote(nextLine))
-				{
-                    LogMessage(new ValidationMessage(string.Concat(sourceFile, ":", lineNumber), "Removing DoubleBlockQuote: {0}", nextLine));
-					continue;
-				}
-				await writer.WriteLineAsync(nextLine);
-			}
-			writer.Close();
-			reader.Close();
+            throw new NotImplementedException("This method is not implemented in the abstract class.");
 		}
 
 		#region Scanning Rules

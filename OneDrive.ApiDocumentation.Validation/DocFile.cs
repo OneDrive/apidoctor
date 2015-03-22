@@ -1,4 +1,4 @@
-﻿namespace OneDrive.ApiDocumentation.Validation
+namespace OneDrive.ApiDocumentation.Validation
 {
     using System;
     using System.Collections.Generic;
@@ -79,6 +79,8 @@
         protected List<MarkdownDeep.LinkInfo> MarkdownLinks {get;set;}
 
         public DocSet Parent { get; protected set; }
+
+        public PageAnnotation Annotation { get; set; }
         #endregion
 
         #region Constructor
@@ -690,6 +692,8 @@
 
         #endregion
 
+
+        
     }
 
 }

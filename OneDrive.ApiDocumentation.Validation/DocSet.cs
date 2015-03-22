@@ -266,7 +266,7 @@
         /// <param name="rootFolderPath"></param>
         /// <param name="urlStyle"></param>
         /// <returns></returns>
-        internal static string RelativePathToRootFromFile(string deepFilePath, string shallowFilePath, bool urlStyle = false)
+        public static string RelativePathToRootFromFile(string deepFilePath, string shallowFilePath, bool urlStyle = false)
         {
             // example:
             // deep file path "/auth/auth_msa.md"

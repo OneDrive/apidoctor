@@ -125,12 +125,15 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             string value = PathToDocSet;
             if (!MakePropertyValid(ref value, Program.DefaultSettings.DocumentationPath))
             {
+                
                 PathToDocSet = Environment.CurrentDirectory;
             }
             else
             {
                 PathToDocSet = value;
             }
+
+            FancyConsole.WriteLine("Documentation path: " + PathToDocSet);
 
             missingArguments = props.ToArray();
             return missingArguments.Length == 0;
@@ -319,7 +322,8 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             Markdown,
             Html,
             Swagger2,
-            Outline
+            Outline,
+            Mustache
         }
     }
 }
