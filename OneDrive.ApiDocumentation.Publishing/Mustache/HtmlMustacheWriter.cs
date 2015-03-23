@@ -36,8 +36,8 @@ namespace OneDrive.ApiDocumentation.Publishing
                 compiler.RegisterTag(new ExtendedElseIfTagDefinition(), false);
                 _generator = compiler.Compile(_templateHtml);
                 _generator.KeyNotFound += _generator_KeyNotFound;
-                _generator.ValueRequested += _generator_ValueRequested;
-                _generator.KeyFound += _generator_KeyFound;
+                //_generator.ValueRequested += _generator_ValueRequested;
+                //_generator.KeyFound += _generator_KeyFound;
             }
         }
 
@@ -52,7 +52,7 @@ namespace OneDrive.ApiDocumentation.Publishing
         }
         void _generator_KeyNotFound(object sender, Mustache.KeyNotFoundEventArgs e)
         {
-            Console.WriteLine("KeyNotFound: " + e.Key);
+            //Console.WriteLine("KeyNotFound: " + e.Key);
 
             e.Substitute = e.Key;
             e.Handled = true;
@@ -72,7 +72,7 @@ namespace OneDrive.ApiDocumentation.Publishing
             var templateObject = new { 
                 Page = pageData, 
                 Body = bodyHtml, 
-                Headers = new object[] { new { Title = "Page1", Url = "page1.htm" }, new { Title = "Page 2", Url = "page2.htm" } } 
+                Headers = GetHeadersForSection(pageData.Section, destinationFile, rootDestinationFolder)
             };
             _fileTag.DestinationFile = destinationFile;
             _fileTag.RootDestinationFolder = rootDestinationFolder;
@@ -84,5 +84,70 @@ namespace OneDrive.ApiDocumentation.Publishing
             }
         }
 
+        protected string RelativeUrlFromCurrentPage(DocFile docFile, string destinationFile, string rootDestinationFolder)
+        {
+            string linkDestinationRelative = docFile.DisplayName.TrimStart(new char[] { '\\' });
+            var relativeLinkToDocFile = DocSet.RelativePathToRootFromFile(destinationFile, Path.Combine(rootDestinationFolder, linkDestinationRelative), true);
+            var result = QualifyUrl(relativeLinkToDocFile);
+            return result;
+        }
+
+        protected IEnumerable<TocItem> GetHeadersForSection(string section, string destinationFile, string rootDestinationFolder)
+        {
+            var headers = from d in Documents.Files
+                          where d.Annotation != null 
+                          && d.Annotation.Section.Equals(section, StringComparison.OrdinalIgnoreCase) 
+                          && !string.IsNullOrEmpty(d.Annotation.TocPath)
+                          orderby d.Annotation.TocPath
+                          select new TocItem { DocFile = d, Title = d.Annotation.TocPath.LastPathComponent(), Url = RelativeUrlFromCurrentPage(d, destinationFile, rootDestinationFolder) };
+            headers = CollapseHeadersByPath(headers);
+            return headers;
+        }
+
+        /// <summary>
+        /// Collpase headers into Headers and NextLevel items based on path hierarchy
+        /// </summary>
+        /// <param name="headers"></param>
+        /// <returns></returns>
+        private IEnumerable<TocItem> CollapseHeadersByPath(IEnumerable<TocItem> headers)
+        {
+            Dictionary<string, TocItem> topLevelHeaders = new Dictionary<string, TocItem>();
+            
+            foreach (var header in headers)
+            {
+                var pathCompoents = header.DocFile.Annotation.TocPath.Split(new char[] { '\\', '/' }, StringSplitOptions.RemoveEmptyEntries);
+                TocItem topLevelHeader = null;
+                if (pathCompoents.Length >= 2)
+                {
+                    if (!topLevelHeaders.TryGetValue(pathCompoents[0], out topLevelHeader))
+                    {
+                        topLevelHeader = new TocItem() { Title = pathCompoents[0] };
+                        topLevelHeaders.Add(pathCompoents[0], topLevelHeader);
+                    }
+                    topLevelHeader.NextLevel.Add(header);
+                }
+                else
+                {
+                    topLevelHeaders.Add(header.Title, header);
+                }
+            }
+            return topLevelHeaders.Values.OrderBy(v => v.Title);
+        }
+        
+
     }
+
+    public class TocItem
+    {
+        public string Title { get; set; }
+        public DocFile DocFile { get; set; }
+        public string Url { get; set; }
+        public List<TocItem> NextLevel { get; set; }
+
+        public TocItem()
+        {
+            NextLevel = new List<TocItem>();
+        }
+    }
+
 }

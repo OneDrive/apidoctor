@@ -52,6 +52,7 @@
     <Compile Include="Mustache\FileTagDefinition.cs" />
     <Compile Include="Mustache\HtmlMustacheWriter.cs" />
     <Compile Include="Mustache\IfMatchTagDefinition.cs" />
+    <Compile Include="PathExtensionMethods.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Swagger\SwaggerClasses.cs" />
     <Compile Include="Swagger\SwaggerExtensionMethods.cs" />

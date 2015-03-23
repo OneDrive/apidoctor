@@ -28,7 +28,10 @@ namespace OneDrive.ApiDocumentation.Validation
         public string CononicalUrl { get; set; }
 
         [JsonProperty("section")]
-        public string SectionName { get; set; }
+        public string Section { get; set; }
+
+        [JsonProperty("tocPath")]
+        public string TocPath { get; set; }
     }
     
 

@@ -253,7 +253,13 @@ namespace OneDrive.ApiDocumentation.Validation
                         // See if this is the page-level annotation
                         var annotation = ParsePageAnnotation(block);
                         if (null != annotation)
+                        {
                             Annotation = annotation;
+                            if (string.IsNullOrEmpty(Annotation.Title))
+                            {
+                                Annotation.Title = (from b in OriginalMarkdownBlocks where IsHeaderBlock(b, 1) select b.Content).FirstOrDefault();
+                            }
+                        }
                     }
                 }
                 else if (block.BlockType == MarkdownDeep.BlockType.table_spec)
