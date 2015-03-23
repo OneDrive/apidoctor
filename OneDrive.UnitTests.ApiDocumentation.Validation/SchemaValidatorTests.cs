@@ -1,11 +1,14 @@
 ﻿using Newtonsoft.Json;
 using NUnit.Framework;
 using OneDrive.ApiDocumentation.Validation;
+using OneDrive.ApiDocumentation.Validation.Http;
+using OneDrive.ApiDocumentation.Validation.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using OneDrive.ApiDocumentation.Validation.Json;
 
 namespace OneDrive.UnitTests.ApiDocumentation.Validation
 {
@@ -31,7 +34,7 @@ namespace OneDrive.UnitTests.ApiDocumentation.Validation
             string json = JsonConvert.SerializeObject(newObj);
 
             ValidationError[] errors;
-            Assert.IsTrue(schema.ValidateJson(json, out errors, null));
+            Assert.IsTrue(schema.ValidateJson(new JsonExample(json), out errors, null, null));
             Assert.AreEqual(0, errors.Length);
         }
 
@@ -52,7 +55,7 @@ namespace OneDrive.UnitTests.ApiDocumentation.Validation
             string json = JsonConvert.SerializeObject(newObj);
 
             ValidationError[] errors;
-            Assert.IsFalse(schema.ValidateJson(json, out errors, null));
+            Assert.IsFalse(schema.ValidateJson(new JsonExample(json), out errors, null, null));
             Assert.AreEqual(2, errors.Length);
             Assert.IsTrue(errors.All(error => error.Code == ValidationErrorCode.ExpectedTypeDifferent));
         }
@@ -75,7 +78,7 @@ namespace OneDrive.UnitTests.ApiDocumentation.Validation
             string json = JsonConvert.SerializeObject(newObj);
 
             ValidationError[] errors;
-            Assert.IsFalse(schema.ValidateJson(json, out errors, null));
+            Assert.IsFalse(schema.ValidateJson(new JsonExample(json), out errors, null, null));
             Assert.AreEqual(1, errors.Length);
             Assert.AreEqual(ValidationErrorCode.AdditionalPropertyDetected, errors.First().Code);
         }
@@ -96,7 +99,7 @@ namespace OneDrive.UnitTests.ApiDocumentation.Validation
             string json = JsonConvert.SerializeObject(newObj);
 
             ValidationError[] errors;
-            Assert.IsFalse(schema.ValidateJson(json, out errors, null));
+            Assert.IsFalse(schema.ValidateJson(new JsonExample(json), out errors, null, null));
             Assert.AreEqual(1, errors.Length);
             Assert.AreEqual(ValidationErrorCode.RequiredPropertiesMissing, errors.First().Code);
         }
@@ -118,9 +121,59 @@ namespace OneDrive.UnitTests.ApiDocumentation.Validation
             string json = JsonConvert.SerializeObject(newObj);
 
             ValidationError[] errors;
-            Assert.IsFalse(schema.ValidateJson(json, out errors, null));
+            Assert.IsFalse(schema.ValidateJson(new JsonExample(json), out errors, null, null));
             Assert.AreEqual(1, errors.Length);
             Assert.AreEqual(ValidationErrorCode.ExpectedNonArrayValue, errors.First().Code);
+        }
+
+        [Test]
+        public void TruncatedExampleWithRequiredPropertiesTest()
+        {
+            DocSet docSet = new DocSet();
+            DocFile testFile = new DocFileForTesting(Properties.Resources.ExampleValidateResponse, "\test\test.md", "test.md", docSet);
+
+            ValidationError[] detectedErrors;
+            testFile.Scan(out detectedErrors);
+
+            Assert.IsEmpty(detectedErrors.Where(x => x.IsError));
+
+            docSet.ResourceCollection.RegisterJsonResource(testFile.Resources.First());
+
+            HttpParser parser = new HttpParser();
+            var testMethod = testFile.Requests.First();
+
+            var expectedResponse = parser.ParseHttpResponse(testMethod.ExpectedResponse);
+            var actualResponse = parser.ParseHttpResponse(testMethod.ActualResponse);
+
+            docSet.ValidateApiMethod(testMethod, actualResponse, expectedResponse, out detectedErrors, false);
+
+            Assert.AreEqual(1, detectedErrors.Length);
+            var error = detectedErrors.First();
+            Assert.AreEqual(ValidationErrorCode.RequiredPropertiesMissing, error.Code);
+        }
+
+        [Test]
+        public void TruncatedExampleSelectStatementOnChildren()
+        {
+            DocSet docSet = new DocSet();
+            DocFile testFile = new DocFileForTesting(Properties.Resources.ExampleValidationSelectStatement, "\test\test.md", "test.md", docSet);
+
+            ValidationError[] detectedErrors;
+            testFile.Scan(out detectedErrors);
+
+            Assert.IsEmpty(detectedErrors.Where(x => x.IsError));
+
+            docSet.ResourceCollection.RegisterJsonResource(testFile.Resources.First());
+
+            HttpParser parser = new HttpParser();
+            var testMethod = testFile.Requests.First();
+
+            var expectedResponse = parser.ParseHttpResponse(testMethod.ExpectedResponse);
+            var actualResponse = parser.ParseHttpResponse(testMethod.ActualResponse);
+
+            docSet.ValidateApiMethod(testMethod, actualResponse, expectedResponse, out detectedErrors, false);
+
+            Assert.AreEqual(0, detectedErrors.Length);
         }
 
     }

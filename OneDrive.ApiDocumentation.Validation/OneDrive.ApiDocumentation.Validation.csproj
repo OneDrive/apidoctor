@@ -56,6 +56,8 @@
     <Compile Include="Http\HttpParser.cs" />
     <Compile Include="Http\HttpRequest.cs" />
     <Compile Include="Http\HttpResponse.cs" />
+    <Compile Include="Json\JsonExample.cs" />
+    <Compile Include="Json\ValidationOptions.cs" />
     <Compile Include="ParameterDefinition.cs" />
     <Compile Include="TableSpec\TableDefinition.cs" />
     <Compile Include="Writers\DocumentPublisher.cs" />

@@ -88,8 +88,10 @@ namespace OneDrive.ApiDocumentation.Validation
             ExpectedResponseMetadata = annotation;
         }
 
-
-
+        public void AddSimulatedResponse(string rawResponse, CodeBlockAnnotation annotation)
+        {
+            ActualResponse = rawResponse;
+        }
 
 
         #region Validation / Request Methods

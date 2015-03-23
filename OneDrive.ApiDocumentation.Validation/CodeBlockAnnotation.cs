@@ -88,6 +88,11 @@ namespace OneDrive.ApiDocumentation.Validation
         /// <summary>
         /// Example code block. Should be checked for JSON correctness and resources
         /// </summary>
-        Example
+        Example,
+
+        /// <summary>
+        /// A simulated response, used for unit testing.
+        /// </summary>
+        SimulatedResponse
     }
 }

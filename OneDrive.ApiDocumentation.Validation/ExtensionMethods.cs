@@ -59,6 +59,27 @@
             return sb.ToString();
         }
 
+        public static void RemoveRange<T>(this IList<T> source, IEnumerable<T> objectsToRemove)
+        {
+            if (null == source) return;
+            if (null == objectsToRemove) return;
+
+            foreach (var objToRemove in objectsToRemove)
+            {
+                source.Remove(objToRemove);
+            }
+        }
+
+        public static void IntersectInPlace<T>(this IList<T> source, IList<T> otherSet)
+        {
+            var existingList = source.ToArray();
+            foreach (var item in existingList)
+            {
+                if (!otherSet.Contains(item))
+                    source.Remove(item);
+            }
+        }
+
         public static bool TryGetPropertyValue<T>(this Newtonsoft.Json.Linq.JContainer container, string propertyName, out T value )
         {
             try

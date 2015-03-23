@@ -394,6 +394,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                     FancyConsole.Write("  Example: {0} [{1}]", example.Metadata.MethodName, example.Metadata.ResourceType);
                     var resourceType = example.Metadata.ResourceType;
                     ValidationError[] errors;
+
                     docset.ResourceCollection.ValidateJsonExample(example.Metadata, example.OriginalExample, out errors);
                     if (errors.WereErrors())
                         errorCount++;

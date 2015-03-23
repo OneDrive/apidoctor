@@ -57,9 +57,9 @@
 
         public ExampleDefinition[] Examples { get { return m_JsonExamples.ToArray(); } }
 
-        public AuthScopeDefinition[] AuthScopes { get; private set; }
+        public AuthScopeDefinition[] AuthScopes { get; protected set; }
 
-        public ErrorDefinition[] ErrorCodes { get; private set; }
+        public ErrorDefinition[] ErrorCodes { get; protected set; }
 
         public string[] LinkDestinations
         {
@@ -78,25 +78,25 @@
 
         protected List<MarkdownDeep.LinkInfo> MarkdownLinks {get;set;}
 
-        public DocSet Parent { get; private set; }
+        public DocSet Parent { get; protected set; }
         #endregion
 
         #region Constructor
         protected DocFile()
         {
             ContentOutline = new List<string>();
+            m_Bookmarks = new List<string>();
         }
 
-        public DocFile(string basePath, string relativePath, DocSet parent)
+        public DocFile(string basePath, string relativePath, DocSet parent) 
+            : this()
         {
             m_BasePath = basePath;
             FullPath = Path.Combine(basePath, relativePath.Substring(1));
             DisplayName = relativePath;
             Parent = parent;
-            ContentOutline = new List<string>();
-
-            m_Bookmarks = new List<string>();
         }
+
         #endregion
 
         #region Markdown Parsing
@@ -112,6 +112,14 @@
             MarkdownLinks = new List<MarkdownDeep.LinkInfo>(md.FoundLinks);
         }
 
+        protected virtual string GetContentsOfFile()
+        {
+            using (StreamReader reader = File.OpenText(this.FullPath))
+            {
+                return reader.ReadToEnd();
+            }
+        }
+
 
         /// <summary>
         /// Read the contents of the file into blocks and generate any resource or method definitions from the contents
@@ -123,10 +131,7 @@
             
             try
             {
-                using (StreamReader reader = File.OpenText(this.FullPath))
-                {
-                    TransformMarkdownIntoBlocksAndLinks(reader.ReadToEnd());
-                }
+                TransformMarkdownIntoBlocksAndLinks(GetContentsOfFile());
             }
             catch (IOException ioex)
             {
@@ -499,6 +504,12 @@
                     }
                 case CodeBlockType.Ignored:
                     return null;
+                case CodeBlockType.SimulatedResponse:
+                    {
+                        var method = m_Requests.Last();
+                        method.AddSimulatedResponse(code.Content, annotation);
+                        return method;
+                    }
                 default:
                     throw new NotSupportedException("Unsupported block type: " + annotation.BlockType);
             }
