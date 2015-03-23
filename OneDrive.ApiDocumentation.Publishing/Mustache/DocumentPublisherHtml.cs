@@ -180,7 +180,7 @@ namespace OneDrive.ApiDocumentation.Validation
             return url;
         }
 
-        protected override async Task PublishFileToDestination(FileInfo sourceFile, DirectoryInfo destinationRoot, PageAnnotation pageData)
+        protected override async Task PublishFileToDestination(FileInfo sourceFile, DirectoryInfo destinationRoot, DocFile page)
         {
             LogMessage(new ValidationMessage(sourceFile.Name, "Publishing file to HTML"));
 
@@ -205,6 +205,7 @@ namespace OneDrive.ApiDocumentation.Validation
             var converter = GetMarkdownConverter();
             var html = converter.Transform(writer.ToString());
 
+            var pageData = page.Annotation;
             if (null == pageData)
             {
                 pageData = new PageAnnotation();
@@ -215,7 +216,8 @@ namespace OneDrive.ApiDocumentation.Validation
                              where b.BlockType == MarkdownDeep.BlockType.h1
                              select b.Content).FirstOrDefault();
             }
-            await WriteHtmlDocumentAsync(html, pageData, destinationPath, destinationRoot.FullName);
+            page.Annotation = pageData;
+            await WriteHtmlDocumentAsync(html, page, destinationPath, destinationRoot.FullName);
         }
 
         /// <summary>
@@ -226,7 +228,7 @@ namespace OneDrive.ApiDocumentation.Validation
         /// <param name="destinationFile"></param>
         /// <param name="rootDestinationFolder"></param>
         /// <returns></returns>
-        protected virtual async Task WriteHtmlDocumentAsync(string bodyHtml, PageAnnotation pageData, string destinationFile, string rootDestinationFolder)
+        protected virtual async Task WriteHtmlDocumentAsync(string bodyHtml, DocFile page, string destinationFile, string rootDestinationFolder)
         {
             List<string> variablesToReplace = new List<string>();
             string pageHtml = null;
@@ -244,7 +246,7 @@ namespace OneDrive.ApiDocumentation.Validation
                 {
                     if (key == "{page.title}")
                     {
-                        templateHtmlForThisPage = templateHtmlForThisPage.Replace(key, pageData.Title);
+                        templateHtmlForThisPage = templateHtmlForThisPage.Replace(key, page.Annotation.Title);
                     }
                     else if (key == "{body.html}")
                     {
@@ -267,7 +269,7 @@ namespace OneDrive.ApiDocumentation.Validation
             }
             else
             {
-                pageHtml = string.Concat(string.Format(htmlHeader, pageData.Title, htmlStyles), bodyHtml, htmlFooter);
+                pageHtml = string.Concat(string.Format(htmlHeader, page.Annotation.Title, htmlStyles), bodyHtml, htmlFooter);
             }
 
             using (var outputWriter = new StreamWriter(destinationFile))

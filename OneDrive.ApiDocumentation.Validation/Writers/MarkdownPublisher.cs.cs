@@ -21,7 +21,7 @@
 		/// Scans the text content of a file and removes any "internal" comments/references
 		/// </summary>
 		/// <param name="file">File.</param>
-        protected override async Task PublishFileToDestination(FileInfo sourceFile, DirectoryInfo destinationRoot, PageAnnotation pageData)
+        protected override async Task PublishFileToDestination(FileInfo sourceFile, DirectoryInfo destinationRoot, DocFile page)
 		{
             LogMessage(new ValidationMessage(sourceFile.Name, "Scanning text file for internal content."));
 

@@ -13,10 +13,12 @@ namespace OneDrive.ApiDocumentation.Publishing
         private Mustache.Generator _generator = null;
         private FileTagDefinition _fileTag;
 
+        public bool CollapseTocToActiveGroup { get; set; }
+
 
         public HtmlMustacheWriter(DocSet docs, string templateFolderPath) : base(docs, templateFolderPath)
         {
-            
+            CollapseTocToActiveGroup = false;
         }
 
         protected override void LoadTemplate()
@@ -67,12 +69,12 @@ namespace OneDrive.ApiDocumentation.Publishing
         /// <param name="destinationFile"></param>
         /// <param name="rootDestinationFolder"></param>
         /// <returns></returns>
-        protected override async Task WriteHtmlDocumentAsync(string bodyHtml, PageAnnotation pageData, string destinationFile, string rootDestinationFolder)
+        protected override async Task WriteHtmlDocumentAsync(string bodyHtml, DocFile page, string destinationFile, string rootDestinationFolder)
         {
             var templateObject = new { 
-                Page = pageData, 
+                Page = page.Annotation, 
                 Body = bodyHtml, 
-                Headers = GetHeadersForSection(pageData.Section, destinationFile, rootDestinationFolder)
+                Headers = GetHeadersForSection(page.Annotation.Section, destinationFile, rootDestinationFolder, page)
             };
             _fileTag.DestinationFile = destinationFile;
             _fileTag.RootDestinationFolder = rootDestinationFolder;
@@ -92,7 +94,7 @@ namespace OneDrive.ApiDocumentation.Publishing
             return result;
         }
 
-        protected IEnumerable<TocItem> GetHeadersForSection(string section, string destinationFile, string rootDestinationFolder)
+        protected IEnumerable<TocItem> GetHeadersForSection(string section, string destinationFile, string rootDestinationFolder, DocFile currentPage)
         {
             var headers = from d in Documents.Files
                           where d.Annotation != null 
@@ -100,7 +102,7 @@ namespace OneDrive.ApiDocumentation.Publishing
                           && !string.IsNullOrEmpty(d.Annotation.TocPath)
                           orderby d.Annotation.TocPath
                           select new TocItem { DocFile = d, Title = d.Annotation.TocPath.LastPathComponent(), Url = RelativeUrlFromCurrentPage(d, destinationFile, rootDestinationFolder) };
-            headers = CollapseHeadersByPath(headers);
+            headers = CollapseHeadersByPath(headers, currentPage);
             return headers;
         }
 
@@ -109,7 +111,7 @@ namespace OneDrive.ApiDocumentation.Publishing
         /// </summary>
         /// <param name="headers"></param>
         /// <returns></returns>
-        private IEnumerable<TocItem> CollapseHeadersByPath(IEnumerable<TocItem> headers)
+        private IEnumerable<TocItem> CollapseHeadersByPath(IEnumerable<TocItem> headers, DocFile currentPage)
         {
             Dictionary<string, TocItem> topLevelHeaders = new Dictionary<string, TocItem>();
             
@@ -131,6 +133,17 @@ namespace OneDrive.ApiDocumentation.Publishing
                     topLevelHeaders.Add(header.Title, header);
                 }
             }
+
+            if (CollapseTocToActiveGroup)
+            {
+                var pageTocComponents = currentPage.Annotation.TocPath.FirstPathComponent();
+                foreach (var header in topLevelHeaders.Values)
+                {
+                    if (header.Title != pageTocComponents)
+                        header.NextLevel.Clear();
+                }
+            }
+
             return topLevelHeaders.Values.OrderBy(v => v.Title);
         }
         

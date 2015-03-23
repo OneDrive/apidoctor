@@ -178,13 +178,7 @@
 				else if (IsScannableFile(file))
 				{
                     var docFile = Documents.Files.Where(x => x.FullPath.Equals(file.FullName)).FirstOrDefault();
-                    PageAnnotation annotation = null;
-                    if (null != docFile)
-                    {
-                        annotation = docFile.Annotation;
-                    }
-
-					await PublishFileToDestination(file, destinationRoot, annotation);
+					await PublishFileToDestination(file, destinationRoot, docFile);
 				}
 				else if (CopyToOutput(file))
 				{
@@ -269,7 +263,7 @@
 		/// Scans the text content of a file and removes any "internal" comments/references
 		/// </summary>
 		/// <param name="file">File.</param>
-		protected virtual async Task PublishFileToDestination(FileInfo sourceFile, DirectoryInfo destinationRoot, PageAnnotation pageData)
+		protected virtual async Task PublishFileToDestination(FileInfo sourceFile, DirectoryInfo destinationRoot, DocFile page)
 		{
             throw new NotImplementedException("This method is not implemented in the abstract class.");
 		}

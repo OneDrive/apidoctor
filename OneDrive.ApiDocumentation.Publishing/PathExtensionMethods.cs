@@ -11,9 +11,25 @@ namespace OneDrive.ApiDocumentation.Publishing
 
         public static string LastPathComponent(this string path)
         {
+            if (null == path) return null;
             var parts = path.Split(new char[] { '\\', '/' });
-            return parts[parts.Length - 1];
+            if (parts.Length > 0)
+            {
+                return parts[parts.Length - 1];
+            }
+            return null;
         }
 
+        public static string FirstPathComponent(this string path)
+        {
+            if (null == path) return null;
+
+            var parts = path.Split(new char[] { '\\', '/' });
+            if (parts.Length > 0)
+            {
+                return parts[0];
+            }
+            return null;
+        }
     }
 }
