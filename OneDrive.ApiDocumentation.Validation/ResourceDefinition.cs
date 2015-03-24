@@ -16,6 +16,11 @@
             
             object inputObject = JsonConvert.DeserializeObject(jsonContent);
             JsonExample = JsonConvert.SerializeObject(inputObject, Formatting.Indented);
+
+            if (string.IsNullOrEmpty(annotation.ResourceType))
+            {
+                throw new InvalidOperationException("ResourceDefinition requires a resource type to be set (@odata.type property in the annotation)");
+            }
         }
 
         /// <summary>

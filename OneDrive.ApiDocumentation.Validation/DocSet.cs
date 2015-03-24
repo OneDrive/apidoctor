@@ -69,6 +69,11 @@
             if (!string.IsNullOrEmpty(optionalScenarioFileRelativePath))
                 LoadTestScenarios(optionalScenarioFileRelativePath);
         }
+
+        public DocSet()
+        {
+            // TODO: Complete member initialization
+        }
         #endregion
 
 
@@ -123,46 +128,41 @@
         /// Validates that a particular HttpResponse matches the method definition and optionally the expected response.
         /// </summary>
         /// <param name="method"></param>
-        /// <param name="response"></param>
+        /// <param name="actualResponse"></param>
         /// <param name="expectedResponse"></param>
         /// <returns></returns>
-        public bool ValidateApiMethod(MethodDefinition method, Http.HttpResponse response, Http.HttpResponse expectedResponse, out ValidationError[] errors, bool silenceWarnings)
+        public bool ValidateApiMethod(MethodDefinition method, Http.HttpResponse actualResponse, Http.HttpResponse expectedResponse, out ValidationError[] errors, bool silenceWarnings)
         {
             if (null == method) throw new ArgumentNullException("method");
-            if (null == response) throw new ArgumentNullException("response");
+            if (null == actualResponse) throw new ArgumentNullException("response");
 
             List<ValidationError> detectedErrors = new List<ValidationError>();
 
-            // Verify the HTTP request is valid
+            // Verify the HTTP request is valid (headers, etc)
             method.VerifyHttpRequest(detectedErrors);
 
-            if (null != expectedResponse)
+            // Verify that the expected response headers match the actual response headers
+            ValidationError[] httpErrors;
+            if (null != expectedResponse && !expectedResponse.CompareToResponse(actualResponse, out httpErrors))
             {
-                // Verify that the HTTP portion of the expected response and the actual response are consistent
-                ValidationError[] httpErrors;
-                if (!expectedResponse.CompareToResponse(response, out httpErrors))
-                {
-                    detectedErrors.AddRange(httpErrors);
-                }
+                detectedErrors.AddRange(httpErrors);
             }
 
-            if (string.IsNullOrEmpty(response.Body) && (expectedResponse != null && !string.IsNullOrEmpty(expectedResponse.Body)))
+            // Verify the actual response body is correct according to the schema defined for the response
+            if (string.IsNullOrEmpty(actualResponse.Body) && (expectedResponse != null && !string.IsNullOrEmpty(expectedResponse.Body)))
             {
-                detectedErrors.Add(new ValidationError(ValidationErrorCode.HttpBodyExpected, null, "Body missing from response (expected response includes a body)."));
+                detectedErrors.Add(new ValidationError(ValidationErrorCode.HttpBodyExpected, null, "Body missing from response (expected response includes a body or a response type was provided)."));
             }
-            else if (!string.IsNullOrEmpty(response.Body))
+            else if (!string.IsNullOrEmpty(actualResponse.Body))
             {
                 ValidationError[] schemaErrors;
                 if (method.ExpectedResponseMetadata == null || (string.IsNullOrEmpty(method.ExpectedResponseMetadata.ResourceType) && (expectedResponse != null && !string.IsNullOrEmpty(expectedResponse.Body))))
                 {
                     detectedErrors.Add(new ValidationError(ValidationErrorCode.ResponseResourceTypeMissing, null, "Expected a response, but resource type on method is missing: {0}", method.Identifier));
                 }
-                else
+                else if (!m_ResourceCollection.ValidateResponseMatchesSchema(method, actualResponse, expectedResponse, out schemaErrors))
                 {
-                    if (!m_ResourceCollection.ValidateJsonExample(method.ExpectedResponseMetadata, response.Body, out schemaErrors))
-                    {
-                        detectedErrors.AddRange(schemaErrors);
-                    }
+                    detectedErrors.AddRange(schemaErrors);
                 }
             }
 
