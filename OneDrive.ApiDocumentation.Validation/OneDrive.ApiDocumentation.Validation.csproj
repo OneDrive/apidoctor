@@ -60,6 +60,7 @@
     <Compile Include="Json\ValidationOptions.cs" />
     <Compile Include="ParameterDefinition.cs" />
     <Compile Include="TableSpec\TableDefinition.cs" />
+    <Compile Include="ValidationConfig.cs" />
     <Compile Include="Writers\DocumentPublisher.cs" />
     <Compile Include="ItemDefinition.cs" />
     <Compile Include="OData\Action.cs" />

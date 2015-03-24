@@ -211,7 +211,8 @@
             // Ignore any missing properties that are defined in the schema as optional
             missingProperties.RemoveRange(OptionalProperties);
 
-            if (options.AllowTruncatedResponses && null != options.RequiredPropertyNames)
+            if (ValidationConfig.ExpectedResponseAsRequiredProperties &&
+                options.AllowTruncatedResponses && null != options.RequiredPropertyNames)
             {
                 // Ignore any missing properties that aren't in the required properties list
                 missingProperties.IntersectInPlace(options.RequiredPropertyNames);
