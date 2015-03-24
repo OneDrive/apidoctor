@@ -179,7 +179,7 @@
             {
                 missingProperties.Remove(property.Name);
                 // This detects bad types, extra properties, etc.
-                if (property.IsArray || property.Type == JsonDataType.ODataType || property.Type == JsonDataType.Object)
+                if (null != options && (property.IsArray || property.Type == JsonDataType.ODataType || property.Type == JsonDataType.Object))
                 {
                     var propertyOptions = options.CreateForProperty(property.Name);
                     ValidateProperty(property, otherSchemas, detectedErrors, propertyOptions);
@@ -431,7 +431,7 @@
                 JContainer obj = (JContainer)JsonConvert.DeserializeObject(json);
                 if (obj is JArray)
                 {
-                    obj = obj.First as JConstructor;
+                    obj = obj.First as JContainer;
                 }
                 if (null != obj)
                 {
