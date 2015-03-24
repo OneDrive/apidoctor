@@ -88,7 +88,7 @@ namespace OneDrive.ApiDocumentation.Publishing
 
         protected string RelativeUrlFromCurrentPage(DocFile docFile, string destinationFile, string rootDestinationFolder)
         {
-            string linkDestinationRelative = docFile.DisplayName.TrimStart(new char[] { '\\' });
+            string linkDestinationRelative = docFile.DisplayName.TrimStart(new char[] { '\\', '/' });
             var relativeLinkToDocFile = DocSet.RelativePathToRootFromFile(destinationFile, Path.Combine(rootDestinationFolder, linkDestinationRelative), true);
             var result = QualifyUrl(relativeLinkToDocFile);
             return result;
@@ -101,7 +101,9 @@ namespace OneDrive.ApiDocumentation.Publishing
                           && d.Annotation.Section.Equals(section, StringComparison.OrdinalIgnoreCase) 
                           && !string.IsNullOrEmpty(d.Annotation.TocPath)
                           orderby d.Annotation.TocPath
-                          select new TocItem { DocFile = d, Title = d.Annotation.TocPath.LastPathComponent(), Url = RelativeUrlFromCurrentPage(d, destinationFile, rootDestinationFolder) };
+                          select new TocItem { DocFile = d, 
+                Title = d.Annotation.TocPath.LastPathComponent(), 
+                Url = RelativeUrlFromCurrentPage(d, destinationFile, rootDestinationFolder) };
             headers = CollapseHeadersByPath(headers, currentPage);
             return headers;
         }
