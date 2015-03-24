@@ -65,20 +65,16 @@ Content-Type: application/json
   "webUrl": "https://onedrive.live.com/?cid=0f040...",
   "children": [
     {
-      "id": "F04AA961744A809!48443",
-      "name": "Applications",
+      "id": "F04AA961744A809!48443"
     },
     {
-      "id": "F04AA961744A809!92647",
-      "name": "Attachments",
+      "id": "F04AA961744A809!92647"
     },
     {
-      "id": "F04AA961744A809!93269",
-      "name": "Balsmiq Sketches",
+      "id": "F04AA961744A809!93269"
     },
     {
-      "id": "F04AA961744A809!65191",
-      "name": "Camera imports",
+      "id": "F04AA961744A809!65191"
     }
   ]
 }

@@ -141,7 +141,6 @@
             // Verify the HTTP request is valid (headers, etc)
             method.VerifyHttpRequest(detectedErrors);
 
-            
             // Verify that the expected response headers match the actual response headers
             ValidationError[] httpErrors;
             if (null != expectedResponse && !expectedResponse.CompareToResponse(actualResponse, out httpErrors))

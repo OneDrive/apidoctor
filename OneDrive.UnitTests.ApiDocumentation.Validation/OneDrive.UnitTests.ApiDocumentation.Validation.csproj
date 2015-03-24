@@ -79,6 +79,7 @@
   <ItemGroup>
     <None Include="packages.config" />
     <None Include="test-docs\ExampleValidateResponse.md" />
+    <None Include="test-docs\ExampleValidationSelectStatementFailure.md" />
     <None Include="test-docs\ExampleValidationSelectStatement.md" />
   </ItemGroup>
   <ItemGroup>

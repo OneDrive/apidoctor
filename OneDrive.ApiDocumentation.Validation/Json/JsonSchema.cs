@@ -179,7 +179,15 @@
             {
                 missingProperties.Remove(property.Name);
                 // This detects bad types, extra properties, etc.
-                ValidateProperty(property, otherSchemas, detectedErrors, options);
+                if (property.IsArray || property.Type == JsonDataType.ODataType || property.Type == JsonDataType.Object)
+                {
+                    var propertyOptions = options.CreateForProperty(property.Name);
+                    ValidateProperty(property, otherSchemas, detectedErrors, propertyOptions);
+                }
+                else
+                {
+                    ValidateProperty(property, otherSchemas, detectedErrors, options);
+                }
             }
 
             CleanMissingProperties(options, missingProperties);
@@ -420,11 +428,18 @@
             try
             {
                 JContainer obj = (JContainer)JsonConvert.DeserializeObject(json);
-                foreach (JToken token in obj)
+                if (obj is JArray)
                 {
-                    JsonProperty propertyInfo = ParseProperty(token, null);
-                    AddParameterDataToProperty(parameters, propertyInfo);
-                    schema[propertyInfo.Name] = propertyInfo;
+                    obj = obj.First as JConstructor;
+                }
+                if (null != obj)
+                {
+                    foreach (JToken token in obj)
+                    {
+                        JsonProperty propertyInfo = ParseProperty(token, null);
+                        AddParameterDataToProperty(parameters, propertyInfo);
+                        schema[propertyInfo.Name] = propertyInfo;
+                    }
                 }
             }
             catch (Exception ex)

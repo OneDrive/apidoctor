@@ -176,5 +176,33 @@ namespace OneDrive.UnitTests.ApiDocumentation.Validation
             Assert.AreEqual(0, detectedErrors.Length);
         }
 
+        [Test]
+        public void TruncatedExampleSelectStatementOnChildrenExpectFailure()
+        {
+            DocSet docSet = new DocSet();
+            DocFile testFile = new DocFileForTesting(Properties.Resources.ExampleValidationSelectStatementFailure, "\test\test.md", "test.md", docSet);
+
+            ValidationError[] detectedErrors;
+            testFile.Scan(out detectedErrors);
+
+            Assert.IsEmpty(detectedErrors.Where(x => x.IsError));
+
+            docSet.ResourceCollection.RegisterJsonResource(testFile.Resources.First());
+
+            HttpParser parser = new HttpParser();
+            var testMethod = testFile.Requests.First();
+
+            var expectedResponse = parser.ParseHttpResponse(testMethod.ExpectedResponse);
+            var actualResponse = parser.ParseHttpResponse(testMethod.ActualResponse);
+
+            docSet.ValidateApiMethod(testMethod, actualResponse, expectedResponse, out detectedErrors, false);
+
+            Assert.AreEqual(4, detectedErrors.Length);
+            foreach (var error in detectedErrors)
+            {
+                Assert.AreEqual(error.Code, ValidationErrorCode.RequiredPropertiesMissing);
+            }
+        }
+
     }
 }
