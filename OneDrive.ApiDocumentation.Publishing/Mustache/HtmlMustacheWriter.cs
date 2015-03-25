@@ -71,11 +71,25 @@ namespace OneDrive.ApiDocumentation.Publishing
         /// <returns></returns>
         protected override async Task WriteHtmlDocumentAsync(string bodyHtml, DocFile page, string destinationFile, string rootDestinationFolder)
         {
-            var templateObject = new { 
-                Page = page.Annotation, 
-                Body = bodyHtml, 
-                Headers = GetHeadersForSection(page.Annotation.Section, destinationFile, rootDestinationFolder, page)
+            var tocHeaders = GetHeadersForSection(page.Annotation.Section, destinationFile, rootDestinationFolder, page);
+
+
+            List<ValueObject<string>> htmlHeaders = new List<ValueObject<string>>();
+            List<ValueObject<string>> htmlFooters = new List<ValueObject<string>>();
+            if (page.Annotation.HeaderAdditions != null)
+                htmlHeaders.AddRange(from h in page.Annotation.HeaderAdditions select new ValueObject<string> { Value = h });
+            if (page.Annotation.FooterAdditions != null)
+                htmlFooters.AddRange(from h in page.Annotation.FooterAdditions select new ValueObject<string> { Value = h });
+
+            var templateObject = new
+            {
+                Page = page.Annotation,
+                Body = bodyHtml,
+                Headers = tocHeaders,
+                HtmlHeaderAdditions = htmlHeaders,
+                HtmlFooterAdditions = htmlFooters
             };
+            
             _fileTag.DestinationFile = destinationFile;
             _fileTag.RootDestinationFolder = rootDestinationFolder;
 
@@ -96,9 +110,12 @@ namespace OneDrive.ApiDocumentation.Publishing
 
         protected IEnumerable<TocItem> GetHeadersForSection(string section, string destinationFile, string rootDestinationFolder, DocFile currentPage)
         {
+            if (null == section)
+                return new TocItem[0];
+
             var headers = from d in Documents.Files
                           where d.Annotation != null 
-                          && d.Annotation.Section.Equals(section, StringComparison.OrdinalIgnoreCase) 
+                          && string.Equals(d.Annotation.Section, section, StringComparison.OrdinalIgnoreCase) 
                           && !string.IsNullOrEmpty(d.Annotation.TocPath)
                           orderby d.Annotation.TocPath
                           select new TocItem { DocFile = d, 
@@ -163,6 +180,11 @@ namespace OneDrive.ApiDocumentation.Publishing
         {
             NextLevel = new List<TocItem>();
         }
+    }
+
+    public class ValueObject<T>
+    {
+        public T Value { get; set; }
     }
 
 }

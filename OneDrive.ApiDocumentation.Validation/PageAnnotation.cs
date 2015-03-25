@@ -32,6 +32,12 @@ namespace OneDrive.ApiDocumentation.Validation
 
         [JsonProperty("tocPath")]
         public string TocPath { get; set; }
+
+        [JsonProperty("headerAdditions")]
+        public string[] HeaderAdditions { get; set; }
+
+        [JsonProperty("footerAdditions")]
+        public string[] FooterAdditions { get; set; }
     }
     
 

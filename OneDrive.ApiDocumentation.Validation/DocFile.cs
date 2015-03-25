@@ -314,9 +314,15 @@ namespace OneDrive.ApiDocumentation.Validation
 
         private PageAnnotation ParsePageAnnotation(MarkdownDeep.Block block)
         {
-            var response = Newtonsoft.Json.JsonConvert.DeserializeObject<PageAnnotation>(StripHtmlCommentTags(block.Content));
-            if (null != response && response.Type.Equals(PageAnnotationType, StringComparison.OrdinalIgnoreCase))
-                return response;
+            try
+            {
+                var response = Newtonsoft.Json.JsonConvert.DeserializeObject<PageAnnotation>(StripHtmlCommentTags(block.Content));
+                if (null != response && response.Type.Equals(PageAnnotationType, StringComparison.OrdinalIgnoreCase))
+                    return response;
+            }
+            catch (Exception)
+            {
+            }
             return null;
         }
 
