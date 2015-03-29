@@ -33,6 +33,9 @@ namespace OneDrive.ApiDocumentation.Validation
         [JsonProperty("isCollection", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public bool IsCollection { get; set; }
 
+        [JsonProperty("collectionProperty", DefaultValueHandling=DefaultValueHandling.Ignore)]
+        public string CollectionPropertyName { get; set; }
+
         [JsonProperty("isEmpty", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public bool IsEmpty { get; set; }
 
@@ -44,6 +47,9 @@ namespace OneDrive.ApiDocumentation.Validation
 
         [JsonProperty("expectError", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public bool ExpectError { get; set; }
+
+        [JsonProperty("nullableProperties", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public string[] NullableProperties { get; set; }
 
         public static CodeBlockAnnotation FromJson(string json)
         {

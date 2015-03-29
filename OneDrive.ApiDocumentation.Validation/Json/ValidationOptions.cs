@@ -25,6 +25,9 @@ namespace OneDrive.ApiDocumentation.Validation.Json
 
         public JsonSchema ExpectedJsonSchema { get; set; }
 
+        public string[] NullablePropertyNames { get; set; }
+
+
         internal ValidationOptions CreateForProperty(string propertyName)
         {
             var newOption = new ValidationOptions

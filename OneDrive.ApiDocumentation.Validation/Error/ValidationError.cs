@@ -65,7 +65,8 @@
         TypeConversionFailure,
         OrphanedDocumentPage,
         UnmappedDocumentElements,
-        MissingCustomMembers
+        MissingCustomMembers,
+        NullPropertyValue
 
     }
 
