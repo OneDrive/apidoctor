@@ -134,10 +134,16 @@
         /// <returns></returns>
         public bool ValidateJsonCompilesWithSchema(JsonSchema schema, JsonExample inputJson, out ValidationError[] errors, JsonExample expectedJson = null)
         {
+            string collectionPropertyName = "value";
+            if (null != inputJson && null != inputJson.Annotation && null != inputJson.Annotation.CollectionPropertyName)
+            {
+                collectionPropertyName = inputJson.Annotation.CollectionPropertyName;
+            }
+
             ValidationOptions options = new ValidationOptions
             {
                 AllowTruncatedResponses = (inputJson.Annotation ?? new CodeBlockAnnotation()).TruncatedResult,
-                CollectionPropertyName = "value"
+                CollectionPropertyName =  collectionPropertyName
             };
 
             return schema.ValidateJson(inputJson, out errors, m_RegisteredSchema, options, expectedJson);

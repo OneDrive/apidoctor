@@ -10,16 +10,16 @@
 
     public class JsonSchema
     {
-        
-
         #region Properties
         public string ResourceName { get { return Metadata.ResourceType; } }
 
         protected Dictionary<string, JsonProperty> ExpectedProperties { get; private set; }
 
-        protected CodeBlockAnnotation Metadata { get; private set; }
+        internal CodeBlockAnnotation Metadata { get; private set; }
 
         public string[] OptionalProperties { get { return (null == Metadata) ? null : Metadata.OptionalProperties; } }
+
+        public string[] NullableProperties { get { return (null == Metadata) ? null : Metadata.NullableProperties; } }
 
         public ResourceDefinition OriginalResource { get; set; }
 
@@ -120,7 +120,7 @@
             var collection = obj[collectionPropertyName];
             if (null == collection)
             {
-                detectedErrors.Add(new ValidationError(ValidationErrorCode.MissingCollectionProperty, null, "Failed to location collection property '{0}' in response.", collectionPropertyName));
+                detectedErrors.Add(new ValidationError(ValidationErrorCode.MissingCollectionProperty, null, "Failed to locate collection property '{0}' in response.", collectionPropertyName));
             }
             else
             {
@@ -253,6 +253,14 @@
                         return PropertyValidationOutcome.InvalidType;
                     }
                 }
+                else if (null == inputProperty.OriginalValue)
+                {
+                    if (null != NullableProperties && !NullableProperties.Contains(schemaPropertyDef.Name))
+                    {
+                        detectedErrors.Add(new ValidationWarning(ValidationErrorCode.NullPropertyValue, null, "Non-nullable property {0} had a null value in the response. Expected {1}.", schemaPropertyDef.Name, schemaPropertyDef.Type));
+                    }
+                    return PropertyValidationOutcome.OK;
+                }
                 else if (schemaPropertyDef.IsArray || inputProperty.IsArray)
                 {
                     // Check for an array
@@ -317,7 +325,7 @@
                 }
                 else
                 {
-                    detectedErrors.Add(new ValidationError(ValidationErrorCode.ExpectedTypeDifferent, null, "Type mismatch: property '{0}' [{1}] doesn't match expected type [{2}].", 
+                    detectedErrors.Add(new ValidationError(ValidationErrorCode.ExpectedTypeDifferent, null, "Type mismatch: property '{0}' [{1}] doesn't match expected type [{2}].",
                         inputProperty.Name, inputProperty.Type, schemaPropertyDef.Type));
                     return PropertyValidationOutcome.InvalidType;
                 }
