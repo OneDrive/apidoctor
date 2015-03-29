@@ -744,10 +744,10 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                     publisher = new MarkdownPublisher(docs);
                     break;
                 case PublishOptions.PublishFormat.Html:
-                    publisher = new DocumentPublisherHtml(docs, options.HtmlTemplateFolder);
+                    publisher = new DocumentPublisherHtml(docs, options.TemplateFolder);
                     break;
                 case PublishOptions.PublishFormat.Mustache:
-                    publisher = new HtmlMustacheWriter(docs, options.HtmlTemplateFolder);
+                    publisher = new HtmlMustacheWriter(docs, options.TemplateFolder);
                     break;
                 case PublishOptions.PublishFormat.Swagger2:
                     publisher = new OneDrive.ApiDocumentation.Validation.Writers.SwaggerWriter(docs, Program.DefaultSettings.ServiceUrl)
@@ -766,14 +766,6 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
             FancyConsole.WriteLineIndented("  ", "Format: {0}", publisher.GetType().Name);
             publisher.VerboseLogging = options.Verbose;
-            publisher.SourceFileExtensions = options.TextFileExtensions;
-            FancyConsole.WriteLineIndented("  ", "File extensions: {0}", publisher.SourceFileExtensions);
-
-            if (!string.IsNullOrEmpty(options.IgnorePaths))
-                publisher.SkipPaths = options.IgnorePaths;
-            FancyConsole.WriteLineIndented("  ", "Ignored Paths: {0}", publisher.SkipPaths);
-            publisher.PublishAllFiles = options.PublishAllFiles;
-            FancyConsole.WriteLineIndented("  ", "Include all files: {0}", publisher.PublishAllFiles);
             FancyConsole.WriteLine();
             
             FancyConsole.WriteLine("Publishing content...");
