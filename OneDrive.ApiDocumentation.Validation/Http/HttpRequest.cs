@@ -85,6 +85,16 @@
                     case "content-length":
                         // Don't set these headers
                         break;
+                    case "if-modified-since":
+                        if (Headers[key].Equals("current_time"))
+                        {
+                            request.IfModifiedSince = DateTime.Now;
+                        }
+                        else
+                        {
+                            request.IfModifiedSince = Convert.ToDateTime(Headers[key]);
+                        }
+                        break;
                     default:
                         request.Headers.Add(key, Headers[key]);
                         break;
