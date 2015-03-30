@@ -315,6 +315,34 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
         #endregion
 
+        public override bool HasRequiredProperties(out string[] missingArguments)
+        {
+            string[] baseResults;
+            if (!base.HasRequiredProperties(out baseResults))
+            {
+                missingArguments = baseResults;
+                return false;
+            }
+
+            List<string> missingArgs = new List<string>();
+            if (Format == PublishFormat.Mustache)
+            {
+                if (string.IsNullOrEmpty(TemplateFolder))
+                    missingArgs.Add("template");
+            }
+            if (Format == PublishFormat.Swagger2)
+            {
+                if (string.IsNullOrEmpty(Title))
+                    missingArgs.Add("swagger-title");
+                if (string.IsNullOrEmpty(Description))
+                    missingArgs.Add("swagger-description");
+                if (string.IsNullOrEmpty(Version))
+                    missingArgs.Add("swagger-version");
+            }
+
+            missingArguments = missingArgs.ToArray();
+            return missingArgs.Count == 0;
+        }
 
         public enum PublishFormat
         {
