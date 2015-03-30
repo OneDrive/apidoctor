@@ -272,6 +272,7 @@ namespace OneDrive.ApiDocumentation.Validation
                 pageHtml = string.Concat(string.Format(htmlHeader, page.Annotation.Title, htmlStyles), bodyHtml, htmlFooter);
             }
 
+            pageHtml = await ConvertLineEndings(pageHtml, OutputLineEndings);
             using (var outputWriter = new StreamWriter(destinationFile))
             {
                 await outputWriter.WriteAsync(pageHtml);

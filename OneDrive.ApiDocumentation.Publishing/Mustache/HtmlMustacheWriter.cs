@@ -94,6 +94,8 @@ namespace OneDrive.ApiDocumentation.Publishing
             _fileTag.RootDestinationFolder = rootDestinationFolder;
 
             var pageHtml = _generator.Render(templateObject);
+            pageHtml = await ConvertLineEndings(pageHtml, OutputLineEndings);
+
             using (var outputWriter = new StreamWriter(destinationFile))
             {
                 await outputWriter.WriteAsync(pageHtml);

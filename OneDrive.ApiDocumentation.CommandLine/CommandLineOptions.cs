@@ -292,6 +292,10 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         [Option("template", HelpText = "Specify the folder where output template files are located.")]
         public string TemplateFolder { get; set; }
 
+        [Option("line-ending",
+            DefaultValue=OneDrive.ApiDocumentation.Validation.LineEndings.Default,
+            HelpText="Change the line endings for output files. Values: default, windows, unix, or macintosh")]
+        public OneDrive.ApiDocumentation.Validation.LineEndings LineEndings { get; set; } 
 
 
         #region Swagger2 output controls

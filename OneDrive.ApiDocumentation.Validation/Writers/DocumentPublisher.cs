@@ -11,8 +11,6 @@
 
 	public abstract class DocumentPublisher
 	{
-        
-
         #region Properties
         /// <summary>
         /// The document set that is the source for the publisher
@@ -35,10 +33,9 @@
         public string SkipPaths { get; set; }
 
         /// <summary>
-        /// Indicates if non-text files are also published to the output directory.
-        /// SkipPaths are still ignored regardless of this setting.
+        /// Allows converting the line endings for markdown documents to another format.
         /// </summary>
-        public bool PublishAllFiles { get; set; }
+        public LineEndings OutputLineEndings { get; set; }
 
         /// <summary>
         /// Output log
@@ -66,7 +63,8 @@
                 RootPath = string.Concat(RootPath, Path.DirectorySeparatorChar);
 
             SourceFileExtensions = ".md,.mdown";
-            SkipPaths = "\\internal;\\.git;\\legacy;\\generate_html_docs;\\.gitignore;\\.gitattributes";
+            SkipPaths = "\\.git;\\.gitignore;\\.gitattributes";
+            OutputLineEndings = LineEndings.Default;
             Messages = new BindingList<ValidationError>();
 		}
         #endregion
@@ -175,18 +173,14 @@
 				{
                     LogMessage(new ValidationMessage(file.Name, "Source file was on the internal path list, skipped."));
 				}
-				else if (IsScannableFile(file))
+				else if (IsMarkdownFile(file))
 				{
                     var docFile = Documents.Files.Where(x => x.FullPath.Equals(file.FullName)).FirstOrDefault();
 					await PublishFileToDestination(file, destinationRoot, docFile);
 				}
-				else if (CopyToOutput(file))
-				{
-					CopyFileToDestination(file, destinationRoot);
-				}
 				else
 				{
-                    LogMessage(new ValidationWarning(ValidationErrorCode.ExtraFileDetected, file.Name, "Source file was not in the scan or copy list, skipped."));
+					CopyFileToDestination(file, destinationRoot);
 				}
 			}
 
@@ -268,6 +262,49 @@
             throw new NotImplementedException("This method is not implemented in the abstract class.");
 		}
 
+        /// <summary>
+        /// Convert the line endings of a string to another format.
+        /// </summary>
+        /// <param name="inputText"></param>
+        /// <param name="endings"></param>
+        /// <returns></returns>
+        protected virtual async Task<string> ConvertLineEndings(string inputText, LineEndings endings)
+        {
+            const char CarriageReturnChar = (char)13;
+            const char LineFeedChar = (char)10;
+            StringWriter writer = new StringWriter();
+            switch(endings)
+            {
+                case LineEndings.Macintosh:
+                    writer.NewLine = CarriageReturnChar.ToString();
+                    break;
+                case LineEndings.Unix:
+                    writer.NewLine =  LineFeedChar.ToString();
+                    break;
+                case LineEndings.Windows:
+                    writer.NewLine = new string(new char[] { CarriageReturnChar, LineFeedChar});
+                    break;
+            }
+
+            if (OutputLineEndings != LineEndings.Default)
+            {
+                await Task.Run(() =>
+                {
+                    StringReader reader = new StringReader(inputText);
+                    string currentLine;
+                    while ((currentLine = reader.ReadLine()) != null)
+                    {
+                        writer.WriteLine(currentLine);
+                    }
+                });
+                return writer.ToString();
+            }
+            else
+            {
+                return inputText;
+            }
+        }
+
 		#region Scanning Rules
 
 		[ScanRuleAttribute(ScanRuleTarget.LineOfText)]
@@ -277,14 +314,9 @@
 		}
 
 		[ScanRuleAttribute(ScanRuleTarget.FileInfo)]
-		public bool IsScannableFile(FileInfo file)
+		public bool IsMarkdownFile(FileInfo file)
 		{
 			return scannableExtensions.Contains(file.Extension);
-		}
-
-		public bool CopyToOutput(FileInfo file)
-		{
-			return PublishAllFiles;
 		}
 
 		[ScanRuleAttribute(ScanRuleTarget.FileInfo)]
@@ -349,4 +381,12 @@
 		FileInfo,
 		LineOfText
 	}
+
+    public enum LineEndings
+    {
+        Default,
+        Windows,
+        Unix,
+        Macintosh
+    }
 }

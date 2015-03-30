@@ -640,6 +640,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         private static void Exit(bool failure)
         {
 #if DEBUG
+            Console.WriteLine("Exit - failure: " + failure);
             if (System.Diagnostics.Debugger.IsAttached)
             {
                 Console.WriteLine();
