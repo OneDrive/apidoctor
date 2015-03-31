@@ -86,10 +86,10 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                     CheckLinks((DocSetOptions)options);
                     break;
                 case CommandLineOptions.VerbDocs:
-                    CheckDocs((ConsistencyCheckOptions)options);
+                    CheckDocs((BasicCheckOptions)options);
                     break;
                 case CommandLineOptions.VerbService:
-                    await CheckService((ServiceConsistencyOptions)options);
+                    await CheckService((CheckServiceOptions)options);
                     break;
                 case CommandLineOptions.VerbSet:
                     SetDefaultValues((SetCommandOptions)options);
@@ -191,7 +191,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 WriteOutErrors(loadErrors, options.SilenceWarnings);
             }
 
-            var serviceOptions = options as ServiceConsistencyOptions;
+            var serviceOptions = options as CheckServiceOptions;
             if (null != serviceOptions)
             {
                 FancyConsole.VerboseWriteLine("Reading configuration parameters...");
@@ -355,7 +355,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             return query.FirstOrDefault();
         }
 
-        private static void CheckDocs(ConsistencyCheckOptions options)
+        private static void CheckDocs(BasicCheckOptions options)
         {
             var docset = GetDocSet(options);
             FancyConsole.WriteLine();
@@ -377,7 +377,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             Exit(failure: wasFailure);
         }
 
-        private static void CheckExamples(ConsistencyCheckOptions options, DocSet docset, ref int successCount, ref int errorCount, ref int warningCount)
+        private static void CheckExamples(BasicCheckOptions options, DocSet docset, ref int successCount, ref int errorCount, ref int warningCount)
         {
             foreach (var doc in docset.Files)
             {
@@ -408,7 +408,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             }
         }
 
-        private static void CheckMethods(ConsistencyCheckOptions options, DocSet docset, ref int successCount, ref int errorCount, ref int warningCount)
+        private static void CheckMethods(BasicCheckOptions options, DocSet docset, ref int successCount, ref int errorCount, ref int warningCount)
         {
             MethodDefinition[] methods = FindTestMethods(options, docset);
             foreach (var method in methods)
@@ -440,7 +440,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             }
         }
 
-        private static MethodDefinition[] FindTestMethods(ConsistencyCheckOptions options, DocSet docset)
+        private static MethodDefinition[] FindTestMethods(BasicCheckOptions options, DocSet docset)
         {
             MethodDefinition[] methods = null;
             if (!string.IsNullOrEmpty(options.MethodName))
@@ -539,10 +539,22 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         /// </summary>
         /// <param name="options"></param>
         /// <returns></returns>
-        private static async Task CheckService(ServiceConsistencyOptions options)
+        private static async Task CheckService(CheckServiceOptions options)
         {
             var docset = GetDocSet(options);
             FancyConsole.WriteLine();
+
+            if (options.AdditionalHeaders != null)
+            {
+                var headers = options.AdditionalHeaders.Split('|');
+                ValidationConfig.AdditionalHttpHeaders = headers.ToArray();
+            }
+
+            if (!string.IsNullOrEmpty(options.ODataMetadataLevel))
+            {
+                ValidationConfig.ODataMetadataLevel = options.ODataMetadataLevel;
+            }
+
 
             if (options.UseEnvironmentVariables)
             {
@@ -674,7 +686,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             FancyConsole.WriteLine();
         }
 
-        private static void AddPause(ServiceConsistencyOptions options)
+        private static void AddPause(CheckServiceOptions options)
         {
             if (options.PauseBetweenRequests)
             {

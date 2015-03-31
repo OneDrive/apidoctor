@@ -11,7 +11,6 @@ namespace OneDrive.ApiDocumentation.Validation
         static ValidationConfig()
         {
             ValidationConfig.ExpectedResponseAsRequiredProperties = true;
-            ValidationConfig.UseODataMetadataNone = false;
             ValidationConfig.AdditionalHttpHeaders = new string[0];
         }
 
@@ -24,8 +23,11 @@ namespace OneDrive.ApiDocumentation.Validation
         /// <summary>
         /// Instead of using the default OData metadata settings, force the odata metadata parameters to none.
         /// </summary>
-        public static bool UseODataMetadataNone { get; set; }
+        public static string ODataMetadataLevel { get; set; }
 
+        /// <summary>
+        /// An array of additional HTTP headers that are added to outgoing requests to the service.
+        /// </summary>
         public static string[] AdditionalHttpHeaders { get; set; }
 
 

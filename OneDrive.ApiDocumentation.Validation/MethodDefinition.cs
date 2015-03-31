@@ -19,8 +19,6 @@ namespace OneDrive.ApiDocumentation.Validation
         internal const string MimeTypeJson = "application/json";
         internal const string MimeTypeMultipartRelated = "multipart/related";
         internal const string MimeTypePlainText = "text/plain";
-        internal const string HttpHeaderIfMatchAny = "If-Match: *";
-        internal const string MimeTypeJsonOdataMetadataNone = "application/json; odata.metadata=none";
         #endregion
 
         #region Constructors / Class Factory
@@ -152,9 +150,9 @@ namespace OneDrive.ApiDocumentation.Validation
 
             if (string.IsNullOrEmpty(request.Accept))
             {
-                if (ValidationConfig.UseODataMetadataNone)
+                if (!string.IsNullOrEmpty(ValidationConfig.ODataMetadataLevel))
                 {
-                    request.Accept = MimeTypeJsonOdataMetadataNone;
+                    request.Accept = MimeTypeJson + "; " + ValidationConfig.ODataMetadataLevel;
                 }
                 else
                 {

@@ -32,10 +32,10 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         public DocSetOptions LinksVerb { get; set; }
 
         [VerbOption(VerbDocs, HelpText = "Check for errors in the documentation (resources + examples).")]
-        public ConsistencyCheckOptions InternalConsistencyVerb { get; set; }
+        public BasicCheckOptions InternalConsistencyVerb { get; set; }
 
         [VerbOption(VerbService, HelpText = "Check for errors between the documentation and service.")]
-        public ServiceConsistencyOptions ServiceConsistencyVerb { get; set; }
+        public CheckServiceOptions ServiceConsistencyVerb { get; set; }
 
         [VerbOption(VerbSet, HelpText = "Save or reset default parameter values.")]
         public SetCommandOptions SetVerb { get; set; }
@@ -204,7 +204,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         }
     }
 
-    class ConsistencyCheckOptions : DocSetOptions
+    class BasicCheckOptions : DocSetOptions
     {
         [Option('m', "method", HelpText = "Name of the method to test. If missing, all methods are tested.", MutuallyExclusiveSet="fileOrMethod")]
         public string MethodName { get; set; }
@@ -214,7 +214,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
     }
 
-    class ServiceConsistencyOptions : ConsistencyCheckOptions
+    class CheckServiceOptions : BasicCheckOptions
     {
         private const string AccessTokenArgument = "access-token";
         private const string ServiceUrlArgument = "url";
@@ -231,6 +231,12 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
         [Option("pause", HelpText="Pause between method requests.")]
         public bool PauseBetweenRequests { get; set; }
+
+        [Option("headers", HelpText = "Additional headers to add to requests to the service. For example If-Match: *")]
+        public string AdditionalHeaders { get; set; }
+
+        [Option("odata-metadata", HelpText="Set the odata.metadata level in the accept header.", DefaultValue=null)]
+        public string ODataMetadataLevel { get; set; }
 
 
         // OAuth 2 Token Generator Properties
