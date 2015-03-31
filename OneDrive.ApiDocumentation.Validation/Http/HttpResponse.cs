@@ -128,8 +128,8 @@
             foreach(var expectedHeader in Headers.AllKeys)
             {
                 if (!otherResponseHeaderKeys.Contains(expectedHeader, comparer))
-                {                    
-                  //  errorList.Add(new ValidationError(ValidationErrorCode.HttpRequiredHeaderMissing, null, "Response is missing header expected header: {0}.", expectedHeader));
+                {
+                    errorList.Add(new ValidationError(ValidationErrorCode.HttpRequiredHeaderMissing, null, "Response is missing header expected header: {0}.", expectedHeader));
                 }
                 else if (HeadersForPartialMatch.Contains(expectedHeader.ToLower()))
                 {
