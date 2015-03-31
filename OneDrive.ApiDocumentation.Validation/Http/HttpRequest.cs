@@ -99,7 +99,6 @@
                         request.Headers.Add(key, Headers[key]);
                         break;
                 }
-                
             }
 
             if (Body != null)
@@ -111,6 +110,15 @@
                     writer.Flush();
                 }
             }
+
+            if (null != ValidationConfig.AdditionalHttpHeaders)
+            {
+                foreach (var header in ValidationConfig.AdditionalHttpHeaders)
+                {
+                    request.Headers.Add(header);
+                }
+            }
+
 
             return request;
         }

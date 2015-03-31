@@ -11,9 +11,23 @@ namespace OneDrive.ApiDocumentation.Validation
         static ValidationConfig()
         {
             ValidationConfig.ExpectedResponseAsRequiredProperties = true;
+            ValidationConfig.UseODataMetadataNone = false;
+            ValidationConfig.AdditionalHttpHeaders = new string[0];
         }
 
+        /// <summary>
+        /// Validatation requires that properties shown in the documentation's expected response are
+        /// found when testing the service or simulatedResponse.
+        /// </summary>
         public static bool ExpectedResponseAsRequiredProperties { get; set; }
+
+        /// <summary>
+        /// Instead of using the default OData metadata settings, force the odata metadata parameters to none.
+        /// </summary>
+        public static bool UseODataMetadataNone { get; set; }
+
+        public static string[] AdditionalHttpHeaders { get; set; }
+
 
     }
 }
