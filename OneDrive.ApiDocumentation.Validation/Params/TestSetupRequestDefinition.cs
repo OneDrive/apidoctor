@@ -11,7 +11,7 @@
     public class TestSetupRequestDefinition : BasicRequestDefinition
     {
         private const string SourceName = "PlaceholderRequest";
-        
+        internal const string MimeTypeEtag = "If-Match:*";
         /// <summary>
         /// Define which values should be captured from the Http Response and stored for another call
         /// </summary>
@@ -75,6 +75,7 @@
             try
             {
                 var webRequest = request.PrepareHttpWebRequest(baseUrl);
+                webRequest.Headers.Add(MimeTypeEtag);
                 var response = await Http.HttpResponse.ResponseFromHttpWebResponseAsync(webRequest);
 
                 errors.Add(new ValidationMessage(null, "HTTP Response:\n{0}\n\n", response.FullHttpText()));
