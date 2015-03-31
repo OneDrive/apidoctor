@@ -16,7 +16,7 @@ namespace OneDrive.ApiDocumentation.Validation
         /// <param name="definition"></param>
         /// <param name="baseUrl"></param>
         /// <returns></returns>
-        public static Http.HttpRequest GetHttpRequest(this BasicRequestDefinition definition, string baseUrl)
+        public static Http.HttpRequest GetHttpRequest(this BasicRequestDefinition definition, string baseUrl, DocSet documents)
         {
             Http.HttpRequest foundRequest = null;
             if (!string.IsNullOrEmpty(definition.RawHttpRequest))
@@ -25,8 +25,7 @@ namespace OneDrive.ApiDocumentation.Validation
             }
             else if (!string.IsNullOrEmpty(definition.MethodName))
             {
-                // TODO: Need to figure out how to plumb in a DocSet reference here.
-                foundRequest = LookupHttpRequestForMethod(definition.MethodName, baseUrl, null);
+                foundRequest = LookupHttpRequestForMethod(definition.MethodName, baseUrl, documents);
             }
 
             return foundRequest;

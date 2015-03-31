@@ -33,6 +33,9 @@ namespace OneDrive.ApiDocumentation.Validation
         [JsonProperty("isCollection", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public bool IsCollection { get; set; }
 
+        [JsonProperty("collectionProperty", DefaultValueHandling=DefaultValueHandling.Ignore)]
+        public string CollectionPropertyName { get; set; }
+
         [JsonProperty("isEmpty", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public bool IsEmpty { get; set; }
 
@@ -45,10 +48,19 @@ namespace OneDrive.ApiDocumentation.Validation
         [JsonProperty("expectError", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public bool ExpectError { get; set; }
 
+        [JsonProperty("nullableProperties", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public string[] NullableProperties { get; set; }
+
         public static CodeBlockAnnotation FromJson(string json)
         {
-            
-            return JsonConvert.DeserializeObject<CodeBlockAnnotation>(json);
+            try
+            {
+                return JsonConvert.DeserializeObject<CodeBlockAnnotation>(json);
+            }
+            catch (Exception)
+            {
+                return new CodeBlockAnnotation() { BlockType = CodeBlockType.Ignored };
+            }
         }
     }
 
@@ -82,6 +94,11 @@ namespace OneDrive.ApiDocumentation.Validation
         /// <summary>
         /// Example code block. Should be checked for JSON correctness and resources
         /// </summary>
-        Example
+        Example,
+
+        /// <summary>
+        /// A simulated response, used for unit testing.
+        /// </summary>
+        SimulatedResponse
     }
 }

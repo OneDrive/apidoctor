@@ -24,7 +24,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>false</ConsolePause>
-    <Commandlineparameters>publish --output /Users/ryan/Desktop/ --format swagger2</Commandlineparameters>
+    <Commandlineparameters>check-docs</Commandlineparameters>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -60,6 +60,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Auth\OAuthTokenGenerator.cs" />
     <Compile Include="CommandLineOptions.cs" />
     <Compile Include="FancyConsole.cs" />
     <Compile Include="Program.cs" />

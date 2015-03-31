@@ -18,7 +18,7 @@
         protected List<MarkdownDeep.Block> m_CodeBlocks = new List<MarkdownDeep.Block>();
         protected List<ResourceDefinition> m_Resources = new List<ResourceDefinition>();
         protected List<MethodDefinition> m_Requests = new List<MethodDefinition>();
-        protected List<ResourceDefinition> m_JsonExamples = new List<ResourceDefinition>();
+        protected List<ExampleDefinition> m_JsonExamples = new List<ExampleDefinition>();
         protected List<string> m_Bookmarks = new List<string>();
 
 //        protected List<MarkdownDeep.LinkInfo> m_Links = new List<MarkdownDeep.LinkInfo>();
@@ -40,6 +40,11 @@
         /// </summary>
         public string HtmlContent { get; protected set; }
 
+        /// <summary>
+        /// Contains information on the headers and content blocks found in this document.
+        /// </summary>
+        public List<string> ContentOutline { get; set; }
+
         public ResourceDefinition[] Resources
         {
             get { return m_Resources.ToArray(); }
@@ -50,9 +55,11 @@
             get { return m_Requests.ToArray(); }
         }
 
-        public AuthScopeDefinition[] AuthScopes { get; private set; }
+        public ExampleDefinition[] Examples { get { return m_JsonExamples.ToArray(); } }
 
-        public ErrorDefinition[] ErrorCodes { get; private set; }
+        public AuthScopeDefinition[] AuthScopes { get; protected set; }
+
+        public ErrorDefinition[] ErrorCodes { get; protected set; }
 
         public string[] LinkDestinations
         {
@@ -71,24 +78,25 @@
 
         protected List<MarkdownDeep.LinkInfo> MarkdownLinks {get;set;}
 
-        public DocSet Parent { get; private set; }
+        public DocSet Parent { get; protected set; }
         #endregion
 
         #region Constructor
         protected DocFile()
         {
-
+            ContentOutline = new List<string>();
+            m_Bookmarks = new List<string>();
         }
 
-        public DocFile(string basePath, string relativePath, DocSet parent)
+        public DocFile(string basePath, string relativePath, DocSet parent) 
+            : this()
         {
             m_BasePath = basePath;
             FullPath = Path.Combine(basePath, relativePath.Substring(1));
             DisplayName = relativePath;
             Parent = parent;
-            
-            m_Bookmarks = new List<string>();
         }
+
         #endregion
 
         #region Markdown Parsing
@@ -104,6 +112,14 @@
             MarkdownLinks = new List<MarkdownDeep.LinkInfo>(md.FoundLinks);
         }
 
+        protected virtual string GetContentsOfFile()
+        {
+            using (StreamReader reader = File.OpenText(this.FullPath))
+            {
+                return reader.ReadToEnd();
+            }
+        }
+
 
         /// <summary>
         /// Read the contents of the file into blocks and generate any resource or method definitions from the contents
@@ -115,10 +131,7 @@
             
             try
             {
-                using (StreamReader reader = File.OpenText(this.FullPath))
-                {
-                    TransformMarkdownIntoBlocksAndLinks(reader.ReadToEnd());
-                }
+                TransformMarkdownIntoBlocksAndLinks(GetContentsOfFile());
             }
             catch (IOException ioex)
             {
@@ -134,16 +147,6 @@
             }
 
             return ParseMarkdownBlocks(out errors);
-        }
-
-        private static TextWriter datawriter;
-        private static TextWriter GetWriter()
-        {
-            if (null == datawriter)
-            {
-                datawriter = new StreamWriter("doc-schema.txt") { AutoFlush = true };
-            }
-            return datawriter;
         }
 
         private static bool IsHeaderBlock(MarkdownDeep.Block block, int maxDepth = 2)
@@ -182,10 +185,6 @@
         {
             List<ValidationError> detectedErrors = new List<ValidationError>();
 
-            var writer = GetWriter();
-            writer.WriteLine();
-            writer.WriteLine("### " + this.DisplayName + " ###");
-
             string methodTitle = null;
             string methodDescription = null;
 
@@ -198,9 +197,7 @@
                 var previousBlock = (i > 0) ? OriginalMarkdownBlocks[i - 1] : null;
                 var block = OriginalMarkdownBlocks[i];
 
-                writer.Write(block.BlockType.ToString());
-                writer.Write(" - ");
-                writer.WriteLine(PreviewOfBlockContent(block));
+                ContentOutline.Add(string.Format("{0} - {1}", block.BlockType, PreviewOfBlockContent(block)));
 
                 // Capture GitHub Flavored Markdown Bookmarks
                 if (IsHeaderBlock(block, 6))
@@ -299,6 +296,8 @@
                 - Find request with matching parameters
              */
 
+            List<ValidationError> detectedErrors = new List<ValidationError>();
+
             var foundMethods = from s in elementsFoundInDocument
                                where s is MethodDefinition
                                select (MethodDefinition)s;
@@ -313,9 +312,9 @@
 
             PostProcessAuthScopes(elementsFoundInDocument);
             PostProcessResources(foundResources, foundTables);
-            PostProcessMethods(foundMethods, foundTables);
-            
-            postProcessingErrors = new ValidationError[0];
+            PostProcessMethods(foundMethods, foundTables, detectedErrors);
+
+            postProcessingErrors = detectedErrors.ToArray();
         }
 
         private void PostProcessAuthScopes(List<object> StuffFoundInThisDoc)
@@ -349,7 +348,7 @@
             }
         }
 
-        private void PostProcessMethods(IEnumerable<MethodDefinition> foundMethods, IEnumerable<TableDefinition> foundTables)
+        private void PostProcessMethods(IEnumerable<MethodDefinition> foundMethods, IEnumerable<TableDefinition> foundTables, List<ValidationError> errors)
         {
             var totalMethods = foundMethods.Count();
             var totalTables = foundTables.Count();
@@ -359,23 +358,32 @@
 
             if (totalMethods == 0)
             {
-                StoreOnFile(foundTables);
+                SetFoundTablesForFile(foundTables);
             }
             else if (totalMethods == 1)
             {
                 var onlyMethod = foundMethods.Single();
-                StoreOnMethod(foundTables, onlyMethod);
+                SetFoundTablesOnMethod(foundTables, onlyMethod);
             }
             else
             {
                 // TODO: Figure out how to map stuff when more than one method exists
-                Console.WriteLine("Failed to map elements in file {0}", DisplayName);
-                Console.WriteLine(" Methods:\r\n  {0}", (from m in foundMethods select m.RequestMetadata.MethodName).ComponentsJoinedByString("\r\n  "));
-                Console.WriteLine(" Tables:\r\n  {0}", (from t in foundTables select string.Format("{0} - {1}", t.Title, t.Type)).ComponentsJoinedByString("\r\n  "));
+                if (null != errors)
+                {
+                    errors.Add(new ValidationWarning(ValidationErrorCode.UnmappedDocumentElements, "Unable to map elements in file {0}", DisplayName));
+                    
+                    var unmappedMethods = (from m in foundMethods select m.RequestMetadata.MethodName).ComponentsJoinedByString("\r\n");
+                    if (!string.IsNullOrEmpty(unmappedMethods)) 
+                        errors.Add(new ValidationMessage("Unmapped methods", unmappedMethods));
+
+                    var unmappedTables = (from t in foundTables select string.Format("{0} - {1}", t.Title, t.Type)).ComponentsJoinedByString("\r\n");
+                    if (!string.IsNullOrEmpty(unmappedTables)) 
+                        errors.Add(new ValidationMessage("Unmapped tables", unmappedTables));
+                }
             }
         }
 
-        private static void StoreOnMethod(IEnumerable<TableDefinition> foundTables, MethodDefinition onlyMethod)
+        private static void SetFoundTablesOnMethod(IEnumerable<TableDefinition> foundTables, MethodDefinition onlyMethod)
         {
             foreach (var table in foundTables)
             {
@@ -410,7 +418,7 @@
             }
         }
 
-        private void StoreOnFile(IEnumerable<TableDefinition> foundTables)
+        private void SetFoundTablesForFile(IEnumerable<TableDefinition> foundTables)
         {
             // Assume anything we found is a global resource
             foreach (var table in foundTables)
@@ -423,47 +431,6 @@
                 }
             }
         }
-
-        ///// <summary>
-        ///// Parse through the markdown blocks and intprerate the documents into
-        ///// our internal object model.
-        ///// </summary>
-        ///// <returns><c>true</c>, if code blocks was parsed, <c>false</c> otherwise.</returns>
-        ///// <param name="errors">Errors.</param>
-        //protected bool ParseMarkdownBlocksOld(out ValidationError[] errors)
-        //{
-        //    List<ValidationError> detectedErrors = new List<ValidationError>();
-
-        //    // Scan through the blocks to find something interesting
-        //    m_CodeBlocks = FindCodeBlocks(OriginalMarkdownBlocks);
-
-        //    for (int i = 0; i < m_CodeBlocks.Count; )
-        //    {
-        //        // We're looking for pairs of html + code blocks. The HTML block contains metadata about the block.
-        //        // If we don't find an HTML block, then we skip the code block.
-        //        var htmlComment = m_CodeBlocks[i];
-        //        if (htmlComment.BlockType != MarkdownDeep.BlockType.html)
-        //        {
-        //            detectedErrors.Add(new ValidationMessage(FullPath, "Block skipped - expected HTML comment, found: {0}", htmlComment.BlockType, htmlComment.Content));
-        //            i++;
-        //            continue;
-        //        }
-
-        //        try
-        //        {
-        //            var codeBlock = m_CodeBlocks[i + 1];
-        //            ParseCodeBlock(htmlComment, codeBlock);
-        //        }
-        //        catch (Exception ex)
-        //        {
-        //            detectedErrors.Add(new ValidationError(ValidationErrorCode.MarkdownParserError, FullPath, "Exception while parsing code blocks: {0}.", ex.Message));
-        //        }
-        //        i += 2;
-        //    }
-
-        //    errors = detectedErrors.ToArray();
-        //    return detectedErrors.Count == 0;
-        //}
 
         /// <summary>
         /// Filters the blocks to just a collection of blocks that may be
@@ -537,6 +504,12 @@
                     }
                 case CodeBlockType.Ignored:
                     return null;
+                case CodeBlockType.SimulatedResponse:
+                    {
+                        var method = m_Requests.Last();
+                        method.AddSimulatedResponse(code.Content, annotation);
+                        return method;
+                    }
                 default:
                     throw new NotSupportedException("Unsupported block type: " + annotation.BlockType);
             }
@@ -639,12 +612,11 @@
             {
                 if (parsedUri.IsAbsoluteUri && (parsedUri.Scheme == "http" || parsedUri.Scheme == "https"))
                 {
-                    // TODO: verify the URL is valid
+                    // TODO: verify an external URL is valid by making a HEAD request
                     return LinkValidationResult.ExternalSkipped;
                 }
                 else if (linkUrl.StartsWith("#"))
                 {
-                    // TODO: bookmark link within the same document
                     string bookmarkName = linkUrl.Substring(1);
                     if (m_Bookmarks.Contains(bookmarkName))
                     {
@@ -719,13 +691,5 @@
         #endregion
 
     }
-
-    public enum DocType
-    {
-        Unknown = 0,
-        Resource,
-        MethodRequest
-    }
-
 
 }

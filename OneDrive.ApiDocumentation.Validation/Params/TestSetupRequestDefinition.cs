@@ -49,7 +49,7 @@
         /// <param name="baseUrl"></param>
         /// <param name="accessToken"></param>
         /// <returns></returns>
-        public async Task<ValidationResult<bool>> MakeSetupRequestAsync(string baseUrl, AuthenicationCredentials credentials, Dictionary<string, string> storedValues)
+        public async Task<ValidationResult<bool>> MakeSetupRequestAsync(string baseUrl, AuthenicationCredentials credentials, Dictionary<string, string> storedValues, DocSet documents)
         {
             List<ValidationError> errors = new List<ValidationError>();
             
@@ -58,7 +58,7 @@
             Http.HttpRequest request = null;
             try
             {
-                request = this.GetHttpRequest(baseUrl);
+                request = this.GetHttpRequest(baseUrl, documents);
             }
             catch (Exception ex)
             {

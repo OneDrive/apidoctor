@@ -95,18 +95,38 @@ apidocs set --access-token "asdkljasdkj..." -url https://api.example.org/v1.0
 apidocs check-service --parameter-file requests.json --method search
 ```
 
+#### Refresh Tokens
+Instead of using an access token on the command line, you can use the following
+environment variables to provide a refresh token and token service to generate
+access tokens. This enables the tool to be used in automation scripts and other
+scenarios where it may not be possible to have user-interaction to generate an
+access token.
+
+| Variable Name           | Description                                                                |
+|:------------------------|:---------------------------------------------------------------------------|
+| **oauth-token-service** | URL for the OAuth 2.0 token service to be used to retrieve an access token |
+| **oauth-client-id**     | Client ID that is passed to the token service                              |
+| **oauth-client-secret** | Client Secret that is passed to the token service                          |
+| **oauth-redirect-uri**  | Redirect URI used to generate the refresh token                            |
+| **oauth-refresh-token** | Refresh token that is used to generate an access token                     |
+
+If these environment variables are set, it is not necessary to pass an access
+token using the `--access-token` command line parameter. The tool will call the
+token service to retrieve an access token when necessary.
+
 ### Publish Command
 The publish command creates a "clean" copy of the documentation set by running
 it through a simple set of processing rules. The output can either be the original
 format or you can convert the output to another supported format.
 
-| Option                     | Description                                                                                                                                                                           |
-|:---------------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `--output <path>`          | Required. Output directory for sanitized documentation.                                                                                                                               |
-| `--extensions <value>`     | Specify a common separated list of file extensions that are considered "documentation files" and should be processed. Default is `.md,.mdown`.                                        |
-| `--format [markdown,html]` | Specify the format for the output documentation. Either `markdown` (default) or `html`.                                                                                               |
-| `--ignore-path <value>`    | Specify a semicolon separated list of paths in the documentation that should never be copied to output. Default is `\internal;\.git;\.gitignore;\generate_html_output`.               |
-| `--include-all`            | Default: true. Specify that all files, even those which are not in the extension list, are copied to the output location. This allows graphics and other non-text files to be copied. |
+| Option                              | Description                                                                                                                                                                                         |
+|:------------------------------------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `--output <path>`                   | Required. Output directory for sanitized documentation.                                                                                                                                             |
+| `--extensions <value>`              | Specify a common separated list of file extensions that are considered "documentation files" and should be processed. Default is `.md,.mdown`.                                                      |
+| `--format [markdown,html,swagger2]` | Specify the format for the output documentation. Either `markdown` (default) or `html`.                                                                                                             |
+| `--ignore-path <value>`             | Specify a semicolon separated list of paths in the documentation that should never be copied to output. Default is `\internal;\.git;\.gitignore;\generate_html_output`.                             |
+| `--include-all`                     | Default: true. Specify that all files, even those which are not in the extension list, are copied to the output location. This allows graphics and other non-text files to be copied.               |
+| `--html-template <value`            | Specify the path to a folder that contains HTML template content. The tool expects to find template.htm in this folder, and copies all other files and folders from the folder to the output folder |
 
 Example: `apidocs --path ~/github/api-docs --output ~/documents/docs`
 
@@ -269,6 +289,7 @@ conforming to this schema:
 
 
 ### Test Setup
+
 The test-setup property allows you to define an array of calls that are made
 before the actual test method is executed. This allows you to pull values from
 other requests and store them to be used in the test method call. This also
@@ -285,7 +306,6 @@ Each object in the array of `test-setup` is a `PlaceholderRequest` instance.
 | `allowed-status-codes` | array of int    | Normally the request is considered failed of the response is anything other than 2xx. Use this to allow error codes and other responses to be considered valid.                                               |
 | `capture`              | key-value pairs | Specify the key-value pairs of values that are read from this response and stored for another request under this scenario. Allows you to store values and use them in other requests under the same scenario. |
 
-
 ### Placeholder Grammar
 
 When specifying a placeholder name or value, the following syntax is used:
@@ -298,8 +318,6 @@ When specifying a placeholder name or value, the following syntax is used:
 | !body         | `!body`            | Replace the content stream of the request with the provided value                                                                         |
 | !url          | `!url`             | Replace the URL for the request with the provided value.                                                                                  |
 | Header:       | `Content-Type:`    | Replace the value of a header with the specified value. Note the header name must end with a colon to be valid.                           |
-
-
 
 ### Capture Grammar
 
@@ -314,6 +332,52 @@ The output-value grammar follows the same syntax as the placeholder grammar:
 | Header: | `Content-Type:` | Read and store the value of the specified HTTP header |
 | !body   | !body           | Read and store the complete body of the response      |
 
+### Code Block Annotation Properties
+
+The HTML-comment enclosed JSON object inside the documentation has the following 
+properties defined:
+
+```json
+{
+	"blockType": "unknown | resource | request | response | ignored | example | simulatedResponse",
+	"@odata.type": "resource name",
+	"optionalProperties": [ "prop1", "prop2" ],
+	"isCollection": false,
+	"collectionProperty": "value",
+	"isEmpty": false,
+	"truncated": true,
+	"name": "string name",
+	"expectError": false,
+	"nullableProperties": [ "prop3", "prop4" ]
+}
+```
+
+#### Property Descriptions
+
+Name | Value | Allowed Blocks | Description
+---|---|---|---
+**blockType** | string | All |  Describes the type of the json block proceeding the annotation.
+**@odata.type** | string | All | Describes the name of the resource (either being defined, in the case of a resource block, or as the body type on a request/response block)
+**optionalProperties** | array of strings | resource | An array of properties that are not required to be in the code block. 
+**isCollection** | boolean | response, example, simulatedResponse | Indicates that the block contains a collection of items that match the **@odata.type** schema. This is expected as an object with a single property that is an array of objects.
+**collectionProperty** | string | response, example, simulatedResponse | Provides the name of the variable that contains the collection. Default value: `value`.
+**isEmpty** | boolean | response, example, simulatedResponse | Indicates that the collection value is expected to be empty (or not).
+**truncated** | boolean | response, example, simulatedResponse | Indicates that the block will not include all properties of the resource and that's not an error. Properties explicitly shown in the code block are always considered required when tested against the service.
+**name** | string | request, example | Provides the name of the request method being defined.
+**expectError** | boolean | response, example, simulatedResponse | Use this to indicate that instead of returning the normal response as defined, an error response will be returned instead.
+**nullableProperties** | array of strings | response, example, simulatedResponse | Provide a list of properties that are allowed to have null values. By default, null values for a property will generate a warning.
+
+
+#### Block Types
+Name | Description
+---|---
+`resource` | The json block describes a system resource (complex type) in the API.
+`request`  | The json block describes an HTTP request that can be made by clients.
+`response` | The json block describes the HTTP response that is sent from the service.
+`example`  | An example of the JSON data that would be generated by the client or returned by the service, without being wrapped in an HTTP call.
+`simulatedResponse` | Used for unit testing to simulate responses from the service.
+`ignored` | No processing is done on the code block that follows. 
+
 
 ## Open Source
 The API Documentation Test Tool uses the following open source components:
@@ -321,3 +385,4 @@ The API Documentation Test Tool uses the following open source components:
 * [MarkdownDeep](https://github.com/toptensoftware/MarkdownDeep) - Markdown for C# parser. Apache 2.0 license, Copyright (C) 2010-2011 Topten Software.
 * [Newtonsoft.Json](https://github.com/JamesNK/Newtonsoft.Json) - Json parser for .NET apps. MIT license, Copyright (c) 2007 James Newton-King
 * [CommandLineParser](https://commandline.codeplex.com/) - Command line parser library. MIT license, Copyright (c) 2005 - 2012 Giacomo Stelluti Scala.
+* [AsyncEx](https://github.com/StephenCleary/AsyncEx/) - Command line Async helper. MIT license, Copyright (c) 2014 StephenCleary.
