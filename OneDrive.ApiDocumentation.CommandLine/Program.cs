@@ -729,7 +729,11 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             FancyConsole.VerboseWriteLineIndented(indentLevel + "  ", requestPreview.FullHttpText());
 
             var parser = new HttpParser();
-            var expectedResponse = parser.ParseHttpResponse(method.ExpectedResponse);
+            HttpResponse expectedResponse = null;
+            if (!string.IsNullOrEmpty(method.ExpectedResponse))
+            {
+                expectedResponse = parser.ParseHttpResponse(method.ExpectedResponse);
+            }
 
             var request = requestPreview.PrepareHttpWebRequest(rootUrl);
             var actualResponse = await HttpResponse.ResponseFromHttpWebResponseAsync(request);
