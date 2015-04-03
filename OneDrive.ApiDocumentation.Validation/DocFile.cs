@@ -197,8 +197,6 @@ namespace OneDrive.ApiDocumentation.Validation
 
             List<object> StuffFoundInThisDoc = new List<object>();
 
-            PageAnnotation pageAnnotation = null;
-
             for (int i = 0; i < OriginalMarkdownBlocks.Length; i++)
             {
                 var previousBlock = (i > 0) ? OriginalMarkdownBlocks[i - 1] : null;
