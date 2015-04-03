@@ -9,8 +9,8 @@ namespace OneDrive.ApiDocumentation.Validation
 {
     public class DocumentPublisherHtml : DocumentPublisher
     {
-        private string _templateFolderPath;
-        private string _templateHtml;
+        protected string _templateFolderPath;
+        protected string _templateHtml;
 
         private const string HtmlOutputExtension = ".htm";
         private const string TemplateHtmlFilename = "template.htm";
@@ -21,14 +21,11 @@ namespace OneDrive.ApiDocumentation.Validation
             _templateFolderPath = templateFolderPath;
         }
 
-        private void LoadTemplate()
+        /// <summary>
+        /// Load the HTML template into memory
+        /// </summary>
+        protected virtual void LoadTemplate()
         {
-            if (string.IsNullOrEmpty(_templateFolderPath) ||
-                !string.IsNullOrEmpty(_templateHtml))
-            {
-                return;
-            }
-
             DirectoryInfo dir = new DirectoryInfo(_templateFolderPath);
             if (!dir.Exists)
             {
@@ -47,6 +44,11 @@ namespace OneDrive.ApiDocumentation.Validation
             _templateHtml = File.ReadAllText(templateFilePath);
         }
 
+        /// <summary>
+        /// Copy everything from the html-template directory to the output directory
+        /// except the template file.
+        /// </summary>
+        /// <param name="destinationRoot"></param>
         protected override void ConfigureOutputDirectory(DirectoryInfo destinationRoot)
         {
             // Copy everything in the template folder to the output folder except template.htm
@@ -68,11 +70,20 @@ namespace OneDrive.ApiDocumentation.Validation
                     DirectoryCopy(folder, Path.Combine(destinationRoot.FullName, folder.Name), true);
                 }
 
-                LoadTemplate();
+                if (string.IsNullOrEmpty(_templateHtml) && !string.IsNullOrEmpty(_templateFolderPath))
+                {
+                    LoadTemplate();
+                }
             }
         }
 
-        private static void DirectoryCopy(DirectoryInfo sourceDir, string destDirName, bool copySubDirs)
+        /// <summary>
+        /// Copy a directory and it's children
+        /// </summary>
+        /// <param name="sourceDir"></param>
+        /// <param name="destDirName"></param>
+        /// <param name="copySubDirs"></param>
+        protected static void DirectoryCopy(DirectoryInfo sourceDir, string destDirName, bool copySubDirs)
         {
             // Get the subdirectories for the specified directory.
             DirectoryInfo[] dirs = sourceDir.GetDirectories();
@@ -109,7 +120,13 @@ namespace OneDrive.ApiDocumentation.Validation
             }
         }
 
-        private static void SplitUrlPathAndBookmark(string input, out string url, out string bookmark)
+        /// <summary>
+        /// Parse a relative URL into the path and bookmark segments
+        /// </summary>
+        /// <param name="input"></param>
+        /// <param name="url"></param>
+        /// <param name="bookmark"></param>
+        protected static void SplitUrlPathAndBookmark(string input, out string url, out string bookmark)
         {
             int position = input.IndexOf('#');
             if (position < 0)
@@ -124,11 +141,50 @@ namespace OneDrive.ApiDocumentation.Validation
             }
         }
 
-        protected override async Task PublishFileToDestination(FileInfo sourceFile, DirectoryInfo destinationRoot)
+        /// <summary>
+        /// Initialize and configure the Markdown to HTML converter.
+        /// </summary>
+        /// <returns></returns>
+        protected virtual MarkdownDeep.Markdown GetMarkdownConverter()
+        {
+            var converter = new MarkdownDeep.Markdown();
+            converter.ExtraMode = true;
+            converter.NewWindowForExternalLinks = true;
+            converter.SafeMode = true;
+            converter.AutoHeadingIDs = true;
+            converter.QualifyUrl = QualifyUrl;
+            return converter;
+        }
+
+        /// <summary>
+        /// Convert URLs in the markdown file into their HTML equivelents.
+        /// </summary>
+        /// <param name="url"></param>
+        /// <returns></returns>
+        protected virtual string QualifyUrl(string url)
+        {
+            if (url.StartsWith("#"))
+                return url;
+            if (MarkdownDeep.Utils.IsUrlFullyQualified(url))
+                return url;
+
+            string filePath, bookmark;
+            SplitUrlPathAndBookmark(url, out filePath, out bookmark);
+            foreach (var extension in scannableExtensions)
+            {
+                if (filePath.EndsWith(extension))
+                {
+                    return filePath.Substring(0, filePath.Length - extension.Length) + HtmlOutputExtension + bookmark;
+                }
+            }
+            return url;
+        }
+
+        protected override async Task PublishFileToDestination(FileInfo sourceFile, DirectoryInfo destinationRoot, DocFile page)
         {
             LogMessage(new ValidationMessage(sourceFile.Name, "Publishing file to HTML"));
 
-            var destinationPath = PublishedFilePath(sourceFile, destinationRoot, HtmlOutputExtension);
+            var destinationPath = GetPublishedFilePath(sourceFile, destinationRoot, HtmlOutputExtension);
 
             StringWriter writer = new StringWriter();
             StreamReader reader = new StreamReader(sourceFile.OpenRead());
@@ -146,46 +202,39 @@ namespace OneDrive.ApiDocumentation.Validation
                 await writer.WriteLineAsync(nextLine);
             }
 
-            var converter = new MarkdownDeep.Markdown();
-            converter.ExtraMode = true;
-            converter.NewWindowForExternalLinks = true;
-            converter.SafeMode = true;
-            converter.AutoHeadingIDs = true;
-            converter.QualifyUrl = (string url) =>
-            {
-                if (url.StartsWith("#"))
-                    return url;
-                if (MarkdownDeep.Utils.IsUrlFullyQualified(url))
-                    return url;
-
-                string filePath, bookmark;
-                SplitUrlPathAndBookmark(url, out filePath, out bookmark);
-                foreach(var extension in scannableExtensions)
-                {
-                    if (filePath.EndsWith(extension))
-                    {
-                        return filePath.Substring(0, filePath.Length - extension.Length) + HtmlOutputExtension + bookmark;
-                    }
-                }
-                return url;
-            };
-
+            var converter = GetMarkdownConverter();
             var html = converter.Transform(writer.ToString());
 
-            var title = (from b in converter.Blocks
-                         where b.BlockType == MarkdownDeep.BlockType.h1
-                         select b.Content).FirstOrDefault();
-
-            await WriteHtmlDocumentAsync(html, title, destinationPath, destinationRoot.FullName);
+            var pageData = page.Annotation;
+            if (null == pageData)
+            {
+                pageData = new PageAnnotation();
+            }
+            if (string.IsNullOrEmpty(pageData.Title))
+            {
+               pageData.Title = (from b in converter.Blocks
+                             where b.BlockType == MarkdownDeep.BlockType.h1
+                             select b.Content).FirstOrDefault();
+            }
+            page.Annotation = pageData;
+            await WriteHtmlDocumentAsync(html, page, destinationPath, destinationRoot.FullName);
         }
 
-        private async Task WriteHtmlDocumentAsync(string bodyHtml, string pageTitle, string destinationFile, string rootDestinationFolder)
+        /// <summary>
+        /// Apply the HTML template to the parameters and write the file to the destination.
+        /// </summary>
+        /// <param name="bodyHtml"></param>
+        /// <param name="pageData"></param>
+        /// <param name="destinationFile"></param>
+        /// <param name="rootDestinationFolder"></param>
+        /// <returns></returns>
+        protected virtual async Task WriteHtmlDocumentAsync(string bodyHtml, DocFile page, string destinationFile, string rootDestinationFolder)
         {
             List<string> variablesToReplace = new List<string>();
             string pageHtml = null;
             if (_templateHtml != null)
             {
-                var matches = SwaggerExtensionMethods.PathVariableRegex.Matches(_templateHtml);
+                var matches = ExtensionMethods.PathVariableRegex.Matches(_templateHtml);
                 foreach (System.Text.RegularExpressions.Match match in matches)
                 {
                     variablesToReplace.Add(match.Groups[0].Value);
@@ -197,7 +246,7 @@ namespace OneDrive.ApiDocumentation.Validation
                 {
                     if (key == "{page.title}")
                     {
-                        templateHtmlForThisPage = templateHtmlForThisPage.Replace(key, pageTitle);
+                        templateHtmlForThisPage = templateHtmlForThisPage.Replace(key, page.Annotation.Title);
                     }
                     else if (key == "{body.html}")
                     {
@@ -220,9 +269,10 @@ namespace OneDrive.ApiDocumentation.Validation
             }
             else
             {
-                pageHtml = string.Concat(string.Format(htmlHeader, pageTitle, htmlStyles), bodyHtml, htmlFooter);
+                pageHtml = string.Concat(string.Format(htmlHeader, page.Annotation.Title, htmlStyles), bodyHtml, htmlFooter);
             }
 
+            pageHtml = await ConvertLineEndings(pageHtml, OutputLineEndings);
             using (var outputWriter = new StreamWriter(destinationFile))
             {
                 await outputWriter.WriteAsync(pageHtml);

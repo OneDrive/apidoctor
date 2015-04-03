@@ -125,12 +125,15 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             string value = PathToDocSet;
             if (!MakePropertyValid(ref value, Program.DefaultSettings.DocumentationPath))
             {
+                
                 PathToDocSet = Environment.CurrentDirectory;
             }
             else
             {
                 PathToDocSet = value;
             }
+
+            FancyConsole.WriteLine("Documentation path: " + PathToDocSet);
 
             missingArguments = props.ToArray();
             return missingArguments.Length == 0;
@@ -292,40 +295,68 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         [Option("format", DefaultValue=PublishFormat.Markdown, HelpText="Format of the output documentation.")]
         public PublishFormat Format { get; set; }
 
-        [Option("extensions", HelpText="File extensions to scan for internal content.", DefaultValue=".md,.mdown")]
-        public string TextFileExtensions { get; set; }
+        [Option("template", HelpText = "Specify the folder where output template files are located.")]
+        public string TemplateFolder { get; set; }
 
-        [Option("ignore-path", HelpText="Semicolon separated list of paths to ignore.")]
-        public string IgnorePaths { get; set; }
+        [Option("line-ending",
+            DefaultValue=OneDrive.ApiDocumentation.Validation.LineEndings.Default,
+            HelpText="Change the line endings for output files. Values: default, windows, unix, or macintosh")]
+        public OneDrive.ApiDocumentation.Validation.LineEndings LineEndings { get; set; } 
 
-        [Option("include-all", DefaultValue=true, HelpText="Include all content files, not just scanned text files.")]
-        public bool PublishAllFiles { get; set; }
 
-        [Option("auth-scope", HelpText="Override the auth scope detection with a default auth scope on every method")]
-        public string AuthScopeDefault { get; set; }
+        #region Swagger2 output controls
 
-        [Option("html-template", HelpText="Specify the folder where HTML template files are read. Expects to find a template.htm file and other supporting files.")]
-        public string HtmlTemplateFolder { get; set; }
-
-        #region Output Controls
-
-        [Option("title", DefaultValue=null, HelpText="Title to include in the published documentation")]
+        [Option("swagger-title", DefaultValue=null, HelpText="Title to include in the published documentation")]
         public string Title { get; set; }
-        [Option("description", DefaultValue = null, HelpText = "Description to include in the published documentation")]
+        
+        [Option("swagger-description", DefaultValue = null, HelpText = "Description to include in the published documentation")]
         public string Description { get; set; }
-        [Option("version", DefaultValue=null, HelpText="Api Version information to include in documentation")]
+        
+        [Option("swagger-version", DefaultValue=null, HelpText="Api Version information to include in documentation")]
         public string Version { get; set; }
+
+        [Option("swagger-auth-scope", HelpText = "Override the auth scope detection with a default auth scope on every method")]
+        public string AuthScopeDefault { get; set; }
 
 
         #endregion
 
+        public override bool HasRequiredProperties(out string[] missingArguments)
+        {
+            string[] baseResults;
+            if (!base.HasRequiredProperties(out baseResults))
+            {
+                missingArguments = baseResults;
+                return false;
+            }
+
+            List<string> missingArgs = new List<string>();
+            if (Format == PublishFormat.Mustache)
+            {
+                if (string.IsNullOrEmpty(TemplateFolder))
+                    missingArgs.Add("template");
+            }
+            if (Format == PublishFormat.Swagger2)
+            {
+                if (string.IsNullOrEmpty(Title))
+                    missingArgs.Add("swagger-title");
+                if (string.IsNullOrEmpty(Description))
+                    missingArgs.Add("swagger-description");
+                if (string.IsNullOrEmpty(Version))
+                    missingArgs.Add("swagger-version");
+            }
+
+            missingArguments = missingArgs.ToArray();
+            return missingArgs.Count == 0;
+        }
 
         public enum PublishFormat
         {
             Markdown,
             Html,
             Swagger2,
-            Outline
+            Outline,
+            Mustache
         }
     }
 }

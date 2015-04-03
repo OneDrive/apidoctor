@@ -1,4 +1,4 @@
-﻿namespace OneDrive.ApiDocumentation.Validation
+namespace OneDrive.ApiDocumentation.Validation
 {
     using System;
     using System.Collections.Generic;
@@ -12,6 +12,9 @@
     /// </summary>
     public class DocFile
     {
+
+        private const string PageAnnotationType = "#page.annotation";
+
         #region Instance Variables
         protected bool m_hasScanRun;
         protected string m_BasePath;
@@ -79,6 +82,8 @@
         protected List<MarkdownDeep.LinkInfo> MarkdownLinks {get;set;}
 
         public DocSet Parent { get; protected set; }
+
+        public PageAnnotation Annotation { get; set; }
         #endregion
 
         #region Constructor
@@ -241,6 +246,19 @@
                             }
                         }
                     }
+                    else if (null == Annotation)
+                    {
+                        // See if this is the page-level annotation
+                        var annotation = ParsePageAnnotation(block);
+                        if (null != annotation)
+                        {
+                            Annotation = annotation;
+                            if (string.IsNullOrEmpty(Annotation.Title))
+                            {
+                                Annotation.Title = (from b in OriginalMarkdownBlocks where IsHeaderBlock(b, 1) select b.Content).FirstOrDefault();
+                            }
+                        }
+                    }
                 }
                 else if (block.BlockType == MarkdownDeep.BlockType.table_spec)
                 {
@@ -269,6 +287,41 @@
             
             errors = detectedErrors.ToArray();
             return !detectedErrors.Any(x => x.IsError);
+        }
+
+
+        /// <summary>
+        /// Remove <!-- and --> from the content string
+        /// </summary>
+        /// <param name="content"></param>
+        /// <returns></returns>
+        private static string StripHtmlCommentTags(string content)
+        {
+            const string StartComment = "<!--";
+            const string EndComment = "-->";
+
+            int index = content.IndexOf(StartComment);
+            if (index >= 0)
+                content = content.Substring(index + StartComment.Length);
+            index = content.IndexOf(EndComment);
+            if (index >= 0)
+                content = content.Substring(0, index);
+
+            return content;
+        }
+
+        private PageAnnotation ParsePageAnnotation(MarkdownDeep.Block block)
+        {
+            try
+            {
+                var response = Newtonsoft.Json.JsonConvert.DeserializeObject<PageAnnotation>(StripHtmlCommentTags(block.Content));
+                if (null != response && response.Type.Equals(PageAnnotationType, StringComparison.OrdinalIgnoreCase))
+                    return response;
+            }
+            catch (Exception)
+            {
+            }
+            return null;
         }
 
         private void AddBookmarkForHeader(string headerText)
@@ -690,6 +743,8 @@
 
         #endregion
 
+
+        
     }
 
 }

@@ -246,5 +246,12 @@
 
             throw new NotSupportedException(string.Format("Couldn't convert this value to a boolean: {0}", input));
         }
+
+        public static System.Text.RegularExpressions.Regex PathVariableRegex = new System.Text.RegularExpressions.Regex(@"\{(?<var>.+?)\}", System.Text.RegularExpressions.RegexOptions.Compiled);
+
+        public static string FlattenVariableNames(this string input)
+        {
+            return PathVariableRegex.Replace(input, "{}");
+        }
     }
 }

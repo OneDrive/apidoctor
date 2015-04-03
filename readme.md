@@ -14,7 +14,7 @@ perform for the following validations:
 * Verify that a target REST service matches the API documentation:
   * Check that requests and responses in the documentation match the service.
   * Inject parameters into the API calls to the service.
-* Publish sanitized documentation to an output folder.
+* Publish documentation to an output folder.
 
 ## Building
 To build the project, invoke either `msbuild` or `xbuild` depending on your
@@ -33,7 +33,7 @@ Available commands are:
 * `check-links` - Verify links in the documentation aren't broken.
 * `check-docs` - Check for errors in the documentation's resources, requests, and response examples.
 * `check-service` - Check for differences between the documentation and service responses to documented requests.
-* `publish` - Create a sanitized version of the documentation without internal comments
+* `publish` - Publish the documentation into one of the supported output formats.
 * `set` - Set default parameter values for the tool
 
 All commands (except `set`) have the following options available:
@@ -115,20 +115,38 @@ token using the `--access-token` command line parameter. The tool will call the
 token service to retrieve an access token when necessary.
 
 ### Publish Command
-The publish command creates a "clean" copy of the documentation set by running
-it through a simple set of processing rules. The output can either be the original
-format or you can convert the output to another supported format.
 
-| Option                              | Description                                                                                                                                                                                         |
-|:------------------------------------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `--output <path>`                   | Required. Output directory for sanitized documentation.                                                                                                                                             |
-| `--extensions <value>`              | Specify a common separated list of file extensions that are considered "documentation files" and should be processed. Default is `.md,.mdown`.                                                      |
-| `--format [markdown,html,swagger2]` | Specify the format for the output documentation. Either `markdown` (default) or `html`.                                                                                                             |
-| `--ignore-path <value>`             | Specify a semicolon separated list of paths in the documentation that should never be copied to output. Default is `\internal;\.git;\.gitignore;\generate_html_output`.                             |
-| `--include-all`                     | Default: true. Specify that all files, even those which are not in the extension list, are copied to the output location. This allows graphics and other non-text files to be copied.               |
-| `--html-template <value`            | Specify the path to a folder that contains HTML template content. The tool expects to find template.htm in this folder, and copies all other files and folders from the folder to the output folder |
+The publish command uses the documentation to generate a new set of outputs.
+
+| Option               | Description                                                         |
+|:---------------------|:--------------------------------------------------------------------|
+| `--output <path>`    | Required. Output directory for documentation.                       |
+| `--format <format>`  | Specify the format for the output documentation.                    |
+| `--template <value>` | Specify the path to a folder that contains output template content. |
 
 Example: `apidocs --path ~/github/api-docs --output ~/documents/docs`
+
+#### Publish Formats
+
+The following formats are supported:
+
+| Value    | Description                                                                                                                     |
+|:---------|:--------------------------------------------------------------------------------------------------------------------------------|
+| markdown | Creates a copy of the documentation in markdown format.                                                                         |
+| html     | Generates a simple HTML output with a default style/format.                                                                     |
+| swagger2 | Experimental: Generates a swagger 2 compatible output file from the documentation.                                              |
+| mustache | Use a mustache template language to generate html output. Requires a --template <path> and a template.htm file inside that path |
+
+#### Swagger2 Options
+
+The following additional command line options are required for swagger2 output:
+| Name                    | Description                                                         |
+|:------------------------|:--------------------------------------------------------------------|
+| **swagger-title**       | Title of the API in the Swagger header .                            |
+| **swagger-description** | Description of the API in the Swagger header.                       |
+| **swagger-version**     | Version number (1.0) in the Swagger header.                         |
+| **swagger-auth-scope**  | Set the required auth scope for every method in the Swagger output. |
+
 
 ### Set Command
 The set command lets you preset values for some parameters so they don't need to
@@ -334,7 +352,7 @@ The output-value grammar follows the same syntax as the placeholder grammar:
 
 ### Code Block Annotation Properties
 
-The HTML-comment enclosed JSON object inside the documentation has the following 
+The HTML-comment enclosed JSON object inside the documentation has the following
 properties defined:
 
 ```json
@@ -354,29 +372,29 @@ properties defined:
 
 #### Property Descriptions
 
-Name | Value | Allowed Blocks | Description
----|---|---|---
-**blockType** | string | All |  Describes the type of the json block proceeding the annotation.
-**@odata.type** | string | All | Describes the name of the resource (either being defined, in the case of a resource block, or as the body type on a request/response block)
-**optionalProperties** | array of strings | resource | An array of properties that are not required to be in the code block. 
-**isCollection** | boolean | response, example, simulatedResponse | Indicates that the block contains a collection of items that match the **@odata.type** schema. This is expected as an object with a single property that is an array of objects.
-**collectionProperty** | string | response, example, simulatedResponse | Provides the name of the variable that contains the collection. Default value: `value`.
-**isEmpty** | boolean | response, example, simulatedResponse | Indicates that the collection value is expected to be empty (or not).
-**truncated** | boolean | response, example, simulatedResponse | Indicates that the block will not include all properties of the resource and that's not an error. Properties explicitly shown in the code block are always considered required when tested against the service.
-**name** | string | request, example | Provides the name of the request method being defined.
-**expectError** | boolean | response, example, simulatedResponse | Use this to indicate that instead of returning the normal response as defined, an error response will be returned instead.
-**nullableProperties** | array of strings | response, example, simulatedResponse | Provide a list of properties that are allowed to have null values. By default, null values for a property will generate a warning.
+| Name                   | Value            | Allowed Blocks                       | Description                                                                                                                                                                                                     |
+|:-----------------------|:-----------------|:-------------------------------------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **blockType**          | string           | All                                  | Describes the type of the json block proceeding the annotation.                                                                                                                                                 |
+| **@odata.type**        | string           | All                                  | Describes the name of the resource (either being defined, in the case of a resource block, or as the body type on a request/response block)                                                                     |
+| **optionalProperties** | array of strings | resource                             | An array of properties that are not required to be in the code block.                                                                                                                                           |
+| **isCollection**       | boolean          | response, example, simulatedResponse | Indicates that the block contains a collection of items that match the **@odata.type** schema. This is expected as an object with a single property that is an array of objects.                                |
+| **collectionProperty** | string           | response, example, simulatedResponse | Provides the name of the variable that contains the collection. Default value: `value`.                                                                                                                         |
+| **isEmpty**            | boolean          | response, example, simulatedResponse | Indicates that the collection value is expected to be empty (or not).                                                                                                                                           |
+| **truncated**          | boolean          | response, example, simulatedResponse | Indicates that the block will not include all properties of the resource and that's not an error. Properties explicitly shown in the code block are always considered required when tested against the service. |
+| **name**               | string           | request, example                     | Provides the name of the request method being defined.                                                                                                                                                          |
+| **expectError**        | boolean          | response, example, simulatedResponse | Use this to indicate that instead of returning the normal response as defined, an error response will be returned instead.                                                                                      |
+| **nullableProperties** | array of strings | response, example, simulatedResponse | Provide a list of properties that are allowed to have null values. By default, null values for a property will generate a warning.                                                                              |
 
 
 #### Block Types
-Name | Description
----|---
-`resource` | The json block describes a system resource (complex type) in the API.
-`request`  | The json block describes an HTTP request that can be made by clients.
-`response` | The json block describes the HTTP response that is sent from the service.
-`example`  | An example of the JSON data that would be generated by the client or returned by the service, without being wrapped in an HTTP call.
-`simulatedResponse` | Used for unit testing to simulate responses from the service.
-`ignored` | No processing is done on the code block that follows. 
+| Name                | Description                                                                                                                          |
+|:--------------------|:-------------------------------------------------------------------------------------------------------------------------------------|
+| `resource`          | The json block describes a system resource (complex type) in the API.                                                                |
+| `request`           | The json block describes an HTTP request that can be made by clients.                                                                |
+| `response`          | The json block describes the HTTP response that is sent from the service.                                                            |
+| `example`           | An example of the JSON data that would be generated by the client or returned by the service, without being wrapped in an HTTP call. |
+| `simulatedResponse` | Used for unit testing to simulate responses from the service.                                                                        |
+| `ignored`           | No processing is done on the code block that follows.                                                                                |
 
 
 ## Open Source
@@ -386,3 +404,4 @@ The API Documentation Test Tool uses the following open source components:
 * [Newtonsoft.Json](https://github.com/JamesNK/Newtonsoft.Json) - Json parser for .NET apps. MIT license, Copyright (c) 2007 James Newton-King
 * [CommandLineParser](https://commandline.codeplex.com/) - Command line parser library. MIT license, Copyright (c) 2005 - 2012 Giacomo Stelluti Scala.
 * [AsyncEx](https://github.com/StephenCleary/AsyncEx/) - Command line Async helper. MIT license, Copyright (c) 2014 StephenCleary.
+* [mustache-sharp] (https://github.com/jehugaleahsa/mustache-sharp) - An extension of the mustache text template engine for .NET. Public domain.

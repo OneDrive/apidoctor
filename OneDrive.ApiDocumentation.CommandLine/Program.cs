@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using OneDrive.ApiDocumentation.Publishing;
 using OneDrive.ApiDocumentation.Validation;
 using OneDrive.ApiDocumentation.Validation.Http;
 using System;
@@ -26,6 +27,12 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
         static void Main(string[] args)
         {
+            FancyConsole.WriteLine(ConsoleColor.Green, "apidocs.exe Copyright (c) 2015 Microsoft Corporation.");
+            FancyConsole.WriteLine();
+            if (args.Length > 0)
+                FancyConsole.WriteLine("Command line: " + args.ComponentsJoinedByString(" "));
+            
+
             string verbName = null;
             BaseOptions verbOptions = null;
 
@@ -357,6 +364,8 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
         private static void CheckDocs(BasicCheckOptions options)
         {
+
+
             var docset = GetDocSet(options);
             FancyConsole.WriteLine();
 
@@ -643,6 +652,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         private static void Exit(bool failure)
         {
 #if DEBUG
+            Console.WriteLine("Exit - failure: " + failure);
             if (System.Diagnostics.Debugger.IsAttached)
             {
                 Console.WriteLine();
@@ -744,10 +754,13 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             switch (options.Format)
             {
                 case PublishOptions.PublishFormat.Markdown:
-                    publisher = new DocumentPublisher(docs);
+                    publisher = new MarkdownPublisher(docs);
                     break;
                 case PublishOptions.PublishFormat.Html:
-                    publisher = new DocumentPublisherHtml(docs, options.HtmlTemplateFolder);
+                    publisher = new DocumentPublisherHtml(docs, options.TemplateFolder);
+                    break;
+                case PublishOptions.PublishFormat.Mustache:
+                    publisher = new HtmlMustacheWriter(docs, options.TemplateFolder);
                     break;
                 case PublishOptions.PublishFormat.Swagger2:
                     publisher = new OneDrive.ApiDocumentation.Validation.Writers.SwaggerWriter(docs, Program.DefaultSettings.ServiceUrl)
@@ -766,14 +779,6 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
             FancyConsole.WriteLineIndented("  ", "Format: {0}", publisher.GetType().Name);
             publisher.VerboseLogging = options.Verbose;
-            publisher.SourceFileExtensions = options.TextFileExtensions;
-            FancyConsole.WriteLineIndented("  ", "File extensions: {0}", publisher.SourceFileExtensions);
-
-            if (!string.IsNullOrEmpty(options.IgnorePaths))
-                publisher.SkipPaths = options.IgnorePaths;
-            FancyConsole.WriteLineIndented("  ", "Ignored Paths: {0}", publisher.SkipPaths);
-            publisher.PublishAllFiles = options.PublishAllFiles;
-            FancyConsole.WriteLineIndented("  ", "Include all files: {0}", publisher.PublishAllFiles);
             FancyConsole.WriteLine();
             
             FancyConsole.WriteLine("Publishing content...");

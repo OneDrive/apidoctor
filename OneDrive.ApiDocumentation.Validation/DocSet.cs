@@ -201,6 +201,12 @@
                 {
                     orphanedPageIndex[pageName] = false;
                 }
+
+                if (null != file.Annotation && file.Annotation.TocPath != null)
+                {
+                    var pageName = CleanUpDisplayName(file.DisplayName);
+                    orphanedPageIndex[pageName] = false;
+                }
             }
 
             foundErrors.AddRange(from o in orphanedPageIndex
@@ -209,6 +215,18 @@
 
             errors = foundErrors.ToArray();
             return !errors.WereWarningsOrErrors();
+        }
+
+        /// <summary>
+        /// Remove the initial path separator and make sure all of the remaining ones are forward-slash
+        /// </summary>
+        /// <param name="displayName"></param>
+        /// <returns></returns>
+        private string CleanUpDisplayName(string displayName)
+        {
+            if (displayName.StartsWith(Path.DirectorySeparatorChar.ToString()))
+                displayName = displayName.Substring(1);
+            return displayName.Replace(Path.DirectorySeparatorChar, '/');
         }
 
 
@@ -266,7 +284,7 @@
         /// <param name="rootFolderPath"></param>
         /// <param name="urlStyle"></param>
         /// <returns></returns>
-        internal static string RelativePathToRootFromFile(string deepFilePath, string shallowFilePath, bool urlStyle = false)
+        public static string RelativePathToRootFromFile(string deepFilePath, string shallowFilePath, bool urlStyle = false)
         {
             // example:
             // deep file path "/auth/auth_msa.md"
