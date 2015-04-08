@@ -214,8 +214,6 @@ namespace OneDrive.ApiDocumentation.Validation.Writers
         /// <returns></returns>
         private IDictionary<string, IDictionary<string, SwaggerMethod>> GeneratePathsFromDocSet()
         {
-            Http.HttpParser parser = new Http.HttpParser();
-
             // "/products" -> "get" -> { SwaggerMethod }
             var swaggerPathObject = new SortedDictionary<string, IDictionary<string, SwaggerMethod>>(new PathLengthSorter());
             foreach (var method in Documents.Methods)
