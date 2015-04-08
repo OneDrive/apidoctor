@@ -12,6 +12,7 @@ namespace OneDrive.ApiDocumentation.Validation
         {
             ValidationConfig.ExpectedResponseAsRequiredProperties = true;
             ValidationConfig.AdditionalHttpHeaders = new string[0];
+            ValidationConfig.RetryAttemptsOnServiceUnavailableResponse = 5;
         }
 
         /// <summary>
@@ -29,6 +30,8 @@ namespace OneDrive.ApiDocumentation.Validation
         /// An array of additional HTTP headers that are added to outgoing requests to the service.
         /// </summary>
         public static string[] AdditionalHttpHeaders { get; set; }
+
+        public static int RetryAttemptsOnServiceUnavailableResponse { get; set; }
 
 
     }

@@ -20,7 +20,7 @@
         public bool WasSuccessful { get { return StatusCode >= 200 && StatusCode < 300; } }
         public string ContentType { get { return Headers["content-type"]; } }
 
-        public static async Task<HttpResponse> ResponseFromHttpWebResponseAsync(HttpWebRequest request)
+        public static async Task<HttpResponse> ResponseFromHttpWebResponseAsync(HttpWebRequest request, int retryCount = 0)
         {
             long requestStartTicks = DateTime.UtcNow.Ticks;
 
@@ -38,6 +38,12 @@
                         StatusCode = 504,
                         StatusMessage = "HttpResponseFailure " + webex.Message
                     };
+                }
+                if (retryCount < ValidationConfig.RetryAttemptsOnServiceUnavailableResponse 
+                    && webResponse.StatusCode == HttpStatusCode.ServiceUnavailable)
+                {
+                    // Try this request again assuming that this was an intermitten failure.
+                    return await ResponseFromHttpWebResponseAsync(request, retryCount + 1);
                 }
             }
             catch (Exception ex)
