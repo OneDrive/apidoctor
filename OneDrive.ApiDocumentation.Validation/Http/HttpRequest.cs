@@ -141,5 +141,26 @@
             
             return sb.ToString();
         }
+
+
+        public async Task<HttpResponse> GetResponseAsync(string baseUrl, int retryCount = 0)
+        {
+            var webRequest = this.PrepareHttpWebRequest(baseUrl);
+            var response = await Http.HttpResponse.ResponseFromHttpWebResponseAsync(webRequest);
+
+            if ((HttpStatusCode)response.StatusCode == HttpStatusCode.ServiceUnavailable)
+            {
+                if (retryCount < ValidationConfig.RetryAttemptsOnServiceUnavailableResponse)
+                {
+                    // Do "full jitter" back off
+                    await BackoffHelper.Default.FullJitterBackoffDelay(retryCount);
+
+                    // Try the request again
+                    return await this.GetResponseAsync(baseUrl, retryCount + 1);
+                }
+            }
+            response.RetryCount = retryCount;
+            return response;
+        }
     }
 }

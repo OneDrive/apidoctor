@@ -75,16 +75,17 @@
 
             try
             {
-                var webRequest = request.PrepareHttpWebRequest(baseUrl);
-                var response = await Http.HttpResponse.ResponseFromHttpWebResponseAsync(webRequest);
-
+                var response = await request.GetResponseAsync(baseUrl);
+                if (response.RetryCount > 0)
+                {
+                    errors.Add(new ValidationMessage(null, "HTTP request was retried {0} times.", response.RetryCount));
+                }
                 errors.Add(new ValidationMessage(null, "HTTP Response:\n{0}\n\n", response.FullHttpText()));
 
                 // Check to see if this request is "successful" or not
                 if ( (AllowedStatusCodes == null && response.WasSuccessful) ||
                     (AllowedStatusCodes != null && AllowedStatusCodes.Contains(response.StatusCode)))
                 {
-
                     string expectedContentType = (null != OutputValues) ? ExpectedResponseContentType(OutputValues.Values) : null;
 
                     // Check for content type mismatch

@@ -735,8 +735,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 expectedResponse = parser.ParseHttpResponse(method.ExpectedResponse);
             }
 
-            var request = requestPreview.PrepareHttpWebRequest(rootUrl);
-            var actualResponse = await HttpResponse.ResponseFromHttpWebResponseAsync(request);
+            var actualResponse = await requestPreview.GetResponseAsync(rootUrl);
 
             FancyConsole.VerboseWriteLineIndented(indentLevel, "Response:");
             FancyConsole.VerboseWriteLineIndented(indentLevel + "  ", actualResponse.FullHttpText());

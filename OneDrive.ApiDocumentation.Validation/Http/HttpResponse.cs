@@ -19,8 +19,9 @@
         public TimeSpan CallDuration { get; set; }
         public bool WasSuccessful { get { return StatusCode >= 200 && StatusCode < 300; } }
         public string ContentType { get { return Headers["content-type"]; } }
+        public int RetryCount { get; set; }
 
-        public static async Task<HttpResponse> ResponseFromHttpWebResponseAsync(HttpWebRequest request, int retryCount = 0)
+        public static async Task<HttpResponse> ResponseFromHttpWebResponseAsync(HttpWebRequest request)
         {
             long requestStartTicks = DateTime.UtcNow.Ticks;
 
@@ -39,12 +40,6 @@
                         StatusMessage = "HttpResponseFailure " + webex.Message
                     };
                 }
-                if (retryCount < ValidationConfig.RetryAttemptsOnServiceUnavailableResponse 
-                    && webResponse.StatusCode == HttpStatusCode.ServiceUnavailable)
-                {
-                    // Try this request again assuming that this was an intermitten failure.
-                    return await ResponseFromHttpWebResponseAsync(request, retryCount + 1);
-                }
             }
             catch (Exception ex)
             {
@@ -57,7 +52,8 @@
             long requestFinalTicks = DateTime.UtcNow.Ticks;
             TimeSpan callDuration = new TimeSpan(requestFinalTicks - requestStartTicks);
 
-            return await ConvertToResponse(webResponse, callDuration);
+            var response = await ConvertToResponse(webResponse, callDuration);
+            return response;
         }
 
         private static async Task<HttpResponse> ConvertToResponse(HttpWebResponse webresp, TimeSpan? duration = null )

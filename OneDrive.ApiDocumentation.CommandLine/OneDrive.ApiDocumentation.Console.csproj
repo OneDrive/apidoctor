@@ -24,7 +24,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>false</ConsolePause>
-    <Commandlineparameters>check-docs</Commandlineparameters>
+    <Commandlineparameters>check-service --path ~/SourceCode/github/onedrive-api-docs-internal --url https://api.onedrive.com/v1.0 --access-token "EwCQAq1DBAAUGCCXc8wU/zFu9QnLdZXy+YnElFkAAWYUASBetv1lHNRO4PcdENF/L3e6NIm2+chOHkgtH1+4u+4uCF07ChLaX7YPGnVX8UaL+J/un173JSW63cZ6B0ber26ua8zjMMFcSElxEf5AVwKES5PpU4fFAfEwpHlWwa4bOMKyPCcTvnLsyBZ60vBOB3VrbxDYsmrNsnUPlfKpXVHQUqL5GMSYBWM7vqs+Lck5ar4hms1lcIbndNXwcarfaAs/8sukdtNbeAsu3eYocBXOeQAmi+f0+LMPThGQwNA7efGtvXkYt/QrSyiwX1oXaYG9IYYk6V6IplxOT1Fh+qDHnugC0v5VMNlyC80J16ie4eGKgESo1xwitqu+rpwDZgAACCnQKJ5cIwLaYAHHBrgfjSfJDY/h69njMKjSQq5NOnp/ereG7GwM0ay3J+W6bUtNS+d+NpBeh+R6vz0NEnpb0pVPDangihEhIH9KBR5DhzBSgp8IbmOJsgjRYzj2V6l9p3CVzzTctnQohNzJij56laPYatUbV8mfv1hmGki7Z5p1qLrsl/MmwDCSaYzVMx5Aeqw9HCOssWShGG1VF12RF8icSQ0Z26Hj+BTL9Gxi/rPtp040QEIzxYCs6aa/8BQ2hdwM19mLx7SbknudEolDWN71FtWQJBeePJ39WnP5yGYrQK8/yvkNaxjH3YLYAPOhAqaDcV0AUG9S9ZP4P4vXbjMmwfEOd34VuUjNgJriKG+I5qmRUJJBdz2C2yXltRehSGRH59f7tdpD5/wK3DCvaEEJSa0Acu1VDE0uRvht2oYHxpQe/kYjnUMaKPGOAE5NwHakzwAU99P239b3D+R8i0cDU39QS8a6OQebeQE="</Commandlineparameters>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -38,10 +38,6 @@
   <ItemGroup>
     <Reference Include="CommandLine">
       <HintPath>..\packages\CommandLineParser.1.9.71\lib\net45\CommandLine.dll</HintPath>
-    </Reference>
-    <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Newtonsoft.Json.6.0.8\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="Nito.AsyncEx">
       <HintPath>..\packages\Nito.AsyncEx.3.0.0\lib\net45\Nito.AsyncEx.dll</HintPath>
@@ -59,6 +55,9 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>..\packages\Newtonsoft.Json.6.0.8\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Auth\OAuthTokenGenerator.cs" />
@@ -74,7 +73,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\OneDrive.ApiDocumentation.Publishing\OneDrive.ApiDocumentation.Publishing.csproj">
-      <Project>{b675cf73-aa42-4a54-b5e7-ff5f155da4a7}</Project>
+      <Project>{B675CF73-AA42-4A54-B5E7-FF5F155DA4A7}</Project>
       <Name>OneDrive.ApiDocumentation.Publishing</Name>
     </ProjectReference>
     <ProjectReference Include="..\OneDrive.ApiDocumentation.Validation\OneDrive.ApiDocumentation.Validation.csproj">

@@ -12,7 +12,9 @@ namespace OneDrive.ApiDocumentation.Validation
         {
             ValidationConfig.ExpectedResponseAsRequiredProperties = true;
             ValidationConfig.AdditionalHttpHeaders = new string[0];
-            ValidationConfig.RetryAttemptsOnServiceUnavailableResponse = 5;
+            ValidationConfig.RetryAttemptsOnServiceUnavailableResponse = 4; // Try 1 + 4 retries = 5 total attempts
+            ValidationConfig.MaximumBackoffMilliseconds = 5000;
+            ValidationConfig.BaseBackoffMilliseconds = 100;
         }
 
         /// <summary>
@@ -33,6 +35,9 @@ namespace OneDrive.ApiDocumentation.Validation
 
         public static int RetryAttemptsOnServiceUnavailableResponse { get; set; }
 
+        public static int MaximumBackoffMilliseconds { get; set; }
+
+        public static int BaseBackoffMilliseconds { get; set; }
 
     }
 }
