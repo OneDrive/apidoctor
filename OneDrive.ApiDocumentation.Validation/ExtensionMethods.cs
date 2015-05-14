@@ -112,7 +112,7 @@
                 return defaultValue;
         }
 
-        public static string TopLineOnly(this string input)
+        public static string FirstLineOnly(this string input)
         {
             System.IO.StringReader reader = new System.IO.StringReader(input);
             return reader.ReadLine();

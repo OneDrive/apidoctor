@@ -15,15 +15,10 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         private const int ExitCodeFailure = 1;
         private const int ExitCodeSuccess = 0;
 
-        private const ConsoleColor ConsoleDefaultColor = ConsoleColor.White;
-        private const ConsoleColor ConsoleHeaderColor = ConsoleColor.Cyan;
-        private const ConsoleColor ConsoleSubheaderColor = ConsoleColor.DarkCyan;
-        private const ConsoleColor ConsoleCodeColor = ConsoleColor.Gray;
-        private const ConsoleColor ConsoleErrorColor = ConsoleColor.Red;
-        private const ConsoleColor ConsoleWarningColor = ConsoleColor.Yellow;
-        private const ConsoleColor ConsoleSuccessColor = ConsoleColor.Green;
+        private const string TestFramework = "apidocs";
 
         public static readonly SavedSettings DefaultSettings = new SavedSettings("ApiTestTool", "settings.json");
+        public static readonly AppVeyor.BuildWorkerApi BuildWorker = new AppVeyor.BuildWorkerApi();
 
         static void Main(string[] args)
         {
@@ -54,6 +49,11 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 System.Diagnostics.Debugger.Launch();
             }
 
+            if (!string.IsNullOrEmpty(verbOptions.AppVeyorServiceUrl))
+            {
+                BuildWorker.UrlEndPoint = new Uri(verbOptions.AppVeyorServiceUrl);
+            }
+
             var commandOptions = verbOptions as DocSetOptions;
             if (null != commandOptions)
             {
@@ -80,23 +80,25 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 }
                 var error = new ValidationError(ValidationErrorCode.MissingRequiredArguments, null, "Command line is missing required arguments: {0}", missingProps.ComponentsJoinedByString(", "));
                 FancyConsole.WriteLine(origCommandLineOpts.GetUsage(invokedVerb));
-                WriteOutErrors(new ValidationError[] { error }, options.SilenceWarnings);
+                await WriteOutErrors(new ValidationError[] { error }, options.SilenceWarnings);
                 Exit(failure: true);
             }
+
+            bool returnSuccess = true;
 
             switch (invokedVerb)
             {
                 case CommandLineOptions.VerbPrint:
-                    PrintDocInformation((PrintOptions)options);
+                    await PrintDocInformationAsync((PrintOptions)options);
                     break;
                 case CommandLineOptions.VerbCheckLinks:
-                    CheckLinks((DocSetOptions)options);
+                    returnSuccess = await CheckLinksAsync((DocSetOptions)options);
                     break;
                 case CommandLineOptions.VerbDocs:
-                    CheckDocs((BasicCheckOptions)options);
+                    returnSuccess = await CheckDocsAsync((BasicCheckOptions)options);
                     break;
                 case CommandLineOptions.VerbService:
-                    await CheckService((CheckServiceOptions)options);
+                    returnSuccess = await CheckServiceAsync((CheckServiceOptions)options);
                     break;
                 case CommandLineOptions.VerbSet:
                     SetDefaultValues((SetCommandOptions)options);
@@ -112,6 +114,8 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                     Exit(failure: false);
                     break;
             }
+
+            Exit(failure: !returnSuccess);
         }
 
         private static void PrintAboutMessage()
@@ -174,7 +178,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
         private static void WriteSavedValues(SavedSettings settings)
         {
-            FancyConsole.WriteLine(ConsoleHeaderColor, "Stored settings:");
+            FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, "Stored settings:");
             FancyConsole.WriteLineIndented("  ", "{0}: {1}", "AccessToken", settings.AccessToken);
             FancyConsole.WriteLineIndented("  ", "{0}: {1}", "DocumentationPath", settings.DocumentationPath);
             FancyConsole.WriteLineIndented("  ", "{0}: {1}", "ServiceUrl", settings.ServiceUrl);
@@ -186,7 +190,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         /// </summary>
         /// <param name="options"></param>
         /// <returns></returns>
-        private static DocSet GetDocSet(DocSetOptions options)
+        private static async Task<DocSet> GetDocSetAsync(DocSetOptions options)
         {
             FancyConsole.VerboseWriteLine("Opening documentation from {0}", options.PathToDocSet);
             DocSet set = new DocSet(options.PathToDocSet);
@@ -195,7 +199,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             ValidationError[] loadErrors;
             if (!set.ScanDocumentation(out loadErrors) && options.ShowLoadWarnings)
             {
-                WriteOutErrors(loadErrors, options.SilenceWarnings);
+                await WriteOutErrors(loadErrors, options.SilenceWarnings);
             }
 
             var serviceOptions = options as CheckServiceOptions;
@@ -205,37 +209,53 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 set.LoadTestScenarios(serviceOptions.ScenarioFilePath);
                 if (!set.TestScenarios.Loaded)
                 {
-                    FancyConsole.WriteLine(ConsoleWarningColor, "Unable to read request parameter configuration file: {0}", serviceOptions.ScenarioFilePath);
+                    RecordWarning("Unable to read request parameter configuration file: {0}", serviceOptions.ScenarioFilePath);
                 }
             }
 
             return set;
         }
 
-        private static void PrintDocInformation(PrintOptions options)
+        private static void RecordWarning(string format, params object[] variables)
         {
-            DocSet docset = GetDocSet(options);
+            var message = string.Format(format, variables);
+            FancyConsole.WriteLine(FancyConsole.ConsoleWarningColor, message);
+            Task t = BuildWorker.AddMessageAsync(message, AppVeyor.MessageCategory.Warning);
+        }
+
+        private static void RecordError(string format, params object[] variables)
+        {
+            var message = string.Format(format, variables);
+            FancyConsole.WriteLine(FancyConsole.ConsoleErrorColor, message);
+            Task t = BuildWorker.AddMessageAsync(message, AppVeyor.MessageCategory.Error);
+        }
+
+        private static async Task PrintDocInformationAsync(PrintOptions options)
+        {
+            DocSet docset = await GetDocSetAsync(options);
             if (options.PrintFiles)
             {
-                PrintFiles(options, docset);
+                await PrintFilesAsync(options, docset);
             }
             if (options.PrintResources)
             {
-                PrintResources(options, docset);
+                await PrintResourcesAsync(options, docset);
             }
             if (options.PrintMethods)
             {
-                PrintMethods(options, docset);
+                await PrintMethodsAsync(options, docset);
             }
         }
 
-        private static void PrintFiles(DocSetOptions options, DocSet docset)
+        private static async Task PrintFilesAsync(DocSetOptions options, DocSet docset)
         {
             if (null == docset)
-                docset = GetDocSet(options);
+            {
+                docset = await GetDocSetAsync(options);
+            }
 
             FancyConsole.WriteLine();
-            FancyConsole.WriteLine(ConsoleHeaderColor, "Documentation files");
+            FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, "Documentation files");
 
             string format = null;
             if (options.Verbose)
@@ -247,9 +267,9 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
             foreach (var file in docset.Files)
             {
-                ConsoleColor color = ConsoleSuccessColor;
+                ConsoleColor color = FancyConsole.ConsoleSuccessColor;
                 if (file.Resources.Length == 0 && file.Requests.Length == 0)
-                    color = ConsoleWarningColor;
+                    color = FancyConsole.ConsoleWarningColor;
 
                 FancyConsole.WriteLineIndented("  ", color, format, file.DisplayName, file.FullPath, file.Resources.Length, file.Requests.Length);
             }
@@ -259,35 +279,29 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         /// Validate that all links in the documentation are unbroken.
         /// </summary>
         /// <param name="options"></param>
-        private static void CheckLinks(DocSetOptions options)
+        private static async Task<bool> CheckLinksAsync(DocSetOptions options)
         {
-            var docset = GetDocSet(options);
+            const string testName = "Check-links";
+            var docset = await GetDocSetAsync(options);
+
+            await TestReport.StartTestAsync(testName);
+
             ValidationError[] errors;
             docset.ValidateLinks(options.Verbose, out errors);
 
-            if (null != errors && errors.Length > 0)
-            {
-                WriteOutErrors(errors, options.SilenceWarnings);
-                if (!errors.WereWarningsOrErrors())
-                {
-                    FancyConsole.WriteLine(ConsoleSuccessColor, "No link errors detected.");
-                    Exit(failure: false);
-                }
-            }
-            else
-            {
-                FancyConsole.WriteLine(ConsoleSuccessColor, "No link errors detected.");
-                Exit(failure: false);
-            }
+            return await WriteOutErrors(errors, options.SilenceWarnings, successMessage: "No link errors detected.", testName: testName);
         }
 
-        private static void PrintResources(DocSetOptions options, DocSet docset)
+
+
+
+        private static async Task PrintResourcesAsync(DocSetOptions options, DocSet docset)
         {
             if (null == docset)
-                docset = GetDocSet(options);
+                docset = await GetDocSetAsync(options);
 
             FancyConsole.WriteLine();
-            FancyConsole.WriteLine(ConsoleHeaderColor, "Defined resources:");
+            FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, "Defined resources:");
             FancyConsole.WriteLine();
 
             var sortedResources = docset.Resources.OrderBy(x => x.ResourceType);
@@ -300,40 +314,40 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 {
                     string metadata = JsonConvert.SerializeObject(resource.Metadata);
                     FancyConsole.Write("  ");
-                    FancyConsole.Write(ConsoleHeaderColor, resource.ResourceType);
+                    FancyConsole.Write(FancyConsole.ConsoleHeaderColor, resource.ResourceType);
                     FancyConsole.WriteLine(" flags: {1}", resource.ResourceType, metadata);
                 }
                 else
                 {
-                    FancyConsole.WriteLineIndented("  ", ConsoleHeaderColor, resource.ResourceType);
+                    FancyConsole.WriteLineIndented("  ", FancyConsole.ConsoleHeaderColor, resource.ResourceType);
                 }
 
                 if (!options.ShortForm)
                 {
-                    FancyConsole.WriteLineIndented("    ", ConsoleCodeColor, resource.JsonExample);
+                    FancyConsole.WriteLineIndented("    ", FancyConsole.ConsoleCodeColor, resource.JsonExample);
                     FancyConsole.WriteLine();
                 }
             }
         }
 
-        private static void PrintMethods(DocSetOptions options, DocSet docset)
+        private static async Task PrintMethodsAsync(DocSetOptions options, DocSet docset)
         {
             if (null == docset)
-                docset = GetDocSet(options);
+                docset = await GetDocSetAsync(options);
 
             FancyConsole.WriteLine();
-            FancyConsole.WriteLine(ConsoleHeaderColor, "Defined methods:");
+            FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, "Defined methods:");
             FancyConsole.WriteLine();
 
             foreach (var method in docset.Methods)
             {
-                FancyConsole.WriteLine(ConsoleHeaderColor, "Method '{0}' in file '{1}'", method.Identifier, method.SourceFile.DisplayName);
+                FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, "Method '{0}' in file '{1}'", method.Identifier, method.SourceFile.DisplayName);
 
                 if (!options.ShortForm)
                 {
                     var requestMetadata = options.Verbose ? JsonConvert.SerializeObject(method.RequestMetadata) : string.Empty;
-                    FancyConsole.WriteLineIndented("  ", ConsoleSubheaderColor, "Request: {0}", requestMetadata);
-                    FancyConsole.WriteLineIndented("    ", ConsoleCodeColor, method.Request);
+                    FancyConsole.WriteLineIndented("  ", FancyConsole.ConsoleSubheaderColor, "Request: {0}", requestMetadata);
+                    FancyConsole.WriteLineIndented("    ", FancyConsole.ConsoleCodeColor, method.Request);
                 }
 
                 if (options.Verbose)
@@ -341,11 +355,11 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                     FancyConsole.WriteLine();
                     var responseMetadata = JsonConvert.SerializeObject(method.ExpectedResponseMetadata);
                     if (options.ShortForm)
-                        FancyConsole.WriteLineIndented("  ", ConsoleHeaderColor, "Expected Response: {0}", method.ExpectedResponse.TopLineOnly());
+                        FancyConsole.WriteLineIndented("  ", FancyConsole.ConsoleHeaderColor, "Expected Response: {0}", method.ExpectedResponse.FirstLineOnly());
                     else
                     {
-                        FancyConsole.WriteLineIndented("  ", ConsoleSubheaderColor, "Expected Response: {0}", responseMetadata);
-                        FancyConsole.WriteLineIndented("    ", ConsoleCodeColor, method.ExpectedResponse);
+                        FancyConsole.WriteLineIndented("  ", FancyConsole.ConsoleSubheaderColor, "Expected Response: {0}", responseMetadata);
+                        FancyConsole.WriteLineIndented("    ", FancyConsole.ConsoleCodeColor, method.ExpectedResponse);
                     }
                     FancyConsole.WriteLine();
                 }
@@ -362,91 +376,86 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             return query.FirstOrDefault();
         }
 
-        private static void CheckDocs(BasicCheckOptions options)
+        private static async Task<bool> CheckDocsAsync(BasicCheckOptions options)
         {
-
-
-            var docset = GetDocSet(options);
+            var docset = await GetDocSetAsync(options);
             FancyConsole.WriteLine();
 
-            int successCount = 0, errorCount = 0, warningCount = 0;
+            var resultMethods = await CheckMethodsAsync(options, docset);
+            var resultExamples = await CheckExamplesAsync(options, docset);
 
-            CheckMethods(options, docset, ref successCount, ref errorCount, ref warningCount);
-            CheckExamples(options, docset, ref successCount, ref errorCount, ref warningCount);
+            var combinedResults = resultMethods + resultExamples;
 
             if (options.IgnoreWarnings)
             {
-                successCount += warningCount;
-                warningCount = 0;
+                combinedResults.ConvertWarningsToSuccess();
             }
 
-            PrintStatusMessage(successCount, warningCount, errorCount);
+            combinedResults.PrintToConsole();
 
-            bool wasFailure = errorCount > 0;
-            Exit(failure: wasFailure);
+            return combinedResults.FailureCount == 0;
         }
 
-        private static void CheckExamples(BasicCheckOptions options, DocSet docset, ref int successCount, ref int errorCount, ref int warningCount)
+        private static async Task<CheckResults> CheckExamplesAsync(BasicCheckOptions options, DocSet docset)
         {
+            var results = new CheckResults();
+
             foreach (var doc in docset.Files)
             {
                 if (doc.Examples.Length == 0)
+                {
                     continue;
+                }
 
-                FancyConsole.WriteLine(ConsoleHeaderColor, "Checking examples in \"{0}\"...", doc.DisplayName);
+                FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, "Checking examples in \"{0}\"...", doc.DisplayName);
 
                 foreach (var example in doc.Examples)
                 {
                     if (example.Metadata == null)
                         continue;
 
-                    FancyConsole.Write("  Example: {0} [{1}]", example.Metadata.MethodName, example.Metadata.ResourceType);
+                    var testName = string.Format("check-example: {0}", example.Metadata.MethodName, example.Metadata.ResourceType);
+                    await TestReport.StartTestAsync(testName, doc.DisplayName);
+
                     var resourceType = example.Metadata.ResourceType;
+
                     ValidationError[] errors;
-
                     docset.ResourceCollection.ValidateJsonExample(example.Metadata, example.OriginalExample, out errors);
-                    if (errors.WereErrors())
-                        errorCount++;
-                    else if (errors.WereWarnings())
-                        warningCount++;
-                    else
-                        successCount++;
 
-                    WriteOutErrors(errors, options.SilenceWarnings, "    ", " no errors.", true);
+                    await WriteOutErrors(errors, options.SilenceWarnings, "   ", "No errors.", false, testName, "Warnings detected", "Errors detected");
+                    results.IncrementResultCount(errors);
                 }
             }
+
+            return results;
         }
 
-        private static void CheckMethods(BasicCheckOptions options, DocSet docset, ref int successCount, ref int errorCount, ref int warningCount)
+        private static async Task<CheckResults> CheckMethodsAsync(BasicCheckOptions options, DocSet docset)
         {
             MethodDefinition[] methods = FindTestMethods(options, docset);
+            CheckResults results = new CheckResults();
+
             foreach (var method in methods)
             {
-                FancyConsole.Write(ConsoleHeaderColor, "Checking \"{0}\" in {1}...", method.Identifier, method.SourceFile.DisplayName);
+                var testName = "check-method-syntax: " + method.Identifier;
+                await TestReport.StartTestAsync(testName, method.SourceFile.DisplayName);
+
                 if (string.IsNullOrEmpty(method.ExpectedResponse))
                 {
-                    FancyConsole.WriteLine();
-                    FancyConsole.WriteLine(ConsoleErrorColor, "  Error: response was null.");
-                    errorCount++;
+                    await TestReport.FinishTestAsync(testName, AppVeyor.TestOutcome.Failed, "Null response where one was expected.");
+                    results.FailureCount++;
                     continue;
                 }
+
                 var parser = new HttpParser();
                 var expectedResponse = parser.ParseHttpResponse(method.ExpectedResponse);
-                ValidationError[] errors = ValidateHttpResponse(docset, method, expectedResponse, options.SilenceWarnings);
-                if (errors.WereErrors())
-                {
-                    errorCount++;
-                }
-                else
-                    if (errors.WereWarnings())
-                    {
-                        warningCount++;
-                    }
-                    else
-                    {
-                        successCount++;
-                    }
+                ValidationError[] errors = await ValidateHttpResponse(docset, method, expectedResponse, options.SilenceWarnings);
+
+                await WriteOutErrors(errors, options.SilenceWarnings, "   ", "No errors.", false, testName, "Warnings detected", "Errors detected");
+                results.IncrementResultCount(errors);
             }
+
+            return results;
         }
 
         private static MethodDefinition[] FindTestMethods(BasicCheckOptions options, DocSet docset)
@@ -457,7 +466,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 var foundMethod = LookUpMethod(docset, options.MethodName);
                 if (null == foundMethod)
                 {
-                    FancyConsole.WriteLine(ConsoleErrorColor, "Unable to locate method '{0}' in docset.", options.MethodName);
+                    FancyConsole.WriteLine(FancyConsole.ConsoleErrorColor, "Unable to locate method '{0}' in docset.", options.MethodName);
                     Exit(failure: true);
                 }
                 methods = new MethodDefinition[] { LookUpMethod(docset, options.MethodName) };
@@ -468,7 +477,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 var selectedFile = selectedFileQuery.SingleOrDefault();
                 if (selectedFile == null)
                 {
-                    FancyConsole.WriteLine(ConsoleErrorColor, "Unable to locate file '{0}' in docset.", options.FileName);
+                    FancyConsole.WriteLine(FancyConsole.ConsoleErrorColor, "Unable to locate file '{0}' in docset.", options.FileName);
                     Exit(failure: true);
                 }
                 methods = selectedFile.Requests;
@@ -480,9 +489,9 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             return methods;
         }
 
-        private static void WriteOutErrors(IEnumerable<ValidationError> errors, bool silenceWarnings, string indent = "", string successMessage = null, bool endLine = false)
+
+        private static async Task<bool> WriteOutErrors(IEnumerable<ValidationError> errors, bool silenceWarnings, string indent = "", string successMessage = null, bool endLineBeforeWriting = false, string testName = null, string warningMessage = null, string failureMessage = null)
         {
-            bool writeSuccessMessage = true;
             foreach (var error in errors)
             {
                 // Skip messages if verbose output is off
@@ -493,53 +502,92 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 if (silenceWarnings && error.IsWarning)
                     continue;
 
-                writeSuccessMessage = false;
-                if (endLine)
+                if (endLineBeforeWriting)
+                {
                     FancyConsole.WriteLine();
+                }
+
                 WriteValidationError(indent, error);
             }
 
-            if (writeSuccessMessage && successMessage != null)
+            AppVeyor.TestOutcome outcome = AppVeyor.TestOutcome.None;
+            string outputMessage = null;
+            if (errors.WereErrors())
             {
-                FancyConsole.WriteLine(ConsoleSuccessColor, successMessage);
+                // Write failure message
+                //if (null != failureMessage)
+                //    FancyConsole.WriteLine(FancyConsole.ConsoleErrorColor, failureMessage);
+                outputMessage = errors.First().Message.FirstLineOnly();
+                outcome = AppVeyor.TestOutcome.Failed;
             }
+            else if (!silenceWarnings && errors.WereWarnings())
+            {
+                // Write warning message
+                //if (null != warningMessage)
+                //    FancyConsole.WriteLine(FancyConsole.ConsoleWarningColor, warningMessage);
+                outputMessage = errors.First().Message.FirstLineOnly();
+                outcome = AppVeyor.TestOutcome.Passed;
+            }
+            else
+            {
+                // write success message!
+                //if (null != successMessage)
+                //    FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, successMessage);
+                outputMessage = successMessage;
+                outcome = AppVeyor.TestOutcome.Passed;
+            }
+
+            // Record this test's outcome in the build worker API
+            if (null != testName)
+            {
+                var errorMessage = (from e in errors select e.ErrorText).ComponentsJoinedByString("\r\n");
+                await TestReport.FinishTestAsync(testName, outcome, outputMessage, stdErr: errorMessage);
+            }
+
+            return outcome == AppVeyor.TestOutcome.Passed;
         }
 
         private static void WriteValidationError(string indent, ValidationError error)
         {
             ConsoleColor color;
             if (error.IsWarning)
-                color = ConsoleWarningColor;
+            {
+                color = FancyConsole.ConsoleWarningColor;
+            }
             else if (error.IsError)
-                color = ConsoleErrorColor;
+            {
+                color = FancyConsole.ConsoleErrorColor;
+            }
             else
-                color = ConsoleDefaultColor;
+            {
+                color = FancyConsole.ConsoleDefaultColor;
+            }
 
             FancyConsole.WriteLineIndented(indent, color, error.ErrorText);
         }
 
-        private static ValidationError[] ValidateHttpResponse(DocSet docset, MethodDefinition method, HttpResponse response, bool silenceWarnings, HttpResponse expectedResponse = null, string indentLevel = "")
+        private static async Task<ValidationError[]> ValidateHttpResponse(DocSet docset, MethodDefinition method, HttpResponse response, bool silenceWarnings, HttpResponse expectedResponse = null, string indentLevel = "")
         {
             ValidationError[] errors;
             bool errorsOccured = !docset.ValidateApiMethod(method, response, expectedResponse, out errors, silenceWarnings);
-            if (errorsOccured)
-            {
-                FancyConsole.WriteLine();
-                WriteOutErrors(errors, silenceWarnings, indentLevel + "  ");
-                FancyConsole.WriteLine();
-            }
-            else
-            {
-                if (response.CallDuration > TimeSpan.Zero)
-                {
-                    FancyConsole.Write(ConsoleSuccessColor, " no errors ");
-                    FancyConsole.WriteLine(ConsoleSuccessColor, " ({0} ms)", response.CallDuration.TotalMilliseconds);
-                }
-                else
-                {
-                    FancyConsole.WriteLine(ConsoleSuccessColor, " no errors.");
-                }
-            }
+            //if (errorsOccured)
+            //{
+            //    FancyConsole.WriteLine();
+            //    await WriteOutErrors(errors, silenceWarnings, indentLevel + "  ");
+            //    FancyConsole.WriteLine();
+            //}
+            //else
+            //{
+            //    //if (response.CallDuration > TimeSpan.Zero)
+            //    //{
+            //    //    FancyConsole.Write(FancyConsole.ConsoleSuccessColor, " no errors ");
+            //    //    FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, " ({0} ms)", response.CallDuration.TotalMilliseconds);
+            //    //}
+            //    //else
+            //    //{
+            //    //    FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, " no errors.");
+            //    //}
+            //}
             return errors;
         }
 
@@ -548,9 +596,9 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         /// </summary>
         /// <param name="options"></param>
         /// <returns></returns>
-        private static async Task CheckService(CheckServiceOptions options)
+        private static async Task<bool> CheckServiceAsync(CheckServiceOptions options)
         {
-            var docset = GetDocSet(options);
+            var docset = await GetDocSetAsync(options);
             FancyConsole.WriteLine();
 
             if (options.AdditionalHeaders != null)
@@ -564,45 +612,35 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 ValidationConfig.ODataMetadataLevel = options.ODataMetadataLevel;
             }
 
-
             if (options.UseEnvironmentVariables)
             {
                 // Generate a new auth token from environment variables
                 var token = await OAuthTokenGenerator.RedeemRefreshTokenFromEnvironment();
                 if (token == null)
                 {
-                    FancyConsole.WriteLine(ConsoleErrorColor, "Unable to retrieve access token from environment variables");
-                    Exit(failure: true);
-                    return;
+                    RecordError("Unable to retrieve access token from environment variables.");
+                    return false;
                 }
                 options.AccessToken = token.AccessToken;
             }
 
+
             var methods = FindTestMethods(options, docset);
-            int successCount = 0, warningCount = 0, errorCount = 0;
+            CheckResults results = new CheckResults();
+
             foreach (var method in methods)
             {
-                FancyConsole.Write(ConsoleHeaderColor, "Calling method \"{0}\"...", method.Identifier);
+                //FancyConsole.Write(FancyConsole.ConsoleHeaderColor, "Calling method \"{0}\"...", method.Identifier);
 
                 AuthenicationCredentials credentials = AuthenicationCredentials.CreateAutoCredentials(options.AccessToken);
                 var testScenarios = docset.TestScenarios.ScenariosForMethod(method);
+                
                 if (testScenarios.Length == 0)
                 {
                     // If there are no parameters defined, we still try to call the request as-is.
-                    FancyConsole.WriteLine(ConsoleCodeColor, "\r\n  Method {0} has no scenario defined. Running as-is from docs.", method.RequestMetadata.MethodName);
+                    FancyConsole.WriteLine(FancyConsole.ConsoleCodeColor, "\r\n  Method {0} has no scenario defined. Running as-is from docs.", method.RequestMetadata.MethodName);
                     var errors = await TestMethodWithParameters(docset, method, null, options.ServiceRootUrl, credentials, options.SilenceWarnings);
-                    if (errors.WereErrors())
-                    {
-                        errorCount++;
-                    }
-                    else if (errors.WereWarnings())
-                    {
-                        warningCount++;
-                    }
-                    else
-                    {
-                        successCount++;
-                    }
+                    results.IncrementResultCount(errors);
                     AddPause(options);
                 }
                 else
@@ -611,25 +649,17 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                     var enabledScenarios = testScenarios.Where(s => s.Enabled);
                     if (enabledScenarios.FirstOrDefault() == null)
                     {
-                        FancyConsole.WriteLine(ConsoleWarningColor, " skipped.");
+                        await TestReport.StartTestAsync(method.Identifier, method.SourceFile.DisplayName);
+                        await TestReport.FinishTestAsync(method.Identifier, AppVeyor.TestOutcome.Skipped, "All scenarios for this method were disabled.");
+                        FancyConsole.Write(FancyConsole.ConsoleHeaderColor, "Skipped test: {0}.", method.Identifier);
+                        FancyConsole.WriteLine(FancyConsole.ConsoleWarningColor, " All scenarios for test were disabled.", method.Identifier);
                     }
                     else
                     {
                         foreach (var requestSettings in testScenarios.Where(s => s.Enabled))
                         {
                             var errors = await TestMethodWithParameters(docset, method, requestSettings, options.ServiceRootUrl, credentials, options.SilenceWarnings);
-                            if (errors.WereErrors())
-                            {
-                                errorCount++;
-                            }
-                            else if (errors.WereWarnings())
-                            {
-                                warningCount++;
-                            }
-                            else
-                            {
-                                successCount++;
-                            }
+                            results.IncrementResultCount(errors);
                             AddPause(options);
                         }
                     }
@@ -640,19 +670,19 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
             if (options.IgnoreWarnings || options.SilenceWarnings)
             {
-                successCount += warningCount;
-                warningCount = 0;
+                results.ConvertWarningsToSuccess();
             }
 
-            PrintStatusMessage(successCount, warningCount, errorCount);
-            bool wereFailures = (errorCount > 0) || (warningCount > 0);
-            Exit(failure: wereFailures);
+            results.PrintToConsole();
+            bool wereFailures = (results.FailureCount + results.WarningCount) > 0;
+            return !wereFailures;
         }
 
         private static void Exit(bool failure)
         {
+            var exitCode = failure ? ExitCodeFailure : ExitCodeSuccess;
 #if DEBUG
-            Console.WriteLine("Exit - failure: " + failure);
+            Console.WriteLine("Exit code: " + exitCode);
             if (System.Diagnostics.Debugger.IsAttached)
             {
                 Console.WriteLine();
@@ -661,40 +691,11 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             }
 #endif
 
-            Environment.Exit(failure ? ExitCodeFailure : ExitCodeSuccess);
+            Environment.Exit(exitCode);
         }
 
 
-        private static void PrintStatusMessage(int successCount, int warningCount, int errorCount)
-        {
-            FancyConsole.WriteLine();
-            FancyConsole.Write("Runs completed. ");
-            var totalCount = successCount + warningCount + errorCount;
-            double percentSuccessful = 100 * (successCount / (double)totalCount);
-
-            const string percentCompleteFormat = "{0:0.00}% passed";
-            if (percentSuccessful == 100.0)
-                FancyConsole.Write(ConsoleSuccessColor, percentCompleteFormat, percentSuccessful);
-            else
-                FancyConsole.Write(ConsoleWarningColor, percentCompleteFormat, percentSuccessful);
-
-            if (errorCount > 0 || warningCount > 0)
-            {
-                FancyConsole.Write(" (");
-                if (errorCount > 0)
-                    FancyConsole.Write(ConsoleErrorColor, "{0} errors", errorCount);
-                if (warningCount > 0 && errorCount > 0)
-                    FancyConsole.Write(", ");
-                if (warningCount > 0)
-                    FancyConsole.Write(ConsoleWarningColor, "{0} warnings", warningCount);
-                if (warningCount > 0 || errorCount > 0 && successCount > 0)
-                    FancyConsole.Write(", ");
-                if (successCount > 0)
-                    FancyConsole.Write(ConsoleSuccessColor, "{0} successful", successCount);
-                FancyConsole.Write(")");
-            }
-            FancyConsole.WriteLine();
-        }
+       
 
         private static void AddPause(CheckServiceOptions options)
         {
@@ -708,20 +709,28 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
         private static async Task<ValidationError[]> TestMethodWithParameters(DocSet docset, MethodDefinition method, ScenarioDefinition requestSettings, string rootUrl, AuthenicationCredentials credentials, bool silenceWarnings)
         {
+            string testName = method.Identifier;
             string indentLevel = "";
             if (requestSettings != null)
             {
-                FancyConsole.WriteLine();
-                FancyConsole.Write(ConsoleHeaderColor, "  With scenario \"{1}\"...", method.Identifier, requestSettings.Description);
-                indentLevel = "  ";
+                if (!string.IsNullOrEmpty(requestSettings.Description))
+                {
+                    testName = string.Format("{0} [{1}]", method.Identifier, requestSettings.Description);
+                }
+                indentLevel = indentLevel + "  ";
             }
 
             FancyConsole.VerboseWriteLine("");
             FancyConsole.VerboseWriteLineIndented(indentLevel, "Request:");
+
+            await TestReport.StartTestAsync(testName, method.SourceFile.DisplayName);
+
             var requestPreviewResult = await method.PreviewRequestAsync(requestSettings, rootUrl, credentials, docset);
+            
+            // Check to see if an error occured building the request, and abort if so.
             if (requestPreviewResult.IsWarningOrError)
             {
-                WriteOutErrors(requestPreviewResult.Messages, silenceWarnings, indentLevel + "  ");
+                await WriteOutErrors(requestPreviewResult.Messages, silenceWarnings, indentLevel + "  ", testName: testName);
                 return requestPreviewResult.Messages;
             }
             
@@ -742,7 +751,10 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             FancyConsole.VerboseWriteLine();
             
             FancyConsole.VerboseWriteLineIndented(indentLevel, "Validation results:");
-            return ValidateHttpResponse(docset, method, actualResponse, silenceWarnings, expectedResponse, indentLevel);
+            var validateResponse = await ValidateHttpResponse(docset, method, actualResponse, silenceWarnings, expectedResponse, indentLevel);
+            await WriteOutErrors(validateResponse, silenceWarnings, indentLevel, "No errors.", false, testName);
+            
+            return validateResponse;
         }
 
         private static async Task PublishDocumentationAsync(PublishOptions options)
@@ -752,7 +764,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
             FancyConsole.WriteLine("Publishing documentation to {0}", outputPath);
 
-            DocSet docs = GetDocSet(options);
+            DocSet docs = await GetDocSetAsync(options);
             DocumentPublisher publisher = null;
             switch (options.Format)
             {
@@ -788,7 +800,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             publisher.NewMessage += publisher_NewMessage;
             await publisher.PublishToFolderAsync(outputPath);
 
-            FancyConsole.WriteLine(ConsoleSuccessColor, "Finished publishing documentation to: {0}", outputPath);
+            FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, "Finished publishing documentation to: {0}", outputPath);
 
             Exit(failure: false);
         }
@@ -802,7 +814,8 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             WriteValidationError("", msg);
         }
 
-        private static async Task CheckServiceMetadata(CheckMetadataOptions options)
+
+        private static async Task<List<OneDrive.ApiDocumentation.Validation.OData.Schema>> TryGetMetadataSchemas(CheckMetadataOptions options)
         {
             if (string.IsNullOrEmpty(options.ServiceMetadataLocation))
             {
@@ -812,15 +825,15 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 }
                 else
                 {
-                    FancyConsole.WriteLine(ConsoleErrorColor, "No service metadata file location specified. Cannot continue.");
-                    Exit(failure: true);
+                    RecordError("No service metadata file location specified.");
+                    return null;
                 }
             }
-            
-            FancyConsole.WriteLine(ConsoleHeaderColor, "Loading service metadata from '{0}'...", options.ServiceMetadataLocation);
+
+            FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, "Loading service metadata from '{0}'...", options.ServiceMetadataLocation);
 
             Uri metadataUrl;
-            List<OneDrive.ApiDocumentation.Validation.OData.Schema> schemas = null;
+            List<OneDrive.ApiDocumentation.Validation.OData.Schema> schemas = new List<Validation.OData.Schema>();
             try
             {
                 if (Uri.TryCreate(options.ServiceMetadataLocation, UriKind.Absolute, out metadataUrl))
@@ -834,20 +847,33 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             }
             catch (Exception ex)
             {
-                FancyConsole.WriteLine(ConsoleErrorColor, "Error parsing metadata: {0}", ex.Message);
-                return;
+                RecordError("Error parsing service metadata: {0}", ex.Message);
+                return null;
             }
 
-            FancyConsole.WriteLine(ConsoleSuccessColor, "  found {0} schema definitions: {1}", schemas.Count, (from s in schemas select s.Namespace).ComponentsJoinedByString(", "));
+            return schemas;
+        }
 
-            var docSet = GetDocSet(options);
-            
+        private static async Task<bool> CheckServiceMetadata(CheckMetadataOptions options)
+        {
+
+            List<OneDrive.ApiDocumentation.Validation.OData.Schema> schemas = await TryGetMetadataSchemas(options);
+            if (null == schemas)
+                return false;
+
+            FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, "  found {0} schema definitions: {1}", schemas.Count, (from s in schemas select s.Namespace).ComponentsJoinedByString(", "));
+
+            var docSet = await GetDocSetAsync(options);
+
+            await TestReport.StartTestAsync("validate-service-metadata", "$metadata");
+
             List<ResourceDefinition> foundResources = OneDrive.ApiDocumentation.Validation.OData.ODataParser.GenerateResourcesFromSchemas(schemas);
-            int successCount = 0, errorCount = 0, warningCount = 0;
+            CheckResults results = new CheckResults();
 
             foreach (var resource in foundResources)
             {
-                FancyConsole.Write(ConsoleHeaderColor, "Checking resource: {0}...", resource.Metadata.ResourceType);
+                FancyConsole.WriteLine();
+                FancyConsole.Write(FancyConsole.ConsoleHeaderColor, "Checking resource: {0}...", resource.Metadata.ResourceType);
 
                 FancyConsole.VerboseWriteLine();
                 FancyConsole.VerboseWriteLine(resource.JsonExample);
@@ -856,31 +882,22 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 // Verify that this resource matches the documentation
                 ValidationError[] errors;
                 docSet.ResourceCollection.ValidateJsonExample(resource.Metadata, resource.JsonExample, out errors);
+                results.IncrementResultCount(errors);
 
-                var wereErrors = errors.WereErrors() || (!options.SilenceWarnings && errors.WereWarnings());
-                if (!wereErrors)
-                {
-                    FancyConsole.WriteLine(ConsoleSuccessColor, "  no errors.");
-                    successCount++;
-                }
-                else
-                {
-                    if (errors.WereErrors())
-                        errorCount++;
-                    else if ((!options.IgnoreWarnings && !options.SilenceWarnings) && errors.WereWarnings())
-                        warningCount++;
-                    else
-                        successCount++;
-                    
-                    FancyConsole.WriteLine();
-                    WriteOutErrors(errors, options.SilenceWarnings, "  ");
-                }
-                FancyConsole.WriteLine();
+                await WriteOutErrors(errors, options.SilenceWarnings, successMessage: " no errors.");
             }
 
-            PrintStatusMessage(successCount, warningCount, errorCount);
+            if (options.IgnoreWarnings)
+            {
+                results.ConvertWarningsToSuccess();
+            }
 
-            Exit(failure: false);
+            await TestReport.FinishTestAsync("Validate service-metadata", results.WereFailures ? AppVeyor.TestOutcome.Failed : AppVeyor.TestOutcome.Passed);
+
+            results.PrintToConsole();
+            return !results.WereFailures;
         }
     }
+
+   
 }
