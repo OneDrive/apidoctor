@@ -865,13 +865,14 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
             var docSet = await GetDocSetAsync(options);
 
-            await TestReport.StartTestAsync("Validate service-metadata", "$metadata");
+            await TestReport.StartTestAsync("validate-service-metadata", "$metadata");
 
             List<ResourceDefinition> foundResources = OneDrive.ApiDocumentation.Validation.OData.ODataParser.GenerateResourcesFromSchemas(schemas);
             CheckResults results = new CheckResults();
 
             foreach (var resource in foundResources)
             {
+                FancyConsole.WriteLine();
                 FancyConsole.Write(FancyConsole.ConsoleHeaderColor, "Checking resource: {0}...", resource.Metadata.ResourceType);
 
                 FancyConsole.VerboseWriteLine();
