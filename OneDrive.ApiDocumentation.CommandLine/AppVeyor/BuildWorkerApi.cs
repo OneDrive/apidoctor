@@ -122,6 +122,7 @@ namespace AppVeyor
             var targetUrl = new Uri(UrlEndPoint, path);
             var request = HttpWebRequest.CreateHttp(targetUrl);
             request.Method = "POST";
+            request.ContentType = "application/json";
 
             if (null != body)
             {
