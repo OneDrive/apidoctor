@@ -9,6 +9,15 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 {
     public class FancyConsole
     {
+        public const ConsoleColor ConsoleDefaultColor = ConsoleColor.White;
+        public const ConsoleColor ConsoleHeaderColor = ConsoleColor.Cyan;
+        public const ConsoleColor ConsoleSubheaderColor = ConsoleColor.DarkCyan;
+        public const ConsoleColor ConsoleCodeColor = ConsoleColor.Gray;
+        public const ConsoleColor ConsoleErrorColor = ConsoleColor.Red;
+        public const ConsoleColor ConsoleWarningColor = ConsoleColor.Yellow;
+        public const ConsoleColor ConsoleSuccessColor = ConsoleColor.Green;
+
+        
         private static string _logFileName;
         private static StreamWriter _logWriter;
 

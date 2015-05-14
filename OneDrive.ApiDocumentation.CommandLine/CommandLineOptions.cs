@@ -68,6 +68,9 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         [Option("silence-warnings", HelpText = "Don't print warnings to the screen or consider them errors")]
         public bool SilenceWarnings { get; set; }
 
+        [Option("appveyor-url", HelpText="Specify the AppVeyor Build Worker API URL for output integration")]
+        public string AppVeyorServiceUrl { get; set; }
+
 
 #if DEBUG
         [Option("debug", HelpText="Launch the debugger before doing anything interesting")]

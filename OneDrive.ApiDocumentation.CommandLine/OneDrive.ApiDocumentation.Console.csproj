@@ -60,12 +60,15 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AppVeyor\BuildWorkerApi.cs" />
     <Compile Include="Auth\OAuthTokenGenerator.cs" />
+    <Compile Include="CheckResults.cs" />
     <Compile Include="CommandLineOptions.cs" />
     <Compile Include="FancyConsole.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SavedSettings.cs" />
+    <Compile Include="TestReport.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
