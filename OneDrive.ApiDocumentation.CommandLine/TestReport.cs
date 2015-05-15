@@ -26,13 +26,13 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             }
             FancyConsole.WriteLine();
 
-            await BuildWorkerApi.RecordTestAsync(testName, TestFrameworkName, outcome: AppVeyor.TestOutcome.Running, filename: filename);
+            //await BuildWorkerApi.RecordTestAsync(testName, TestFrameworkName, outcome: AppVeyor.TestOutcome.Running, filename: filename);
 
             TestStartTimes[testName] = DateTimeOffset.Now.Ticks;
         }
 
 
-        public static async Task FinishTestAsync(string testName, AppVeyor.TestOutcome outcome, string message = null, string filename = null, string stdErr = null)
+        public static async Task FinishTestAsync(string testName, AppVeyor.TestOutcome outcome, string message = null, string filename = null, string stdOut = null)
         {
             var endTime = DateTimeOffset.Now.Ticks;
 
@@ -71,7 +71,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
             FancyConsole.WriteLine(" duration: {0}", duration);
 
-            await BuildWorkerApi.RecordTestAsync(testName, TestFrameworkName, outcome: outcome, durationInMilliseconds: (long)duration.TotalMilliseconds, errorMessage: message, filename: filename, stdErr: stdErr);
+            await BuildWorkerApi.RecordTestAsync(testName, TestFrameworkName, outcome: outcome, durationInMilliseconds: (long)duration.TotalMilliseconds, errorMessage: message, filename: filename, stdOut: stdOut);
         }
 
     }
