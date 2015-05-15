@@ -78,21 +78,65 @@ the metadata in the documentation is formatted properly.
 Example: `apidocs.exe check-docs --path ~/github/api-docs --method search`
 
 ### Check-service Command
-Check the documented requests and responses against an actual REST service. Requires
-the URL for the service and an OAuth access token to call the service.
+Check the documented requests and responses against an actual REST service. This
+option will load accounts from a configuration file (see below), environment
+variables or use the specified access-token and url parameters to determine
+how to make API calls with the target service.
 
-| Option                             | Description                                                                                                                                                              |
-|:-----------------------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `--access-token "token"`           | OAuth access token to use when calling the service. You can use set to provide a default value. You may need to escape the token value by enclosing it in double quotes. |
-| `--url <url>`                      | Set the base URL for the service calls.                                                                                                                                  |
-| `--parameter-file <relative_path>` | Relative path to a JSON file describing the parameter replacements to make in the request methods.                                                                       |
-| `--pause`                          | Pause for a key press between API calls to the service to enable reading the responses.                                                                                  |
-| `--method <method_name>`           | Check a single request/response method instead of everything in the documentation.                                                                                       |
+Any scenario files that are contained within the documentation path will
+automatically be loaded and used by the check-service method.
+
+| Option                     | Description                                                                                                                                                                             |
+|:---------------------------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `--access-token "token"`   | OAuth access token to use when calling the service. You can use set to provide a default value. You may need to escape the token value by enclosing it in double quotes.                |
+| `--url <url>`              | Set the base URL for the service calls.                                                                                                                                                 |
+| `--pause`                  | Pause for a key press between API calls to the service to enable reading the responses.                                                                                                 |
+| `--method <method_name>`   | Optional. Check a single request/response method instead of everything in the documentation.                                                                                            |
+| `--branch-name <branch>`   | Optional. Specify the branch name that is the source of the documentation. Compares this name to the configuration file to see if the check-service command is allowed for this branch. |
+| `--headers <headers>`      | Optional. Enables adding additional headers to every API call made by check-service. The format should be a quoted string with a | separating different header lines.                   |
+| `--odata-metadata <value>` | Optional. Specify the value of the odata.metadata level that is provided in the Accept header.                                                                                          |
 
 Example:
 ```
 apidocs set --access-token "asdkljasdkj..." -url https://api.example.org/v1.0
-apidocs check-service --parameter-file requests.json --method search
+apidocs check-service --method "search"
+apidocs check-service --headers "If-Match: *|Application: apidocs-test-app" --odata-metadata "odata.metadata=none"
+```
+
+#### Account configuration file
+You can specify account information in a configuration file stored inside the
+documentation set. Apidocs will look for any .json file that includes an
+`accounts` property include an array of account objects. These accounts will
+be used by the `check-service` command.
+
+Example configuration file:
+```json
+{
+  "checkServiceEnabledBranches": ["master", "release", "release-stage"],
+  "accounts": [
+    {
+      "name": "OneDriveProd",
+      "enabled": true,
+      "clientId": "123456",
+      "clientSecret": "987654321",
+      "tokenService": "https://login.live.com/oauth20_token.srf",
+      "redirectUri": "http://my-test-app.com",
+      "refreshToken": "1230913jkljsdklajslkj12lk3j1lknmjasad",
+      "serviceUrl": "https://api.onedrive.com/v1.0"
+    },
+    {
+      "name": "SharePointPreProduction",
+      "enabled": false,
+      "clientId": "50b5a58e-71e3-49c3-b5ad-123141234",
+      "clientSecret": "123u1n1klnkl1zxz1241klnek1",
+      "tokenService": "https://login.windows-ppe.net/common/oauth2/token",
+      "redirectUri": "https://onedrive-explorer-test.azurewebsites.net/callback.html",
+      "refreshToken": "alk1nkl1nkm1nszkjhaoi1asdasdgb1",
+      "serviceUrl": "https://prepsp-my.spoppe.com/personal/billtest_prepsp_ccsctp_net/_api/v2.0",
+      "additionalHeaders": [ "If-Match: *" ]
+    }
+  ]
+}
 ```
 
 #### Refresh Tokens
