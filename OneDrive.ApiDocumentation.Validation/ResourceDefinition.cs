@@ -13,9 +13,17 @@
             Metadata = annotation;
             OriginalExample = jsonContent;
             SourceFile = source;
-            
-            object inputObject = JsonConvert.DeserializeObject(jsonContent);
-            JsonExample = JsonConvert.SerializeObject(inputObject, Formatting.Indented);
+
+            try
+            {
+                object inputObject = JsonConvert.DeserializeObject(jsonContent);
+                JsonExample = JsonConvert.SerializeObject(inputObject, Formatting.Indented);
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogFailure("Error parsing file {0}: {1}", source.FullPath, ex.Message);
+                throw;
+            }
 
             if (string.IsNullOrEmpty(annotation.ResourceType))
             {

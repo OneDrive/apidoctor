@@ -20,6 +20,8 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
         static void Main(string[] args)
         {
+            OneDrive.ApiDocumentation.Validation.LogHelper.ProvideLogHelper(new LogRecorder());
+
             FancyConsole.WriteLine(ConsoleColor.Green, "apidocs.exe Copyright (c) 2015 Microsoft Corporation.");
             FancyConsole.WriteLine();
             if (args.Length > 0)
@@ -210,14 +212,14 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             return set;
         }
 
-        private static void RecordWarning(string format, params object[] variables)
+        public static void RecordWarning(string format, params object[] variables)
         {
             var message = string.Format(format, variables);
             FancyConsole.WriteLine(FancyConsole.ConsoleWarningColor, message);
             Task t = BuildWorker.AddMessageAsync(message, AppVeyor.MessageCategory.Warning);
         }
 
-        private static void RecordError(string format, params object[] variables)
+        public static void RecordError(string format, params object[] variables)
         {
             var message = string.Format(format, variables);
             FancyConsole.WriteLine(FancyConsole.ConsoleErrorColor, message);
@@ -902,5 +904,17 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         }
     }
 
+    class LogRecorder : OneDrive.ApiDocumentation.Validation.ILogHelper
+    {
+        public void RecordFailure(string message)
+        {
+            Program.RecordError(message);
+        }
+
+        public void RecordWarning(string message)
+        {
+            Program.RecordWarning(message);
+        }
+    }
    
 }
