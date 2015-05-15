@@ -326,7 +326,7 @@ namespace OneDrive.ApiDocumentation.Validation
 
         private void AddBookmarkForHeader(string headerText)
         {
- 	        string bookmark = headerText.ToLowerInvariant().Replace(' ', '-');
+ 	        string bookmark = headerText.ToLowerInvariant().Replace(' ', '-').Replace(".", "");
             m_Bookmarks.Add(bookmark);
         }
 
