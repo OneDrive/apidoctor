@@ -65,6 +65,7 @@
     <Compile Include="Auth\OAuthTokenGenerator.cs" />
     <Compile Include="CheckResults.cs" />
     <Compile Include="CommandLineOptions.cs" />
+    <Compile Include="ConfigFile.cs" />
     <Compile Include="FancyConsole.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

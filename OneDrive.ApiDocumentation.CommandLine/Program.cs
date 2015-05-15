@@ -17,6 +17,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
         public static readonly SavedSettings DefaultSettings = new SavedSettings("ApiTestTool", "settings.json");
         public static readonly AppVeyor.BuildWorkerApi BuildWorker = new AppVeyor.BuildWorkerApi();
+        public static ConfigFile CurrentConfiguration { get; private set; }
 
         static void Main(string[] args)
         {
@@ -65,6 +66,17 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             Nito.AsyncEx.AsyncContext.Run(() => RunInvokedMethodAsync(options, verbName, verbOptions));
         }
 
+        public static void LoadCurrentConfiguration(DocSetOptions options)
+        {
+            if (CurrentConfiguration != null)
+                return;
+
+            if (null != options)
+            {
+                CurrentConfiguration = ConfigFile.LoadFromDocumentSet(options.DocumentationSetPath);
+            }
+        }
+
         private static async Task RunInvokedMethodAsync(CommandLineOptions origCommandLineOpts, string invokedVerb, BaseOptions options)
         {
             string[] missingProps;
@@ -83,6 +95,8 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 await WriteOutErrors(new ValidationError[] { error }, options.SilenceWarnings);
                 Exit(failure: true);
             }
+
+            LoadCurrentConfiguration(options as DocSetOptions);
 
             bool returnSuccess = true;
 
@@ -567,10 +581,18 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         /// <returns></returns>
         private static async Task<bool> CheckServiceAsync(CheckServiceOptions options)
         {
-            if (!string.IsNullOrEmpty(options.BranchName) && !options.BranchName.Equals("master"))
+            // See if we're supposed to run check-service on this branch (assuming we know what branch we're running on)
+            if (!string.IsNullOrEmpty(options.BranchName))
             {
-                RecordWarning("Aborting check-service run. Branch {0} != \"master\".", options.BranchName);
-                return true;
+                string[] validBranches = null;
+                if (null != Program.CurrentConfiguration) 
+                    validBranches = Program.CurrentConfiguration.CheckServiceEnabledBranches;
+
+                if (null != validBranches && !validBranches.Contains(options.BranchName))
+                {
+                    RecordWarning("Aborting check-service run. Branch \"{0}\" wasn't in the checkServiceEnabledBranches configuration list.", options.BranchName);
+                    return true;
+                }
             }
 
             var docset = await GetDocSetAsync(options);

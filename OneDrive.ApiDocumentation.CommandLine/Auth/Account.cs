@@ -40,35 +40,6 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         [JsonIgnore]
         public string AccessToken { get; set; }
 
-
-        /// <summary>
-        /// Search for a .JSON file that includes accounts and load accounts from it.
-        /// </summary>
-        /// <returns></returns>
-        public static Account[] LoadFromConfig(string docSetPath)
-        {
-            DirectoryInfo source = new DirectoryInfo(docSetPath);
-            var potentialFiles = source.GetFiles("*.json", SearchOption.AllDirectories);
-            foreach (var file in potentialFiles)
-            {
-                // See if this file maps to what we're looking for.
-                using (var reader = file.OpenText())
-                {
-                    try
-                    {
-                        var configFile = JsonConvert.DeserializeObject<AccountConfigFile>(reader.ReadToEnd());
-                        if (configFile.Accounts != null && configFile.Accounts.Length > 0)
-                        {
-                            Console.WriteLine("Using account configuration file: {0}", file.FullName);
-                            return configFile.Accounts;
-                        }
-                    }
-                    catch { } 
-                }
-            }
-            return null;
-        }
-
         /// <summary>
         /// Read command environmental variables to build an account
         /// </summary>
@@ -113,9 +84,5 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
     }
 
 
-    internal class AccountConfigFile
-    {
-        [JsonProperty("accounts")]
-        public Account[] Accounts { get; set; }
-    }
+    
 }

@@ -266,11 +266,14 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
             string checkValue = null;
 
+            Program.LoadCurrentConfiguration(this);
 
             if (string.IsNullOrEmpty(this.AccessToken))
             {
                 // Try to add accounts from configuration file in the documentation
-                var accounts = Account.LoadFromConfig(this.DocumentationSetPath);
+                Account[] accounts = null;
+                if (Program.CurrentConfiguration != null)
+                    accounts = Program.CurrentConfiguration.Accounts;
                 if (null != accounts)
                 {
                     FoundAccounts.AddRange(accounts);
