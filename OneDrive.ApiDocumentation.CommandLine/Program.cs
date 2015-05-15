@@ -603,7 +603,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 ValidationConfig.ODataMetadataLevel = options.ODataMetadataLevel;
             }
 
-            if (options.FoundAccounts == null || options.FoundAccounts.Count == 0)
+            if (options.FoundAccounts == null || !options.FoundAccounts.Any())
             {
                 RecordError("No account was found. Cannot connect to the service.");
                 return false;
@@ -633,7 +633,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 }
 
                 string testNamePrefix = "";
-                if (options.FoundAccounts.Count > 1)
+                if (options.FoundAccounts.Any())
                 {
                     FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, "Testing with account: {0}", account.Name);
                     testNamePrefix = account.Name.ToLower() + "-";
