@@ -541,7 +541,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             if (null != testName)
             {
                 var errorMessage = (from e in errors select e.ErrorText).ComponentsJoinedByString("\r\n");
-                await TestReport.FinishTestAsync(testName, outcome, outputMessage, stdErr: errorMessage);
+                await TestReport.FinishTestAsync(testName, outcome, outputMessage, stdOut: errorMessage);
             }
 
             return outcome == AppVeyor.TestOutcome.Passed;
@@ -865,10 +865,13 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
             var docSet = await GetDocSetAsync(options);
 
-            await TestReport.StartTestAsync("validate-service-metadata", "$metadata");
+            const string testname = "validate-service-metadata";
+            await TestReport.StartTestAsync(testname);
 
             List<ResourceDefinition> foundResources = OneDrive.ApiDocumentation.Validation.OData.ODataParser.GenerateResourcesFromSchemas(schemas);
             CheckResults results = new CheckResults();
+
+            List<ValidationError> collectedErrors = new List<ValidationError>();
 
             foreach (var resource in foundResources)
             {
@@ -884,6 +887,8 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 docSet.ResourceCollection.ValidateJsonExample(resource.Metadata, resource.JsonExample, out errors);
                 results.IncrementResultCount(errors);
 
+                collectedErrors.AddRange(errors);
+
                 await WriteOutErrors(errors, options.SilenceWarnings, successMessage: " no errors.");
             }
 
@@ -892,7 +897,9 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 results.ConvertWarningsToSuccess();
             }
 
-            await TestReport.FinishTestAsync("Validate service-metadata", results.WereFailures ? AppVeyor.TestOutcome.Failed : AppVeyor.TestOutcome.Passed);
+            var output = (from e in collectedErrors select e.ErrorText).ComponentsJoinedByString("\r\n");
+
+            await TestReport.FinishTestAsync(testname, results.WereFailures ? AppVeyor.TestOutcome.Failed : AppVeyor.TestOutcome.Passed, stdOut:output);
 
             results.PrintToConsole();
             return !results.WereFailures;
