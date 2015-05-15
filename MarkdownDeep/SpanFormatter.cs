@@ -109,7 +109,7 @@ namespace MarkdownDeep
 			return MakeID(str, 0, str.Length);
 		}
 
-		internal string MakeID(string str, int start, int len)
+		internal string MakeID(string str, int start, int len, bool useGithubFormat = true)
 		{
 			// Parse the string into a list of tokens
 			Tokenize(str, start, len);
@@ -136,20 +136,23 @@ namespace MarkdownDeep
 			// Now clean it using the same rules as pandoc
 			base.Reset(sb.ToString());
 
-			// Skip everything up to the first letter
-			while (!eof)
-			{
-				if (Char.IsLetter(current))
-					break;
-				SkipForward(1);
-			}
+            if (!useGithubFormat)
+            {
+                // Skip everything up to the first letter
+                while (!eof)
+                {
+                    if (Char.IsLetter(current))
+                        break;
+                    SkipForward(1);
+                }
+            }
 
 			// Process all characters
 			sb.Length = 0;
 			while (!eof)
 			{
 				char ch = current;
-				if (char.IsLetterOrDigit(ch) || ch=='_' || ch=='-' || ch=='.')
+				if (char.IsLetterOrDigit(ch) || ch=='_' || ch=='-' /*|| ch=='.'*/)
 					sb.Append(Char.ToLower(ch));
 				else if (ch == ' ')
 					sb.Append("-");
