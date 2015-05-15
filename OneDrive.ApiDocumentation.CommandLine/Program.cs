@@ -15,8 +15,6 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         private const int ExitCodeFailure = 1;
         private const int ExitCodeSuccess = 0;
 
-        private const string TestFramework = "apidocs";
-
         public static readonly SavedSettings DefaultSettings = new SavedSettings("ApiTestTool", "settings.json");
         public static readonly AppVeyor.BuildWorkerApi BuildWorker = new AppVeyor.BuildWorkerApi();
 
