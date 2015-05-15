@@ -55,7 +55,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             var commandOptions = verbOptions as DocSetOptions;
             if (null != commandOptions)
             {
-                FancyConsole.WriteVerboseOutput = commandOptions.Verbose;
+                FancyConsole.WriteVerboseOutput = commandOptions.EnableVerboseOutput;
             }
 
             FancyConsole.LogFileName = verbOptions.LogFile;
@@ -190,12 +190,12 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         /// <returns></returns>
         private static async Task<DocSet> GetDocSetAsync(DocSetOptions options)
         {
-            FancyConsole.VerboseWriteLine("Opening documentation from {0}", options.PathToDocSet);
-            DocSet set = new DocSet(options.PathToDocSet);
+            FancyConsole.VerboseWriteLine("Opening documentation from {0}", options.DocumentationSetPath);
+            DocSet set = new DocSet(options.DocumentationSetPath);
 
             FancyConsole.VerboseWriteLine("Scanning documentation files...");
             ValidationError[] loadErrors;
-            if (!set.ScanDocumentation(out loadErrors) && options.ShowLoadWarnings)
+            if (!set.ScanDocumentation(out loadErrors) && options.EnableVerboseOutput)
             {
                 await WriteOutErrors(loadErrors, options.SilenceWarnings);
             }
@@ -204,11 +204,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             if (null != serviceOptions)
             {
                 FancyConsole.VerboseWriteLine("Reading configuration parameters...");
-                set.LoadTestScenarios(serviceOptions.ScenarioFilePath);
-                if (!set.TestScenarios.Loaded)
-                {
-                    RecordWarning("Unable to read request parameter configuration file: {0}", serviceOptions.ScenarioFilePath);
-                }
+                set.LoadTestScenarios();
             }
 
             return set;
@@ -256,12 +252,14 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, "Documentation files");
 
             string format = null;
-            if (options.Verbose)
+            if (options.EnableVerboseOutput)
+            {
                 format = "{1} (resources: {2}, methods: {3})";
-            else if (options.ShortForm)
-                format = "{0}";
+            }
             else
+            {
                 format = "{0} (r:{2}, m:{3})";
+            }
 
             foreach (var file in docset.Files)
             {
@@ -285,7 +283,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             await TestReport.StartTestAsync(testName);
 
             ValidationError[] errors;
-            docset.ValidateLinks(options.Verbose, out errors);
+            docset.ValidateLinks(options.EnableVerboseOutput, out errors);
 
             return await WriteOutErrors(errors, options.SilenceWarnings, successMessage: "No link errors detected.", testName: testName);
         }
@@ -308,7 +306,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             {
 
 
-                if (!options.ShortForm && options.Verbose)
+                if (options.EnableVerboseOutput)
                 {
                     string metadata = JsonConvert.SerializeObject(resource.Metadata);
                     FancyConsole.Write("  ");
@@ -320,11 +318,8 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                     FancyConsole.WriteLineIndented("  ", FancyConsole.ConsoleHeaderColor, resource.ResourceType);
                 }
 
-                if (!options.ShortForm)
-                {
-                    FancyConsole.WriteLineIndented("    ", FancyConsole.ConsoleCodeColor, resource.JsonExample);
-                    FancyConsole.WriteLine();
-                }
+                FancyConsole.WriteLineIndented("    ", FancyConsole.ConsoleCodeColor, resource.JsonExample);
+                FancyConsole.WriteLine();
             }
         }
 
@@ -341,24 +336,16 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             {
                 FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, "Method '{0}' in file '{1}'", method.Identifier, method.SourceFile.DisplayName);
 
-                if (!options.ShortForm)
-                {
-                    var requestMetadata = options.Verbose ? JsonConvert.SerializeObject(method.RequestMetadata) : string.Empty;
-                    FancyConsole.WriteLineIndented("  ", FancyConsole.ConsoleSubheaderColor, "Request: {0}", requestMetadata);
-                    FancyConsole.WriteLineIndented("    ", FancyConsole.ConsoleCodeColor, method.Request);
-                }
+                var requestMetadata = options.EnableVerboseOutput ? JsonConvert.SerializeObject(method.RequestMetadata) : string.Empty;
+                FancyConsole.WriteLineIndented("  ", FancyConsole.ConsoleSubheaderColor, "Request: {0}", requestMetadata);
+                FancyConsole.WriteLineIndented("    ", FancyConsole.ConsoleCodeColor, method.Request);
 
-                if (options.Verbose)
+                if (options.EnableVerboseOutput)
                 {
                     FancyConsole.WriteLine();
                     var responseMetadata = JsonConvert.SerializeObject(method.ExpectedResponseMetadata);
-                    if (options.ShortForm)
-                        FancyConsole.WriteLineIndented("  ", FancyConsole.ConsoleHeaderColor, "Expected Response: {0}", method.ExpectedResponse.FirstLineOnly());
-                    else
-                    {
-                        FancyConsole.WriteLineIndented("  ", FancyConsole.ConsoleSubheaderColor, "Expected Response: {0}", responseMetadata);
-                        FancyConsole.WriteLineIndented("    ", FancyConsole.ConsoleCodeColor, method.ExpectedResponse);
-                    }
+                    FancyConsole.WriteLineIndented("  ", FancyConsole.ConsoleSubheaderColor, "Expected Response: {0}", responseMetadata);
+                    FancyConsole.WriteLineIndented("    ", FancyConsole.ConsoleCodeColor, method.ExpectedResponse);
                     FancyConsole.WriteLine();
                 }
                 FancyConsole.WriteLine();
@@ -568,24 +555,6 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         {
             ValidationError[] errors;
             bool errorsOccured = !docset.ValidateApiMethod(method, response, expectedResponse, out errors, silenceWarnings);
-            //if (errorsOccured)
-            //{
-            //    FancyConsole.WriteLine();
-            //    await WriteOutErrors(errors, silenceWarnings, indentLevel + "  ");
-            //    FancyConsole.WriteLine();
-            //}
-            //else
-            //{
-            //    //if (response.CallDuration > TimeSpan.Zero)
-            //    //{
-            //    //    FancyConsole.Write(FancyConsole.ConsoleSuccessColor, " no errors ");
-            //    //    FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, " ({0} ms)", response.CallDuration.TotalMilliseconds);
-            //    //}
-            //    //else
-            //    //{
-            //    //    FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, " no errors.");
-            //    //}
-            //}
             return errors;
         }
 
@@ -610,69 +579,89 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 ValidationConfig.ODataMetadataLevel = options.ODataMetadataLevel;
             }
 
-            if (options.UseEnvironmentVariables)
+            if (options.FoundAccounts == null || options.FoundAccounts.Count == 0)
             {
-                // Generate a new auth token from environment variables
-                var token = await OAuthTokenGenerator.RedeemRefreshTokenFromEnvironment();
-                if (token == null)
-                {
-                    RecordError("Unable to retrieve access token from environment variables.");
-                    return false;
-                }
-                options.AccessToken = token.AccessToken;
+                RecordError("No account was found. Cannot connect to the service.");
+                return false;
             }
 
-
             var methods = FindTestMethods(options, docset);
-            CheckResults results = new CheckResults();
 
-            foreach (var method in methods)
+            bool wereFailures = false;
+
+            foreach (var account in options.FoundAccounts.Where(x => x.Enabled))
             {
-                //FancyConsole.Write(FancyConsole.ConsoleHeaderColor, "Calling method \"{0}\"...", method.Identifier);
+                CheckResults results = new CheckResults();
 
-                AuthenicationCredentials credentials = AuthenicationCredentials.CreateAutoCredentials(options.AccessToken);
-                var testScenarios = docset.TestScenarios.ScenariosForMethod(method);
-                
-                if (testScenarios.Length == 0)
+                string testNamePrefix = "";
+                if (options.FoundAccounts.Count > 1)
                 {
-                    // If there are no parameters defined, we still try to call the request as-is.
-                    FancyConsole.WriteLine(FancyConsole.ConsoleCodeColor, "\r\n  Method {0} has no scenario defined. Running as-is from docs.", method.RequestMetadata.MethodName);
-                    var errors = await TestMethodWithParameters(docset, method, null, options.ServiceRootUrl, credentials, options.SilenceWarnings);
-                    results.IncrementResultCount(errors);
-                    AddPause(options);
+                    FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, "Testing with account: {0}", account.Name);
+                    testNamePrefix = account.Name.ToLower() + "-";
                 }
-                else
+                // Make sure we have an access token
+                if (string.IsNullOrEmpty(account.AccessToken))
                 {
-                    // Otherwise, if there are parameter sets, we call each of them and check the result.
-                    var enabledScenarios = testScenarios.Where(s => s.Enabled);
-                    if (enabledScenarios.FirstOrDefault() == null)
+                    var tokens = await OAuthTokenGenerator.RedeemRefreshToken(account);
+                    if (null != tokens)
                     {
-                        await TestReport.StartTestAsync(method.Identifier, method.SourceFile.DisplayName);
-                        await TestReport.FinishTestAsync(method.Identifier, AppVeyor.TestOutcome.Skipped, "All scenarios for this method were disabled.");
-                        FancyConsole.Write(FancyConsole.ConsoleHeaderColor, "Skipped test: {0}.", method.Identifier);
-                        FancyConsole.WriteLine(FancyConsole.ConsoleWarningColor, " All scenarios for test were disabled.", method.Identifier);
+                        account.AccessToken = tokens.AccessToken;
                     }
                     else
                     {
-                        foreach (var requestSettings in testScenarios.Where(s => s.Enabled))
-                        {
-                            var errors = await TestMethodWithParameters(docset, method, requestSettings, options.ServiceRootUrl, credentials, options.SilenceWarnings);
-                            results.IncrementResultCount(errors);
-                            AddPause(options);
-                        }
+                        RecordError("Failed to retrieve access token for account: {0}", account.Name);
+                        continue;
                     }
                 }
+                
+                AuthenicationCredentials credentials = AuthenicationCredentials.CreateAutoCredentials(account.AccessToken);
+                
+                foreach (var method in methods)
+                {
+                    var testScenarios = docset.TestScenarios.ScenariosForMethod(method);
 
-                FancyConsole.WriteLine();
+                    if (testScenarios.Length == 0)
+                    {
+                        // If there are no parameters defined, we still try to call the request as-is.
+                        FancyConsole.WriteLine(FancyConsole.ConsoleCodeColor, "\r\n  Method {0} has no scenario defined. Running as-is from docs.", method.RequestMetadata.MethodName);
+                        var errors = await TestMethodWithParameters(docset, method, null, account.ServiceUrl, credentials, options.SilenceWarnings, testNamePrefix);
+                        results.IncrementResultCount(errors);
+                        AddPause(options);
+                    }
+                    else
+                    {
+                        // Otherwise, if there are parameter sets, we call each of them and check the result.
+                        var enabledScenarios = testScenarios.Where(s => s.Enabled);
+                        if (enabledScenarios.FirstOrDefault() == null)
+                        {
+                            await TestReport.StartTestAsync(method.Identifier, method.SourceFile.DisplayName);
+                            await TestReport.FinishTestAsync(method.Identifier, AppVeyor.TestOutcome.Skipped, "All scenarios for this method were disabled.");
+                            FancyConsole.Write(FancyConsole.ConsoleHeaderColor, "Skipped test: {0}.", method.Identifier);
+                            FancyConsole.WriteLine(FancyConsole.ConsoleWarningColor, " All scenarios for test were disabled.", method.Identifier);
+                        }
+                        else
+                        {
+                            foreach (var requestSettings in testScenarios.Where(s => s.Enabled))
+                            {
+                                var errors = await TestMethodWithParameters(docset, method, requestSettings, account.ServiceUrl, credentials, options.SilenceWarnings, testNamePrefix);
+                                results.IncrementResultCount(errors);
+                                AddPause(options);
+                            }
+                        }
+                    }
+
+                    FancyConsole.WriteLine();
+                }
+
+                if (options.IgnoreWarnings || options.SilenceWarnings)
+                {
+                    results.ConvertWarningsToSuccess();
+                }
+
+                results.PrintToConsole();
+                wereFailures |= (results.FailureCount + results.WarningCount) > 0;
             }
 
-            if (options.IgnoreWarnings || options.SilenceWarnings)
-            {
-                results.ConvertWarningsToSuccess();
-            }
-
-            results.PrintToConsole();
-            bool wereFailures = (results.FailureCount + results.WarningCount) > 0;
             return !wereFailures;
         }
 
@@ -705,15 +694,15 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             }
         }
 
-        private static async Task<ValidationError[]> TestMethodWithParameters(DocSet docset, MethodDefinition method, ScenarioDefinition requestSettings, string rootUrl, AuthenicationCredentials credentials, bool silenceWarnings)
+        private static async Task<ValidationError[]> TestMethodWithParameters(DocSet docset, MethodDefinition method, ScenarioDefinition requestSettings, string rootUrl, AuthenicationCredentials credentials, bool silenceWarnings, string testNamePrefix)
         {
-            string testName = method.Identifier;
+            string testName = testNamePrefix + method.Identifier;
             string indentLevel = "";
             if (requestSettings != null)
             {
                 if (!string.IsNullOrEmpty(requestSettings.Description))
                 {
-                    testName = string.Format("{0} [{1}]", method.Identifier, requestSettings.Description);
+                    testName = testNamePrefix + string.Format("{0} [{1}]", method.Identifier, requestSettings.Description);
                 }
                 indentLevel = indentLevel + "  ";
             }
@@ -758,7 +747,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         private static async Task PublishDocumentationAsync(PublishOptions options)
         {
             var outputPath = options.OutputDirectory;
-            var inputPath = options.PathToDocSet;
+            var inputPath = options.DocumentationSetPath;
 
             FancyConsole.WriteLine("Publishing documentation to {0}", outputPath);
 
@@ -791,7 +780,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             }
 
             FancyConsole.WriteLineIndented("  ", "Format: {0}", publisher.GetType().Name);
-            publisher.VerboseLogging = options.Verbose;
+            publisher.VerboseLogging = options.EnableVerboseOutput;
             FancyConsole.WriteLine();
             
             FancyConsole.WriteLine("Publishing content...");

@@ -33,7 +33,7 @@
 
         public Json.JsonResourceCollection ResourceCollection { get { return m_ResourceCollection; } }
         
-        public Scenarios TestScenarios {get; set;}
+        public List<ScenarioDefinition> TestScenarios {get; internal set;}
 
         public IEnumerable<AuthScopeDefinition> AuthScopes
         {
@@ -65,22 +65,47 @@
 
             SourceFolderPath = sourceFolderPath;
             ReadDocumentationHierarchy(sourceFolderPath);
-
-            if (!string.IsNullOrEmpty(optionalScenarioFileRelativePath))
-                LoadTestScenarios(optionalScenarioFileRelativePath);
+            LoadTestScenarios();
         }
 
         public DocSet()
         {
-            // TODO: Complete member initialization
+            
         }
         #endregion
 
-
-        public void LoadTestScenarios(string relativePathName)
+        public void LoadTestScenarios()
         {
-            TestScenarios = new Scenarios(this, relativePathName);
+            TestScenarios = new List<ScenarioDefinition>();
+
+            DirectoryInfo docSetDir = new DirectoryInfo(this.SourceFolderPath);
+            var jsonFiles = docSetDir.GetFiles("*.json", SearchOption.AllDirectories);
+            foreach (var file in jsonFiles)
+            {
+                var scenarios = TryLoadScenariosFromFile(file);
+                if (null != scenarios)
+                {
+                    Console.WriteLine("Found test scenario file: {0}", file.FullName);
+                    TestScenarios.AddRange(scenarios);
+                }
+            }
         }
+
+        private ScenarioDefinition[] TryLoadScenariosFromFile(FileInfo file)
+        {
+            using (var reader = file.OpenText())
+            {
+                var data = Newtonsoft.Json.JsonConvert.DeserializeObject<ScenarioFile>(reader.ReadToEnd());
+                if (null != data.Scenarios && data.Scenarios.Length > 0)
+                {
+                    return data.Scenarios;
+                }
+            }
+
+            return null;
+        }
+
+        
 
         public static string ResolvePathWithUserRoot(string path)
         {
