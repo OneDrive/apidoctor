@@ -60,7 +60,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
             return new Account
             {
-                Name = "FromEnvironmentVariables",
+                Name = "DefaultAccount",
                 Enabled = true,
                 ClientId = clientId,
                 ClientSecret = clientSecret,
