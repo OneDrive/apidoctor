@@ -11,6 +11,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         private const string TestFrameworkName = "apidocs";
         private static AppVeyor.BuildWorkerApi BuildWorkerApi { get { return Program.BuildWorker; } }
         private static Dictionary<string, long> TestStartTimes = new Dictionary<string, long>();
+        private static Dictionary<string, string> TestStartFilename = new Dictionary<string, string>();
 
         public static async Task StartTestAsync(string testName, string filename = null)
         {
@@ -21,6 +22,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             if (null != filename)
             {
                 FancyConsole.Write(" [{0}]", filename);
+                TestStartFilename[testName] = filename;
             }
             FancyConsole.WriteLine();
 
@@ -33,15 +35,23 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         public static async Task FinishTestAsync(string testName, AppVeyor.TestOutcome outcome, string message = null, string filename = null, string stdErr = null)
         {
             var endTime = DateTimeOffset.Now.Ticks;
+
             TimeSpan duration;
             long startTime;
             if (TestStartTimes.TryGetValue(testName, out startTime))
             {
                 duration = new TimeSpan(endTime - startTime);
+                TestStartTimes.Remove(testName);
             }
             else
             {
                 duration = TimeSpan.Zero;
+            }
+
+            if (null == filename)
+            {
+                TestStartFilename.TryGetValue(testName, out filename);
+                TestStartFilename.Remove(testName);
             }
 
             FancyConsole.Write("Test {0} complete.", testName);
