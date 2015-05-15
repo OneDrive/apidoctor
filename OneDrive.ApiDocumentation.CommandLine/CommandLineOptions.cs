@@ -29,13 +29,13 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         public PrintOptions PrintVerbOptions { get; set; }
 
         [VerbOption(VerbCheckLinks, HelpText = "Verify links in the documentation aren't broken.")]
-        public DocSetOptions LinksVerb { get; set; }
+        public DocSetOptions CheckLinksVerb { get; set; }
 
         [VerbOption(VerbDocs, HelpText = "Check for errors in the documentation (resources + examples).")]
-        public BasicCheckOptions InternalConsistencyVerb { get; set; }
+        public BasicCheckOptions CheckDocsVerb { get; set; }
 
         [VerbOption(VerbService, HelpText = "Check for errors between the documentation and service.")]
-        public CheckServiceOptions ServiceConsistencyVerb { get; set; }
+        public CheckServiceOptions CheckServiceVerb { get; set; }
 
         [VerbOption(VerbSet, HelpText = "Save or reset default parameter values.")]
         public SetCommandOptions SetVerb { get; set; }
@@ -71,7 +71,6 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         [Option("appveyor-url", HelpText="Specify the AppVeyor Build Worker API URL for output integration")]
         public string AppVeyorServiceUrl { get; set; }
 
-
 #if DEBUG
         [Option("debug", HelpText="Launch the debugger before doing anything interesting")]
 #endif
@@ -98,24 +97,19 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
     }
 
+    /// <summary>
+    /// Command line options for any verbs that work with a documentation set.
+    /// </summary>
     class DocSetOptions : BaseOptions
     {
-        private const string PathArgument = "path";
-        private const string ShortArgument = "short";
-        private const string VerboseArgument = "verbose";
-        private const string LoadErrorArguments = "show-load-warnings";
+        internal const string PathArgument = "path";
+        internal const string VerboseArgument = "verbose";
 
-        [Option('p', PathArgument, HelpText = "Path to the documentation set. Required if no default value set.")]
-        public string PathToDocSet { get; set; }
+        [Option('p', PathArgument, HelpText = "Path to the documentation set. Can set a default value using the set verb, otherwise defaults to the current working folder.")]
+        public string DocumentationSetPath { get; set; }
 
-        [Option(ShortArgument, HelpText = "Print output in single line format.")]
-        public bool ShortForm { get; set; }
-
-        [Option(VerboseArgument, HelpText = "Print verbose output.")]
-        public bool Verbose { get; set; }
-
-        [Option(LoadErrorArguments, HelpText="Show document set load messages and warnings")]
-        public bool ShowLoadWarnings { get; set; }
+        [Option(VerboseArgument, HelpText = "Output verbose messages.")]
+        public bool EnableVerboseOutput { get; set; }
 
         /// <summary>
         /// Checks to see if this options block has all the required properties (or that we had values in the settings for them)
@@ -125,27 +119,30 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         {
             List<string> props = new List<string>();
 
-            string value = PathToDocSet;
+            string value = DocumentationSetPath;
             if (!MakePropertyValid(ref value, Program.DefaultSettings.DocumentationPath))
             {
                 
-                PathToDocSet = Environment.CurrentDirectory;
+                DocumentationSetPath = Environment.CurrentDirectory;
             }
             else
             {
-                PathToDocSet = value;
+                DocumentationSetPath = value;
             }
 
-            FancyConsole.WriteLine("Documentation path: " + PathToDocSet);
+            FancyConsole.WriteLine("Documentation path: " + DocumentationSetPath);
 
             missingArguments = props.ToArray();
             return missingArguments.Length == 0;
         }
     }
 
+    /// <summary>
+    /// Command line options for the set verb, which allows storing default values for configuration settings.
+    /// </summary>
     class SetCommandOptions : BaseOptions
     {
-        [Option("path", HelpText="Set the default documentation folder.")]
+        [Option(DocSetOptions.PathArgument, HelpText="Set the default path for the documentation set location.")]
         public string DocumentationPath { get; set; }
 
         [Option("access-token", HelpText="Set the default access token.")]
@@ -212,12 +209,11 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
     class BasicCheckOptions : DocSetOptions
     {
-        [Option('m', "method", HelpText = "Name of the method to test. If missing, all methods are tested.", MutuallyExclusiveSet="fileOrMethod")]
+        [Option('m', "method", HelpText = "Name of the method to test. If omitted, all defined methods are tested.", MutuallyExclusiveSet="fileOrMethod")]
         public string MethodName { get; set; }
 
         [Option("file", HelpText="Name of the doc file to test. If missing, all methods are tested.", MutuallyExclusiveSet="fileOrMethod")]
         public string FileName { get; set; }
-
     }
 
     class CheckServiceOptions : BasicCheckOptions
@@ -226,17 +222,28 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         private const string ServiceUrlArgument = "url";
         private const string ParameterFileArgument = "scenarios";
 
+        public CheckServiceOptions()
+        {
+            FoundAccounts = new List<Account>();
+        }
+
+        // Three ways to "connect" to an account
+        // 1. Using access-token and url
         [Option('t', AccessTokenArgument, HelpText = "OAuth access token. Required if not default value is set.")]
         public string AccessToken { get; set; }
 
         [Option('u', ServiceUrlArgument, HelpText = "Root URL for API calls, like https://api.example.org/v1.0. Required if not default value is set.")]
         public string ServiceRootUrl { get; set; }
 
-        [Option('s', ParameterFileArgument, DefaultValue = "/tests/test-scenarios.json", HelpText = "Test scenarios configuration file")]
-        public string ScenarioFilePath { get; set; }
+        // 2. Using environment variables for oauth properties - auto-detected
+        // 3. Using an accounts file - auto-detected
+        [Option("account", HelpText="Specify the name of an account in the account configuration file. If omitted all enabled accounts will be used.")]
+        public string AccountName { get; set; }
+
 
         [Option("pause", HelpText="Pause between method requests.")]
         public bool PauseBetweenRequests { get; set; }
+
 
         [Option("headers", HelpText = "Additional headers to add to requests to the service. For example If-Match: *")]
         public string AdditionalHeaders { get; set; }
@@ -244,21 +251,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         [Option("odata-metadata", HelpText="Set the odata.metadata level in the accept header.", DefaultValue=null)]
         public string ODataMetadataLevel { get; set; }
 
-
-        // OAuth 2 Token Generator Properties
-        [Option("refresh-token", HelpText="Refresh token for authentication.")]
-        public string RefreshToken { get; set; }
-        [Option("token-service", HelpText = "OAuth 2 token service to exchange refresh token for access token")]
-        public string TokenServiceUrl { get; set; }
-        [Option("client-id", HelpText = "Client ID used in token generation")]
-        public string ClientId { get; set; }
-        [Option("client-secret", HelpText = "Client secret for token generation")]
-        public string ClientSecret { get; set; }
-        [Option("redirect-uri", HelpText = "Redirect URI used with refresh token")]
-        public string RedirectUri { get; set; }
-
-        [Option("use-environment-variables", HelpText="Read OAuth values from environment variables")]
-        public bool UseEnvironmentVariables { get; set; }
+        public List<Account> FoundAccounts { get; set; }
 
 
         public override bool HasRequiredProperties(out string[] missingArguments)
@@ -270,19 +263,51 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
             string checkValue = null;
 
-            if (!UseEnvironmentVariables)
+
+            if (string.IsNullOrEmpty(this.AccessToken))
+            {
+                // Try to add accounts from configuration file in the documentation
+                var accounts = Account.LoadFromConfig(this.DocumentationSetPath);
+                if (null != accounts)
+                {
+                    FoundAccounts.AddRange(accounts);
+                }
+
+                // Try to add an account from environment variables
+                try
+                {
+                    var account = Account.CreateAccountFromEnvironmentVariables();
+                    FoundAccounts.Add(account);
+                }
+                catch (InvalidOperationException) { }
+            }
+
+            bool hasAccount = (FoundAccounts.Select(x => x.Enabled).Count() > 0);
+
+            if (!hasAccount)
             {
                 checkValue = AccessToken;
                 if (!MakePropertyValid(ref checkValue, Program.DefaultSettings.AccessToken))
+                {
                     props.Add(AccessTokenArgument);
+                }
                 else
+                {
                     AccessToken = checkValue;
-            }
+                }
 
-            checkValue = ServiceRootUrl;
-            if (!MakePropertyValid(ref checkValue, Program.DefaultSettings.ServiceUrl))
-                props.Add(ServiceUrlArgument);
-            ServiceRootUrl = checkValue;
+                checkValue = ServiceRootUrl;
+                if (!MakePropertyValid(ref checkValue, Program.DefaultSettings.ServiceUrl))
+                {
+                    props.Add(ServiceUrlArgument);
+                }
+                ServiceRootUrl = checkValue;
+
+                if (!string.IsNullOrEmpty(AccessToken) && !string.IsNullOrEmpty(ServiceRootUrl))
+                {
+                    FoundAccounts.Add(new Account { Name = "CommandLineAccount", Enabled = true, AccessToken = this.AccessToken, ServiceUrl = this.ServiceRootUrl });
+                }
+            }
 
             missingArguments = props.ToArray();
             return missingArguments.Length == 0;

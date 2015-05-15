@@ -11,33 +11,11 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 {
     public class OAuthTokenGenerator
     {
-
-        private static string GetVariable(string name)
+        public static async Task<TokenResponse> RedeemRefreshToken(Account account)
         {
-            var value = Environment.GetEnvironmentVariable(name);
-            if (string.IsNullOrEmpty(value))
-            {
-                Console.WriteLine("No value for variable {0}", name);
-            }
-            return value;
-        }
-
-
-        /// <summary>
-        /// Uses environment variables to pull refresh token from service
-        /// </summary>
-        /// <returns></returns>
-        public static async Task<TokenResponse> RedeemRefreshTokenFromEnvironment()
-        {
-            string clientId = GetVariable("oauth-client-id");
-            string clientSecret = GetVariable("oauth-client-secret");
-            string tokenService = GetVariable("oauth-token-service");
-            string redirectUri = GetVariable("oauth-redirect-uri");
-            string refreshToken = GetVariable("oauth-refresh-token");
-
             try
             {
-                return await RedeemRefreshToken(tokenService, refreshToken, clientId, clientSecret, redirectUri);
+                return await RedeemRefreshToken(account.TokenService, account.RefreshToken, account.ClientId, account.ClientSecret, account.RedirectUri);
             }
             catch (Exception ex)
             {
