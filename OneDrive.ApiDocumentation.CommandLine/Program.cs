@@ -568,12 +568,6 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             var docset = await GetDocSetAsync(options);
             FancyConsole.WriteLine();
 
-            if (options.AdditionalHeaders != null)
-            {
-                var headers = options.AdditionalHeaders.Split('|');
-                ValidationConfig.AdditionalHttpHeaders = headers.ToArray();
-            }
-
             if (!string.IsNullOrEmpty(options.ODataMetadataLevel))
             {
                 ValidationConfig.ODataMetadataLevel = options.ODataMetadataLevel;
@@ -586,12 +580,27 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             }
 
             var methods = FindTestMethods(options, docset);
-
             bool wereFailures = false;
 
             foreach (var account in options.FoundAccounts.Where(x => x.Enabled))
             {
                 CheckResults results = new CheckResults();
+
+                if (account.AdditionalHeaders != null && account.AdditionalHeaders.Length > 0)
+                {
+                    // If the account needs additional headers, merge them in.
+                    List<string> headers = new List<string>(account.AdditionalHeaders);
+                    if (options.AdditionalHeaders != null)
+                    {
+                        headers.AddRange(options.AdditionalHeaders.Split('|'));
+                    }
+                    ValidationConfig.AdditionalHttpHeaders = headers.ToArray();
+                }
+                else if (options.AdditionalHeaders != null) 
+                {
+                    var headers = options.AdditionalHeaders.Split('|');
+                    ValidationConfig.AdditionalHttpHeaders = headers.ToArray();
+                }
 
                 string testNamePrefix = "";
                 if (options.FoundAccounts.Count > 1)

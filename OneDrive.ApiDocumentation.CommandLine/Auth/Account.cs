@@ -34,6 +34,9 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         [JsonProperty("serviceUrl")]
         public string ServiceUrl { get; set; }
 
+        [JsonProperty("additionalHeaders")]
+        public string[] AdditionalHeaders { get; set; }
+
         [JsonIgnore]
         public string AccessToken { get; set; }
 
