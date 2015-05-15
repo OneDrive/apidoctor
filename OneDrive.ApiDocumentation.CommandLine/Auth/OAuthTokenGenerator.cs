@@ -46,6 +46,19 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             }
         }
 
+        public static async Task<TokenResponse> RedeemRefreshToken(Account account)
+        {
+            try
+            {
+                return await RedeemRefreshToken(account.TokenService, account.RefreshToken, account.ClientId, account.ClientSecret, account.RedirectUri);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error redeeming token: " + ex.Message);
+                return null;
+            }
+        }
+
 
         public static async Task<TokenResponse> RedeemRefreshToken(string tokenService, string refreshToken, string clientId, string clientSecret, string redirectUri)
         {
