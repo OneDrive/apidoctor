@@ -277,6 +277,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 try
                 {
                     var account = Account.CreateAccountFromEnvironmentVariables();
+                    account.ServiceUrl = this.ServiceRootUrl;
                     FoundAccounts.Add(account);
                 }
                 catch (InvalidOperationException) { }
