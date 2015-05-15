@@ -147,7 +147,7 @@ namespace AppVeyor
 
             if (null != httpResponse)
             {
-                if (httpResponse.StatusCode != HttpStatusCode.OK || httpResponse.StatusCode != HttpStatusCode.NoContent)
+                if (httpResponse.StatusCode != HttpStatusCode.OK && httpResponse.StatusCode != HttpStatusCode.NoContent)
                 {
                     Console.WriteLine("BuildWorkerApi response was {0}: {1}", (int)httpResponse.StatusCode, httpResponse.StatusDescription);
                 }
