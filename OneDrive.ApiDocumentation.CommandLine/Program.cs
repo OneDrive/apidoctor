@@ -567,6 +567,12 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         /// <returns></returns>
         private static async Task<bool> CheckServiceAsync(CheckServiceOptions options)
         {
+            if (!string.IsNullOrEmpty(options.BranchName) && !options.BranchName.Equals("master"))
+            {
+                RecordWarning("Aborting check-service run. Branch {0} != \"master\".", options.BranchName);
+                return true;
+            }
+
             var docset = await GetDocSetAsync(options);
             FancyConsole.WriteLine();
 

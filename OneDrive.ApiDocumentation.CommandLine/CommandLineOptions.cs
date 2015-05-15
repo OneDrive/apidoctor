@@ -253,6 +253,9 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
         public List<Account> FoundAccounts { get; set; }
 
+        [Option("branch-name")]
+        public string BranchName { get; set; }
+
 
         public override bool HasRequiredProperties(out string[] missingArguments)
         {
