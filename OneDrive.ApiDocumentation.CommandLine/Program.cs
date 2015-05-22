@@ -301,6 +301,20 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             ValidationError[] errors;
             docset.ValidateLinks(options.EnableVerboseOutput, out errors);
 
+            foreach (var error in errors)
+            {
+                AppVeyor.MessageCategory category;
+                if (error.IsWarning)
+                    category = AppVeyor.MessageCategory.Warning;
+                else if (error.IsError)
+                    category = AppVeyor.MessageCategory.Error;
+                else
+                    category = AppVeyor.MessageCategory.Information;
+
+                string message = string.Format("{1}: {0}", error.Message.FirstLineOnly(), error.Code);
+                await TestReport.LogMessageAsync(message, category);
+            }
+
             return await WriteOutErrors(errors, options.SilenceWarnings, successMessage: "No link errors detected.", testName: testName);
         }
 

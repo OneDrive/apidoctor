@@ -74,5 +74,10 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             await BuildWorkerApi.RecordTestAsync(testName, TestFrameworkName, outcome: outcome, durationInMilliseconds: (long)duration.TotalMilliseconds, errorMessage: message, filename: filename, stdOut: stdOut);
         }
 
+
+        internal static async Task LogMessageAsync(string message, AppVeyor.MessageCategory category = AppVeyor.MessageCategory.Information, string details = null)
+        {
+            await BuildWorkerApi.AddMessageAsync(message, category, details);
+        }
     }
 }
