@@ -214,6 +214,9 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
         [Option("file", HelpText="Name of the doc file to test. If missing, all methods are tested.", MutuallyExclusiveSet="fileOrMethod")]
         public string FileName { get; set; }
+
+        [Option("force-all", HelpText="Force all defined scenarios to be executed, even if disabled.")]
+        public bool ForceAllScenarios { get; set; }
     }
 
     class CheckServiceOptions : BasicCheckOptions
@@ -240,10 +243,8 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         [Option("account", HelpText="Specify the name of an account in the account configuration file. If omitted all enabled accounts will be used.")]
         public string AccountName { get; set; }
 
-
         [Option("pause", HelpText="Pause between method requests.")]
         public bool PauseBetweenRequests { get; set; }
-
 
         [Option("headers", HelpText = "Additional headers to add to requests to the service. For example If-Match: *")]
         public string AdditionalHeaders { get; set; }

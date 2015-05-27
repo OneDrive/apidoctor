@@ -677,7 +677,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                     else
                     {
                         // Otherwise, if there are parameter sets, we call each of them and check the result.
-                        var enabledScenarios = testScenarios.Where(s => s.Enabled);
+                        var enabledScenarios = testScenarios.Where(s => s.Enabled || options.ForceAllScenarios);
                         if (enabledScenarios.FirstOrDefault() == null)
                         {
                             TestReport.StartTestAsync(method.Identifier, method.SourceFile.DisplayName);
