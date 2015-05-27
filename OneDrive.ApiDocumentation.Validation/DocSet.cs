@@ -50,8 +50,6 @@
                 return ListFromFiles<ErrorDefinition>(x => x.ErrorCodes);
             }
         }
-
-
         #endregion
 
         #region Constructors
@@ -71,6 +69,19 @@
         public DocSet()
         {
             
+        }
+        #endregion
+
+        #region Logging Support
+        public event EventHandler<DocSetEventArgs> LogMessage;
+
+        internal void RecordLogMessage(bool verbose, string title, string format, params object[] parameters)
+        {
+            var evt = LogMessage;
+            if (null != evt)
+            {
+                evt(this, new DocSetEventArgs(verbose, title, format, parameters));
+            }
         }
         #endregion
 
@@ -385,5 +396,25 @@
 
 
 
+    }
+
+    public class DocSetEventArgs : EventArgs
+    {
+        public string Message { get; private set; }
+        public bool Verbose { get; private set; }
+        public string Title {get; private set;}
+
+        public DocSetEventArgs(string message, bool verbose = false)
+        {
+            Message = message;
+            Verbose = verbose;
+        }
+
+        public DocSetEventArgs(bool verbose, string title, string format, params object[] parameters)
+        {
+            Title = title;
+            Message = string.Format(format, parameters);
+            Verbose = verbose;
+        }
     }
 }

@@ -92,7 +92,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 }
                 var error = new ValidationError(ValidationErrorCode.MissingRequiredArguments, null, "Command line is missing required arguments: {0}", missingProps.ComponentsJoinedByString(", "));
                 FancyConsole.WriteLine(origCommandLineOpts.GetUsage(invokedVerb));
-                await WriteOutErrors(new ValidationError[] { error }, options.SilenceWarnings);
+                await WriteOutErrorsAndFinishTest(new ValidationError[] { error }, options.SilenceWarnings);
                 Exit(failure: true);
             }
 
@@ -208,12 +208,24 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         {
             FancyConsole.VerboseWriteLine("Opening documentation from {0}", options.DocumentationSetPath);
             DocSet set = new DocSet(options.DocumentationSetPath);
-
+            set.LogMessage += (object sender, DocSetEventArgs e) => {
+                
+                if (e.Verbose)
+                {
+                    FancyConsole.VerboseWriteLine(FancyConsole.ConsoleHeaderColor, e.Title);
+                    FancyConsole.VerboseWriteLine(e.Message);
+                }
+                else
+                {
+                    FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, e.Title);
+                    FancyConsole.WriteLine(e.Message);
+                }
+            };
             FancyConsole.VerboseWriteLine("Scanning documentation files...");
             ValidationError[] loadErrors;
             if (!set.ScanDocumentation(out loadErrors) && options.EnableVerboseOutput)
             {
-                await WriteOutErrors(loadErrors, options.SilenceWarnings);
+                await WriteOutErrorsAndFinishTest(loadErrors, options.SilenceWarnings);
             }
                 
             return set;
@@ -308,7 +320,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 await TestReport.LogMessageAsync(message, category);
             }
 
-            return await WriteOutErrors(errors, options.SilenceWarnings, successMessage: "No link errors detected.", testName: testName);
+            return await WriteOutErrorsAndFinishTest(errors, options.SilenceWarnings, successMessage: "No link errors detected.", testName: testName);
         }
 
 
@@ -430,7 +442,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                     ValidationError[] errors;
                     docset.ResourceCollection.ValidateJsonExample(example.Metadata, example.OriginalExample, out errors);
 
-                    await WriteOutErrors(errors, options.SilenceWarnings, "   ", "No errors.", false, testName, "Warnings detected", "Errors detected");
+                    await WriteOutErrorsAndFinishTest(errors, options.SilenceWarnings, "   ", "No errors.", false, testName, "Warnings detected", "Errors detected");
                     results.IncrementResultCount(errors);
                 }
             }
@@ -459,7 +471,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 var expectedResponse = parser.ParseHttpResponse(method.ExpectedResponse);
                 ValidationError[] errors = ValidateHttpResponse(docset, method, expectedResponse, options.SilenceWarnings);
 
-                await WriteOutErrors(errors, options.SilenceWarnings, "   ", "No errors.", false, testName, "Warnings detected", "Errors detected");
+                await WriteOutErrorsAndFinishTest(errors, options.SilenceWarnings, "   ", "No errors.", false, testName, "Warnings detected", "Errors detected");
                 results.IncrementResultCount(errors);
             }
 
@@ -498,7 +510,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         }
 
 
-        private static async Task<bool> WriteOutErrors(IEnumerable<ValidationError> errors, bool silenceWarnings, string indent = "", string successMessage = null, bool endLineBeforeWriting = false, string testName = null, string warningMessage = null, string failureMessage = null)
+        private static async Task<bool> WriteOutErrorsAndFinishTest(IEnumerable<ValidationError> errors, bool silenceWarnings, string indent = "", string successMessage = null, bool endLineBeforeWriting = false, string testName = null, string warningMessage = null, string failureMessage = null)
         {
             foreach (var error in errors)
             {
@@ -687,7 +699,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                         }
                         else
                         {
-                            foreach (var requestSettings in testScenarios.Where(s => s.Enabled))
+                            foreach (var requestSettings in enabledScenarios)
                             {
                                 var errors = await TestMethodWithParameters(docset, method, requestSettings, account.ServiceUrl, credentials, options.SilenceWarnings, testNamePrefix);
                                 results.IncrementResultCount(errors);
@@ -754,20 +766,27 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             }
 
             FancyConsole.VerboseWriteLine("");
-            FancyConsole.VerboseWriteLineIndented(indentLevel, "Request:");
+
 
             TestReport.StartTestAsync(testName, method.SourceFile.DisplayName);
 
+            // Generate the tested request by "previewing" the request and executing
+            // all test-setup procedures
+            FancyConsole.VerboseWriteLineIndented(indentLevel, "Executing test-setup and building testable request...");
             var requestPreviewResult = await method.PreviewRequestAsync(requestSettings, rootUrl, credentials, docset);
-            
+
+
             // Check to see if an error occured building the request, and abort if so.
             if (requestPreviewResult.IsWarningOrError)
             {
-                await WriteOutErrors(requestPreviewResult.Messages, silenceWarnings, indentLevel + "  ", testName: testName);
+                await WriteOutErrorsAndFinishTest(requestPreviewResult.Messages, silenceWarnings, indentLevel + "  ", testName: testName);
                 return requestPreviewResult.Messages;
             }
-            
+
+            // We've done all the test-setup work, now we have the real request to make to the service
             var requestPreview = requestPreviewResult.Value;
+
+            FancyConsole.VerboseWriteLineIndented(indentLevel, "Method HTTP Request:");
             FancyConsole.VerboseWriteLineIndented(indentLevel + "  ", requestPreview.FullHttpText());
 
             var parser = new HttpParser();
@@ -776,7 +795,8 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             {
                 expectedResponse = parser.ParseHttpResponse(method.ExpectedResponse);
             }
-
+                
+            // Execute the actual tested method (the result of the method preview call, which made the test-setup requests)
             var actualResponse = await requestPreview.GetResponseAsync(rootUrl);
 
             FancyConsole.VerboseWriteLineIndented(indentLevel, "Response:");
@@ -785,7 +805,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             
             FancyConsole.VerboseWriteLineIndented(indentLevel, "Validation results:");
             var validateResponse = ValidateHttpResponse(docset, method, actualResponse, silenceWarnings, expectedResponse, indentLevel);
-            await WriteOutErrors(validateResponse, silenceWarnings, indentLevel, "No errors.", false, testName);
+            await WriteOutErrorsAndFinishTest(validateResponse, silenceWarnings, indentLevel, "No errors.", false, testName);
             
             return validateResponse;
         }
@@ -922,7 +942,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
                 collectedErrors.AddRange(errors);
 
-                await WriteOutErrors(errors, options.SilenceWarnings, successMessage: " no errors.");
+                await WriteOutErrorsAndFinishTest(errors, options.SilenceWarnings, successMessage: " no errors.");
             }
 
             if (options.IgnoreWarnings)

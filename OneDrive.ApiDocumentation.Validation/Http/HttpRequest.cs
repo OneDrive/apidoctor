@@ -131,9 +131,17 @@
             sb.Append(Url);
             sb.Append(" ");
             sb.AppendLine("HTTP/1.1");
-            foreach (var header in Headers.AllKeys)
+            foreach (string header in Headers.AllKeys)
             {
-                sb.AppendFormat("{0}: {1}", header, Headers[header]);
+                if (header.Equals("authorization", StringComparison.OrdinalIgnoreCase) && Headers[header].Length > 30)
+                {
+                    sb.AppendFormat("{0}: {1}...", header, Headers[header].Substring(0, 30));
+                }
+                else
+                {
+                    sb.AppendFormat("{0}: {1}", header, Headers[header]);
+                }
+
                 sb.AppendLine();
             }
             sb.AppendLine();

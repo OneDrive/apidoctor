@@ -73,9 +73,13 @@
             request.RewriteRequestWithParameters(placeholderValues);
             MethodDefinition.AddAccessTokenToRequest(credentials, request);
 
+            documents.RecordLogMessage(true, "Test-setup request:", "{0}", request.FullHttpText());
+
             try
             {
                 var response = await request.GetResponseAsync(baseUrl);
+
+                documents.RecordLogMessage(true, "Test-setup response:", "{0}", response.FullHttpText());
                 if (response.RetryCount > 0)
                 {
                     errors.Add(new ValidationMessage(null, "HTTP request was retried {0} times.", response.RetryCount));

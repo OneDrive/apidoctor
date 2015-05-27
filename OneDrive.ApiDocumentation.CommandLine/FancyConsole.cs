@@ -152,6 +152,14 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             }
         }
 
+        public static void VerboseWriteLine(ConsoleColor color, string output)
+        {
+            if (WriteVerboseOutput)
+            {
+                WriteLine(color, output);
+            }
+        }
+
         public static void VerboseWriteLine(string format, params object[] parameters)
         {
             if (WriteVerboseOutput)
