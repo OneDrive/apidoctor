@@ -298,6 +298,9 @@ namespace OneDrive.ApiDocumentation.Validation
                     detectedErrors.Add(new ValidationWarning(ValidationErrorCode.UnsupportedContentType, null, "Unvalidated request content type: {0}", request.ContentType));
                 }
             }
+
+            var verifyApiRequirementsResponse = request.IsRequestValid(this.SourceFile.DisplayName, this.SourceFile.Parent.Requirements);
+            detectedErrors.AddRange(verifyApiRequirementsResponse.Messages);
         }
         #endregion
 

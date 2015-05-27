@@ -50,6 +50,8 @@
                 return ListFromFiles<ErrorDefinition>(x => x.ErrorCodes);
             }
         }
+
+        public ApiRequirements Requirements { get; internal set; }
         #endregion
 
         #region Constructors
@@ -63,6 +65,8 @@
 
             SourceFolderPath = sourceFolderPath;
             ReadDocumentationHierarchy(sourceFolderPath);
+
+            LoadRequirements();
             LoadTestScenarios();
         }
 
@@ -85,38 +89,56 @@
         }
         #endregion
 
-        public void LoadTestScenarios()
+        private void LoadRequirements()
+        {
+            ApiRequirementsFile[] requirements = TryLoadConfigurationFiles<ApiRequirementsFile>(this.SourceFolderPath);
+            var foundRequirements = requirements.FirstOrDefault();
+            if (null != foundRequirements)
+            {
+                Console.WriteLine("Using API requirements file: {0}", foundRequirements.SourcePath);
+                Requirements = foundRequirements.ApiRequirements;
+            }
+        }
+
+        private void LoadTestScenarios()
         {
             TestScenarios = new List<ScenarioDefinition>();
 
-            DirectoryInfo docSetDir = new DirectoryInfo(this.SourceFolderPath);
+            ScenarioFile[] files = TryLoadConfigurationFiles<ScenarioFile>(this.SourceFolderPath);
+            foreach (var file in files)
+            {
+                Console.WriteLine("Found test scenario file: {0}", file.SourcePath);
+                TestScenarios.AddRange(file.Scenarios);
+            }
+        }
+
+        /// <summary>
+        /// Looks for JSON files that are a member of the doc set and parses them
+        /// to look for files of type T that can be loaded.
+        /// </summary>
+        /// <returns>The loaded configuration files.</returns>
+        /// <typeparam name="T">The 1st type parameter.</typeparam>
+        public static T[] TryLoadConfigurationFiles<T>(string path) where T : ConfigFile
+        {
+            List<T> validConfigurationFiles = new List<T>();
+
+            DirectoryInfo docSetDir = new DirectoryInfo(path);
             var jsonFiles = docSetDir.GetFiles("*.json", SearchOption.AllDirectories);
             foreach (var file in jsonFiles)
             {
-                var scenarios = TryLoadScenariosFromFile(file);
-                if (null != scenarios)
+                using (var reader = file.OpenText())
                 {
-                    Console.WriteLine("Found test scenario file: {0}", file.FullName);
-                    TestScenarios.AddRange(scenarios);
-                }
-            }
-        }
-
-        private ScenarioDefinition[] TryLoadScenariosFromFile(FileInfo file)
-        {
-            using (var reader = file.OpenText())
-            {
-                var data = Newtonsoft.Json.JsonConvert.DeserializeObject<ScenarioFile>(reader.ReadToEnd());
-                if (null != data.Scenarios && data.Scenarios.Length > 0)
-                {
-                    return data.Scenarios;
+                    var config = Newtonsoft.Json.JsonConvert.DeserializeObject<T>(reader.ReadToEnd());
+                    if (null != config && config.IsValid)
+                    {
+                        validConfigurationFiles.Add(config);
+                        config.SourcePath = file.FullName;
+                    }
                 }
             }
 
-            return null;
+            return validConfigurationFiles.ToArray();
         }
-
-        
 
         public static string ResolvePathWithUserRoot(string path)
         {
@@ -200,6 +222,9 @@
                 {
                     detectedErrors.AddRange(schemaErrors);
                 }
+
+                var responseValidation = actualResponse.IsResponseValid(method.SourceFile.DisplayName, method.SourceFile.Parent.Requirements);
+                detectedErrors.AddRange(responseValidation.Messages);
             }
 
             errors = detectedErrors.ToArray();

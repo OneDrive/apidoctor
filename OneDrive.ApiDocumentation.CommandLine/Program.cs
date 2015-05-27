@@ -17,7 +17,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
         public static readonly SavedSettings DefaultSettings = new SavedSettings("ApiTestTool", "settings.json");
         public static readonly AppVeyor.BuildWorkerApi BuildWorker = new AppVeyor.BuildWorkerApi();
-        public static ConfigFile CurrentConfiguration { get; private set; }
+        public static AppConfigFile CurrentConfiguration { get; private set; }
 
         static void Main(string[] args)
         {
@@ -73,7 +73,10 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
             if (null != options)
             {
-                CurrentConfiguration = ConfigFile.LoadFromDocumentSet(options.DocumentationSetPath);
+                var configurationFiles = DocSet.TryLoadConfigurationFiles<AppConfigFile>(options.DocumentationSetPath);
+                CurrentConfiguration = configurationFiles.FirstOrDefault();
+                if (null != CurrentConfiguration)
+                    Console.WriteLine("Using configuration file: {0}", CurrentConfiguration.SourcePath);
             }
         }
 
@@ -402,7 +405,11 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             FancyConsole.WriteLine();
 
             var resultMethods = await CheckMethodsAsync(options, docset);
-            var resultExamples = await CheckExamplesAsync(options, docset);
+            CheckResults resultExamples = new CheckResults();
+            if (string.IsNullOrEmpty(options.MethodName))
+            {
+                resultExamples = await CheckExamplesAsync(options, docset);
+            }
 
             var combinedResults = resultMethods + resultExamples;
 

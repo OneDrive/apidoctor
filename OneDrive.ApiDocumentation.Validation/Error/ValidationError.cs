@@ -66,7 +66,11 @@
         OrphanedDocumentPage,
         UnmappedDocumentElements,
         MissingCustomMembers,
-        NullPropertyValue
+        NullPropertyValue,
+        InvalidContentType,
+        InvalidHttpMethod,
+        UrlLengthExceedsMaximum,
+        NonStandardHeaderUsed
 
     }
 

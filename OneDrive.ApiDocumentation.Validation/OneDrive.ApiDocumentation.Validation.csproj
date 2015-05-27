@@ -102,6 +102,9 @@
     <Compile Include="Error\ValidationWarning.cs" />
     <Compile Include="Writers\OutlinePublisher.cs" />
     <Compile Include="BackoffHelper.cs" />
+    <Compile Include="Config\ConfigFile.cs" />
+    <Compile Include="Config\ApiRequirementsFile.cs" />
+    <Compile Include="Http\HttpValidationExtensionMethods.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MarkdownDeep\MarkdownDeep.csproj">
@@ -127,4 +130,7 @@
   <Target Name="AfterBuild">
   </Target>
   -->
+  <ItemGroup>
+    <Folder Include="Config\" />
+  </ItemGroup>
 </Project>
