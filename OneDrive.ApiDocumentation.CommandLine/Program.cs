@@ -230,14 +230,14 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         {
             var message = string.Format(format, variables);
             FancyConsole.WriteLine(FancyConsole.ConsoleWarningColor, message);
-            Task t = BuildWorker.AddMessageAsync(message, AppVeyor.MessageCategory.Warning);
+            Task.Run(() => BuildWorker.AddMessageAsync(message, AppVeyor.MessageCategory.Warning));
         }
 
         public static void RecordError(string format, params object[] variables)
         {
             var message = string.Format(format, variables);
             FancyConsole.WriteLine(FancyConsole.ConsoleErrorColor, message);
-            Task t = BuildWorker.AddMessageAsync(message, AppVeyor.MessageCategory.Error);
+            Task.Run(() => BuildWorker.AddMessageAsync(message, AppVeyor.MessageCategory.Error));
         }
 
         private static async Task PrintDocInformationAsync(PrintOptions options)
