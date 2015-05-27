@@ -13,7 +13,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         private static Dictionary<string, long> TestStartTimes = new Dictionary<string, long>();
         private static Dictionary<string, string> TestStartFilename = new Dictionary<string, string>();
 
-        public static async Task StartTestAsync(string testName, string filename = null)
+        public static void StartTestAsync(string testName, string filename = null)
         {
             FancyConsole.WriteLine();
             FancyConsole.Write(FancyConsole.ConsoleHeaderColor, "Starting test: ");
@@ -25,8 +25,6 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 TestStartFilename[testName] = filename;
             }
             FancyConsole.WriteLine();
-
-            //await BuildWorkerApi.RecordTestAsync(testName, TestFrameworkName, outcome: AppVeyor.TestOutcome.Running, filename: filename);
 
             TestStartTimes[testName] = DateTimeOffset.Now.Ticks;
         }

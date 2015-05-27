@@ -289,7 +289,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             const string testName = "Check-links";
             var docset = await GetDocSetAsync(options);
 
-            await TestReport.StartTestAsync(testName);
+            TestReport.StartTestAsync(testName);
 
             ValidationError[] errors;
             docset.ValidateLinks(options.EnableVerboseOutput, out errors);
@@ -423,7 +423,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                         continue;
 
                     var testName = string.Format("check-example: {0}", example.Metadata.MethodName, example.Metadata.ResourceType);
-                    await TestReport.StartTestAsync(testName, doc.DisplayName);
+                    TestReport.StartTestAsync(testName, doc.DisplayName);
 
                     var resourceType = example.Metadata.ResourceType;
 
@@ -446,7 +446,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             foreach (var method in methods)
             {
                 var testName = "check-method-syntax: " + method.Identifier;
-                await TestReport.StartTestAsync(testName, method.SourceFile.DisplayName);
+                TestReport.StartTestAsync(testName, method.SourceFile.DisplayName);
 
                 if (string.IsNullOrEmpty(method.ExpectedResponse))
                 {
@@ -457,7 +457,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
                 var parser = new HttpParser();
                 var expectedResponse = parser.ParseHttpResponse(method.ExpectedResponse);
-                ValidationError[] errors = await ValidateHttpResponse(docset, method, expectedResponse, options.SilenceWarnings);
+                ValidationError[] errors = ValidateHttpResponse(docset, method, expectedResponse, options.SilenceWarnings);
 
                 await WriteOutErrors(errors, options.SilenceWarnings, "   ", "No errors.", false, testName, "Warnings detected", "Errors detected");
                 results.IncrementResultCount(errors);
@@ -574,10 +574,10 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             FancyConsole.WriteLineIndented(indent, color, error.ErrorText);
         }
 
-        private static async Task<ValidationError[]> ValidateHttpResponse(DocSet docset, MethodDefinition method, HttpResponse response, bool silenceWarnings, HttpResponse expectedResponse = null, string indentLevel = "")
+        private static ValidationError[] ValidateHttpResponse(DocSet docset, MethodDefinition method, HttpResponse response, bool silenceWarnings, HttpResponse expectedResponse = null, string indentLevel = "")
         {
             ValidationError[] errors;
-            bool errorsOccured = !docset.ValidateApiMethod(method, response, expectedResponse, out errors, silenceWarnings);
+            docset.ValidateApiMethod(method, response, expectedResponse, out errors, silenceWarnings);
             return errors;
         }
 
@@ -680,7 +680,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                         var enabledScenarios = testScenarios.Where(s => s.Enabled);
                         if (enabledScenarios.FirstOrDefault() == null)
                         {
-                            await TestReport.StartTestAsync(method.Identifier, method.SourceFile.DisplayName);
+                            TestReport.StartTestAsync(method.Identifier, method.SourceFile.DisplayName);
                             await TestReport.FinishTestAsync(method.Identifier, AppVeyor.TestOutcome.Skipped, "All scenarios for this method were disabled.");
                             FancyConsole.Write(FancyConsole.ConsoleHeaderColor, "Skipped test: {0}.", method.Identifier);
                             FancyConsole.WriteLine(FancyConsole.ConsoleWarningColor, " All scenarios for test were disabled.", method.Identifier);
@@ -756,7 +756,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             FancyConsole.VerboseWriteLine("");
             FancyConsole.VerboseWriteLineIndented(indentLevel, "Request:");
 
-            await TestReport.StartTestAsync(testName, method.SourceFile.DisplayName);
+            TestReport.StartTestAsync(testName, method.SourceFile.DisplayName);
 
             var requestPreviewResult = await method.PreviewRequestAsync(requestSettings, rootUrl, credentials, docset);
             
@@ -784,7 +784,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             FancyConsole.VerboseWriteLine();
             
             FancyConsole.VerboseWriteLineIndented(indentLevel, "Validation results:");
-            var validateResponse = await ValidateHttpResponse(docset, method, actualResponse, silenceWarnings, expectedResponse, indentLevel);
+            var validateResponse = ValidateHttpResponse(docset, method, actualResponse, silenceWarnings, expectedResponse, indentLevel);
             await WriteOutErrors(validateResponse, silenceWarnings, indentLevel, "No errors.", false, testName);
             
             return validateResponse;
@@ -899,7 +899,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             var docSet = await GetDocSetAsync(options);
 
             const string testname = "validate-service-metadata";
-            await TestReport.StartTestAsync(testname);
+            TestReport.StartTestAsync(testname);
 
             List<ResourceDefinition> foundResources = OneDrive.ApiDocumentation.Validation.OData.ODataParser.GenerateResourcesFromSchemas(schemas);
             CheckResults results = new CheckResults();
