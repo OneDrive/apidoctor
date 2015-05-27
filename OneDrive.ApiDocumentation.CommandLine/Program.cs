@@ -215,14 +215,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             {
                 await WriteOutErrors(loadErrors, options.SilenceWarnings);
             }
-
-            var serviceOptions = options as CheckServiceOptions;
-            if (null != serviceOptions)
-            {
-                FancyConsole.VerboseWriteLine("Reading configuration parameters...");
-                set.LoadTestScenarios();
-            }
-
+                
             return set;
         }
 
