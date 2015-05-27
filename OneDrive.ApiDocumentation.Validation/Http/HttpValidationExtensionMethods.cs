@@ -15,7 +15,7 @@ namespace OneDrive.ApiDocumentation.Validation
         /// <param name="requirements">Requirements.</param>
         public static ValidationResult<bool> IsRequestValid(this Http.HttpRequest request, string sourceFile, ApiRequirements apiRequirements)
         {
-            if (null == apiRequirements)
+            if (null == apiRequirements || null == apiRequirements.HttpRequest)
                 return new ValidationResult<bool>(true);
 
             List<ValidationError> errors = new List<ValidationError>();
@@ -53,7 +53,7 @@ namespace OneDrive.ApiDocumentation.Validation
 
         public static ValidationResult<bool> IsResponseValid(this Http.HttpResponse response, string sourceFile, ApiRequirements requirements)
         {
-            if (null == requirements)
+            if (null == requirements || null == requirements.HttpResponse)
                 return new ValidationResult<bool>(true);
             
             List<ValidationError> errors = new List<ValidationError>();
