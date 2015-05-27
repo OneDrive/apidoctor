@@ -79,27 +79,51 @@
             return resp;
         }
 
-        public string FullHttpText()
+        public string FullHttpText(bool prettyPrintJson = true)
         {
-            return FormatFullResponse(Body);
+            return FormatFullResponse(Body, prettyPrintJson);
         }
 
-        public string FormatFullResponse(string body)
+        public string FormatFullResponse(string body, bool prettyPrintJson)
         {
             StringBuilder sb = new StringBuilder();
             sb.AppendFormat("{0} {1} {2}", HttpVersion, StatusCode, StatusMessage);
             sb.AppendLine();
+
+            bool isJson = false;
             if (null != Headers)
             {
                 foreach (var key in Headers.AllKeys)
                 {
                     sb.AppendFormat("{0}: {1}", key, Headers[key]);
                     sb.AppendLine();
+
+                    if (key.Equals("content-type", StringComparison.OrdinalIgnoreCase))
+                    {
+                        isJson = Headers[key].StartsWith("application/json");
+                    }
                 }
                 sb.AppendLine();
             }
-            
-            sb.Append(body);
+
+            // Pretty print JSON if that's what the body is
+            if (isJson && prettyPrintJson)
+            {
+                object jsonObject = null;
+                try 
+                {
+                    jsonObject = Newtonsoft.Json.JsonConvert.DeserializeObject(body);
+                    sb.Append(Newtonsoft.Json.JsonConvert.SerializeObject(jsonObject, Newtonsoft.Json.Formatting.Indented));
+                } 
+                catch (Exception)
+                {
+                    sb.Append(body);
+                }
+            }
+            else
+            {
+                sb.Append(body);
+            }
 
             return sb.ToString();
         }
