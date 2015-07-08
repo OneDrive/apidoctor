@@ -229,10 +229,10 @@ namespace OneDrive.ApiDocumentation.Validation
                         detectedErrors.Add(new ValidationWarning(ValidationErrorCode.MissingHeaderBlock, null, "Paragraph text found before a valid header: {0}", this.DisplayName));
                     }
                     else if (IsHeaderBlock(previousHeaderBlock))
-                    {
-                        methodDescription = block.Content;
-                        detectedErrors.Add(new ValidationMessage(null, "Found description: {0}", methodDescription));
-                    }
+                {
+                    methodDescription = block.Content;
+                    detectedErrors.Add(new ValidationMessage(null, "Found description: {0}", methodDescription));
+                }
                 }
                 else if (block.BlockType == MarkdownDeep.BlockType.html)
                 {
