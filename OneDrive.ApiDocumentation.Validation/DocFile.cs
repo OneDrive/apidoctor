@@ -156,6 +156,9 @@ namespace OneDrive.ApiDocumentation.Validation
 
         private static bool IsHeaderBlock(MarkdownDeep.Block block, int maxDepth = 2)
         {
+            if (null == block)
+                return false;
+
             var blockType = block.BlockType;
             if (maxDepth >= 1 && blockType == MarkdownDeep.BlockType.h1) 
                 return true;
