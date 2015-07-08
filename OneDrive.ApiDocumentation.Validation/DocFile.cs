@@ -156,6 +156,11 @@ namespace OneDrive.ApiDocumentation.Validation
 
         private static bool IsHeaderBlock(MarkdownDeep.Block block, int maxDepth = 2)
         {
+            if (null == block)
+            {
+                return false;
+            }
+
             var blockType = block.BlockType;
             if (maxDepth >= 1 && blockType == MarkdownDeep.BlockType.h1) 
                 return true;
@@ -217,10 +222,17 @@ namespace OneDrive.ApiDocumentation.Validation
                     methodDescription = null;       // Clear this because we don't want new title + old description
                     detectedErrors.Add(new ValidationMessage(null, "Found title: {0}", methodTitle));
                 }
-                else if (block.BlockType == MarkdownDeep.BlockType.p && IsHeaderBlock(previousBlock))
+                else if (block.BlockType == MarkdownDeep.BlockType.p)
                 {
-                    methodDescription = block.Content;
-                    detectedErrors.Add(new ValidationMessage(null, "Found description: {0}", methodDescription));
+                    if (null == previousHeaderBlock)
+                    {
+                        detectedErrors.Add(new ValidationWarning(ValidationErrorCode.MissingHeaderBlock, null, "Paragraph text found before a valid header: {0}", this.DisplayName));
+                    }
+                    else if (IsHeaderBlock(previousHeaderBlock))
+                    {
+                        methodDescription = block.Content;
+                        detectedErrors.Add(new ValidationMessage(null, "Found description: {0}", methodDescription));
+                    }
                 }
                 else if (block.BlockType == MarkdownDeep.BlockType.html)
                 {
