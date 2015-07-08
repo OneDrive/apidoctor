@@ -70,7 +70,8 @@
         InvalidContentType,
         InvalidHttpMethod,
         UrlLengthExceedsMaximum,
-        NonStandardHeaderUsed
+        NonStandardHeaderUsed,
+        MissingHeaderBlock
 
     }
 
