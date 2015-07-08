@@ -1,6 +1,8 @@
 ﻿using System;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Text;
+using System.Collections.Generic;
 
 namespace OneDrive.ApiDocumentation.Validation.Json
 {
@@ -83,33 +85,139 @@ namespace OneDrive.ApiDocumentation.Validation.Json
             return JsonConvert.SerializeObject(originalObject, Formatting.Indented);
         }
 
-
+        /// <summary>
+        /// Decompose path string into the individual navigation members (propertyName[arrayindex])
+        /// Property names can be separated by periods ($.foo.bar) and can be enclosed in square brackets ($.['foo'].['bar'])
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
         private static JsonPathPart DecomposePath(string path)
         {
-            var components = path.Split('.');
-            if (components.Length < 1 || components[0] != "$")
+            const string JsonPathStarter = "$.";
+
+            if (path == "$")
+                return JsonPathPart.Root;
+
+            if (!path.StartsWith(JsonPathStarter))
                 throw new ArgumentException(
                     string.Format("Path \"{0}\" doesn't appear to conform to JSONpath syntax.", path),
                     "path");
 
-            JsonPathPart root = JsonPathPart.Root;
-            JsonPathPart currentPart = root;
+            List<JsonPathPart> pathParts = new List<JsonPathPart>();
+            pathParts.Add(JsonPathPart.Root);
 
-            for (int i = 1; i < components.Length; i++)
+            StringBuilder reader = new StringBuilder();
+            JsonPathPart partBeingRead = new JsonPathPart();
+
+            PathParserState state = PathParserState.ReadingPropertyName;
+
+            for (int i = JsonPathStarter.Length; i < path.Length; i++)
             {
-                var propertyName = components[i];
-                int arrayindex = -1;
-                if (propertyName.EndsWith("]"))
+                // Walk through all the characters of the string and build up the path parts.
+                char thisChar = path[i];
+                if (thisChar == '.' && state != PathParserState.ReadingEscapedPropertyName)
                 {
-                    int startIndexPosition = propertyName.LastIndexOf("[");
-                    arrayindex = Int32.Parse(propertyName.Substring(startIndexPosition + 1, propertyName.Length - (startIndexPosition + 2)));
-                    propertyName = propertyName.Substring(0, startIndexPosition);
+                    // End of a part name, save it and start a new path part.
+                    if (reader.Length > 0)
+                    {
+                        if (state == PathParserState.ReadingPropertyName)
+                        {
+                            partBeingRead.PropertyName = reader.ToString();
+                            reader.Clear();
+                        }
+                        else
+                        {
+                            throw new InvalidOperationException("Unexpected state. Malformed JsonPath syntax?");
+                        }
+                    }
+                    pathParts.Add(partBeingRead);
+                    partBeingRead = new JsonPathPart();
+                    state = PathParserState.ReadingPropertyName;
                 }
-
-                currentPart = new JsonPathPart(currentPart) { PropertyName = propertyName, ArrayIndex = arrayindex };
+                else if (thisChar == '[' && state != PathParserState.ReadingEscapedPropertyName)
+                {
+                    if (reader.Length > 0)
+                    {
+                        if (state == PathParserState.ReadingPropertyName)
+                        {
+                            partBeingRead.PropertyName = reader.ToString();
+                            reader.Clear();
+                        }
+                        else
+                        {
+                            throw new InvalidOperationException("Unexpected state. Malformed JsonPath syntax?");
+                        }
+                    }
+                    state = PathParserState.ReadingIndexer;
+                }
+                else if (thisChar == ']' && state != PathParserState.ReadingEscapedPropertyName)
+                {
+                    if (state != PathParserState.ReadingIndexer)
+                    {
+                        throw new InvalidOperationException("Unexpected state. Malformed JsonPath syntax?");
+                    }
+                    if (reader.Length > 0)
+                    {
+                        partBeingRead.ArrayIndex = Int32.Parse(reader.ToString());
+                        reader.Clear();
+                    }
+                    state = PathParserState.PartComplete;
+                }
+                else if (thisChar == '\'')
+                {
+                    if (state == PathParserState.ReadingIndexer && reader.Length == 0)
+                    {
+                        state = PathParserState.ReadingEscapedPropertyName;
+                    }
+                    else if (state == PathParserState.ReadingEscapedPropertyName && reader.Length > 0)
+                    {
+                        partBeingRead.PropertyName = reader.ToString();
+                        reader.Clear();
+                        state = PathParserState.ReadingIndexer;
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException("Unexpected state. Malformed JsonPath syntax?");
+                    }
+                }
+                else
+                {
+                    reader.Append(thisChar);
+                }
             }
 
-            return root;
+            if (reader.Length > 0 && (state == PathParserState.ReadingPropertyName || state == PathParserState.PartComplete))
+            {
+                partBeingRead.PropertyName = reader.ToString();
+            }
+            else if (reader.Length > 0)
+            {
+                throw new InvalidOperationException("Unexpected content in reader buffer. Malformed JsonPath syntax?");
+            }
+
+            // Add the final part, if it wasn't there already.
+            if (!string.IsNullOrEmpty(partBeingRead.PropertyName))
+            {
+                pathParts.Add(partBeingRead);
+            }
+
+            for (int i = 0; i < pathParts.Count; i++)
+            {
+                if (i < pathParts.Count - 1)
+                    pathParts[i].Child = pathParts[i + 1];
+                if (i > 0)
+                    pathParts[i].Parent = pathParts[i - 1];
+            }
+
+            return pathParts[0];
+        }
+
+        enum PathParserState
+        {
+            PartComplete,
+            ReadingPropertyName,
+            ReadingIndexer,
+            ReadingEscapedPropertyName
         }
 
         class JsonPathPart

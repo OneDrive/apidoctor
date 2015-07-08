@@ -2,6 +2,7 @@
 using NUnit.Framework;
 using Newtonsoft.Json;
 using OneDrive.ApiDocumentation.Validation.Json;
+using System.Collections.Generic;
 
 namespace OneDrive.UnitTests.ApiDocumentation.Validation
 {
@@ -11,33 +12,33 @@ namespace OneDrive.UnitTests.ApiDocumentation.Validation
 
         public object GetJsonObject()
         {
-            var obj = new
-            {
-                id = "1234",
-                path = "/root/Documents/something",
-                another = new {
+            Dictionary<string, object> obj = new Dictionary<string, object>();
+            obj["id"] = "1234";
+            obj["path"] = "/root/Documents/something";
+            obj["another"] = new {
                     value = "test-string",
                     number = 1234
-                },
-                thumbnails = new
+                };
+            obj["thumbnails"] = new
                 {
                     small = new { id = "small", width = "100", height = "100", url = "http://small" },
                     medium = new { id = "medium", width = "200", height = "200", url = "http://medium" },
                     large = new { id = "medium", width = "1000", height = "1000", url = "http://large" }
-                },
-                children = new object[] {
+                };
+            obj["children"] = new object[] {
                         new { id = "1234.1", name = "first_file.txt" },
                         new { id = "1234.2", name = "second_file.txt"},
                         new { id = "1234.3", name = "third_file.txt"},
                         new { id = "1234.4", name = "fourth_file.txt"}
-                    }
-            };
+                    };
+            obj["@content.downloadUrl"] = "https://foobar.com/something";
             return obj;
         }
 
         public string GetJson()
         {
-            return JsonConvert.SerializeObject(GetJsonObject());
+            var jsonString = JsonConvert.SerializeObject(GetJsonObject());
+            return jsonString;
         }
 
 
@@ -71,7 +72,7 @@ namespace OneDrive.UnitTests.ApiDocumentation.Validation
             var value = JsonPath.ValueFromJsonPath(GetJson(), "$.thumbnails.small");
 
             dynamic obj = GetJsonObject();
-            var smallThumbnailObject = obj.thumbnails.small;
+            var smallThumbnailObject = obj["thumbnails"].small;
 
             var foundObjectJson = JsonConvert.SerializeObject(value);
             var dynamicObjectJson = JsonConvert.SerializeObject(smallThumbnailObject);
@@ -92,7 +93,7 @@ namespace OneDrive.UnitTests.ApiDocumentation.Validation
             var value = JsonPath.ValueFromJsonPath(GetJson(), "$.children[0]");
 
             dynamic obj = GetJsonObject();
-            var firstChild = obj.children[0];
+            var firstChild = obj["children"][0];
 
             var foundObjectJson = JsonConvert.SerializeObject(value);
             var dynamicObjectJson = JsonConvert.SerializeObject(firstChild);
@@ -107,7 +108,12 @@ namespace OneDrive.UnitTests.ApiDocumentation.Validation
             Assert.AreEqual("first_file.txt", value);
         }
 
-
+        [Test]
+        public void JsonPathWithPeriodInPropertyNameTest()
+        {
+            var value = JsonPath.ValueFromJsonPath(GetJson(), "$.['@content.downloadUrl']");
+            Assert.AreEqual("https://foobar.com/something", value);
+        }
 
         [Test]
         public void JsonPathSetTopLevelValue()
