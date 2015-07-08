@@ -88,10 +88,17 @@
             var expectedResponseJson = (null != expectedResponse) ? expectedResponse.Body : null;
             JsonSchema schema = GetJsonSchema(expectedResourceType, newErrors, expectedResponseJson);
 
-            ValidationError[] validationJsonOutput;
-            ValidateJsonCompilesWithSchema(schema, new JsonExample(actualResponse.Body, method.ExpectedResponseMetadata), out validationJsonOutput, (null != expectedResponseJson) ? new JsonExample(expectedResponseJson) : null);
+            if (null == schema)
+            {
+                newErrors.Add(new ValidationError(ValidationErrorCode.ResourceTypeNotFound, null, "Unable to locate a definition for resource type: {0}", expectedResourceType));
+            }
+            else
+            {
+                ValidationError[] validationJsonOutput;
+                ValidateJsonCompilesWithSchema(schema, new JsonExample(actualResponse.Body, method.ExpectedResponseMetadata), out validationJsonOutput, (null != expectedResponseJson) ? new JsonExample(expectedResponseJson) : null);
+                newErrors.AddRange(validationJsonOutput);
+            }
 
-            newErrors.AddRange(validationJsonOutput);
             schemaErrors = newErrors.ToArray();
             return !schemaErrors.WereWarningsOrErrors();
 
