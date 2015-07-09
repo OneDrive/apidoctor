@@ -191,6 +191,12 @@ namespace OneDrive.ApiDocumentation.Validation
             return contentPreview;
         }
 
+        /// <summary>
+        /// Convert blocks of text found inside the markdown file into things we know how to work
+        /// with (methods, resources, examples, etc).
+        /// </summary>
+        /// <param name="errors"></param>
+        /// <returns></returns>
         protected bool ParseMarkdownBlocks(out ValidationError[] errors)
         {
             List<ValidationError> detectedErrors = new List<ValidationError>();
@@ -342,6 +348,11 @@ namespace OneDrive.ApiDocumentation.Validation
             m_Bookmarks.Add(bookmark);
         }
 
+        /// <summary>
+        /// Run post processing on the collection of elements found inside this doc file.
+        /// </summary>
+        /// <param name="elementsFoundInDocument"></param>
+        /// <param name="postProcessingErrors"></param>
         private void PostProcessFoundElements(List<object> elementsFoundInDocument, out ValidationError[] postProcessingErrors)
         {
             /*

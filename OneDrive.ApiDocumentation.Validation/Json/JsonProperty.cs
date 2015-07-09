@@ -38,6 +38,44 @@
                 }
             }
         }
+
+        public ExpectedStringFormat StringFormat
+        {
+            get
+            {
+                if (Type != JsonDataType.String)
+                    return ExpectedStringFormat.Generic;
+
+                if (OriginalValue == "timestamp" || OriginalValue == "datetime")
+                    return ExpectedStringFormat.Iso8601Date;
+                if (OriginalValue == "url" || OriginalValue == "absolute url")
+                    return ExpectedStringFormat.AbsoluteUrl;
+                if (OriginalValue.IndexOf('|') > 0)
+                    return ExpectedStringFormat.EnumeratedValue;
+
+                return ExpectedStringFormat.Generic;
+            }
+        }
+
+        public string[] PossibleEnumValues()
+        {
+            if (Type != JsonDataType.String) 
+                throw new InvalidOperationException("Cannot provide possible enum values on non-string data types");
+
+            string[] possibleValues = OriginalValue.Split(new char[] { '|' }, StringSplitOptions.RemoveEmptyEntries);
+
+            return (from v in possibleValues select v.Trim()).ToArray();
+        }
+
+        public bool IsValidEnumValue(string input)
+        {
+            string[] values = PossibleEnumValues();
+            if (null != values && values.Length > 0)
+            {
+                return values.Contains(input);
+            }
+            return false;
+        }
     }
 
     public enum JsonDataType
@@ -50,6 +88,14 @@
 
         ODataType,
         Object
+    }
+
+    public enum ExpectedStringFormat
+    {
+        Generic,
+        Iso8601Date,
+        AbsoluteUrl,
+        EnumeratedValue
     }
 
 }
