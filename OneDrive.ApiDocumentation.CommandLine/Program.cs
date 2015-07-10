@@ -662,7 +662,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                 if (options.FoundAccounts.Any())
                 {
                     FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, "Testing with account: {0}", account.Name);
-                    testNamePrefix = account.Name.ToLower() + "-";
+                    testNamePrefix = account.Name.ToLower() + ": ";
                 }
                 // Make sure we have an access token
                 if (string.IsNullOrEmpty(account.AccessToken))

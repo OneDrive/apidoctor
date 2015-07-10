@@ -48,6 +48,24 @@
         #region Json Validation Against Schema
 
         /// <summary>
+        /// Checks that the expected response of a method definition is valid with this resource.
+        /// </summary>
+        /// <param name="method"></param>
+        /// <param name="errors"></param>
+        /// <param name="otherSchemas"></param>
+        /// <param name="options"></param>
+        /// <returns></returns>
+        public bool ValidateExpectedResponse(MethodDefinition method, out ValidationError[] errors)
+        {
+            Http.HttpParser parser = new Http.HttpParser();
+            var response = parser.ParseHttpResponse(method.ExpectedResponse);
+            
+            JsonExample example = new JsonExample(response.Body, method.ExpectedResponseMetadata);
+            var otherSchemas = new Dictionary<string, JsonSchema>();
+            return ValidateJson(example, out errors, otherSchemas, null);
+        }
+
+        /// <summary>
         /// Validate the input json against the defined scehma when the instance was created.
         /// </summary>
         /// <param name="json">Input json to validate against schema</param>
@@ -58,7 +76,8 @@
             JContainer obj = null;
             try
             {
-                obj = (JContainer)JsonConvert.DeserializeObject(jsonInput.JsonData);
+                var settings = new JsonSerializerSettings { DateParseHandling = Newtonsoft.Json.DateParseHandling.None, NullValueHandling = NullValueHandling.Include, DefaultValueHandling = DefaultValueHandling.Include };
+                obj = (JContainer)JsonConvert.DeserializeObject(jsonInput.JsonData, settings);
             }
             catch (Exception ex)
             {
@@ -178,6 +197,7 @@
             foreach(var property in propertiesOnObject)
             {
                 missingProperties.Remove(property.Name);
+
                 // This detects bad types, extra properties, etc.
                 if (null != options && (property.IsArray || property.Type == JsonDataType.ODataType || property.Type == JsonDataType.Object))
                 {
@@ -242,9 +262,14 @@
                 if (SimpleValueTypes(schemaPropertyDef.Type, inputProperty.Type) && 
                     AllFalse(schemaPropertyDef.IsArray, inputProperty.IsArray))
                 {
-                    if (schemaPropertyDef.Type == inputProperty.Type)
+                    if (schemaPropertyDef.Type == inputProperty.Type && inputProperty.Type != JsonDataType.String)
                     {
                         return PropertyValidationOutcome.OK;
+                    }
+                    else if (schemaPropertyDef.Type == inputProperty.Type && inputProperty.Type == JsonDataType.String)
+                    {
+                        // Perform extra validation to see if the string is the right format (iso date, enum value, url, or just a string)
+                        return ValidateStringFormat(schemaPropertyDef, inputProperty, detectedErrors);
                     }
                     else
                     {
@@ -335,6 +360,53 @@
                 detectedErrors.Add(new ValidationWarning(ValidationErrorCode.AdditionalPropertyDetected, null, "Extra property: property '{0}' [{1}] was not expected.", inputProperty.Name, inputProperty.Type));
                 return PropertyValidationOutcome.MissingFromSchema;
             }
+        }
+
+        private static string[] ISO8601Formats = new string[] { "yyyy-MM-dd", @"HH\:mm\:ss.fff", @"HH\:mm\:ss", @"yyyy-MM-ddTHH\:mm\:ssZ", @"yyyy-MM-ddTHH\:mm\:ss.fffZ", @"yyyy-MM-ddTHH\:mm\:ss.fffffffZ" };
+
+        private static PropertyValidationOutcome ValidateStringFormat(JsonProperty schemaProperty, JsonProperty inputProperty, List<ValidationError> detectedErrorsCollection)
+        {
+            switch (schemaProperty.StringFormat)
+            {
+                case ExpectedStringFormat.Iso8601Date:
+                    {
+                        DateTime output;
+                        bool result = (DateTime.TryParseExact(inputProperty.OriginalValue, ISO8601Formats, System.Globalization.DateTimeFormatInfo.InvariantInfo, System.Globalization.DateTimeStyles.None, out output));
+                        if (!result)
+                        {
+                            detectedErrorsCollection.Add(new ValidationError(ValidationErrorCode.InvalidDateTimeString, null, "Invalid ISO 8601 date-time string in property: {1}: {0}", inputProperty.OriginalValue, schemaProperty.Name));
+                            return PropertyValidationOutcome.BadStringValue;
+                        }
+                        return PropertyValidationOutcome.OK;
+                    }
+                case ExpectedStringFormat.AbsoluteUrl:
+                    {
+                        try
+                        {
+                            Uri parsedUri = new Uri(inputProperty.OriginalValue, UriKind.Absolute);
+                            return PropertyValidationOutcome.OK;
+                        }
+                        catch (FormatException)
+                        {
+                            detectedErrorsCollection.Add(new ValidationError(ValidationErrorCode.InvalidUrlString, null, "Invalid absolute URL value in property {1}: {0}", inputProperty.OriginalValue, schemaProperty.Name));
+                            return PropertyValidationOutcome.BadStringValue;
+                        }
+                    }
+                case ExpectedStringFormat.EnumeratedValue:
+                    {
+                        if (!schemaProperty.IsValidEnumValue(inputProperty.OriginalValue))
+                        {
+                            detectedErrorsCollection.Add(new ValidationError(ValidationErrorCode.InvalidEnumeratedValueString, null, "Invalid enumerated value in property {1}: {0}", inputProperty.OriginalValue, schemaProperty.Name));
+                            return PropertyValidationOutcome.BadStringValue;
+                        }
+                        return PropertyValidationOutcome.OK;
+                    }
+                case ExpectedStringFormat.Generic:
+                    return PropertyValidationOutcome.OK;
+                default:
+                    throw new NotImplementedException();
+            }
+            return PropertyValidationOutcome.OK;
         }
 
         private bool SimpleValueTypes(params JsonDataType[] types)
@@ -619,7 +691,8 @@
             InvalidType,
             MissingFromSchema,
             MissingResourceType,
-            GenericError
+            GenericError,
+            BadStringValue
         }
         #endregion
 

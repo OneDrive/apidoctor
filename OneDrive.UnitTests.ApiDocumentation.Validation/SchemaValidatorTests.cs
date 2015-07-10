@@ -16,6 +16,8 @@ namespace OneDrive.UnitTests.ApiDocumentation.Validation
     public class SchemaValidatorTests
     {
 
+        private static JsonSerializerSettings settings = new JsonSerializerSettings { DateFormatHandling = Newtonsoft.Json.DateFormatHandling.IsoDateFormat };
+
         [Test]
         public void SimpleTypeValidationValid()
         {
@@ -30,7 +32,7 @@ namespace OneDrive.UnitTests.ApiDocumentation.Validation
                 floatProp = 123123.1231231231
             };
 
-            string json = JsonConvert.SerializeObject(newObj);
+            string json = JsonConvert.SerializeObject(newObj, settings);
 
             ValidationError[] errors;
             Assert.IsTrue(schema.ValidateJson(new JsonExample(json), out errors, null, null));
@@ -51,7 +53,7 @@ namespace OneDrive.UnitTests.ApiDocumentation.Validation
                 floatProp = 123123.1231231231
             };
 
-            string json = JsonConvert.SerializeObject(newObj);
+            string json = JsonConvert.SerializeObject(newObj, settings);
 
             ValidationError[] errors;
             Assert.IsFalse(schema.ValidateJson(new JsonExample(json), out errors, null, null));
@@ -74,7 +76,7 @@ namespace OneDrive.UnitTests.ApiDocumentation.Validation
                 floatProp = 123123.1231231231
             };
 
-            string json = JsonConvert.SerializeObject(newObj);
+            string json = JsonConvert.SerializeObject(newObj, settings);
 
             ValidationError[] errors;
             Assert.IsFalse(schema.ValidateJson(new JsonExample(json), out errors, null, null));
@@ -95,7 +97,7 @@ namespace OneDrive.UnitTests.ApiDocumentation.Validation
                 floatProp = 123123.1231231231
             };
 
-            string json = JsonConvert.SerializeObject(newObj);
+            string json = JsonConvert.SerializeObject(newObj, settings);
 
             ValidationError[] errors;
             Assert.IsFalse(schema.ValidateJson(new JsonExample(json), out errors, null, null));
@@ -117,7 +119,7 @@ namespace OneDrive.UnitTests.ApiDocumentation.Validation
                 floatProp = 123123.1231231231
             };
 
-            string json = JsonConvert.SerializeObject(newObj);
+            string json = JsonConvert.SerializeObject(newObj, settings);
 
             ValidationError[] errors;
             Assert.IsFalse(schema.ValidateJson(new JsonExample(json), out errors, null, null));

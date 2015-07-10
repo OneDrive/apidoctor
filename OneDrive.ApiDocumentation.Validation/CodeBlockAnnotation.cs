@@ -57,8 +57,9 @@ namespace OneDrive.ApiDocumentation.Validation
             {
                 return JsonConvert.DeserializeObject<CodeBlockAnnotation>(json);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine("Error parsing JSON annotation: " + ex.Message);
                 return new CodeBlockAnnotation() { BlockType = CodeBlockType.Ignored };
             }
         }

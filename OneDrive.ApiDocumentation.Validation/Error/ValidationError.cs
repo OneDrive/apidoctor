@@ -71,7 +71,10 @@
         InvalidHttpMethod,
         UrlLengthExceedsMaximum,
         NonStandardHeaderUsed,
-        MissingHeaderBlock
+        MissingHeaderBlock,
+        InvalidDateTimeString,
+        InvalidEnumeratedValueString,
+        InvalidUrlString
 
     }
 

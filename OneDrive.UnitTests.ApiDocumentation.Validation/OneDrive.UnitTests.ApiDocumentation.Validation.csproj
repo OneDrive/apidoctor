@@ -73,6 +73,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <Compile Include="ResourceStringValidationTests.cs" />
     <Compile Include="SchemaBuilderTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SchemaValidatorTests.cs" />
@@ -80,6 +81,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="test-docs\ExampleResources.md" />
     <None Include="test-docs\ExampleValidateResponse.md" />
     <None Include="test-docs\ExampleValidationSelectStatementFailure.md" />
     <None Include="test-docs\ExampleValidationSelectStatement.md" />
