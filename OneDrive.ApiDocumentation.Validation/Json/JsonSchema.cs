@@ -406,7 +406,6 @@
                 default:
                     throw new NotImplementedException();
             }
-            return PropertyValidationOutcome.OK;
         }
 
         private bool SimpleValueTypes(params JsonDataType[] types)
