@@ -156,7 +156,7 @@
             var webRequest = this.PrepareHttpWebRequest(baseUrl);
             var response = await Http.HttpResponse.ResponseFromHttpWebResponseAsync(webRequest);
 
-            if ((HttpStatusCode)response.StatusCode == HttpStatusCode.ServiceUnavailable)
+            if (IsRetryableError(response))
             {
                 if (retryCount < ValidationConfig.RetryAttemptsOnServiceUnavailableResponse)
                 {
@@ -169,6 +169,11 @@
             }
             response.RetryCount = retryCount;
             return response;
+        }
+
+        public static bool IsRetryableError(Http.HttpResponse response)
+        {
+            return (response.StatusCode >= 500 && response.StatusCode < 600);
         }
     }
 }
