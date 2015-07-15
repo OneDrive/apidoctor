@@ -61,6 +61,7 @@
     <Compile Include="LogHelper.cs" />
     <Compile Include="PageAnnotation.cs" />
     <Compile Include="ParameterDefinition.cs" />
+    <Compile Include="ScenarioExtensionMethods.cs" />
     <Compile Include="TableSpec\TableDefinition.cs" />
     <Compile Include="ValidationConfig.cs" />
     <Compile Include="Writers\MarkdownPublisher.cs.cs" />
@@ -130,7 +131,5 @@
   <Target Name="AfterBuild">
   </Target>
   -->
-  <ItemGroup>
-    <Folder Include="Config\" />
-  </ItemGroup>
+  <ItemGroup />
 </Project>

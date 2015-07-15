@@ -100,24 +100,24 @@ namespace OneDrive.ApiDocumentation.Validation
 
 
         #region Validation / Request Methods
-        /// <summary>
-        /// Converts the raw HTTP request in Request into a callable HttpWebRequest
-        /// </summary>
-        /// <param name="baseUrl"></param>
-        /// <param name="accessToken"></param>
-        /// <returns></returns>
-        public async Task<ValidationResult<HttpWebRequest>> BuildRequestAsync(string baseUrl, AuthenicationCredentials credentials, DocSet documents, ScenarioDefinition scenario = null)
-        {
-            var previewResult = await PreviewRequestAsync(scenario, baseUrl, credentials, documents);
-            if (previewResult.IsWarningOrError)
-            {
-                return new ValidationResult<HttpWebRequest>(null, previewResult.Messages);
-            }
+        ///// <summary>
+        ///// Converts the raw HTTP request in Request into a callable HttpWebRequest
+        ///// </summary>
+        ///// <param name="baseUrl"></param>
+        ///// <param name="accessToken"></param>
+        ///// <returns></returns>
+        //public async Task<ValidationResult<HttpWebRequest>> BuildRequestAsync(string baseUrl, AuthenicationCredentials credentials, DocSet documents, ScenarioDefinition scenario = null)
+        //{
+        //    var previewResult = await PreviewRequestAsync(scenario, baseUrl, credentials, documents);
+        //    if (previewResult.IsWarningOrError)
+        //    {
+        //        return new ValidationResult<HttpWebRequest>(null, previewResult.Messages);
+        //    }
 
-            var httpRequest = previewResult.Value;
-            HttpWebRequest request = httpRequest.PrepareHttpWebRequest(baseUrl);
-            return new ValidationResult<HttpWebRequest>(request);
-        }
+        //    var httpRequest = previewResult.Value;
+        //    HttpWebRequest request = httpRequest.PrepareHttpWebRequest(baseUrl);
+        //    return new ValidationResult<HttpWebRequest>(request);
+        //}
 
         public async Task<ValidationResult<HttpRequest>> PreviewRequestAsync(ScenarioDefinition scenario, string baseUrl, AuthenicationCredentials credentials, DocSet documents)
         {

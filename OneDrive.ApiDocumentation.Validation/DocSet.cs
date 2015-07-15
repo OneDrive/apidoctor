@@ -189,14 +189,14 @@
         /// <param name="actualResponse"></param>
         /// <param name="expectedResponse"></param>
         /// <returns></returns>
-        public bool ValidateApiMethod(MethodDefinition method, Http.HttpResponse actualResponse, Http.HttpResponse expectedResponse, out ValidationError[] errors, bool silenceWarnings)
+        public bool ValidateApiMethod(MethodDefinition method, Http.HttpResponse actualResponse, Http.HttpResponse expectedResponse, out ValidationError[] errors, bool silenceWarnings, ScenarioDefinition scenario)
         {
             if (null == method) throw new ArgumentNullException("method");
             if (null == actualResponse) throw new ArgumentNullException("response");
 
             List<ValidationError> detectedErrors = new List<ValidationError>();
 
-            // Verify the HTTP request is valid (headers, etc)
+            // Verify the request is valid (headers, etc)
             method.VerifyHttpRequest(detectedErrors);
 
             // Verify that the expected response headers match the actual response headers
@@ -225,6 +225,12 @@
 
                 var responseValidation = actualResponse.IsResponseValid(method.SourceFile.DisplayName, method.SourceFile.Parent.Requirements);
                 detectedErrors.AddRange(responseValidation.Messages);
+            }
+
+            // Verify any expectations in the scenario are met
+            if (null != scenario)
+            {
+                scenario.ValidateExpectations(actualResponse, detectedErrors);
             }
 
             errors = detectedErrors.ToArray();

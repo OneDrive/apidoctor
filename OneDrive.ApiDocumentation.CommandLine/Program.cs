@@ -476,7 +476,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
                 var parser = new HttpParser();
                 var expectedResponse = parser.ParseHttpResponse(method.ExpectedResponse);
-                ValidationError[] errors = ValidateHttpResponse(docset, method, expectedResponse, options.SilenceWarnings);
+                ValidationError[] errors = ValidateHttpResponse(method, expectedResponse, options.SilenceWarnings);
 
                 await WriteOutErrorsAndFinishTest(errors, options.SilenceWarnings, "   ", "No errors.", false, testName, "Warnings detected", "Errors detected");
                 results.IncrementResultCount(errors);
@@ -593,10 +593,13 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             FancyConsole.WriteLineIndented(indent, color, error.ErrorText);
         }
 
-        private static ValidationError[] ValidateHttpResponse(DocSet docset, MethodDefinition method, HttpResponse response, bool silenceWarnings, HttpResponse expectedResponse = null, string indentLevel = "")
+        private static ValidationError[] ValidateHttpResponse(MethodDefinition method, HttpResponse response, bool silenceWarnings, HttpResponse expectedResponse = null, ScenarioDefinition scenario = null)
         {
+
+            var docset = method.SourceFile.Parent;
+
             ValidationError[] errors;
-            docset.ValidateApiMethod(method, response, expectedResponse, out errors, silenceWarnings);
+            docset.ValidateApiMethod(method, response, expectedResponse, out errors, silenceWarnings, scenario);
             return errors;
         }
 
@@ -689,7 +692,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                     {
                         // If there are no parameters defined, we still try to call the request as-is.
                         FancyConsole.WriteLine(FancyConsole.ConsoleCodeColor, "\r\n  Method {0} has no scenario defined. Running as-is from docs.", method.RequestMetadata.MethodName);
-                        var errors = await TestMethodWithParameters(docset, method, null, account.ServiceUrl, credentials, options.SilenceWarnings, testNamePrefix);
+                        var errors = await TestMethodWithScenario(docset, method, null, account.ServiceUrl, credentials, options.SilenceWarnings, testNamePrefix);
                         results.IncrementResultCount(errors);
                         AddPause(options);
                     }
@@ -708,7 +711,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                         {
                             foreach (var requestSettings in enabledScenarios)
                             {
-                                var errors = await TestMethodWithParameters(docset, method, requestSettings, account.ServiceUrl, credentials, options.SilenceWarnings, testNamePrefix);
+                                var errors = await TestMethodWithScenario(docset, method, requestSettings, account.ServiceUrl, credentials, options.SilenceWarnings, testNamePrefix);
                                 results.IncrementResultCount(errors);
                                 AddPause(options);
                             }
@@ -759,29 +762,26 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             }
         }
 
-        private static async Task<ValidationError[]> TestMethodWithParameters(DocSet docset, MethodDefinition method, ScenarioDefinition requestSettings, string rootUrl, AuthenicationCredentials credentials, bool silenceWarnings, string testNamePrefix)
+        private static async Task<ValidationError[]> TestMethodWithScenario(DocSet docset, MethodDefinition method, ScenarioDefinition scenario, string rootUrl, AuthenicationCredentials credentials, bool silenceWarnings, string testNamePrefix)
         {
             string testName = testNamePrefix + method.Identifier;
             string indentLevel = "";
-            if (requestSettings != null)
+            if (scenario != null)
             {
-                if (!string.IsNullOrEmpty(requestSettings.Description))
+                if (!string.IsNullOrEmpty(scenario.Description))
                 {
-                    testName = testNamePrefix + string.Format("{0} [{1}]", method.Identifier, requestSettings.Description);
+                    testName = testNamePrefix + string.Format("{0} [{1}]", method.Identifier, scenario.Description);
                 }
                 indentLevel = indentLevel + "  ";
             }
 
             FancyConsole.VerboseWriteLine("");
-
-
             TestReport.StartTestAsync(testName, method.SourceFile.DisplayName);
 
             // Generate the tested request by "previewing" the request and executing
             // all test-setup procedures
             FancyConsole.VerboseWriteLineIndented(indentLevel, "Executing test-setup and building testable request...");
-            var requestPreviewResult = await method.PreviewRequestAsync(requestSettings, rootUrl, credentials, docset);
-
+            var requestPreviewResult = await method.PreviewRequestAsync(scenario, rootUrl, credentials, docset);
 
             // Check to see if an error occured building the request, and abort if so.
             if (requestPreviewResult.IsWarningOrError)
@@ -811,7 +811,12 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             FancyConsole.VerboseWriteLine();
             
             FancyConsole.VerboseWriteLineIndented(indentLevel, "Validation results:");
-            var validateResponse = ValidateHttpResponse(docset, method, actualResponse, silenceWarnings, expectedResponse, indentLevel);
+            
+            // Perform validation on the method's actual response
+            var validateResponse = ValidateHttpResponse(method, actualResponse, silenceWarnings, expectedResponse, scenario);
+
+
+
             await WriteOutErrorsAndFinishTest(validateResponse, silenceWarnings, indentLevel, "No errors.", false, testName);
             
             return validateResponse;

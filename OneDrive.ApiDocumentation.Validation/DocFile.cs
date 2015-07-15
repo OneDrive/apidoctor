@@ -251,7 +251,16 @@ namespace OneDrive.ApiDocumentation.Validation
                     if (null != nextBlock && nextBlock.BlockType == MarkdownDeep.BlockType.codeblock)
                     {
                         // html + codeblock = likely request or response!
-                        var definition = ParseCodeBlock(block, nextBlock);
+                        ItemDefinition definition = null;
+                        try
+                        {
+                            definition = ParseCodeBlock(block, nextBlock);
+                        }
+                        catch (Exception ex)
+                        {
+                            detectedErrors.Add(new ValidationError(ValidationErrorCode.MarkdownParserError, DisplayName, ex.Message));
+                        }
+
                         if (null != definition)
                         {
                             detectedErrors.Add(new ValidationMessage(null, "Found code block: {0} [{1}]", definition.Title, definition.GetType().Name));

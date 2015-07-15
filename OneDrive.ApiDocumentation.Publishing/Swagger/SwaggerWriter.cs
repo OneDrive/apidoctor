@@ -286,18 +286,18 @@ namespace OneDrive.ApiDocumentation.Validation.Writers
 
         private System.Text.RegularExpressions.Regex PathVariableRegex = new System.Text.RegularExpressions.Regex("{(?<var>.*)}");
 
-        private string[] CapturePathVariables(string relativePath)
-        {
-            var matches = PathVariableRegex.Matches(relativePath);
-            List<string> variables = new List<string>();
-            for(int i=0; i<matches.Count; i++)
-            {
-                var match = matches[i];
-                var capture = match.Groups["var"].Value;
-                variables.Add(capture);
-            }
-            return variables.ToArray();
-        }
+        //private string[] CapturePathVariables(string relativePath)
+        //{
+        //    var matches = PathVariableRegex.Matches(relativePath);
+        //    List<string> variables = new List<string>();
+        //    for(int i=0; i<matches.Count; i++)
+        //    {
+        //        var match = matches[i];
+        //        var capture = match.Groups["var"].Value;
+        //        variables.Add(capture);
+        //    }
+        //    return variables.ToArray();
+        //}
 
        
 
