@@ -84,6 +84,11 @@ namespace OneDrive.ApiDocumentation.Validation
 
         public void AddExpectedResponse(string rawResponse, CodeBlockAnnotation annotation)
         {
+            if (ExpectedResponse != null)
+            {
+                throw new InvalidOperationException("An expected response was already added to this request.");
+            }
+
             ExpectedResponse = rawResponse;
             ExpectedResponseMetadata = annotation;
         }
