@@ -57,8 +57,8 @@ namespace OneDrive.UnitTests.ApiDocumentation.Validation
 
             ValidationError[] errors;
             Assert.IsFalse(schema.ValidateJson(new JsonExample(json), out errors, null, null));
-            Assert.AreEqual(2, errors.Length);
             Assert.IsTrue(errors.All(error => error.Code == ValidationErrorCode.ExpectedTypeDifferent));
+            Assert.AreEqual(2, errors.Length, "Expected 2 errors in the response");
         }
 
         [Test]
@@ -146,7 +146,7 @@ namespace OneDrive.UnitTests.ApiDocumentation.Validation
             var expectedResponse = parser.ParseHttpResponse(testMethod.ExpectedResponse);
             var actualResponse = parser.ParseHttpResponse(testMethod.ActualResponse);
 
-            docSet.ValidateApiMethod(testMethod, actualResponse, expectedResponse, out detectedErrors, false);
+            docSet.ValidateApiMethod(testMethod, actualResponse, expectedResponse, out detectedErrors, false, null);
 
             Assert.AreEqual(1, detectedErrors.Length);
             var error = detectedErrors.First();
@@ -172,7 +172,7 @@ namespace OneDrive.UnitTests.ApiDocumentation.Validation
             var expectedResponse = parser.ParseHttpResponse(testMethod.ExpectedResponse);
             var actualResponse = parser.ParseHttpResponse(testMethod.ActualResponse);
 
-            docSet.ValidateApiMethod(testMethod, actualResponse, expectedResponse, out detectedErrors, false);
+            docSet.ValidateApiMethod(testMethod, actualResponse, expectedResponse, out detectedErrors, false, null);
 
             Assert.AreEqual(0, detectedErrors.Length);
         }
@@ -196,7 +196,7 @@ namespace OneDrive.UnitTests.ApiDocumentation.Validation
             var expectedResponse = parser.ParseHttpResponse(testMethod.ExpectedResponse);
             var actualResponse = parser.ParseHttpResponse(testMethod.ActualResponse);
 
-            docSet.ValidateApiMethod(testMethod, actualResponse, expectedResponse, out detectedErrors, false);
+            docSet.ValidateApiMethod(testMethod, actualResponse, expectedResponse, out detectedErrors, false, null);
 
             Assert.AreEqual(4, detectedErrors.Length);
             foreach (var error in detectedErrors)

@@ -74,7 +74,9 @@
         MissingHeaderBlock,
         InvalidDateTimeString,
         InvalidEnumeratedValueString,
-        InvalidUrlString
+        InvalidUrlString,
+        InvalidExpectationKey,
+        ExpectationConditionFailed
 
     }
 

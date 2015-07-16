@@ -230,7 +230,7 @@ which includes the following definition:
   "optionalProperties": ["array", "of", "properties", "considered", "optional"],
   "isCollection": "bool value to treat the response as a collection of a resource type",
   "truncated": "bool value that the response may be missing properties required by the resource",
-  "name": "name of the request method"
+  "name": "name of the block method"
 }
 ```
 
@@ -242,9 +242,11 @@ An example usage would look like this in the markdown:
 <!-- {"blockType": "resource", "@odata.type": "example_item"} -->
 \```
 {
-  "id": "string",
   "name": "string",
-  "count": 123
+  "count": 123,
+  "season": "summer | fall | winter | spring",
+  "webUrl": "url",
+  "createdDateTime": "datetime"
 }
 \```
 
@@ -264,16 +266,29 @@ HTTP/1.1 200 OK
 Content-Type: application/json
 
 {
-  "id": "!23134!",
   "name": "root_folder",
-  "count": 4
+  "count": 4,
+  "height": "6.12",
+  "season": "summer",
+  "webUrl": "http://example.org",
+  "createdDateTime": "2015-07-15T14:44:00Z"
 }
 \```
 ```
 
 This file, if included in the documentation, would be read as one resource,
-`example_item` that has a JSON object schema with three properties: `string id`,
-`string name` and `number count`. It then has one request method which calls
+`example_item` that has a JSON object schema with these properties: 
+
+| Property Name | Type | Validation type
+|---|---|---|
+| `name` | string | Value is only validated to be a string type. |
+| `count` | integer | Value is only validated to be an integer type. |
+| `height` | float | Value is only validated to be a float type. |
+| `season` | enum-string | Value is validated to be one of the enumerated values (separated by a pipe character). |
+| `webUrl` | url | Value is validated to be an absolute URL. |
+| `createdDateTime` | datetime | Value is validated to be a string value in the format of an ISO8601 date time stamp. |
+
+It then has one request method which calls
 `GET <url_root>/drive/items/root` and returns an `example_item` resource.
 
 Using `check-docs` would verify that the return example in the documentation
@@ -337,6 +352,12 @@ conforming to this schema:
   "request-parameters":
   {
     "{item-id}": "[source-file-id]"
+  },
+  "expectations": 
+  {
+	"$.size": 123,
+	"content-type:" "application/json",
+	"$.id": ["12345", "67890"]
   }
 }
 ```
@@ -348,7 +369,7 @@ conforming to this schema:
 | `enabled`            | bool            | Enable or disable the scenario.                                                                                                                 |
 | `test-setup`         | array           | See below.                                                                                                                                      |
 | `request-parameters` | key-value pairs | Specify the key-value pairs for parameters for the request. The key is used as a placeholder name, and the value is subed into the placeholder. |
-
+| `expectations`       | key-value pairs | Specify the expected values in the final response. The keys are the same [Capture Grammar](#capture-grammer) defined for request-parameters.    |
 
 ### Test Setup
 

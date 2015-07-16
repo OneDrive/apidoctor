@@ -55,6 +55,16 @@ namespace OneDrive.ApiDocumentation.Validation.Json
             return input;
         }
 
+        public static bool TokenEquals(JToken token, object input)
+        {
+            var convertedValue = ConvertValueForOutput(token);
+
+            if (null != input)
+            {
+                return input.Equals(convertedValue);
+            }
+            return input == convertedValue;
+        }
 
         /// <summary>
         /// Sets the value of a property in a dynamic object based on a json path

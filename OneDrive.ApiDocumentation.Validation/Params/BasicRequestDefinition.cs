@@ -27,6 +27,10 @@ namespace OneDrive.ApiDocumentation.Validation
         [JsonProperty("method", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public string MethodName { get; set; }
 
+        /// <summary>
+        /// Specify a list of replacements to be made in the request using values previously captured from
+        /// test-setup requests.
+        /// </summary>
         [JsonProperty("request-parameters", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public Dictionary<string, string> RequestParameters { get; set; }
 
@@ -35,6 +39,14 @@ namespace OneDrive.ApiDocumentation.Validation
         /// </summary>
         [JsonProperty("allowed-status-codes", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public List<int> AllowedStatusCodes { get; set; }
+
+        /// <summary>
+        /// A set of expectations that are validated when the response is complete. The key value
+        /// follows the same formatting as RequestParameter values, and the values are either 
+        /// a constant or an array of constant values that are expected.
+        /// </summary>
+        [JsonProperty("expectations", DefaultValueHandling=DefaultValueHandling.Ignore)]
+        public Dictionary<string, object> Expectations { get; set; }
 
 
         public virtual ValidationError[] CheckForErrors()
@@ -59,8 +71,20 @@ namespace OneDrive.ApiDocumentation.Validation
             return errors.ToArray();
         }
 
+        /// <summary>
+        /// Parse the type of placeholder value the input represents.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <returns></returns>
         public static PlaceholderLocation LocationForKey(string key)
         {
+            string index;
+            return LocationForKey(key, out index);
+        }
+
+        public static PlaceholderLocation LocationForKey(string key, out string index)
+        {
+            index = key;
             if (null == key)
                 return PlaceholderLocation.Invalid;
 
@@ -73,7 +97,10 @@ namespace OneDrive.ApiDocumentation.Validation
             if (key == "!url")
                 return PlaceholderLocation.Url;
             if (key.EndsWith(":") && key.Length > 1)
+            {
+                index = key.Substring(0, key.Length - 1);
                 return PlaceholderLocation.HttpHeader;
+            }
             if (key.StartsWith("$"))
                 return PlaceholderLocation.Json;
 

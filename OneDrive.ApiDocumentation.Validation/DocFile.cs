@@ -251,7 +251,16 @@ namespace OneDrive.ApiDocumentation.Validation
                     if (null != nextBlock && nextBlock.BlockType == MarkdownDeep.BlockType.codeblock)
                     {
                         // html + codeblock = likely request or response!
-                        var definition = ParseCodeBlock(block, nextBlock);
+                        ItemDefinition definition = null;
+                        try
+                        {
+                            definition = ParseCodeBlock(block, nextBlock);
+                        }
+                        catch (Exception ex)
+                        {
+                            detectedErrors.Add(new ValidationError(ValidationErrorCode.MarkdownParserError, DisplayName, ex.Message));
+                        }
+
                         if (null != definition)
                         {
                             detectedErrors.Add(new ValidationMessage(null, "Found code block: {0} [{1}]", definition.Title, definition.GetType().Name));
@@ -568,9 +577,24 @@ namespace OneDrive.ApiDocumentation.Validation
 
                 case CodeBlockType.Response:
                     {
-                        var method = m_Requests.Last();
-                        method.AddExpectedResponse(code.Content, annotation);
-                        return method;
+                        MethodDefinition pairedRequest = null;
+                        if (!string.IsNullOrEmpty(annotation.MethodName))
+                        {
+                            // Look up paired request by name
+                            pairedRequest = (from m in m_Requests where m.Identifier == annotation.MethodName select m).FirstOrDefault();
+                        }
+                        else
+                        {
+                            pairedRequest = m_Requests.Last();
+                        }
+
+                        if (null == pairedRequest)
+                        {
+                            throw new InvalidOperationException(string.Format("Unable to locate the corresponding request for response block: {0}. Requests must be defined before a response.", annotation.MethodName));
+                        }
+
+                        pairedRequest.AddExpectedResponse(code.Content, annotation);
+                        return pairedRequest;
                     }
                 case CodeBlockType.Example:
                     {
