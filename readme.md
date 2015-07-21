@@ -463,10 +463,5 @@ properties defined:
 
 
 ## Open Source
-The API Documentation Test Tool uses the following open source components:
 
-* [MarkdownDeep](https://github.com/toptensoftware/MarkdownDeep) - Markdown for C# parser. Apache 2.0 license, Copyright (C) 2010-2011 Topten Software.
-* [Newtonsoft.Json](https://github.com/JamesNK/Newtonsoft.Json) - Json parser for .NET apps. MIT license, Copyright (c) 2007 James Newton-King
-* [CommandLineParser](https://commandline.codeplex.com/) - Command line parser library. MIT license, Copyright (c) 2005 - 2012 Giacomo Stelluti Scala.
-* [AsyncEx](https://github.com/StephenCleary/AsyncEx/) - Command line Async helper. MIT license, Copyright (c) 2014 StephenCleary.
-* [mustache-sharp] (https://github.com/jehugaleahsa/mustache-sharp) - An extension of the mustache text template engine for .NET. Public domain.
+See [OpenSourceNotes](OpenSourceNotes.md) for more details about open source usage in markdown-scanner.
