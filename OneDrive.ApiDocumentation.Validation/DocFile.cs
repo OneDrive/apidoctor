@@ -610,6 +610,12 @@ namespace OneDrive.ApiDocumentation.Validation
                         method.AddSimulatedResponse(code.Content, annotation);
                         return method;
                     }
+                case CodeBlockType.TestParams:
+                    {
+                        var method = m_Requests.Last();
+                        method.AddTestParams(code.Content);
+                        return method;
+                    }
                 default:
                     throw new NotSupportedException("Unsupported block type: " + annotation.BlockType);
             }
