@@ -100,6 +100,11 @@ namespace OneDrive.ApiDocumentation.Validation
         /// <summary>
         /// A simulated response, used for unit testing.
         /// </summary>
-        SimulatedResponse
+        SimulatedResponse,
+
+        /// <summary>
+        /// A block representing a test parameter definition for the preceding example
+        /// </summary>
+        TestParams,
     }
 }

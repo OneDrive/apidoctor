@@ -27,6 +27,7 @@ namespace OneDrive.ApiDocumentation.Validation
             Errors = new List<ErrorDefinition>();
             Enumerations = new Dictionary<string, List<ParameterDefinition>>();
             RequestBodyParameters = new List<ParameterDefinition>();
+            Scenarios = new List<ScenarioDefinition>();
         }
 
         public static MethodDefinition FromRequest(string request, CodeBlockAnnotation annotation, DocFile source)
@@ -80,6 +81,10 @@ namespace OneDrive.ApiDocumentation.Validation
         /// <value>The actual response.</value>
         public string ActualResponse { get; set; }
 
+        /// <summary>
+        /// Scenarios defined inline with this method
+        /// </summary>
+        public List<ScenarioDefinition> Scenarios { get; private set; }
         #endregion
 
         public void AddExpectedResponse(string rawResponse, CodeBlockAnnotation annotation)
@@ -98,6 +103,17 @@ namespace OneDrive.ApiDocumentation.Validation
             ActualResponse = rawResponse;
         }
 
+        public void AddTestParams(string rawContent)
+        {
+            var scenarios = Newtonsoft.Json.JsonConvert.DeserializeObject<ScenarioDefinition[]>(rawContent);
+            if (null != scenarios)
+            {
+                foreach (var scenario in scenarios)
+                {
+                    Scenarios.Add(scenario);
+                }
+            }
+        }
 
         #region Validation / Request Methods
         ///// <summary>

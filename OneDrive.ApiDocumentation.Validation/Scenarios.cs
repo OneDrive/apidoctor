@@ -32,8 +32,12 @@ namespace OneDrive.ApiDocumentation.Validation
                         where p.MethodName == id
                         select p;
 
+            if (method.Scenarios != null && method.Scenarios.Count > 0)
+            {
+                query = query.Union(method.Scenarios);
+            }
+
             return query.ToArray();
         }
     }
-
 }
