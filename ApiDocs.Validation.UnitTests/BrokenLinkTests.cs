@@ -8,6 +8,8 @@ using System.Threading.Tasks;
 
 namespace ApiDocs.Validation.UnitTests
 {
+    using ApiDocs.Validation.Error;
+
     [TestFixture]
     public class BrokenLinkTests
     {
@@ -77,13 +79,18 @@ This link goes [up one level](../anotherfile.md)
 
 [microsoft]: http://www.microsoft.com
 ";
-            TestableDocFile file = new TestableDocFile(markdown);
-            file.IsLinkValid = new Func<string, bool>(link =>
+            TestableDocFile file = new TestableDocFile(markdown)
             {
-                if (link == "../anotherfile.md")
-                    return false;
-                return true;
-            });
+                IsLinkValid = new Func<string, bool>(
+                    link =>
+                    {
+                        if (link == "../anotherfile.md")
+                        {
+                            return false;
+                        }
+                        return true;
+                    })
+            };
 
             ValidationError[] errors;
 
@@ -98,7 +105,7 @@ This link goes [up one level](../anotherfile.md)
         [Test]
         public void BrokenLinkMultipleErrors()
         {
-            string markdown =
+            var markdown =
 @"# Test file
 
 This is a [basic Link](http://www.microsoft.com/).
@@ -110,12 +117,7 @@ This link goes [up one level](../anotherfile.md)
 [microsoft]: http://www.microsoft.com
 ";
             TestableDocFile file = new TestableDocFile(markdown);
-            file.IsLinkValid = new Func<string, bool>(link =>
-            {
-                if (link == "../anotherfile.md")
-                    return false;
-                return true;
-            });
+            file.IsLinkValid = link => link != "../anotherfile.md";
 
             ValidationError[] errors;
 
@@ -131,20 +133,21 @@ This link goes [up one level](../anotherfile.md)
 
     class TestableDocFile : DocFile
     {
-        private string m_Markdown { get; set; }
+        private string Markdown { get; set; }
+
         public TestableDocFile(string markdownContent)
         {
-            m_Markdown = markdownContent;
-            m_BasePath = "doesn't matter";
-            FullPath = "doesn't matter";
-            DisplayName = "testable_doc_file";
+            this.Markdown = markdownContent;
+            this.BasePath = "doesn't matter";
+            this.FullPath = "doesn't matter";
+            this.DisplayName = "testable_doc_file";
         }
 
         public new bool Scan(out ValidationError[] errors)
         {
-            m_hasScanRun = true;
-            TransformMarkdownIntoBlocksAndLinks(m_Markdown);
-            return ParseMarkdownBlocks(out errors);
+            this.HasScanRun = true;
+            this.TransformMarkdownIntoBlocksAndLinks(this.Markdown);
+            return this.ParseMarkdownBlocks(out errors);
         }
 
         public Func<string, bool> IsLinkValid { get; set; }
@@ -153,9 +156,9 @@ This link goes [up one level](../anotherfile.md)
         protected override DocFile.LinkValidationResult VerifyRelativeLink(System.IO.FileInfo sourceFile, string linkUrl, string docSetBasePath, out string relativeFileName)
         {
             relativeFileName = null;
-            if (null != IsLinkValid)
+            if (null != this.IsLinkValid)
             {
-                return IsLinkValid(linkUrl) ? LinkValidationResult.Valid : LinkValidationResult.FileNotFound;
+                return this.IsLinkValid(linkUrl) ? LinkValidationResult.Valid : LinkValidationResult.FileNotFound;
             }
 
             return LinkValidationResult.Valid;

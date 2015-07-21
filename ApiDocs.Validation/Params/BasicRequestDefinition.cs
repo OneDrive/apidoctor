@@ -1,20 +1,13 @@
 ﻿
 
-namespace ApiDocs.Validation
+namespace ApiDocs.Validation.Params
 {
-    using Newtonsoft.Json;
-    using System;
     using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using System.Threading.Tasks;
+    using ApiDocs.Validation.Error;
+    using Newtonsoft.Json;
 
     public class BasicRequestDefinition
     {
-        public BasicRequestDefinition()
-        {
-        }
-
         /// <summary>
         /// Raw Http Request that is invoked instead of using a method from the documentation
         /// </summary>
@@ -53,10 +46,10 @@ namespace ApiDocs.Validation
         {
             List<ValidationError> errors = new List<ValidationError>();
 
-            if (!string.IsNullOrEmpty(RawHttpRequest) && !string.IsNullOrEmpty(MethodName))
-                errors.Add(new ValidationError(ValidationErrorCode.HttpRequestAndMethodSpecified, null, "http-request and method are mutually exclusive: http-request: {0}, method: {1}", RawHttpRequest, MethodName));
+            if (!string.IsNullOrEmpty(this.RawHttpRequest) && !string.IsNullOrEmpty(this.MethodName))
+                errors.Add(new ValidationError(ValidationErrorCode.HttpRequestAndMethodSpecified, null, "http-request and method are mutually exclusive: http-request: {0}, method: {1}", this.RawHttpRequest, this.MethodName));
 
-            foreach (var key in RequestParameters.Keys)
+            foreach (var key in this.RequestParameters.Keys)
             {
                 var keyType = LocationForKey(key);
                 switch (keyType)

@@ -8,6 +8,8 @@ namespace ApiDocs.Validation
     using System.Linq;
     using ApiDocs.Validation.Http;
     using System.Threading.Tasks;
+    using ApiDocs.Validation.Error;
+    using ApiDocs.Validation.Params;
     using Newtonsoft.Json;
 
     /// <summary>
@@ -24,17 +26,22 @@ namespace ApiDocs.Validation
         #region Constructors / Class Factory
         public MethodDefinition()
         {
-            Errors = new List<ErrorDefinition>();
-            Enumerations = new Dictionary<string, List<ParameterDefinition>>();
-            RequestBodyParameters = new List<ParameterDefinition>();
-            Scenarios = new List<ScenarioDefinition>();
+
+            this.Errors = new List<ErrorDefinition>();
+            this.Enumerations = new Dictionary<string, List<ParameterDefinition>>();
+            this.RequestBodyParameters = new List<ParameterDefinition>();
+            this.Scenarios = new List<ScenarioDefinition>();
         }
 
         public static MethodDefinition FromRequest(string request, CodeBlockAnnotation annotation, DocFile source)
         {
-            var method = new MethodDefinition { Request = request, RequestMetadata = annotation };
-            method.Identifier = annotation.MethodName;
-            method.SourceFile = source;
+            var method = new MethodDefinition
+            {
+                Request = request,
+                RequestMetadata = annotation,
+                Identifier = annotation.MethodName,
+                SourceFile = source
+            };
             method.Title = method.Identifier;
             return method;
         }
@@ -89,18 +96,18 @@ namespace ApiDocs.Validation
 
         public void AddExpectedResponse(string rawResponse, CodeBlockAnnotation annotation)
         {
-            if (ExpectedResponse != null)
+            if (this.ExpectedResponse != null)
             {
                 throw new InvalidOperationException("An expected response was already added to this request.");
             }
 
-            ExpectedResponse = rawResponse;
-            ExpectedResponseMetadata = annotation;
+            this.ExpectedResponse = rawResponse;
+            this.ExpectedResponseMetadata = annotation;
         }
 
         public void AddSimulatedResponse(string rawResponse, CodeBlockAnnotation annotation)
         {
-            ActualResponse = rawResponse;
+            this.ActualResponse = rawResponse;
         }
 
         public void AddTestParams(string rawContent)
@@ -138,7 +145,7 @@ namespace ApiDocs.Validation
         public async Task<ValidationResult<HttpRequest>> PreviewRequestAsync(ScenarioDefinition scenario, string baseUrl, AuthenicationCredentials credentials, DocSet documents)
         {
             var parser = new HttpParser();
-            var request = parser.ParseHttpRequest(Request);
+            var request = parser.ParseHttpRequest(this.Request);
 
             AddAccessTokenToRequest(credentials, request);
 
@@ -262,18 +269,6 @@ namespace ApiDocs.Validation
         //}
 
 
-        class DynamicBinder : System.Dynamic.SetMemberBinder
-        {
-            public DynamicBinder(string propertyName) : base(propertyName, true)
-            {
-            }
-
-            public override System.Dynamic.DynamicMetaObject FallbackSetMember(System.Dynamic.DynamicMetaObject target, System.Dynamic.DynamicMetaObject value, System.Dynamic.DynamicMetaObject errorSuggestion)
-            {
-                throw new NotImplementedException();
-            }
-        }
-
         /// <summary>
         /// Check to ensure the http request is valid
         /// </summary>
@@ -284,7 +279,7 @@ namespace ApiDocs.Validation
             HttpRequest request = null;
             try
             {
-                request = parser.ParseHttpRequest(Request);
+                request = parser.ParseHttpRequest(this.Request);
             }
             catch (Exception ex)
             {
@@ -329,7 +324,7 @@ namespace ApiDocs.Validation
         public void SplitRequestUrl(out string relativePath, out string queryString, out string httpMethod)
         {
             var parser = new Http.HttpParser();
-            var request = parser.ParseHttpRequest(Request);
+            var request = parser.ParseHttpRequest(this.Request);
             httpMethod = request.Method;
 
             request.Url.SplitUrlComponents(out relativePath, out queryString);

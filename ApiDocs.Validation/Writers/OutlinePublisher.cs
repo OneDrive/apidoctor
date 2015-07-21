@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.IO;
-
-namespace ApiDocs.Validation
+﻿namespace ApiDocs.Validation.Writers
 {
+    using System.IO;
+    using System.Threading.Tasks;
+
     public class OutlinePublisher : DocumentPublisher
     {
 

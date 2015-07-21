@@ -6,6 +6,10 @@
     using System.Text;
     using System.Threading.Tasks;
     using System.IO;
+    using ApiDocs.Validation.Config;
+    using ApiDocs.Validation.Error;
+    using ApiDocs.Validation.Http;
+    using ApiDocs.Validation.Params;
 
     public class DocSet
     {
@@ -14,7 +18,7 @@
         #endregion
 
         #region Instance Variables
-        Json.JsonResourceCollection m_ResourceCollection = new Json.JsonResourceCollection();
+        readonly Json.JsonResourceCollection resourceCollection = new Json.JsonResourceCollection();
         #endregion
 
         #region Properties
@@ -31,7 +35,7 @@
         public ResourceDefinition[] Resources { get; private set; }
         public MethodDefinition[] Methods { get; private set; }
 
-        public Json.JsonResourceCollection ResourceCollection { get { return m_ResourceCollection; } }
+        public Json.JsonResourceCollection ResourceCollection { get { return this.resourceCollection; } }
         
         public List<ScenarioDefinition> TestScenarios {get; internal set;}
 
@@ -39,7 +43,7 @@
         {
             get
             {
-                return ListFromFiles<AuthScopeDefinition>(x => x.AuthScopes);
+                return this.ListFromFiles<AuthScopeDefinition>(x => x.AuthScopes);
             }
         }
 
@@ -47,7 +51,7 @@
         {
             get
             {
-                return ListFromFiles<ErrorDefinition>(x => x.ErrorCodes);
+                return this.ListFromFiles<ErrorDefinition>(x => x.ErrorCodes);
             }
         }
 
@@ -55,7 +59,7 @@
         #endregion
 
         #region Constructors
-        public DocSet(string sourceFolderPath, string optionalScenarioFileRelativePath = null)
+        public DocSet(string sourceFolderPath)
         {
             sourceFolderPath = ResolvePathWithUserRoot(sourceFolderPath);
             if (sourceFolderPath.EndsWith(Path.DirectorySeparatorChar.ToString()))
@@ -63,11 +67,11 @@
                 sourceFolderPath = sourceFolderPath.TrimEnd(new char[] { Path.DirectorySeparatorChar });
             }
 
-            SourceFolderPath = sourceFolderPath;
-            ReadDocumentationHierarchy(sourceFolderPath);
+            this.SourceFolderPath = sourceFolderPath;
+            this.ReadDocumentationHierarchy(sourceFolderPath);
 
-            LoadRequirements();
-            LoadTestScenarios();
+            this.LoadRequirements();
+            this.LoadTestScenarios();
         }
 
         public DocSet()
@@ -81,7 +85,7 @@
 
         internal void RecordLogMessage(bool verbose, string title, string format, params object[] parameters)
         {
-            var evt = LogMessage;
+            var evt = this.LogMessage;
             if (null != evt)
             {
                 evt(this, new DocSetEventArgs(verbose, title, format, parameters));
@@ -96,19 +100,19 @@
             if (null != foundRequirements)
             {
                 Console.WriteLine("Using API requirements file: {0}", foundRequirements.SourcePath);
-                Requirements = foundRequirements.ApiRequirements;
+                this.Requirements = foundRequirements.ApiRequirements;
             }
         }
 
         private void LoadTestScenarios()
         {
-            TestScenarios = new List<ScenarioDefinition>();
+            this.TestScenarios = new List<ScenarioDefinition>();
 
             ScenarioFile[] files = TryLoadConfigurationFiles<ScenarioFile>(this.SourceFolderPath);
             foreach (var file in files)
             {
                 Console.WriteLine("Found test scenario file: {0}", file.SourcePath);
-                TestScenarios.AddRange(file.Scenarios);
+                this.TestScenarios.AddRange(file.Scenarios);
             }
         }
 
@@ -161,8 +165,8 @@
 
             var detectedErrors = new List<ValidationError>();
 
-            m_ResourceCollection.Clear();
-            foreach (var file in Files)
+            this.resourceCollection.Clear();
+            foreach (var file in this.Files)
             {
                 ValidationError[] parseErrors;
                 if (!file.Scan(out parseErrors))
@@ -173,10 +177,10 @@
                 foundResources.AddRange(file.Resources);
                 foundMethods.AddRange(file.Requests);
             }
-            m_ResourceCollection.RegisterJsonResources(foundResources);
+            this.resourceCollection.RegisterJsonResources(foundResources);
 
-            Resources = foundResources.ToArray();
-            Methods = foundMethods.ToArray();
+            this.Resources = foundResources.ToArray();
+            this.Methods = foundMethods.ToArray();
 
             errors = detectedErrors.ToArray();
             return detectedErrors.Count == 0;
@@ -188,11 +192,14 @@
         /// <param name="method"></param>
         /// <param name="actualResponse"></param>
         /// <param name="expectedResponse"></param>
+        /// <param name="errors"></param>
+        /// <param name="silenceWarnings"></param>
+        /// <param name="scenario"></param>
         /// <returns></returns>
         public bool ValidateApiMethod(MethodDefinition method, Http.HttpResponse actualResponse, Http.HttpResponse expectedResponse, out ValidationError[] errors, bool silenceWarnings, ScenarioDefinition scenario)
         {
             if (null == method) throw new ArgumentNullException("method");
-            if (null == actualResponse) throw new ArgumentNullException("response");
+            if (null == actualResponse) throw new ArgumentNullException("actualResponse");
 
             List<ValidationError> detectedErrors = new List<ValidationError>();
 
@@ -218,7 +225,7 @@
                 {
                     detectedErrors.Add(new ValidationError(ValidationErrorCode.ResponseResourceTypeMissing, null, "Expected a response, but resource type on method is missing: {0}", method.Identifier));
                 }
-                else if (!m_ResourceCollection.ValidateResponseMatchesSchema(method, actualResponse, expectedResponse, out schemaErrors))
+                else if (!this.resourceCollection.ValidateResponseMatchesSchema(method, actualResponse, expectedResponse, out schemaErrors))
                 {
                     detectedErrors.AddRange(schemaErrors);
                 }
@@ -237,26 +244,24 @@
 
             if (silenceWarnings)
             {
-                return errors.Where(x => x.IsError).Count() == 0;
+                return !errors.Any(x => x.IsError);
             }
-            else
-            {
-                return errors.Length == 0;
-            }
+            return errors.Length == 0;
         }
 
         /// <summary>
         /// Scan through the document set looking for any broken links.
         /// </summary>
+        /// <param name="includeWarnings"></param>
         /// <param name="errors"></param>
         /// <returns></returns>
         public bool ValidateLinks(bool includeWarnings, out ValidationError[] errors)
         {
             List<ValidationError> foundErrors = new List<ValidationError>();
 
-            Dictionary<string, bool> orphanedPageIndex = Files.ToDictionary(x => RelativePathToFile(x, true), x => true);
+            Dictionary<string, bool> orphanedPageIndex = this.Files.ToDictionary(x => this.RelativePathToFile(x, true), x => true);
 
-            foreach (var file in Files)
+            foreach (var file in this.Files)
             {
                 ValidationError[] localErrors;
                 string [] linkedPages;
@@ -271,7 +276,7 @@
 
                 if (null != file.Annotation && file.Annotation.TocPath != null)
                 {
-                    var pageName = CleanUpDisplayName(file.DisplayName);
+                    var pageName = this.CleanUpDisplayName(file.DisplayName);
                     orphanedPageIndex[pageName] = false;
                 }
             }
@@ -311,23 +316,24 @@
             var fileInfos = sourceFolder.GetFiles(DocumentationFileExtension, SearchOption.AllDirectories);
 
             var relativeFilePaths = from fi in fileInfos
-                                    select new DocFile(SourceFolderPath, RelativePathToFile(fi.FullName), this);
-            Files = relativeFilePaths.ToArray();
+                                    select new DocFile(this.SourceFolderPath, this.RelativePathToFile(fi.FullName), this);
+            this.Files = relativeFilePaths.ToArray();
         }
 
         internal string RelativePathToFile(DocFile file, bool urlStyle = false)
         {
-            return RelativePathToFile(file.FullPath, SourceFolderPath, urlStyle);
+            return RelativePathToFile(file.FullPath, this.SourceFolderPath, urlStyle);
         }
 
         /// <summary>
         /// Generate a relative file path from the base path of the documentation
         /// </summary>
         /// <param name="fileFullName"></param>
+        /// <param name="urlStyle"></param>
         /// <returns></returns>
         internal string RelativePathToFile(string fileFullName, bool urlStyle = false)
         {
-            return RelativePathToFile(fileFullName, SourceFolderPath, urlStyle);
+            return RelativePathToFile(fileFullName, this.SourceFolderPath, urlStyle);
         }
 
         internal static string RelativePathToFile(string fileFullName, string rootFolderPath, bool urlStyle = false)
@@ -347,12 +353,15 @@
         /// <summary>
         /// Generates a relative path from deepFilePath to shallowFilePath.
         /// </summary>
-        /// <param name="fileFullName"></param>
-        /// <param name="rootFolderPath"></param>
+        /// <param name="shallowFilePath"></param>
         /// <param name="urlStyle"></param>
+        /// <param name="deepFilePath"></param>
         /// <returns></returns>
         public static string RelativePathToRootFromFile(string deepFilePath, string shallowFilePath, bool urlStyle = false)
         {
+            if (deepFilePath == null) throw new ArgumentNullException("deepFilePath");
+            if (shallowFilePath == null) throw new ArgumentNullException("shallowFilePath");
+
             // example:
             // deep file path "/auth/auth_msa.md"
             // shallow file path "template/stylesheet.css"
@@ -399,7 +408,7 @@
         private IEnumerable<T> ListFromFiles<T>(Func<DocFile, IEnumerable<T>> perFileSource)
         {
             List<T> collected = new List<T>();
-            foreach (var file in Files)
+            foreach (var file in this.Files)
             {
                 var data = perFileSource(file);
                 if (null != data)
@@ -416,7 +425,7 @@
             string pathSeperator = System.IO.Path.DirectorySeparatorChar.ToString();
             string displayName = pathSeperator + pathComponents.ComponentsJoinedByString(pathSeperator);
 
-            var query = from f in Files
+            var query = from f in this.Files
                         where f.DisplayName.Equals(displayName, StringComparison.OrdinalIgnoreCase)
                         select f;
 
@@ -437,15 +446,15 @@
 
         public DocSetEventArgs(string message, bool verbose = false)
         {
-            Message = message;
-            Verbose = verbose;
+            this.Message = message;
+            this.Verbose = verbose;
         }
 
         public DocSetEventArgs(bool verbose, string title, string format, params object[] parameters)
         {
-            Title = title;
-            Message = string.Format(format, parameters);
-            Verbose = verbose;
+            this.Title = title;
+            this.Message = string.Format(format, parameters);
+            this.Verbose = verbose;
         }
     }
 }

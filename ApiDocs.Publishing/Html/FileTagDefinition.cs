@@ -1,14 +1,13 @@
-﻿using Mustache;
-using ApiDocs.Validation;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.IO;
+﻿using Scope = Mustache.Scope;
+using TagDefinition = Mustache.TagDefinition;
+using TagParameter = Mustache.TagParameter;
 
-namespace ApiDocs.Publishing
+namespace ApiDocs.Publishing.Html
 {
+    using System.Collections.Generic;
+    using System.IO;
+    using ApiDocs.Validation;
+
     public class FileTagDefinition : TagDefinition
     {
         public FileTagDefinition()
@@ -22,9 +21,14 @@ namespace ApiDocs.Publishing
         public override void GetText(System.IO.TextWriter writer, Dictionary<string, object> arguments, Scope context)
         {
             var filenameToReplace = arguments["filename"] as string;
-
-            var relativeFileUrl = DocSet.RelativePathToRootFromFile(DestinationFile, Path.Combine(RootDestinationFolder, filenameToReplace), true);
-            writer.Write(relativeFileUrl);
+            if (null != filenameToReplace)
+            {
+                var relativeFileUrl = DocSet.RelativePathToRootFromFile(
+                    this.DestinationFile,
+                    Path.Combine(this.RootDestinationFolder, filenameToReplace),
+                    true);
+                writer.Write(relativeFileUrl);
+            }
         }
 
         protected override bool GetHasContent()

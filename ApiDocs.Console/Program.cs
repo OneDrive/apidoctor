@@ -10,6 +10,13 @@ using System.Threading.Tasks;
 
 namespace ApiDocs.ConsoleApp
 {
+    using ApiDocs.ConsoleApp.Auth;
+    using ApiDocs.Publishing.Swagger;
+    using ApiDocs.Validation.Error;
+    using ApiDocs.Validation.Params;
+    using ApiDocs.Validation.Writers;
+    using ApiDocs.Publishing.Html;
+
     class Program
     {
         private const int ExitCodeFailure = 1;
@@ -90,12 +97,12 @@ namespace ApiDocs.ConsoleApp
                     // Just print out the current values of the set parameters
                     FancyConsole.WriteLine(origCommandLineOpts.GetUsage(invokedVerb));
                     FancyConsole.WriteLine();
-                    WriteSavedValues(Program.DefaultSettings);
+                    WriteSavedValues(DefaultSettings);
                     Exit(failure: true);
                 }
                 var error = new ValidationError(ValidationErrorCode.MissingRequiredArguments, null, "Command line is missing required arguments: {0}", missingProps.ComponentsJoinedByString(", "));
                 FancyConsole.WriteLine(origCommandLineOpts.GetUsage(invokedVerb));
-                await WriteOutErrorsAndFinishTest(new ValidationError[] { error }, options.SilenceWarnings);
+                await WriteOutErrorsAndFinishTestAsync(new ValidationError[] { error }, options.SilenceWarnings);
                 Exit(failure: true);
             }
 
@@ -124,7 +131,7 @@ namespace ApiDocs.ConsoleApp
                     await PublishDocumentationAsync((PublishOptions)options);
                     break;
                 case CommandLineOptions.VerbMetadata:
-                    await CheckServiceMetadata((CheckMetadataOptions)options);
+                    await CheckServiceMetadataAsync((CheckMetadataOptions)options);
                     break;
                 case CommandLineOptions.VerbAbout:
                     PrintAboutMessage();
@@ -156,7 +163,7 @@ namespace ApiDocs.ConsoleApp
 
         private static void SetDefaultValues(SetCommandOptions setCommandOptions)
         {
-            var settings = Program.DefaultSettings;
+            var settings = DefaultSettings;
             if (setCommandOptions.ResetStoredValues)
             {
                 settings.AccessToken = null;
@@ -228,7 +235,7 @@ namespace ApiDocs.ConsoleApp
             ValidationError[] loadErrors;
             if (!set.ScanDocumentation(out loadErrors) && options.EnableVerboseOutput)
             {
-                await WriteOutErrorsAndFinishTest(loadErrors, options.SilenceWarnings);
+                await WriteOutErrorsAndFinishTestAsync(loadErrors, options.SilenceWarnings);
             }
                 
             return set;
@@ -304,7 +311,7 @@ namespace ApiDocs.ConsoleApp
             const string testName = "Check-links";
             var docset = await GetDocSetAsync(options);
 
-            TestReport.StartTestAsync(testName);
+            TestReport.StartTest(testName);
 
             ValidationError[] errors;
             docset.ValidateLinks(options.EnableVerboseOutput, out errors);
@@ -323,7 +330,7 @@ namespace ApiDocs.ConsoleApp
                 await TestReport.LogMessageAsync(message, category);
             }
 
-            return await WriteOutErrorsAndFinishTest(errors, options.SilenceWarnings, successMessage: "No link errors detected.", testName: testName);
+            return await WriteOutErrorsAndFinishTestAsync(errors, options.SilenceWarnings, successMessage: "No link errors detected.", testName: testName);
         }
 
 
@@ -442,14 +449,12 @@ namespace ApiDocs.ConsoleApp
                         continue;
 
                     var testName = string.Format("check-example: {0}", example.Metadata.MethodName, example.Metadata.ResourceType);
-                    TestReport.StartTestAsync(testName, doc.DisplayName);
-
-                    var resourceType = example.Metadata.ResourceType;
+                    TestReport.StartTest(testName, doc.DisplayName);
 
                     ValidationError[] errors;
                     docset.ResourceCollection.ValidateJsonExample(example.Metadata, example.OriginalExample, out errors);
 
-                    await WriteOutErrorsAndFinishTest(errors, options.SilenceWarnings, "   ", "No errors.", false, testName, "Warnings detected", "Errors detected");
+                    await WriteOutErrorsAndFinishTestAsync(errors, options.SilenceWarnings, "   ", "No errors.", false, testName, "Warnings detected", "Errors detected");
                     results.IncrementResultCount(errors);
                 }
             }
@@ -465,7 +470,7 @@ namespace ApiDocs.ConsoleApp
             foreach (var method in methods)
             {
                 var testName = "check-method-syntax: " + method.Identifier;
-                TestReport.StartTestAsync(testName, method.SourceFile.DisplayName);
+                TestReport.StartTest(testName, method.SourceFile.DisplayName);
 
                 if (string.IsNullOrEmpty(method.ExpectedResponse))
                 {
@@ -478,7 +483,7 @@ namespace ApiDocs.ConsoleApp
                 var expectedResponse = parser.ParseHttpResponse(method.ExpectedResponse);
                 ValidationError[] errors = ValidateHttpResponse(method, expectedResponse, options.SilenceWarnings);
 
-                await WriteOutErrorsAndFinishTest(errors, options.SilenceWarnings, "   ", "No errors.", false, testName, "Warnings detected", "Errors detected");
+                await WriteOutErrorsAndFinishTestAsync(errors, options.SilenceWarnings, "   ", "No errors.", false, testName, "Warnings detected", "Errors detected");
                 results.IncrementResultCount(errors);
             }
 
@@ -517,7 +522,7 @@ namespace ApiDocs.ConsoleApp
         }
 
 
-        private static async Task<bool> WriteOutErrorsAndFinishTest(IEnumerable<ValidationError> errors, bool silenceWarnings, string indent = "", string successMessage = null, bool endLineBeforeWriting = false, string testName = null, string warningMessage = null, string failureMessage = null)
+        private static async Task<bool> WriteOutErrorsAndFinishTestAsync(IEnumerable<ValidationError> errors, bool silenceWarnings, string indent = "", string successMessage = null, bool endLineBeforeWriting = false, string testName = null, string warningsMessage = null, string errorsMessage = null)
         {
             foreach (var error in errors)
             {
@@ -614,8 +619,8 @@ namespace ApiDocs.ConsoleApp
             if (!string.IsNullOrEmpty(options.BranchName))
             {
                 string[] validBranches = null;
-                if (null != Program.CurrentConfiguration) 
-                    validBranches = Program.CurrentConfiguration.CheckServiceEnabledBranches;
+                if (null != CurrentConfiguration) 
+                    validBranches = CurrentConfiguration.CheckServiceEnabledBranches;
 
                 if (null != validBranches && !validBranches.Contains(options.BranchName))
                 {
@@ -670,7 +675,7 @@ namespace ApiDocs.ConsoleApp
                 // Make sure we have an access token
                 if (string.IsNullOrEmpty(account.AccessToken))
                 {
-                    var tokens = await OAuthTokenGenerator.RedeemRefreshToken(account);
+                    var tokens = await OAuthTokenGenerator.RedeemRefreshTokenAsync(account);
                     if (null != tokens)
                     {
                         account.AccessToken = tokens.AccessToken;
@@ -692,7 +697,7 @@ namespace ApiDocs.ConsoleApp
                     {
                         // If there are no parameters defined, we still try to call the request as-is.
                         FancyConsole.WriteLine(FancyConsole.ConsoleCodeColor, "\r\n  Method {0} has no scenario defined. Running as-is from docs.", method.RequestMetadata.MethodName);
-                        var errors = await TestMethodWithScenario(docset, method, null, account.ServiceUrl, credentials, options.SilenceWarnings, testNamePrefix);
+                        var errors = await TestMethodWithScenarioAsync(docset, method, null, account.ServiceUrl, credentials, options.SilenceWarnings, testNamePrefix);
                         results.IncrementResultCount(errors);
                         AddPause(options);
                     }
@@ -702,7 +707,7 @@ namespace ApiDocs.ConsoleApp
                         var enabledScenarios = testScenarios.Where(s => s.Enabled || options.ForceAllScenarios);
                         if (enabledScenarios.FirstOrDefault() == null)
                         {
-                            TestReport.StartTestAsync(method.Identifier, method.SourceFile.DisplayName);
+                            TestReport.StartTest(method.Identifier, method.SourceFile.DisplayName);
                             await TestReport.FinishTestAsync(method.Identifier, AppVeyor.TestOutcome.Skipped, "All scenarios for this method were disabled.");
                             FancyConsole.Write(FancyConsole.ConsoleHeaderColor, "Skipped test: {0}.", method.Identifier);
                             FancyConsole.WriteLine(FancyConsole.ConsoleWarningColor, " All scenarios for test were disabled.", method.Identifier);
@@ -711,7 +716,7 @@ namespace ApiDocs.ConsoleApp
                         {
                             foreach (var requestSettings in enabledScenarios)
                             {
-                                var errors = await TestMethodWithScenario(docset, method, requestSettings, account.ServiceUrl, credentials, options.SilenceWarnings, testNamePrefix);
+                                var errors = await TestMethodWithScenarioAsync(docset, method, requestSettings, account.ServiceUrl, credentials, options.SilenceWarnings, testNamePrefix);
                                 results.IncrementResultCount(errors);
                                 AddPause(options);
                             }
@@ -762,7 +767,7 @@ namespace ApiDocs.ConsoleApp
             }
         }
 
-        private static async Task<ValidationError[]> TestMethodWithScenario(DocSet docset, MethodDefinition method, ScenarioDefinition scenario, string rootUrl, AuthenicationCredentials credentials, bool silenceWarnings, string testNamePrefix)
+        private static async Task<ValidationError[]> TestMethodWithScenarioAsync(DocSet docset, MethodDefinition method, ScenarioDefinition scenario, string rootUrl, AuthenicationCredentials credentials, bool silenceWarnings, string testNamePrefix)
         {
             string testName = testNamePrefix + method.Identifier;
             string indentLevel = "";
@@ -776,7 +781,7 @@ namespace ApiDocs.ConsoleApp
             }
 
             FancyConsole.VerboseWriteLine("");
-            TestReport.StartTestAsync(testName, method.SourceFile.DisplayName);
+            TestReport.StartTest(testName, method.SourceFile.DisplayName);
 
             // Generate the tested request by "previewing" the request and executing
             // all test-setup procedures
@@ -786,7 +791,7 @@ namespace ApiDocs.ConsoleApp
             // Check to see if an error occured building the request, and abort if so.
             if (requestPreviewResult.IsWarningOrError)
             {
-                await WriteOutErrorsAndFinishTest(requestPreviewResult.Messages, silenceWarnings, indentLevel + "  ", testName: testName);
+                await WriteOutErrorsAndFinishTestAsync(requestPreviewResult.Messages, silenceWarnings, indentLevel + "  ", testName: testName);
                 return requestPreviewResult.Messages;
             }
 
@@ -817,7 +822,7 @@ namespace ApiDocs.ConsoleApp
 
 
 
-            await WriteOutErrorsAndFinishTest(validateResponse, silenceWarnings, indentLevel, "No errors.", false, testName);
+            await WriteOutErrorsAndFinishTestAsync(validateResponse, silenceWarnings, indentLevel, "No errors.", false, testName);
             
             return validateResponse;
         }
@@ -843,7 +848,7 @@ namespace ApiDocs.ConsoleApp
                     publisher = new HtmlMustacheWriter(docs, options.TemplateFolder);
                     break;
                 case PublishOptions.PublishFormat.Swagger2:
-                    publisher = new ApiDocs.Validation.Writers.SwaggerWriter(docs, Program.DefaultSettings.ServiceUrl)
+                    publisher = new SwaggerWriter(docs, DefaultSettings.ServiceUrl)
                     {
                         Title = options.Title,
                         Description = options.Description,
@@ -880,13 +885,13 @@ namespace ApiDocs.ConsoleApp
         }
 
 
-        private static async Task<List<ApiDocs.Validation.OData.Schema>> TryGetMetadataSchemas(CheckMetadataOptions options)
+        private static async Task<List<ApiDocs.Validation.OData.Schema>> TryGetMetadataSchemasAsync(CheckMetadataOptions options)
         {
             if (string.IsNullOrEmpty(options.ServiceMetadataLocation))
             {
-                if (!string.IsNullOrEmpty(Program.DefaultSettings.ServiceUrl))
+                if (!string.IsNullOrEmpty(DefaultSettings.ServiceUrl))
                 {
-                    options.ServiceMetadataLocation = Program.DefaultSettings.ServiceUrl + "/$metadata";
+                    options.ServiceMetadataLocation = DefaultSettings.ServiceUrl + "/$metadata";
                 }
                 else
                 {
@@ -897,17 +902,17 @@ namespace ApiDocs.ConsoleApp
 
             FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, "Loading service metadata from '{0}'...", options.ServiceMetadataLocation);
 
-            Uri metadataUrl;
-            List<ApiDocs.Validation.OData.Schema> schemas = new List<Validation.OData.Schema>();
+            List<ApiDocs.Validation.OData.Schema> schemas;
             try
             {
+                Uri metadataUrl;
                 if (Uri.TryCreate(options.ServiceMetadataLocation, UriKind.Absolute, out metadataUrl))
                 {
-                    schemas = await ApiDocs.Validation.OData.ODataParser.ReadSchemaFromMetadataUrl(metadataUrl);
+                    schemas = await ApiDocs.Validation.OData.ODataParser.ReadSchemaFromMetadataUrlAsync(metadataUrl);
                 }
                 else
                 {
-                    schemas = await ApiDocs.Validation.OData.ODataParser.ReadSchemaFromFile(options.ServiceMetadataLocation);
+                    schemas = await ApiDocs.Validation.OData.ODataParser.ReadSchemaFromFileAsync(options.ServiceMetadataLocation);
                 }
             }
             catch (Exception ex)
@@ -919,10 +924,10 @@ namespace ApiDocs.ConsoleApp
             return schemas;
         }
 
-        private static async Task<bool> CheckServiceMetadata(CheckMetadataOptions options)
+        private static async Task<bool> CheckServiceMetadataAsync(CheckMetadataOptions options)
         {
 
-            List<ApiDocs.Validation.OData.Schema> schemas = await TryGetMetadataSchemas(options);
+            List<ApiDocs.Validation.OData.Schema> schemas = await TryGetMetadataSchemasAsync(options);
             if (null == schemas)
                 return false;
 
@@ -931,7 +936,7 @@ namespace ApiDocs.ConsoleApp
             var docSet = await GetDocSetAsync(options);
 
             const string testname = "validate-service-metadata";
-            TestReport.StartTestAsync(testname);
+            TestReport.StartTest(testname);
 
             List<ResourceDefinition> foundResources = ApiDocs.Validation.OData.ODataParser.GenerateResourcesFromSchemas(schemas);
             CheckResults results = new CheckResults();
@@ -954,7 +959,7 @@ namespace ApiDocs.ConsoleApp
 
                 collectedErrors.AddRange(errors);
 
-                await WriteOutErrorsAndFinishTest(errors, options.SilenceWarnings, successMessage: " no errors.");
+                await WriteOutErrorsAndFinishTestAsync(errors, options.SilenceWarnings, successMessage: " no errors.");
             }
 
             if (options.IgnoreWarnings)

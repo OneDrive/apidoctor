@@ -2,10 +2,13 @@ namespace ApiDocs.Validation
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Linq;
     using System.Text;
     using System.Threading.Tasks;
     using System.IO;
+    using ApiDocs.Validation.Error;
+    using ApiDocs.Validation.TableSpec;
 
     /// <summary>
     /// A documentation file that may contain one more resources or API methods
@@ -16,15 +19,14 @@ namespace ApiDocs.Validation
         private const string PageAnnotationType = "#page.annotation";
 
         #region Instance Variables
-        protected bool m_hasScanRun;
-        protected string m_BasePath;
-        protected List<MarkdownDeep.Block> m_CodeBlocks = new List<MarkdownDeep.Block>();
-        protected List<ResourceDefinition> m_Resources = new List<ResourceDefinition>();
-        protected List<MethodDefinition> m_Requests = new List<MethodDefinition>();
-        protected List<ExampleDefinition> m_JsonExamples = new List<ExampleDefinition>();
-        protected List<string> m_Bookmarks = new List<string>();
+        protected bool HasScanRun;
+        protected string BasePath;
 
-//        protected List<MarkdownDeep.LinkInfo> m_Links = new List<MarkdownDeep.LinkInfo>();
+        private readonly List<ResourceDefinition> resources = new List<ResourceDefinition>();
+        private readonly List<MethodDefinition> requests = new List<MethodDefinition>();
+        private readonly List<ExampleDefinition> examples = new List<ExampleDefinition>();
+        private readonly List<string> bookmarks = new List<string>();
+
         #endregion
 
         #region Properties
@@ -50,15 +52,15 @@ namespace ApiDocs.Validation
 
         public ResourceDefinition[] Resources
         {
-            get { return m_Resources.ToArray(); }
+            get { return this.resources.ToArray(); }
         }
 
         public MethodDefinition[] Requests
         {
-            get { return m_Requests.ToArray(); }
+            get { return this.requests.ToArray(); }
         }
 
-        public ExampleDefinition[] Examples { get { return m_JsonExamples.ToArray(); } }
+        public ExampleDefinition[] Examples { get { return this.examples.ToArray(); } }
 
         public AuthScopeDefinition[] AuthScopes { get; protected set; }
 
@@ -68,7 +70,7 @@ namespace ApiDocs.Validation
         {
             get
             {
-                var query = from p in MarkdownLinks
+                var query = from p in this.MarkdownLinks
                             select p.def.url;
                 return query.ToArray();
             }
@@ -89,17 +91,16 @@ namespace ApiDocs.Validation
         #region Constructor
         protected DocFile()
         {
-            ContentOutline = new List<string>();
-            m_Bookmarks = new List<string>();
+            this.ContentOutline = new List<string>();
         }
 
         public DocFile(string basePath, string relativePath, DocSet parent) 
             : this()
         {
-            m_BasePath = basePath;
-            FullPath = Path.Combine(basePath, relativePath.Substring(1));
-            DisplayName = relativePath;
-            Parent = parent;
+            this.BasePath = basePath;
+            this.FullPath = Path.Combine(basePath, relativePath.Substring(1));
+            this.DisplayName = relativePath;
+            this.Parent = parent;
         }
 
         #endregion
@@ -108,13 +109,15 @@ namespace ApiDocs.Validation
 
         protected void TransformMarkdownIntoBlocksAndLinks(string inputMarkdown)
         {
-            MarkdownDeep.Markdown md = new MarkdownDeep.Markdown();
-            md.SafeMode = false;
-            md.ExtraMode = true;
+            MarkdownDeep.Markdown md = new MarkdownDeep.Markdown
+            {
+                SafeMode = false,
+                ExtraMode = true
+            };
 
-            HtmlContent = md.Transform(inputMarkdown);
-            OriginalMarkdownBlocks = md.Blocks;
-            MarkdownLinks = new List<MarkdownDeep.LinkInfo>(md.FoundLinks);
+            this.HtmlContent = md.Transform(inputMarkdown);
+            this.OriginalMarkdownBlocks = md.Blocks;
+            this.MarkdownLinks = new List<MarkdownDeep.LinkInfo>(md.FoundLinks);
         }
 
         protected virtual string GetContentsOfFile()
@@ -131,27 +134,27 @@ namespace ApiDocs.Validation
         /// </summary>
         public bool Scan(out ValidationError[] errors)
         {
-            m_hasScanRun = true;
+            this.HasScanRun = true;
             List<ValidationError> detectedErrors = new List<ValidationError>();
             
             try
             {
-                TransformMarkdownIntoBlocksAndLinks(GetContentsOfFile());
+                this.TransformMarkdownIntoBlocksAndLinks(this.GetContentsOfFile());
             }
             catch (IOException ioex)
             {
-                detectedErrors.Add(new ValidationError(ValidationErrorCode.ErrorOpeningFile, DisplayName, "Error reading file contents: {0}", ioex.Message));
+                detectedErrors.Add(new ValidationError(ValidationErrorCode.ErrorOpeningFile, this.DisplayName, "Error reading file contents: {0}", ioex.Message));
                 errors = detectedErrors.ToArray();
                 return false;
             }
             catch (Exception ex)
             {
-                detectedErrors.Add(new ValidationError(ValidationErrorCode.ErrorReadingFile, DisplayName, "Error reading file contents: {0}", ex.Message));
+                detectedErrors.Add(new ValidationError(ValidationErrorCode.ErrorReadingFile, this.DisplayName, "Error reading file contents: {0}", ex.Message));
                 errors = detectedErrors.ToArray();
                 return false;
             }
 
-            return ParseMarkdownBlocks(out errors);
+            return this.ParseMarkdownBlocks(out errors);
         }
 
         private static bool IsHeaderBlock(MarkdownDeep.Block block, int maxDepth = 2)
@@ -184,9 +187,9 @@ namespace ApiDocs.Validation
             if (block == null) return string.Empty;
             if (block.Content == null) return string.Empty;
 
-            const int PreviewLength = 35;
+            const int previewLength = 35;
 
-            string contentPreview = block.Content.Length > PreviewLength ? block.Content.Substring(0, PreviewLength) : block.Content;
+            string contentPreview = block.Content.Length > previewLength ? block.Content.Substring(0, previewLength) : block.Content;
             contentPreview = contentPreview.Replace('\n', ' ').Replace('\r', ' ');
             return contentPreview;
         }
@@ -206,19 +209,18 @@ namespace ApiDocs.Validation
 
             MarkdownDeep.Block previousHeaderBlock = null;
 
-            List<object> StuffFoundInThisDoc = new List<object>();
+            List<object> foundElements = new List<object>();
 
-            for (int i = 0; i < OriginalMarkdownBlocks.Length; i++)
+            for (int i = 0; i < this.OriginalMarkdownBlocks.Length; i++)
             {
-                var previousBlock = (i > 0) ? OriginalMarkdownBlocks[i - 1] : null;
-                var block = OriginalMarkdownBlocks[i];
+                var block = this.OriginalMarkdownBlocks[i];
 
-                ContentOutline.Add(string.Format("{0} - {1}", block.BlockType, PreviewOfBlockContent(block)));
+                this.ContentOutline.Add(string.Format("{0} - {1}", block.BlockType, this.PreviewOfBlockContent(block)));
 
                 // Capture GitHub Flavored Markdown Bookmarks
                 if (IsHeaderBlock(block, 6))
                 {
-                    AddBookmarkForHeader(block.Content);
+                    this.AddBookmarkForHeader(block.Content);
                 }
 
                 // Capture h1 and/or p element to be used as the title and description for items on this page
@@ -244,9 +246,9 @@ namespace ApiDocs.Validation
                 {
                     // If the next block is a codeblock we've found a metadata + codeblock pair
                     MarkdownDeep.Block nextBlock = null;
-                    if (i + 1 < OriginalMarkdownBlocks.Length)
+                    if (i + 1 < this.OriginalMarkdownBlocks.Length)
                     {
-                        nextBlock = OriginalMarkdownBlocks[i + 1];
+                        nextBlock = this.OriginalMarkdownBlocks[i + 1];
                     }
                     if (null != nextBlock && nextBlock.BlockType == MarkdownDeep.BlockType.codeblock)
                     {
@@ -254,11 +256,11 @@ namespace ApiDocs.Validation
                         ItemDefinition definition = null;
                         try
                         {
-                            definition = ParseCodeBlock(block, nextBlock);
+                            definition = this.ParseCodeBlock(block, nextBlock);
                         }
                         catch (Exception ex)
                         {
-                            detectedErrors.Add(new ValidationError(ValidationErrorCode.MarkdownParserError, DisplayName, ex.Message));
+                            detectedErrors.Add(new ValidationError(ValidationErrorCode.MarkdownParserError, this.DisplayName, ex.Message));
                         }
 
                         if (null != definition)
@@ -267,29 +269,29 @@ namespace ApiDocs.Validation
                             definition.Title = methodTitle;
                             definition.Description = methodDescription;
 
-                            if (!StuffFoundInThisDoc.Contains(definition))
+                            if (!foundElements.Contains(definition))
                             {
-                                StuffFoundInThisDoc.Add(definition);
+                                foundElements.Add(definition);
                             }
                         }
                     }
-                    else if (null == Annotation)
+                    else if (null == this.Annotation)
                     {
                         // See if this is the page-level annotation
-                        var annotation = ParsePageAnnotation(block);
+                        var annotation = this.ParsePageAnnotation(block);
                         if (null != annotation)
                         {
-                            Annotation = annotation;
-                            if (string.IsNullOrEmpty(Annotation.Title))
+                            this.Annotation = annotation;
+                            if (string.IsNullOrEmpty(this.Annotation.Title))
                             {
-                                Annotation.Title = (from b in OriginalMarkdownBlocks where IsHeaderBlock(b, 1) select b.Content).FirstOrDefault();
+                                this.Annotation.Title = (from b in this.OriginalMarkdownBlocks where IsHeaderBlock(b, 1) select b.Content).FirstOrDefault();
                             }
                         }
                     }
                 }
                 else if (block.BlockType == MarkdownDeep.BlockType.table_spec)
                 {
-                    MarkdownDeep.Block blockBeforeTable = (i - 1 >= 0) ? OriginalMarkdownBlocks[i - 1] : null;
+                    MarkdownDeep.Block blockBeforeTable = (i - 1 >= 0) ? this.OriginalMarkdownBlocks[i - 1] : null;
                     if (null == blockBeforeTable) continue;
 
                     ValidationError[] parseErrors;
@@ -299,7 +301,7 @@ namespace ApiDocs.Validation
                     detectedErrors.Add(new ValidationMessage(null, "Found table: {0}. Rows:\r\n{1}", table.Type,
                         (from r in table.Rows select Newtonsoft.Json.JsonConvert.SerializeObject(r, Newtonsoft.Json.Formatting.Indented)).ComponentsJoinedByString(" ,\r\n")));
 
-                    StuffFoundInThisDoc.Add(table);
+                    foundElements.Add(table);
                 }
 
                 if (block.IsHeaderBlock())
@@ -309,7 +311,7 @@ namespace ApiDocs.Validation
             }
 
             ValidationError[] postProcessingErrors;
-            PostProcessFoundElements(StuffFoundInThisDoc, out postProcessingErrors);
+            this.PostProcessFoundElements(foundElements, out postProcessingErrors);
             detectedErrors.AddRange(postProcessingErrors);
             
             errors = detectedErrors.ToArray();
@@ -324,13 +326,13 @@ namespace ApiDocs.Validation
         /// <returns></returns>
         private static string StripHtmlCommentTags(string content)
         {
-            const string StartComment = "<!--";
-            const string EndComment = "-->";
+            const string startComment = "<!--";
+            const string endComment = "-->";
 
-            int index = content.IndexOf(StartComment);
+            int index = content.IndexOf(startComment, StringComparison.Ordinal);
             if (index >= 0)
-                content = content.Substring(index + StartComment.Length);
-            index = content.IndexOf(EndComment);
+                content = content.Substring(index + startComment.Length);
+            index = content.IndexOf(endComment, StringComparison.Ordinal);
             if (index >= 0)
                 content = content.Substring(0, index);
 
@@ -345,8 +347,9 @@ namespace ApiDocs.Validation
                 if (null != response && response.Type.Equals(PageAnnotationType, StringComparison.OrdinalIgnoreCase))
                     return response;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Debug.WriteLine("Ignored page annotation [{0}]: {1}", ex.Message, block.Content);
             }
             return null;
         }
@@ -354,7 +357,7 @@ namespace ApiDocs.Validation
         private void AddBookmarkForHeader(string headerText)
         {
  	        string bookmark = headerText.ToLowerInvariant().Replace(' ', '-').Replace(".", "");
-            m_Bookmarks.Add(bookmark);
+            this.bookmarks.Add(bookmark);
         }
 
         /// <summary>
@@ -362,7 +365,7 @@ namespace ApiDocs.Validation
         /// </summary>
         /// <param name="elementsFoundInDocument"></param>
         /// <param name="postProcessingErrors"></param>
-        private void PostProcessFoundElements(List<object> elementsFoundInDocument, out ValidationError[] postProcessingErrors)
+        private void PostProcessFoundElements(List<object> elements, out ValidationError[] postProcessingErrors)
         {
             /*
             if FoundMethods == 1 then
@@ -383,6 +386,8 @@ namespace ApiDocs.Validation
 
             List<ValidationError> detectedErrors = new List<ValidationError>();
 
+            var elementsFoundInDocument = elements as IList<object> ?? elements.ToList();
+
             var foundMethods = from s in elementsFoundInDocument
                                where s is MethodDefinition
                                select (MethodDefinition)s;
@@ -395,16 +400,16 @@ namespace ApiDocs.Validation
                                    where s is TableDefinition
                                    select (TableDefinition)s;
 
-            PostProcessAuthScopes(elementsFoundInDocument);
+            this.PostProcessAuthScopes(elementsFoundInDocument);
             PostProcessResources(foundResources, foundTables);
-            PostProcessMethods(foundMethods, foundTables, detectedErrors);
+            this.PostProcessMethods(foundMethods, foundTables, detectedErrors);
 
             postProcessingErrors = detectedErrors.ToArray();
         }
 
-        private void PostProcessAuthScopes(List<object> StuffFoundInThisDoc)
+        private void PostProcessAuthScopes(IList<object> foundElements)
         {
-            var authScopeTables = (from s in StuffFoundInThisDoc
+            var authScopeTables = (from s in foundElements
                                    where s is TableDefinition && ((TableDefinition)s).Type == TableBlockType.AuthScopes
                                    select ((TableDefinition)s));
 
@@ -413,7 +418,7 @@ namespace ApiDocs.Validation
             {
                 foundScopes.AddRange(table.Rows.Cast<AuthScopeDefinition>());
             }
-            AuthScopes = foundScopes.ToArray();
+            this.AuthScopes = foundScopes.ToArray();
         }
 
         private static void PostProcessResources(IEnumerable<ResourceDefinition> foundResources, IEnumerable<TableDefinition> foundTables)
@@ -443,7 +448,7 @@ namespace ApiDocs.Validation
 
             if (totalMethods == 0)
             {
-                SetFoundTablesForFile(foundTables);
+                this.SetFoundTablesForFile(foundTables);
             }
             else if (totalMethods == 1)
             {
@@ -455,7 +460,7 @@ namespace ApiDocs.Validation
                 // TODO: Figure out how to map stuff when more than one method exists
                 if (null != errors)
                 {
-                    errors.Add(new ValidationWarning(ValidationErrorCode.UnmappedDocumentElements, "Unable to map elements in file {0}", DisplayName));
+                    errors.Add(new ValidationWarning(ValidationErrorCode.UnmappedDocumentElements, "Unable to map elements in file {0}", this.DisplayName));
                     
                     var unmappedMethods = (from m in foundMethods select m.RequestMetadata.MethodName).ComponentsJoinedByString("\r\n");
                     if (!string.IsNullOrEmpty(unmappedMethods)) 
@@ -511,7 +516,7 @@ namespace ApiDocs.Validation
                 switch (table.Type)
                 {
                     case TableBlockType.ErrorCodes:
-                        ErrorCodes = table.Rows.Cast<ErrorDefinition>().ToArray();
+                        this.ErrorCodes = table.Rows.Cast<ErrorDefinition>().ToArray();
                         break;
                 }
             }
@@ -563,15 +568,15 @@ namespace ApiDocs.Validation
                 case CodeBlockType.Resource:
                     {
                         var resource = new ResourceDefinition(annotation, code.Content, this);
-                        m_Resources.Add(resource);
+                        this.resources.Add(resource);
                         return resource;
                     }
                 case CodeBlockType.Request:
                     {
                         var method = MethodDefinition.FromRequest(code.Content, annotation, this);
                         if (string.IsNullOrEmpty(method.Identifier))
-                            method.Identifier = string.Format("{0} #{1}", DisplayName, m_Requests.Count);
-                        m_Requests.Add(method);
+                            method.Identifier = string.Format("{0} #{1}", this.DisplayName, this.requests.Count);
+                        this.requests.Add(method);
                         return method;
                     }
 
@@ -581,11 +586,11 @@ namespace ApiDocs.Validation
                         if (!string.IsNullOrEmpty(annotation.MethodName))
                         {
                             // Look up paired request by name
-                            pairedRequest = (from m in m_Requests where m.Identifier == annotation.MethodName select m).FirstOrDefault();
+                            pairedRequest = (from m in this.requests where m.Identifier == annotation.MethodName select m).FirstOrDefault();
                         }
                         else
                         {
-                            pairedRequest = m_Requests.Last();
+                            pairedRequest = this.requests.Last();
                         }
 
                         if (null == pairedRequest)
@@ -599,14 +604,14 @@ namespace ApiDocs.Validation
                 case CodeBlockType.Example:
                     {
                         var example = new ExampleDefinition(annotation, code.Content, this);
-                        m_JsonExamples.Add(example);
+                        this.examples.Add(example);
                         return example;
                     }
                 case CodeBlockType.Ignored:
                     return null;
                 case CodeBlockType.SimulatedResponse:
                     {
-                        var method = m_Requests.Last();
+                        var method = this.requests.Last();
                         method.AddSimulatedResponse(code.Content, annotation);
                         return method;
                     }
@@ -621,10 +626,6 @@ namespace ApiDocs.Validation
             }
         }
 
-        public MarkdownDeep.Block[] CodeBlocks
-        {
-            get { return m_CodeBlocks.ToArray(); }
-        }
         #endregion
 
         #region Link Verification
@@ -632,24 +633,25 @@ namespace ApiDocs.Validation
         public bool ValidateNoBrokenLinks(bool includeWarnings, out ValidationError[] errors)
         {
             string[] files;
-            return ValidateNoBrokenLinks(includeWarnings, out errors, out files);
+            return this.ValidateNoBrokenLinks(includeWarnings, out errors, out files);
         }
 
         /// <summary>
         /// Checks all links detected in the source document to make sure they are valid.
         /// </summary>
+        /// <param name="includeWarnings"></param>
         /// <param name="errors">Information about broken links</param>
+        /// <param name="linkedDocFiles"></param>
         /// <returns>True if all links are valid. Otherwise false</returns>
         public bool ValidateNoBrokenLinks(bool includeWarnings, out ValidationError[] errors, out string[] linkedDocFiles)
         {
-            if (!m_hasScanRun)
+            if (!this.HasScanRun)
                 throw new InvalidOperationException("Cannot validate links until Scan() is called.");
 
             List<string> linkedPages = new List<string>();
-            string relativeFileName = null;
 
             var foundErrors = new List<ValidationError>();
-            foreach (var link in MarkdownLinks)
+            foreach (var link in this.MarkdownLinks)
             {
                 if (null == link.def)
                 {
@@ -657,7 +659,8 @@ namespace ApiDocs.Validation
                     continue;
                 }
 
-                var result = VerifyLink(FullPath, link.def.url, m_BasePath, out relativeFileName);
+                string relativeFileName;
+                var result = this.VerifyLink(this.FullPath, link.def.url, this.BasePath, out relativeFileName);
                 switch (result)
                 {
                     case LinkValidationResult.BookmarkSkipped:
@@ -724,7 +727,7 @@ namespace ApiDocs.Validation
                 else if (linkUrl.StartsWith("#"))
                 {
                     string bookmarkName = linkUrl.Substring(1);
-                    if (m_Bookmarks.Contains(bookmarkName))
+                    if (this.bookmarks.Contains(bookmarkName))
                     {
                         return LinkValidationResult.Valid;
                     }
@@ -735,7 +738,7 @@ namespace ApiDocs.Validation
                 }
                 else
                 {
-                    return VerifyRelativeLink(sourceFile, linkUrl, docSetBasePath, out relativeFileName);
+                    return this.VerifyRelativeLink(sourceFile, linkUrl, docSetBasePath, out relativeFileName);
                 }
             }
             else
@@ -746,6 +749,10 @@ namespace ApiDocs.Validation
 
         protected virtual LinkValidationResult VerifyRelativeLink(FileInfo sourceFile, string linkUrl, string docSetBasePath, out string relativeFileName)
         {
+            if (sourceFile == null) throw new ArgumentNullException("sourceFile");
+            if (linkUrl == null) throw new ArgumentNullException("linkUrl");
+            if (docSetBasePath == null) throw new ArgumentNullException("docSetBasePath");
+
             relativeFileName = null;
             var rootPath = sourceFile.DirectoryName;
             string bookmarkName = null;
@@ -775,17 +782,17 @@ namespace ApiDocs.Validation
                 return LinkValidationResult.FileNotFound;
             }
 
-            relativeFileName = Parent.RelativePathToFile(info.FullName, urlStyle: true);
+            relativeFileName = this.Parent.RelativePathToFile(info.FullName, urlStyle: true);
 
             if (bookmarkName != null)
             {
                 // See if that bookmark exists in the target document, assuming we know about it
-                var otherDocFile = Parent.LookupFileForPath(relativeFileName);
+                var otherDocFile = this.Parent.LookupFileForPath(relativeFileName);
                 if (otherDocFile == null)
                 {
                     return LinkValidationResult.BookmarkSkippedDocFileNotFound;
                 }
-                else if (!otherDocFile.m_Bookmarks.Contains(bookmarkName))
+                else if (!otherDocFile.bookmarks.Contains(bookmarkName))
                 {
                     return LinkValidationResult.BookmarkMissing;
                 }

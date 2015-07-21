@@ -13,10 +13,12 @@ namespace ApiDocs.Validation.OData
 
         internal static EntitySet FromXml(XElement xml)
         {
-            if (xml.Name.LocalName != EntitySet.ElementName) throw new ArgumentException("xml was not an EntitySet element");
-            var obj = new EntitySet();
-            obj.Name = xml.AttributeValue("Name");
-            obj.EntityType = xml.AttributeValue("EntityType");
+            if (xml.Name.LocalName != ElementName) throw new ArgumentException("xml was not an EntitySet element");
+            var obj = new EntitySet
+            {
+                Name = xml.AttributeValue("Name"),
+                EntityType = xml.AttributeValue("EntityType")
+            };
             return obj;
         }
 

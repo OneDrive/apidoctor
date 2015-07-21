@@ -1,24 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ApiDocs.Validation
+﻿namespace ApiDocs.Validation.TableSpec
 {
+    using System.Collections.Generic;
+    using System.Linq;
+    using ApiDocs.Validation.Error;
+
     /// <summary>
     /// Manages to convert between a tablespec MarkdownDeep.Block object and useful object model
     /// concepts that we know how to deal with
     /// </summary>
     internal class TableSpecConverter
     {
-
         /// <summary>
         /// Convert a tablespec block into one of our internal object model representations
         /// </summary>
         /// <param name="tableSpecBlock"></param>
         /// <param name="lastHeaderBlock"></param>
-        /// <param name="data"></param>
+        /// <param name="errors"></param>
         /// <returns></returns>
         public static TableDefinition ParseTableSpec(MarkdownDeep.Block tableSpecBlock, MarkdownDeep.Block lastHeaderBlock, out ValidationError[] errors)
         {
@@ -170,13 +167,9 @@ namespace ApiDocs.Validation
             
         private static TableBlockType CommonHeaderMatch(string lastHeader)
         {
-            foreach (var key in CommonHeaderContentMap.Keys)
-            {
-                if (lastHeader.ContainsIgnoreCase(key))
-                    return CommonHeaderContentMap[key];
-            }
-
-            return TableBlockType.Unknown;
+            return (from key in CommonHeaderContentMap.Keys 
+                    where lastHeader.ContainsIgnoreCase(key) 
+                    select CommonHeaderContentMap[key]).FirstOrDefault();
         }
 
         private static TableBlockType TableShapeMatch(MarkdownDeep.IMarkdownTable table)

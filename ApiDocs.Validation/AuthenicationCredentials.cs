@@ -19,10 +19,10 @@ namespace ApiDocs.Validation
             if (String.IsNullOrEmpty(authenicationToken)) { return CreateNoCredentials(); }
             if (authenicationToken.StartsWith("t="))
             {
-                return AuthenicationCredentials.CreateWLIDCredentials(authenicationToken);
+                return CreateFirstPartyCredentials(authenicationToken);
             }
 
-            return AuthenicationCredentials.CreateBearerCredentials(authenicationToken);
+            return CreateBearerCredentials(authenicationToken);
         }
 
         public static AuthenicationCredentials CreateBearerCredentials(string authenicationToken)
@@ -31,10 +31,10 @@ namespace ApiDocs.Validation
             return new BearerCredentials { AuthenicationToken = "Bearer " + authenicationToken };
         }
 
-        public static AuthenicationCredentials CreateWLIDCredentials(string authenicationToken)
+        public static AuthenicationCredentials CreateFirstPartyCredentials(string authenicationToken)
         {
             if (String.IsNullOrEmpty(authenicationToken)) { return CreateNoCredentials(); }
-            return new WLIDCredentials { AuthenicationToken = "WLID1.1 " + authenicationToken };
+            return new FirstPartyCredentials { AuthenicationToken = "WLID1.1 " + authenicationToken };
         }
 
         public static AuthenicationCredentials CreateNoCredentials()
@@ -50,9 +50,9 @@ namespace ApiDocs.Validation
         public override string AuthenicationToken { get; internal set; }
     }
 
-    public class WLIDCredentials : AuthenicationCredentials
+    public class FirstPartyCredentials : AuthenicationCredentials
     {
-        internal WLIDCredentials()
+        internal FirstPartyCredentials()
         {
             this.FirstPartyApplicationHeaderValue = "SaveToOneDriveWidget";
         }

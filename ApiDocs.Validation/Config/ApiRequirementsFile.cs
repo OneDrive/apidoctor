@@ -1,14 +1,9 @@
-﻿using System;
-using Newtonsoft.Json;
-
-namespace ApiDocs.Validation
+﻿namespace ApiDocs.Validation.Config
 {
+    using Newtonsoft.Json;
+
     public class ApiRequirementsFile : ConfigFile
     {
-        public ApiRequirementsFile()
-        {
-        }
-
         [JsonProperty("api-requirements")]
         public ApiRequirements ApiRequirements {get;set;}
 
@@ -16,7 +11,7 @@ namespace ApiDocs.Validation
         {
             get
             {
-                return ApiRequirements != null;
+                return this.ApiRequirements != null;
             }
         }
     }

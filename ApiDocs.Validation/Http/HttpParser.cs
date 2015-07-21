@@ -48,7 +48,7 @@
                         }
 
                         // Parse each header
-                        int split = line.IndexOf(": ");
+                        int split = line.IndexOf(": ", StringComparison.Ordinal);
                         if (split < 1) 
                             throw new ArgumentException("requestString contains an invalid header definition");
 
@@ -102,7 +102,7 @@
                         }
 
                         // Parse each header
-                        int split = line.IndexOf(": ");
+                        int split = line.IndexOf(": ", StringComparison.Ordinal);
                         if (split < 1) throw new ArgumentException("requestString contains an invalid header definition");
 
                         var headerName = line.Substring(0, split);

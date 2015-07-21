@@ -8,7 +8,10 @@ using System.Threading.Tasks;
 
 namespace ApiDocs.ConsoleApp
 {
-    public class AppConfigFile : ApiDocs.Validation.ConfigFile
+    using ApiDocs.ConsoleApp.Auth;
+    using ApiDocs.Validation.Config;
+
+    public class AppConfigFile : ConfigFile
     {
         [JsonProperty("accounts")]
         public Account[] Accounts { get; set; }
@@ -19,7 +22,7 @@ namespace ApiDocs.ConsoleApp
 
         public override bool IsValid
         {
-            get { return null != Accounts || null != CheckServiceEnabledBranches; }
+            get { return null != this.Accounts || null != this.CheckServiceEnabledBranches; }
         }
     }
 }

@@ -1,15 +1,15 @@
-﻿namespace ApiDocs.Validation
+﻿namespace ApiDocs.Validation.Writers
 {
     using System;
-    using System.IO;
     using System.Collections.Generic;
-    using System.Threading.Tasks;
-    using System.Diagnostics;
     using System.ComponentModel;
-    using MarkdownDeep;
+    using System.Diagnostics;
+    using System.IO;
     using System.Linq;
+    using System.Threading.Tasks;
+    using ApiDocs.Validation.Error;
 
-	public abstract class DocumentPublisher
+    public abstract class DocumentPublisher
 	{
         #region Properties
         /// <summary>
@@ -49,23 +49,23 @@
 
         #endregion
 
-        protected List<string> scannableExtensions;
-        protected List<string> ignoredPaths;
-        protected string _outputFolder;
+        protected List<string> ScannableExtensions;
+        protected List<string> IgnoredPaths;
+        protected string OutputFolder;
 
         #region Constructors
 
-        public DocumentPublisher(DocSet docset)
+	    protected DocumentPublisher(DocSet docset)
 		{
-            Documents = docset;
-            RootPath = new DirectoryInfo(docset.SourceFolderPath).FullName;
-            if (!RootPath.EndsWith(Path.DirectorySeparatorChar.ToString()))
-                RootPath = string.Concat(RootPath, Path.DirectorySeparatorChar);
+	        this.Documents = docset;
+	        this.RootPath = new DirectoryInfo(docset.SourceFolderPath).FullName;
+            if (!this.RootPath.EndsWith(Path.DirectorySeparatorChar.ToString()))
+                this.RootPath = string.Concat(this.RootPath, Path.DirectorySeparatorChar);
 
-            SourceFileExtensions = ".md,.mdown";
-            SkipPaths = "\\.git;\\.gitignore;\\.gitattributes";
-            OutputLineEndings = LineEndings.Default;
-            Messages = new BindingList<ValidationError>();
+	        this.SourceFileExtensions = ".md,.mdown";
+	        this.SkipPaths = "\\.git;\\.gitignore;\\.gitattributes";
+	        this.OutputLineEndings = LineEndings.Default;
+	        this.Messages = new BindingList<ValidationError>();
 		}
         #endregion
 
@@ -79,12 +79,12 @@
         /// <param name="message">Message.</param>
         protected void LogMessage(ValidationError message)
         {
-            var eventHandler = NewMessage;
+            var eventHandler = this.NewMessage;
             if (null != eventHandler)
             {
                 eventHandler(this, new ValidationMessageEventArgs(message));
             }
-            Messages.Add(message);
+            this.Messages.Add(message);
         }
         #endregion
 
@@ -95,29 +95,30 @@
         /// <returns></returns>
 		public virtual async Task PublishToFolderAsync(string outputFolder)
 		{
-            Messages.Clear();
+            this.Messages.Clear();
 
-            _outputFolder = outputFolder;
+            this.OutputFolder = outputFolder;
 
             DirectoryInfo destination = new DirectoryInfo(outputFolder);
-            SnapVariables();
+            this.SnapVariables();
 
-			await PublishFromDirectory(new DirectoryInfo(RootPath), destination);
+			await this.PublishFromDirectoryAsync(new DirectoryInfo(this.RootPath), destination);
 		}
 
         protected void SnapVariables()
         {
-            scannableExtensions = new List<string>(SourceFileExtensions.Split(','));
-            ignoredPaths = new List<string>(SkipPaths.Split(';'));
+            this.ScannableExtensions = new List<string>(this.SourceFileExtensions.Split(','));
+            this.IgnoredPaths = new List<string>(this.SkipPaths.Split(';'));
         }
 
-		/// <summary>
-		/// Returns the relative directory for the passed directory based on the
-		/// RootPath property.
-		/// </summary>
-		/// <returns>The directory path.</returns>
-		/// <param name="dir">Dir.</param>
-		protected string RelativeDirectoryPath(DirectoryInfo dir, bool includeRootSpecifier)
+	    /// <summary>
+	    /// Returns the relative directory for the passed directory based on the
+	    /// RootPath property.
+	    /// </summary>
+	    /// <returns>The directory path.</returns>
+	    /// <param name="dir">Dir.</param>
+	    /// <param name="includeRootSpecifier"></param>
+	    protected string RelativeDirectoryPath(DirectoryInfo dir, bool includeRootSpecifier)
 		{
 			var fullPath = dir.FullName;
 			if (!fullPath.EndsWith(Path.DirectorySeparatorChar.ToString()))
@@ -125,79 +126,80 @@
 				fullPath = string.Concat(fullPath, Path.DirectorySeparatorChar);
 			}
 
-			if (fullPath.Equals(RootPath))
+			if (fullPath.Equals(this.RootPath))
 			{
 				return includeRootSpecifier ? Path.DirectorySeparatorChar.ToString() : string.Empty;
 			}
-			else if (fullPath.StartsWith(RootPath))
+			else if (fullPath.StartsWith(this.RootPath))
 			{
 				if (includeRootSpecifier)
-					return Path.DirectorySeparatorChar + fullPath.Substring(RootPath.Length);
+					return Path.DirectorySeparatorChar + fullPath.Substring(this.RootPath.Length);
 				else
-					return fullPath.Substring(RootPath.Length);
+					return fullPath.Substring(this.RootPath.Length);
 			}
 
-			Debug.Assert(false, "Failed to find a relative path for {0} from {1}", dir.FullName, RootPath);
+			Debug.Assert(false, "Failed to find a relative path for {0} from {1}", dir.FullName, this.RootPath);
 			return null;
 		}
 
-		/// <summary>
-        /// PublishFromDirectory iterates over every file in the documentation set root folder and below
-        /// and calls IsInternalPath, IsScannableFile, CopyToOutput, or PublishFileToDetination.
-		/// </summary>
-		/// <param name="directory">Directory.</param>
-		protected virtual async Task PublishFromDirectory(DirectoryInfo directory, DirectoryInfo destinationRoot)
+	    /// <summary>
+	    /// PublishFromDirectory iterates over every file in the documentation set root folder and below
+	    /// and calls IsInternalPath, IsScannableFile, CopyToOutput, or PublishFileToDetination.
+	    /// </summary>
+	    /// <param name="directory">Directory.</param>
+	    /// <param name="destinationRoot"></param>
+	    protected virtual async Task PublishFromDirectoryAsync(DirectoryInfo directory, DirectoryInfo destinationRoot)
 		{
-			var pathDisplayName = RelativeDirectoryPath(directory, true);
+			var pathDisplayName = this.RelativeDirectoryPath(directory, true);
 
 			var filesInDirectory = directory.GetFiles();
 			if (filesInDirectory.Length > 0)
 			{
 				// Create folder in the destination
 
-				var relativePath = RelativeDirectoryPath(directory, false);
+				var relativePath = this.RelativeDirectoryPath(directory, false);
                 var newDirectoryPath = Path.Combine(destinationRoot.FullName, relativePath);
 				var newDirectory = new DirectoryInfo(newDirectoryPath);
 				if (!newDirectory.Exists)
 				{
-                    LogMessage(new ValidationMessage(pathDisplayName, "Creating new directory in output folder."));
+				    this.LogMessage(new ValidationMessage(pathDisplayName, "Creating new directory in output folder."));
 					newDirectory.Create();
 				}
 			}
 
-            ConfigureOutputDirectory(destinationRoot);
+		    this.ConfigureOutputDirectory(destinationRoot);
 
 			foreach (var file in filesInDirectory)
 			{
-				if (IsInternalPath(file))
+				if (this.IsInternalPath(file))
 				{
-                    LogMessage(new ValidationMessage(file.Name, "Source file was on the internal path list, skipped."));
+				    this.LogMessage(new ValidationMessage(file.Name, "Source file was on the internal path list, skipped."));
 				}
-				else if (IsMarkdownFile(file))
+				else if (this.IsMarkdownFile(file))
 				{
-                    var docFile = Documents.Files.Where(x => x.FullPath.Equals(file.FullName)).FirstOrDefault();
-					await PublishFileToDestination(file, destinationRoot, docFile);
+                    var docFile = this.Documents.Files.FirstOrDefault(x => x.FullPath.Equals(file.FullName));
+					await this.PublishFileToDestinationAsync(file, destinationRoot, docFile);
 				}
 				else
 				{
-					CopyFileToDestination(file, destinationRoot);
+				    this.CopyFileToDestination(file, destinationRoot);
 				}
 			}
 
 			var subfolders = directory.GetDirectories();
 			foreach (var folder in subfolders)
 			{
-				if (IsInternalPath(folder))
+				if (this.IsInternalPath(folder))
 				{
-                    LogMessage(new ValidationMessage(folder.Name, "Source file was on the internal path list, skipped."));
+				    this.LogMessage(new ValidationMessage(folder.Name, "Source file was on the internal path list, skipped."));
 					// Skip output for that directory
 					continue;
 				}
 				else
 				{
-					var displayName = RelativeDirectoryPath(folder, true);
-                    LogMessage(new ValidationMessage(displayName, "Scanning directory."));
-					await PublishFromDirectory(folder, destinationRoot);
+					var displayName = this.RelativeDirectoryPath(folder, true);
+				    this.LogMessage(new ValidationMessage(displayName, "Scanning directory."));
+					await this.PublishFromDirectoryAsync(folder, destinationRoot);
 				}
 			}
 		}
@@ -216,12 +218,12 @@
         /// giving the file a new file extension.
         /// </summary>
         /// <returns>The file path.</returns>
-        /// <param name="file">File.</param>
+        /// <param name="sourceFile">File.</param>
         /// <param name="destinationRoot">Destination root.</param>
-        /// <param name="newExtension">New extension.</param>
+        /// <param name="changeFileExtension">New extension.</param>
         protected virtual string GetPublishedFilePath(FileInfo sourceFile, DirectoryInfo destinationRoot, string changeFileExtension = null)
 		{
-			var relativePath = RelativeDirectoryPath(sourceFile.Directory, false);
+			var relativePath = this.RelativeDirectoryPath(sourceFile.Directory, false);
 
             string destinationFileName = sourceFile.Name;
             if (!string.IsNullOrEmpty(changeFileExtension))
@@ -243,21 +245,25 @@
 		{
 			try
 			{
-				var outPath = GetPublishedFilePath(file, destinationRoot);
-                LogMessage(new ValidationMessage(file.Name, "Copying to output directory without scanning."));
+				var outPath = this.GetPublishedFilePath(file, destinationRoot);
+			    this.LogMessage(new ValidationMessage(file.Name, "Copying to output directory without scanning."));
                 file.CopyTo(outPath, true);
 			}
 			catch (Exception ex)
 			{
-                LogMessage(new ValidationError(ValidationErrorCode.ErrorCopyingFile, file.Name, "Cannot copy file to output directory: {0}", ex.Message));
+			    this.LogMessage(new ValidationError(ValidationErrorCode.ErrorCopyingFile, file.Name, "Cannot copy file to output directory: {0}", ex.Message));
 			}
 		}
 
-		/// <summary>
-		/// Scans the text content of a file and removes any "internal" comments/references
-		/// </summary>
-		/// <param name="file">File.</param>
-		protected virtual async Task PublishFileToDestination(FileInfo sourceFile, DirectoryInfo destinationRoot, DocFile page)
+	    /// <summary>
+	    /// Scans the text content of a file and removes any "internal" comments/references
+	    /// </summary>
+	    /// <param name="sourceFile">File.</param>
+	    /// <param name="destinationRoot"></param>
+	    /// <param name="page"></param>
+#pragma warning disable 1998
+	    protected virtual async Task PublishFileToDestinationAsync(FileInfo sourceFile, DirectoryInfo destinationRoot, DocFile page)
+#pragma warning restore 1998
 		{
             throw new NotImplementedException("This method is not implemented in the abstract class.");
 		}
@@ -268,25 +274,25 @@
         /// <param name="inputText"></param>
         /// <param name="endings"></param>
         /// <returns></returns>
-        protected virtual async Task<string> ConvertLineEndings(string inputText, LineEndings endings)
+        protected virtual async Task<string> ConvertLineEndingsAsync(string inputText, LineEndings endings)
         {
-            const char CarriageReturnChar = (char)13;
-            const char LineFeedChar = (char)10;
+            const char carriageReturnChar = (char)13;
+            const char lineFeedChar = (char)10;
             StringWriter writer = new StringWriter();
             switch(endings)
             {
                 case LineEndings.Macintosh:
-                    writer.NewLine = CarriageReturnChar.ToString();
+                    writer.NewLine = carriageReturnChar.ToString();
                     break;
                 case LineEndings.Unix:
-                    writer.NewLine =  LineFeedChar.ToString();
+                    writer.NewLine =  lineFeedChar.ToString();
                     break;
                 case LineEndings.Windows:
-                    writer.NewLine = new string(new char[] { CarriageReturnChar, LineFeedChar});
+                    writer.NewLine = new string(new char[] { carriageReturnChar, lineFeedChar});
                     break;
             }
 
-            if (OutputLineEndings != LineEndings.Default)
+            if (this.OutputLineEndings != LineEndings.Default)
             {
                 await Task.Run(() =>
                 {
@@ -307,30 +313,30 @@
 
 		#region Scanning Rules
 
-		[ScanRuleAttribute(ScanRuleTarget.LineOfText)]
+		[ScanRule(ScanRuleTarget.LineOfText)]
 		protected bool IsDoubleBlockQuote(string text)
 		{
 			return text.StartsWith(">>") || text.StartsWith(" >>");
 		}
 
-		[ScanRuleAttribute(ScanRuleTarget.FileInfo)]
+		[ScanRule(ScanRuleTarget.FileInfo)]
 		public bool IsMarkdownFile(FileInfo file)
 		{
-			return scannableExtensions.Contains(file.Extension);
+			return this.ScannableExtensions.Contains(file.Extension);
 		}
 
-		[ScanRuleAttribute(ScanRuleTarget.FileInfo)]
+		[ScanRule(ScanRuleTarget.FileInfo)]
 		public bool IsInternalPath(DirectoryInfo folder)
 		{
-			var relativePath = RelativeDirectoryPath(folder, true);
-			return IsRelativePathInternal(relativePath);
+			var relativePath = this.RelativeDirectoryPath(folder, true);
+			return this.IsRelativePathInternal(relativePath);
 		}
 
-		[ScanRuleAttribute(ScanRuleTarget.FileInfo)]
+		[ScanRule(ScanRuleTarget.FileInfo)]
 		public bool IsInternalPath(FileInfo file)
 		{
-			var relativePath = Path.Combine(RelativeDirectoryPath(file.Directory, true), file.Name);
-			return IsRelativePathInternal(relativePath);
+			var relativePath = Path.Combine(this.RelativeDirectoryPath(file.Directory, true), file.Name);
+			return this.IsRelativePathInternal(relativePath);
 		}
 
 		protected bool IsRelativePathInternal(string relativePath)
@@ -339,7 +345,7 @@
 				StringSplitOptions.RemoveEmptyEntries);
 			var pathSyntax = "\\" + pathComponents.ComponentsJoinedByString("\\");
 
-            var query = from p in ignoredPaths
+            var query = from p in this.IgnoredPaths
                         where pathSyntax.StartsWith(p)
                         select p;
 
@@ -348,7 +354,7 @@
 
         protected bool IsDocFileInternal(DocFile file)
         {
-            return IsRelativePathInternal(file.DisplayName);
+            return this.IsRelativePathInternal(file.DisplayName);
         }
 
 		#endregion
@@ -371,7 +377,7 @@
 
         public ValidationMessageEventArgs(ValidationError message)
         {
-            Message = message;
+            this.Message = message;
         }
     }
 

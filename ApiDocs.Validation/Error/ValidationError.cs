@@ -1,10 +1,9 @@
-﻿namespace ApiDocs.Validation
+﻿namespace ApiDocs.Validation.Error
 {
     using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Text;
-    using System.Threading.Tasks;
 
     public enum ValidationErrorCode
     {
@@ -89,9 +88,9 @@
 
         public ValidationError(ValidationErrorCode code, string source, string messageformat, params object[] formatParams)
         {
-            Code = code;
-            Source = source;
-            Message = string.Format(messageformat, formatParams);
+            this.Code = code;
+            this.Source = source;
+            this.Message = string.Format(messageformat, formatParams);
         }
 
         public ValidationErrorCode Code { get; set; }
@@ -114,26 +113,26 @@
             get 
             {
                 StringBuilder sb = new StringBuilder();
-                if (IsWarning)
+                if (this.IsWarning)
                 {
                     sb.Append("Warning: ");
                 }
-                else if (IsError)
+                else if (this.IsError)
                 {
                     sb.Append("Error: ");
                 }
                 
-                if (!string.IsNullOrEmpty(Source))
+                if (!string.IsNullOrEmpty(this.Source))
                 {
-                    sb.Append(Source);
+                    sb.Append(this.Source);
                     sb.Append(": ");
                 }
-                sb.Append(Message);
+                sb.Append(this.Message);
 
-                if (null != InnerErrors && InnerErrors.Length > 0)
+                if (null != this.InnerErrors && this.InnerErrors.Length > 0)
                 {
                     sb.AppendLine();
-                    sb.AppendLine(InnerErrors.ErrorsToString("   "));
+                    sb.AppendLine(this.InnerErrors.ErrorsToString("   "));
                 }
                 
                 return sb.ToString();
@@ -143,14 +142,7 @@
         public static ValidationError NewConsolidatedError(ValidationErrorCode code, ValidationError[] errors, string message, params object[] parameters)
         {
             ValidationError error = null;
-            if (errors.All(err => err.IsWarning))
-            {
-                error = new ValidationWarning(code, null, message, parameters);
-            }
-            else
-            {
-                error = new ValidationError(code, null, message, parameters);
-            }
+            error = errors.All(err => err.IsWarning) ? new ValidationWarning(code, null, message, parameters) : new ValidationError(code, null, message, parameters);
 
             error.InnerErrors = errors;
             return error;

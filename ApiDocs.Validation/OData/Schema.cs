@@ -18,12 +18,12 @@ namespace ApiDocs.Validation.OData
 
         public Schema()
         {
-            Entities = new List<EntityType>();
-            ComplexTypes = new List<ComplexType>();
-            EntityContainers = new List<EntityContainer>();
-            Functions = new List<Function>();
-            Actions = new List<Action>();
-            Terms = new List<Term>();
+            this.Entities = new List<EntityType>();
+            this.ComplexTypes = new List<ComplexType>();
+            this.EntityContainers = new List<EntityContainer>();
+            this.Functions = new List<Function>();
+            this.Actions = new List<Action>();
+            this.Terms = new List<Term>();
         }
 
 
@@ -31,10 +31,9 @@ namespace ApiDocs.Validation.OData
 
         internal static Schema FromXml(System.Xml.Linq.XElement xml)
         {
-            if (xml.Name.LocalName != Schema.ElementName) throw new ArgumentException("xml was not a Schema element");
+            if (xml.Name.LocalName != ElementName) throw new ArgumentException("xml was not a Schema element");
 
-            var obj = new Schema();
-            obj.Namespace = xml.AttributeValue("Namespace");
+            var obj = new Schema { Namespace = xml.AttributeValue("Namespace") };
 
             obj.Entities.AddRange(from e in xml.Elements()
                                   where e.Name.LocalName == EntityType.ElementName

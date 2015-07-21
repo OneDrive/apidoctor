@@ -19,14 +19,16 @@ namespace ApiDocs.Validation.OData
 
         internal static Parameter FromXml(System.Xml.Linq.XElement xml)
         {
-            if (xml.Name.LocalName != Parameter.ElementName) throw new ArgumentException("xml wasn't a Parameter element");
+            if (xml.Name.LocalName != ElementName) throw new ArgumentException("xml wasn't a Parameter element");
 
-            var obj = new Parameter();
-            
-            obj.Name = xml.Attribute("Name").Value;
-            obj.Type = xml.Attribute("Type").Value;
-            obj.Nullable = xml.Attribute("Nullable").Value.ToBoolean();
-            
+            var obj = new Parameter
+            {
+                Name = xml.Attribute("Name").Value,
+                Type = xml.Attribute("Type").Value,
+                Nullable = xml.Attribute("Nullable").Value.ToBoolean()
+            };
+
+
             return obj;
         }
     }

@@ -11,13 +11,15 @@ using System.Threading.Tasks;
 
 namespace ApiDocs.Validation.UnitTests
 {
+    using ApiDocs.Validation.Error;
+
     [TestFixture]
     public class NullableTests
     {
         [Test]
-        public void NullPropertyShouldBeOK()
+        public void NullPropertyShouldBeOk()
         {
-            var nullableSchema = SchemaForNullTest(expectNulls: true);
+            var nullableSchema = this.SchemaForNullTest(expectNulls: true);
 
             var exampleObj = new
             {
@@ -37,7 +39,7 @@ namespace ApiDocs.Validation.UnitTests
         [Test]
         public void NullPropertyShouldGenerateWarning()
         {
-            var nullableSchema = SchemaForNullTest(expectNulls: false);
+            var nullableSchema = this.SchemaForNullTest(expectNulls: false);
 
             var exampleObj = new
             {

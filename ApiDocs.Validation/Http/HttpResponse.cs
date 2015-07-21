@@ -7,7 +7,7 @@
     using System.Text;
     using System.Threading.Tasks;
     using System.IO;
-
+    using ApiDocs.Validation.Error;
 
     public class HttpResponse
     {
@@ -17,8 +17,8 @@
         public System.Net.WebHeaderCollection Headers { get; set; }
         public string Body { get; set; }
         public TimeSpan CallDuration { get; set; }
-        public bool WasSuccessful { get { return StatusCode >= 200 && StatusCode < 300; } }
-        public string ContentType { get { return Headers["content-type"]; } }
+        public bool WasSuccessful { get { return this.StatusCode >= 200 && this.StatusCode < 300; } }
+        public string ContentType { get { return this.Headers["content-type"]; } }
         public int RetryCount { get; set; }
 
         public static async Task<HttpResponse> ResponseFromHttpWebResponseAsync(HttpWebRequest request)
@@ -52,19 +52,18 @@
             long requestFinalTicks = DateTime.UtcNow.Ticks;
             TimeSpan callDuration = new TimeSpan(requestFinalTicks - requestStartTicks);
 
-            var response = await ConvertToResponse(webResponse, callDuration);
+            var response = await ConvertToResponseAsync(webResponse, callDuration);
             return response;
         }
 
-        private static async Task<HttpResponse> ConvertToResponse(HttpWebResponse webresp, TimeSpan? duration = null )
+        private static async Task<HttpResponse> ConvertToResponseAsync(HttpWebResponse webresp, TimeSpan? duration = null )
         {
-            HttpResponse resp;
-            resp = new HttpResponse()
+            var resp = new HttpResponse()
             {
-                    HttpVersion = string.Format("HTTP/{0}.{1}", webresp.ProtocolVersion.Major, webresp.ProtocolVersion.Minor),
-                    StatusCode = (int)webresp.StatusCode,
-                    StatusMessage = webresp.StatusDescription,
-                    Headers = webresp.Headers
+                HttpVersion = string.Format("HTTP/{0}.{1}", webresp.ProtocolVersion.Major, webresp.ProtocolVersion.Minor),
+                StatusCode = (int)webresp.StatusCode,
+                StatusMessage = webresp.StatusDescription,
+                Headers = webresp.Headers
             };
 
             if (duration.HasValue)
@@ -72,35 +71,39 @@
                 resp.CallDuration = duration.Value;
             }
 
-            using (StreamReader reader = new StreamReader(webresp.GetResponseStream()))
+            var responseStream = webresp.GetResponseStream();
+            if (null != responseStream)
             {
-                resp.Body = await reader.ReadToEndAsync();
+                using (var reader = new StreamReader(responseStream))
+                {
+                    resp.Body = await reader.ReadToEndAsync();
+                }
             }
             return resp;
         }
 
         public string FullHttpText(bool prettyPrintJson = true)
         {
-            return FormatFullResponse(Body, prettyPrintJson);
+            return this.FormatFullResponse(this.Body, prettyPrintJson);
         }
 
         public string FormatFullResponse(string body, bool prettyPrintJson)
         {
             StringBuilder sb = new StringBuilder();
-            sb.AppendFormat("{0} {1} {2}", HttpVersion, StatusCode, StatusMessage);
+            sb.AppendFormat("{0} {1} {2}", this.HttpVersion, this.StatusCode, this.StatusMessage);
             sb.AppendLine();
 
             bool isJson = false;
-            if (null != Headers)
+            if (null != this.Headers)
             {
-                foreach (var key in Headers.AllKeys)
+                foreach (var key in this.Headers.AllKeys)
                 {
-                    sb.AppendFormat("{0}: {1}", key, Headers[key]);
+                    sb.AppendFormat("{0}: {1}", key, this.Headers[key]);
                     sb.AppendLine();
 
                     if (key.Equals("content-type", StringComparison.OrdinalIgnoreCase))
                     {
-                        isJson = Headers[key].StartsWith("application/json");
+                        isJson = this.Headers[key].StartsWith("application/json");
                     }
                 }
                 sb.AppendLine();
@@ -109,12 +112,11 @@
             // Pretty print JSON if that's what the body is
             if (isJson && prettyPrintJson)
             {
-                object jsonObject = null;
-                try 
+                try
                 {
-                    jsonObject = Newtonsoft.Json.JsonConvert.DeserializeObject(body);
+                    var jsonObject = Newtonsoft.Json.JsonConvert.DeserializeObject(body);
                     sb.Append(Newtonsoft.Json.JsonConvert.SerializeObject(jsonObject, Newtonsoft.Json.Formatting.Indented));
-                } 
+                }
                 catch (Exception)
                 {
                     sb.Append(body);
@@ -128,19 +130,21 @@
             return sb.ToString();
         }
 
-        private readonly string[] HeadersForPartialMatch = { "content-type" };
+        private readonly string[] headersForPartialMatch = { "content-type" };
 
         public bool CompareToResponse(HttpResponse actualResponse, out ValidationError[] errors)
         {
+            if (actualResponse == null) throw new ArgumentNullException("actualResponse");
+            
             List<ValidationError> errorList = new List<ValidationError>();
-            if (StatusCode != actualResponse.StatusCode)
+            if (this.StatusCode != actualResponse.StatusCode)
             {
-                errorList.Add(new ValidationError(ValidationErrorCode.HttpStatusCodeDifferent, null, "Expected status code :{0}, received: {1}.", StatusCode, actualResponse.StatusCode));
+                errorList.Add(new ValidationError(ValidationErrorCode.HttpStatusCodeDifferent, null, "Expected status code :{0}, received: {1}.", this.StatusCode, actualResponse.StatusCode));
             }
 
-            if (StatusMessage != actualResponse.StatusMessage)
+            if (this.StatusMessage != actualResponse.StatusMessage)
             {
-                errorList.Add(new ValidationError(ValidationErrorCode.HttpStatusMessageDifferent, null, "Expected status message {0}, received: {1}.", StatusMessage, actualResponse.StatusMessage));
+                errorList.Add(new ValidationError(ValidationErrorCode.HttpStatusMessageDifferent, null, "Expected status message {0}, received: {1}.", this.StatusMessage, actualResponse.StatusMessage));
             }
 
             // Check to see that expected headers were found in the response
@@ -151,15 +155,15 @@
             }
 
             var comparer = new HeaderNameComparer();
-            foreach(var expectedHeader in Headers.AllKeys)
+            foreach(var expectedHeader in this.Headers.AllKeys)
             {
                 if (!otherResponseHeaderKeys.Contains(expectedHeader, comparer))
                 {
                     errorList.Add(new ValidationError(ValidationErrorCode.HttpRequiredHeaderMissing, null, "Response is missing header expected header: {0}.", expectedHeader));
                 }
-                else if (HeadersForPartialMatch.Contains(expectedHeader.ToLower()))
+                else if (this.headersForPartialMatch.Contains(expectedHeader.ToLower()))
                 {
-                    var expectedValue = Headers[expectedHeader];
+                    var expectedValue = this.Headers[expectedHeader];
                     var actualValue = actualResponse.Headers[expectedHeader];
 
                     if (!actualValue.ToLower().StartsWith(expectedValue))

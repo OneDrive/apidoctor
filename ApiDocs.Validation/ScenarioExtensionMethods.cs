@@ -9,6 +9,9 @@ using System.Threading.Tasks;
 
 namespace ApiDocs.Validation
 {
+    using ApiDocs.Validation.Error;
+    using ApiDocs.Validation.Params;
+
     internal static class InternalScenarioExtensionMethods
     {
 
@@ -84,20 +87,23 @@ namespace ApiDocs.Validation
 
             if (expectedValues is IList<JToken>)
             {
-                foreach (JToken possibleValue in (IList<JToken>)expectedValues)
+                if (((IList<JToken>)expectedValues).Any(possibleValue => JsonPath.TokenEquals(possibleValue, actualValue)))
                 {
-                    if (JsonPath.TokenEquals(possibleValue, actualValue))
-                        return true;
+                    return true;
                 }
             }
-            else if (expectedValues is JToken)
+            else
             {
-                if (JsonPath.TokenEquals((JToken)expectedValues, actualValue))
+                var token = expectedValues as JToken;
+                if (token != null)
+                {
+                    if (JsonPath.TokenEquals(token, actualValue))
+                        return true;
+                }
+                else if (actualValue.Equals(expectedValues))
+                {
                     return true;
-            }
-            else if (null != expectedValues && actualValue.Equals(expectedValues))
-            {
-                return true;
+                }
             }
 
             detectedErrors.Add(new ValidationError(ValidationErrorCode.ExpectationConditionFailed, null, "Expectation {0} = {1} failed. Actual value: {2}", key, expectedValues, actualValue));

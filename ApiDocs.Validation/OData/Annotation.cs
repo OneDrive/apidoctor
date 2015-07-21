@@ -15,11 +15,13 @@ namespace ApiDocs.Validation.OData
 
         public static Annotation FromXml(System.Xml.Linq.XElement xml)
         {
-            if (xml.Name.LocalName != Annotation.ElementName) throw new ArgumentException("xml was not an Annotation element");
+            if (xml.Name.LocalName != ElementName) throw new ArgumentException("xml was not an Annotation element");
 
-            var obj = new Annotation();
-            obj.Term = xml.AttributeValue("Term");
-            obj.String = xml.AttributeValue("String");
+            var obj = new Annotation
+            {
+                Term = xml.AttributeValue("Term"),
+                String = xml.AttributeValue("String")
+            };
             return obj;
         }
     }

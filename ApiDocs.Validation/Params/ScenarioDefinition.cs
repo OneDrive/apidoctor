@@ -1,12 +1,7 @@
-﻿namespace ApiDocs.Validation
+﻿namespace ApiDocs.Validation.Params
 {
-    using System;
     using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using System.Threading.Tasks;
     using Newtonsoft.Json;
-    using System.ComponentModel;
 
     /// <summary>
     /// Class represents information about a set of parameters that are used to make a request
@@ -14,10 +9,6 @@
     /// </summary>
     public class ScenarioDefinition : BasicRequestDefinition
     {
-        public ScenarioDefinition()
-        {
-        }
-
         #region Json-Fed Properties
         [JsonProperty("name")]
         public string Description { get; set; }
@@ -34,7 +25,7 @@
         {
             get
             {
-                return string.Concat(Description, " (", MethodName, ")");
+                return string.Concat(this.Description, " (", this.MethodName, ")");
             }
         }
 

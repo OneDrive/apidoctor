@@ -1,58 +1,56 @@
-﻿using ApiDocs.Validation;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ApiDocs.Publishing
+﻿namespace ApiDocs.Publishing.Html
 {
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+    using System.Threading.Tasks;
+    using ApiDocs.Validation;
+
     public class HtmlMustacheWriter : DocumentPublisherHtml
     {
-        private Mustache.Generator _generator = null;
-        private FileTagDefinition _fileTag;
+        private Mustache.Generator generator;
+        private FileTagDefinition fileTag;
 
         public bool CollapseTocToActiveGroup { get; set; }
 
 
         public HtmlMustacheWriter(DocSet docs, string templateFolderPath) : base(docs, templateFolderPath)
         {
-            CollapseTocToActiveGroup = false;
+            this.CollapseTocToActiveGroup = false;
         }
 
         protected override void LoadTemplate()
         {
             base.LoadTemplate();
 
-            if (!string.IsNullOrEmpty(_templateHtml))
+            if (!string.IsNullOrEmpty(this.TemplateHtml))
             {
-
-                _fileTag = new FileTagDefinition();
+                this.fileTag = new FileTagDefinition();
 
                 Mustache.FormatCompiler compiler = new Mustache.FormatCompiler() { RemoveNewLines = false };
                 
-                compiler.RegisterTag(_fileTag, true);
+                compiler.RegisterTag(this.fileTag, true);
                 compiler.RegisterTag(new IfMatchTagDefinition(), true);
                 compiler.RegisterTag(new ExtendedElseTagDefinition(), false);
                 compiler.RegisterTag(new ExtendedElseIfTagDefinition(), false);
-                _generator = compiler.Compile(_templateHtml);
-                _generator.KeyNotFound += _generator_KeyNotFound;
-                //_generator.ValueRequested += _generator_ValueRequested;
-                //_generator.KeyFound += _generator_KeyFound;
+                this.generator = compiler.Compile(this.TemplateHtml);
+                this.generator.KeyNotFound += this.Generator_KeyNotFound;
+                //_generator.ValueRequested += Generator_ValueRequested;
+                //_generator.KeyFound += Generator_KeyFound;
             }
         }
 
-        void _generator_KeyFound(object sender, Mustache.KeyFoundEventArgs e)
-        {
-            Console.WriteLine("KeyFound: " + e.Key);
-        }
+        //void Generator_KeyFound(object sender, Mustache.KeyFoundEventArgs e)
+        //{
+        //    Console.WriteLine("KeyFound: " + e.Key);
+        //}
 
-        void _generator_ValueRequested(object sender, Mustache.ValueRequestEventArgs e)
-        {
-            Console.WriteLine("ValueRequested: " + e.Value);
-        }
-        void _generator_KeyNotFound(object sender, Mustache.KeyNotFoundEventArgs e)
+        //void Generator_ValueRequested(object sender, Mustache.ValueRequestEventArgs e)
+        //{
+        //    Console.WriteLine("ValueRequested: " + e.Value);
+        //}
+        void Generator_KeyNotFound(object sender, Mustache.KeyNotFoundEventArgs e)
         {
             //Console.WriteLine("KeyNotFound: " + e.Key);
 
@@ -65,13 +63,13 @@ namespace ApiDocs.Publishing
         /// Apply the template to the document
         /// </summary>
         /// <param name="bodyHtml"></param>
-        /// <param name="pageData"></param>
+        /// <param name="page"></param>
         /// <param name="destinationFile"></param>
         /// <param name="rootDestinationFolder"></param>
         /// <returns></returns>
         protected override async Task WriteHtmlDocumentAsync(string bodyHtml, DocFile page, string destinationFile, string rootDestinationFolder)
         {
-            var tocHeaders = GetHeadersForSection(page.Annotation.Section, destinationFile, rootDestinationFolder, page);
+            var tocHeaders = this.GetHeadersForSection(page.Annotation.Section, destinationFile, rootDestinationFolder, page);
 
 
             List<ValueObject<string>> htmlHeaders = new List<ValueObject<string>>();
@@ -89,12 +87,12 @@ namespace ApiDocs.Publishing
                 HtmlHeaderAdditions = htmlHeaders,
                 HtmlFooterAdditions = htmlFooters
             };
-            
-            _fileTag.DestinationFile = destinationFile;
-            _fileTag.RootDestinationFolder = rootDestinationFolder;
 
-            var pageHtml = _generator.Render(templateObject);
-            pageHtml = await ConvertLineEndings(pageHtml, OutputLineEndings);
+            this.fileTag.DestinationFile = destinationFile;
+            this.fileTag.RootDestinationFolder = rootDestinationFolder;
+
+            var pageHtml = this.generator.Render(templateObject);
+            pageHtml = await this.ConvertLineEndingsAsync(pageHtml, this.OutputLineEndings);
 
             using (var outputWriter = new StreamWriter(destinationFile))
             {
@@ -106,7 +104,7 @@ namespace ApiDocs.Publishing
         {
             string linkDestinationRelative = docFile.DisplayName.TrimStart(new char[] { '\\', '/' });
             var relativeLinkToDocFile = DocSet.RelativePathToRootFromFile(destinationFile, Path.Combine(rootDestinationFolder, linkDestinationRelative), true);
-            var result = QualifyUrl(relativeLinkToDocFile);
+            var result = this.QualifyUrl(relativeLinkToDocFile);
             return result;
         }
 
@@ -115,15 +113,15 @@ namespace ApiDocs.Publishing
             if (null == section)
                 return new TocItem[0];
 
-            var headers = from d in Documents.Files
+            var headers = from d in this.Documents.Files
                           where d.Annotation != null 
                           && string.Equals(d.Annotation.Section, section, StringComparison.OrdinalIgnoreCase) 
                           && !string.IsNullOrEmpty(d.Annotation.TocPath)
                           orderby d.Annotation.TocPath
                           select new TocItem { DocFile = d, 
                 Title = d.Annotation.TocPath.LastPathComponent(), 
-                Url = RelativeUrlFromCurrentPage(d, destinationFile, rootDestinationFolder) };
-            headers = CollapseHeadersByPath(headers, currentPage);
+                Url = this.RelativeUrlFromCurrentPage(d, destinationFile, rootDestinationFolder) };
+            headers = this.CollapseHeadersByPath(headers, currentPage);
             return headers;
         }
 
@@ -131,6 +129,7 @@ namespace ApiDocs.Publishing
         /// Collpase headers into Headers and NextLevel items based on path hierarchy
         /// </summary>
         /// <param name="headers"></param>
+        /// <param name="currentPage"></param>
         /// <returns></returns>
         private IEnumerable<TocItem> CollapseHeadersByPath(IEnumerable<TocItem> headers, DocFile currentPage)
         {
@@ -139,9 +138,9 @@ namespace ApiDocs.Publishing
             foreach (var header in headers)
             {
                 var pathCompoents = header.DocFile.Annotation.TocPath.Split(new char[] { '\\', '/' }, StringSplitOptions.RemoveEmptyEntries);
-                TocItem topLevelHeader = null;
                 if (pathCompoents.Length >= 2)
                 {
+                    TocItem topLevelHeader;
                     if (!topLevelHeaders.TryGetValue(pathCompoents[0], out topLevelHeader))
                     {
                         topLevelHeader = new TocItem() { Title = pathCompoents[0] };
@@ -155,7 +154,7 @@ namespace ApiDocs.Publishing
                 }
             }
 
-            if (CollapseTocToActiveGroup)
+            if (this.CollapseTocToActiveGroup)
             {
                 var pageTocComponents = currentPage.Annotation.TocPath.FirstPathComponent();
                 foreach (var header in topLevelHeaders.Values)
@@ -180,7 +179,7 @@ namespace ApiDocs.Publishing
 
         public TocItem()
         {
-            NextLevel = new List<TocItem>();
+            this.NextLevel = new List<TocItem>();
         }
     }
 

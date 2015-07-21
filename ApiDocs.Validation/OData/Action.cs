@@ -15,17 +15,19 @@ namespace ApiDocs.Validation.OData
 
         public Action()
         {
-            Parameters = new List<Parameter>();
+            this.Parameters = new List<Parameter>();
         }
 
 
         public static string ElementName { get { return "Action"; } }
         public static OData.Action FromXml(XElement xml)
         {
-            if (xml.Name.LocalName != OData.Action.ElementName) throw new ArgumentException("xml was not a Action element");
-            var obj = new OData.Action();
-            obj.Name = xml.AttributeValue("Name");
-            obj.IsBound = xml.AttributeValue("IsBound").ToBoolean();
+            if (xml.Name.LocalName != ElementName) throw new ArgumentException("xml was not a Action element");
+            var obj = new OData.Action
+            {
+                Name = xml.AttributeValue("Name"),
+                IsBound = xml.AttributeValue("IsBound").ToBoolean()
+            };
             obj.Parameters.AddRange(from e in xml.Elements()
                                     where e.Name == Parameter.ElementName
                                     select Parameter.FromXml(e));

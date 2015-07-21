@@ -45,14 +45,14 @@ namespace ApiDocs.Validation
     {
         public MaxLengthAttribute(int maximumLength)
         {
-            MaximumLength = maximumLength;
+            this.MaximumLength = maximumLength;
         }
 
         public int MaximumLength { get; set; }
 
         public static int GetMaxLength(Type type, string propertyName)
         {
-            var attribute = (MaxLengthAttribute)type.GetProperty(propertyName).GetCustomAttributes(true).Where(x => x is MaxLengthAttribute).FirstOrDefault();
+            var attribute = (MaxLengthAttribute)type.GetProperty(propertyName).GetCustomAttributes(true).FirstOrDefault(x => x is MaxLengthAttribute);
             if (null != attribute)
             {
                 return attribute.MaximumLength;

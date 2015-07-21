@@ -36,9 +36,9 @@ namespace ApiDocs.Validation.Json
                 CollectionPropertyName = this.CollectionPropertyName
             };
 
-            if (null != ExpectedJsonSchema)
+            if (null != this.ExpectedJsonSchema)
             {
-                var propertyData = this.ExpectedJsonSchema.Properties.Where(x => x.Name.Equals(propertyName)).FirstOrDefault();
+                var propertyData = this.ExpectedJsonSchema.Properties.FirstOrDefault(x => x.Name.Equals(propertyName));
                 if (null != propertyData && null != propertyData.OriginalValue)
                 {
                     // Compute a new expected schema for the property's contents.

@@ -1,12 +1,13 @@
-﻿using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ApiDocs.Validation.Writers
+﻿namespace ApiDocs.Publishing.Swagger
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Threading.Tasks;
+    using ApiDocs.Validation;
+    using ApiDocs.Validation.Writers;
+    using Newtonsoft.Json;
+
     /// <summary>
     /// Generates a swagger json output for the methods defined in the API documentation
     /// </summary>
@@ -25,7 +26,7 @@ namespace ApiDocs.Validation.Writers
 
         public SwaggerWriter(DocSet docs, string baseUrl) : base(docs)
         {
-            AuthenticationParameters = new SwaggerAuth
+            this.AuthenticationParameters = new SwaggerAuth
             {
                 ProviderName = "microsoftAccount",
                 OAuthFlow = "implicit",
@@ -37,8 +38,8 @@ namespace ApiDocs.Validation.Writers
             if (!string.IsNullOrEmpty(baseUrl))
             {
                 Uri baseUri = new Uri(baseUrl);
-                ProductionHost = baseUri.Host;
-                BaseUrl = baseUri.PathAndQuery;
+                this.ProductionHost = baseUri.Host;
+                this.BaseUrl = baseUri.PathAndQuery;
             }
 
         }
@@ -46,26 +47,26 @@ namespace ApiDocs.Validation.Writers
 #pragma warning disable 1998
         public override async Task PublishToFolderAsync(string outputFolder)
         {
-            SnapVariables();
+            this.SnapVariables();
 
             var swag = new
             {
                 swagger = "2.0",    // Swagger version #
                 info = new
                 {
-                    title = Title,
-                    description = Description,
-                    version = Version
+                    title = this.Title,
+                    description = this.Description,
+                    version = this.Version
                 },
-                host = ProductionHost,
-                basePath = BaseUrl,
+                host = this.ProductionHost,
+                basePath = this.BaseUrl,
                 schemes = new object[] { "https" },
                 produces = new object[] { "application/json" },
                 consumes = new object[] { "application/json" },
-                paths = GeneratePathsFromDocSet(),
-                definitions = GenerateResourcesFromDocSet(),
+                paths = this.GeneratePathsFromDocSet(),
+                definitions = this.GenerateResourcesFromDocSet(),
                 security = new object[] { new Dictionary<string, object> { { "microsoftAccount", new object[0] } } },
-                securityDefinitions = BuildSecurityDefinition()
+                securityDefinitions = this.BuildSecurityDefinition()
             };
 
             foreach (var path in swag.paths)
@@ -83,14 +84,15 @@ namespace ApiDocs.Validation.Writers
 
         private object BuildSecurityDefinition()
         {
-            var foundScopes = Documents.AuthScopes;
+            var foundScopes = this.Documents.AuthScopes;
 
             return new Dictionary<string, object> { 
-                { AuthenticationParameters.ProviderName, new { 
-                    type = AuthenticationParameters.AuthType,
+                {
+                    this.AuthenticationParameters.ProviderName, new { 
+                    type = this.AuthenticationParameters.AuthType,
                     scopes = foundScopes.ToDictionary(x => x.Scope, x => x.Description),
-                    flow = AuthenticationParameters.OAuthFlow,
-                    authorizationUrl = AuthenticationParameters.AuthorizationEndPoint
+                    flow = this.AuthenticationParameters.OAuthFlow,
+                    authorizationUrl = this.AuthenticationParameters.AuthorizationEndPoint
             }}};
         }
 
@@ -98,33 +100,20 @@ namespace ApiDocs.Validation.Writers
         /// Generate the swagger-compatible property type based on the internal object model type
         /// </summary>
         /// <returns>The property type.</returns>
-        /// <param name="type">Type.</param>
-        /// <param name="odataTypeName">Odata type name.</param>
-
-        /// <summary>
-        /// Build a set of "schema" for the resources in the doc set
-        /// </summary>
-        /// <returns>The resources from document set.</returns>
         private object GenerateResourcesFromDocSet()
         {
             var swaggerDefinitions = new Dictionary<string, object>();
-            foreach (var jsonSchema in Documents.ResourceCollection.RegisteredSchema)
+            foreach (var jsonSchema in this.Documents.ResourceCollection.RegisteredSchema)
             {
-                if (IsDocFileInternal(jsonSchema.OriginalResource.SourceFile))
+                if (this.IsDocFileInternal(jsonSchema.OriginalResource.SourceFile))
                     continue;
 
                 var resourceName = jsonSchema.ResourceName.SwaggerResourceName();
 
-                var propertiesForThisResource = new Dictionary<string, object>();
+                var propertiesForThisResource = jsonSchema.Properties.ToDictionary(
+                    property => property.Name.SwaggerResourceName(), 
+                    property => property.AsSwaggerProperty());
 
-                foreach (var property in jsonSchema.Properties)
-                {
-                    propertiesForThisResource.Add(
-                        property.Name.SwaggerResourceName(), 
-                        property.AsSwaggerProperty()
-                    );
-                }
-                
                 var definition = new
                 {
                     properties = propertiesForThisResource
@@ -160,7 +149,7 @@ namespace ApiDocs.Validation.Writers
                         return 1;
                     if (parts1[i] != "{}" && parts2[i] == "{}")
                         return -1;
-                    result = parts1[i].CompareTo(parts2[i]);
+                    result = String.Compare(parts1[i], parts2[i], StringComparison.Ordinal);
                     if (result != 0) return result;
                 }
 
@@ -182,7 +171,7 @@ namespace ApiDocs.Validation.Writers
                 int value2 = ValueOfHttpMethod(method2);
 
                 if (value1 == value2)
-                    return method1.CompareTo(method2);
+                    return String.Compare(method1, method2, StringComparison.Ordinal);
                 else 
                     return value1.CompareTo(value2);
             }
@@ -216,9 +205,9 @@ namespace ApiDocs.Validation.Writers
         {
             // "/products" -> "get" -> { SwaggerMethod }
             var swaggerPathObject = new SortedDictionary<string, IDictionary<string, SwaggerMethod>>(new PathLengthSorter());
-            foreach (var method in Documents.Methods)
+            foreach (var method in this.Documents.Methods)
             {
-                if (IsDocFileInternal(method.SourceFile))
+                if (this.IsDocFileInternal(method.SourceFile))
                     continue;
 
                 string relativePath, queryString, httpMethod;
@@ -243,16 +232,16 @@ namespace ApiDocs.Validation.Writers
                 {
                     var swaggerMethod = method.ToSwaggerMethod();
                     IEnumerable<string> requiredScopes;
-                    if (DefaultAuthScope != null)
+                    if (this.DefaultAuthScope != null)
                     {
-                        requiredScopes = new string[] { DefaultAuthScope };
+                        requiredScopes = new string[] { this.DefaultAuthScope };
                     }
                     else
                     {
-                        requiredScopes = from r in Documents.AuthScopes where r.Required == true select r.Scope;
+                        requiredScopes = from r in this.Documents.AuthScopes where r.Required == true select r.Scope;
                     }
 
-                    swaggerMethod.AddRequiredSecurityRoles(AuthenticationParameters.ProviderName, requiredScopes);
+                    swaggerMethod.AddRequiredSecurityRoles(this.AuthenticationParameters.ProviderName, requiredScopes);
                     restPathNode.Add(httpMethod, swaggerMethod);
                 }
                 else
@@ -284,23 +273,7 @@ namespace ApiDocs.Validation.Writers
             return false;
         }
 
-        private System.Text.RegularExpressions.Regex PathVariableRegex = new System.Text.RegularExpressions.Regex("{(?<var>.*)}");
-
-        //private string[] CapturePathVariables(string relativePath)
-        //{
-        //    var matches = PathVariableRegex.Matches(relativePath);
-        //    List<string> variables = new List<string>();
-        //    for(int i=0; i<matches.Count; i++)
-        //    {
-        //        var match = matches[i];
-        //        var capture = match.Groups["var"].Value;
-        //        variables.Add(capture);
-        //    }
-        //    return variables.ToArray();
-        //}
-
-       
-
+        private System.Text.RegularExpressions.Regex pathVariableRegex = new System.Text.RegularExpressions.Regex("{(?<var>.*)}");
     }
 
     public class SwaggerAuth

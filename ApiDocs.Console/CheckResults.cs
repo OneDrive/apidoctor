@@ -7,19 +7,21 @@ using System.Threading.Tasks;
 
 namespace ApiDocs.ConsoleApp
 {
+    using ApiDocs.Validation.Error;
+
     public class CheckResults
     {
         public int SuccessCount { get; set; }
         public int WarningCount { get; set; }
         public int FailureCount { get; set; }
 
-        public int TotalCount { get { return SuccessCount + WarningCount + FailureCount; } }
+        public int TotalCount { get { return this.SuccessCount + this.WarningCount + this.FailureCount; } }
 
-        public bool WereFailures { get { return FailureCount != 0; } }
+        public bool WereFailures { get { return this.FailureCount != 0; } }
 
         public double PercentSuccessful
         {
-            get { return 100.0 * ((double)SuccessCount / TotalCount); }
+            get { return 100.0 * ((double)this.SuccessCount / this.TotalCount); }
         }
 
         public IEnumerable<ValidationError> Errors { get; set; }
@@ -27,24 +29,25 @@ namespace ApiDocs.ConsoleApp
 
         public void IncrementResultCount(IEnumerable<ValidationError> output)
         {
-            if (output.WereErrors())
+            var errors = output as ValidationError[] ?? output.ToArray();
+            if (errors.WereErrors())
             {
-                FailureCount++;
+                this.FailureCount++;
             }
-            else if (output.WereWarnings())
+            else if (errors.WereWarnings())
             {
-                WarningCount++;
+                this.WarningCount++;
             }
             else
             {
-                SuccessCount++;
+                this.SuccessCount++;
             }
         }
 
         public void ConvertWarningsToSuccess()
         {
-            SuccessCount += WarningCount;
-            WarningCount = 0;
+            this.SuccessCount += this.WarningCount;
+            this.WarningCount = 0;
         }
 
         public static CheckResults operator +(CheckResults c1, CheckResults c2)
@@ -74,24 +77,24 @@ namespace ApiDocs.ConsoleApp
             FancyConsole.Write("Runs completed. ");
 
             const string percentCompleteFormat = "{0:0.00}% passed";
-            if (PercentSuccessful == 100.0)
-                FancyConsole.Write(FancyConsole.ConsoleSuccessColor, percentCompleteFormat, PercentSuccessful);
-            else
-                FancyConsole.Write(FancyConsole.ConsoleWarningColor, percentCompleteFormat, PercentSuccessful);
+            FancyConsole.Write(
+                this.PercentSuccessful == 100.0 ? FancyConsole.ConsoleSuccessColor : FancyConsole.ConsoleWarningColor,
+                percentCompleteFormat,
+                this.PercentSuccessful);
 
-            if (FailureCount > 0 || WarningCount > 0)
+            if (this.FailureCount > 0 || this.WarningCount > 0)
             {
                 FancyConsole.Write(" (");
-                if (FailureCount > 0)
-                    FancyConsole.Write(FancyConsole.ConsoleErrorColor, "{0} errors", FailureCount);
-                if (WarningCount > 0 && FailureCount > 0)
+                if (this.FailureCount > 0)
+                    FancyConsole.Write(FancyConsole.ConsoleErrorColor, "{0} errors", this.FailureCount);
+                if (this.WarningCount > 0 && this.FailureCount > 0)
                     FancyConsole.Write(", ");
-                if (WarningCount > 0)
-                    FancyConsole.Write(FancyConsole.ConsoleWarningColor, "{0} warnings", WarningCount);
-                if (WarningCount > 0 || FailureCount > 0 && SuccessCount > 0)
+                if (this.WarningCount > 0)
+                    FancyConsole.Write(FancyConsole.ConsoleWarningColor, "{0} warnings", this.WarningCount);
+                if (this.WarningCount > 0 || this.FailureCount > 0 && this.SuccessCount > 0)
                     FancyConsole.Write(", ");
-                if (SuccessCount > 0)
-                    FancyConsole.Write(FancyConsole.ConsoleSuccessColor, "{0} successful", SuccessCount);
+                if (this.SuccessCount > 0)
+                    FancyConsole.Write(FancyConsole.ConsoleSuccessColor, "{0} successful", this.SuccessCount);
                 FancyConsole.Write(")");
             }
             FancyConsole.WriteLine();

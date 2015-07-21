@@ -10,10 +10,10 @@ namespace ApiDocs.ConsoleApp
     {
         private const string TestFrameworkName = "apidocs";
         private static AppVeyor.BuildWorkerApi BuildWorkerApi { get { return Program.BuildWorker; } }
-        private static Dictionary<string, long> TestStartTimes = new Dictionary<string, long>();
-        private static Dictionary<string, string> TestStartFilename = new Dictionary<string, string>();
+        private static readonly Dictionary<string, long> TestStartTimes = new Dictionary<string, long>();
+        private static readonly Dictionary<string, string> TestStartFilename = new Dictionary<string, string>();
 
-        public static void StartTestAsync(string testName, string filename = null)
+        public static void StartTest(string testName, string filename = null)
         {
             FancyConsole.WriteLine();
             FancyConsole.Write(FancyConsole.ConsoleHeaderColor, "Starting test: ");

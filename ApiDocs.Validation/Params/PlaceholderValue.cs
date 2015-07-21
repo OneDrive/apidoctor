@@ -1,32 +1,21 @@
-﻿namespace ApiDocs.Validation
+﻿namespace ApiDocs.Validation.Params
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using System.Threading.Tasks;
-    using Newtonsoft.Json;
     using System.ComponentModel;
     using System.Runtime.CompilerServices;
 
     public class PlaceholderValue : INotifyPropertyChanged
     {
-        private string _placeholderText;
-
-        public PlaceholderValue()
-        {
-
-        }
+        private string placeholderText;
 
         public string PlaceholderKey 
         {
-            get { return _placeholderText; }
+            get { return this.placeholderText; }
             set
             {
-                if (value != _placeholderText)
+                if (value != this.placeholderText)
                 {
-                    _placeholderText = value;
-                    RaisePropertyChanged();
+                    this.placeholderText = value;
+                    this.RaisePropertyChanged();
                 }
             }
         }
@@ -43,7 +32,7 @@
 
         protected void RaisePropertyChanged([CallerMemberName] string propertyName = null)
         {
-            var evt = PropertyChanged;
+            var evt = this.PropertyChanged;
             if (null != evt)
             {
                 evt(this, new PropertyChangedEventArgs(propertyName));

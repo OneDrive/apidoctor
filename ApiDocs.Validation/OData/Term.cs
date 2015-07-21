@@ -19,19 +19,21 @@ namespace ApiDocs.Validation.OData
 
         public Term()
         {
-            Annotations = new List<Annotation>();
+            this.Annotations = new List<Annotation>();
         }
 
         public static string ElementName { get { return "Term"; } }
 
         public static Term FromXml(System.Xml.Linq.XElement xml)
         {
-            if (xml.Name.LocalName != Term.ElementName) throw new ArgumentException("xml was not a Term element");
+            if (xml.Name.LocalName != ElementName) throw new ArgumentException("xml was not a Term element");
 
-            var obj = new Term();
-            obj.Name = xml.AttributeValue("Name");
-            obj.Type = xml.AttributeValue("Type");
-            obj.AppliesTo = xml.AttributeValue("AppliesTo");
+            var obj = new Term
+            {
+                Name = xml.AttributeValue("Name"),
+                Type = xml.AttributeValue("Type"),
+                AppliesTo = xml.AttributeValue("AppliesTo")
+            };
             obj.Annotations.AddRange(from e in xml.Elements()
                                      where e.Name.LocalName == Annotation.ElementName
                                      select Annotation.FromXml(e));

@@ -1,25 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Net;
-using System.IO;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
-
-namespace AppVeyor
+﻿namespace ApiDocs.ConsoleApp.AppVeyor
 {
+    using System;
+    using System.IO;
+    using System.Net;
+    using System.Threading.Tasks;
+    using Newtonsoft.Json;
+    using Newtonsoft.Json.Converters;
 
     public class BuildWorkerApi
     {
         public Uri UrlEndPoint { get; set; }
-        private static JsonSerializerSettings jsonSettings;
+        private static readonly JsonSerializerSettings CachedJsonSettings;
 
         static BuildWorkerApi()
         {
-            jsonSettings =  new JsonSerializerSettings { DefaultValueHandling = DefaultValueHandling.Ignore, NullValueHandling = NullValueHandling.Ignore };
-            jsonSettings.Converters.Add(new StringEnumConverter { CamelCaseText = true });
+            CachedJsonSettings =  new JsonSerializerSettings { DefaultValueHandling = DefaultValueHandling.Ignore, NullValueHandling = NullValueHandling.Ignore };
+            CachedJsonSettings.Converters.Add(new StringEnumConverter { CamelCaseText = true });
         }
 
         public BuildWorkerApi(Uri apiUrl)
@@ -37,9 +33,12 @@ namespace AppVeyor
             try
             {
                 var body = new { message = message, category = category, details = details };
-                await PostToApi("api/build/messages", body);
+                await this.PostToApiAsync("api/build/messages", body);
             }
-            catch { }
+            catch
+            {
+                // ignored
+            }
         }
 
         public async Task AddCompilationMessageAsync(string message, MessageCategory category = MessageCategory.Information, string details = null, string filename = null, int line = 0, int column = 0, string projectName = null, string projectFileName = null)
@@ -57,9 +56,12 @@ namespace AppVeyor
                     projectName = projectName,
                     projectFileName = projectFileName
                 };
-                await PostToApi("api/build/compilationmessages", body);
+                await this.PostToApiAsync("api/build/compilationmessages", body);
             }
-            catch { }
+            catch
+            {
+                // ignored
+            }
         }
 
         public async Task AddEnvironmentVariableAsync(string name, string value)
@@ -71,9 +73,12 @@ namespace AppVeyor
                     name = name,
                     value = value
                 };
-                await PostToApi("api/build/variables", body);
+                await this.PostToApiAsync("api/build/variables", body);
             }
-            catch { }
+            catch
+            {
+                // ignored
+            }
         }
 
         public async Task RecordTestAsync(string testName, string testFramework = null, string filename = null, TestOutcome outcome = TestOutcome.None, long durationInMilliseconds = 0, string errorMessage = null, string errorStackTrace = null, string stdOut = null, string stdErr = null)
@@ -92,9 +97,12 @@ namespace AppVeyor
                     StdOut = stdOut,
                     StdErr = stdErr
                 };
-                await PostToApi("api/tests", body);
+                await this.PostToApiAsync("api/tests", body);
             }
-            catch { }
+            catch
+            {
+                // ignored
+            }
         }
 
         public async Task PushArtifactAsync(string path, string fileName, string name, ArtifactType type)
@@ -109,18 +117,21 @@ namespace AppVeyor
                     name = name,
                     type = type
                 };
-                await PostToApi("api/artifacts", body);
+                await this.PostToApiAsync("api/artifacts", body);
             }
-            catch { }
+            catch
+            {
+                // ignored
+            }
         }
 
-        private async Task PostToApi(string path, object body)
+        private async Task PostToApiAsync(string path, object body)
         {
             if (this.UrlEndPoint == null) return;
 
 
-            var targetUrl = new Uri(UrlEndPoint, path);
-            var request = HttpWebRequest.CreateHttp(targetUrl);
+            var targetUrl = new Uri(this.UrlEndPoint, path);
+            var request = WebRequest.CreateHttp(targetUrl);
             request.Method = "POST";
             request.ContentType = "application/json";
 
@@ -128,7 +139,7 @@ namespace AppVeyor
             {
                 using (var writer = new StreamWriter(await request.GetRequestStreamAsync()))
                 {
-                    var bodyString = JsonConvert.SerializeObject(body, jsonSettings);
+                    var bodyString = JsonConvert.SerializeObject(body, CachedJsonSettings);
                     await writer.WriteAsync(bodyString);
                     await writer.FlushAsync();
                 }

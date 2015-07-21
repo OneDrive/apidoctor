@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ApiDocs.Validation
+﻿namespace ApiDocs.Validation.TableSpec
 {
+    using System.Collections.Generic;
+    using System.Linq;
+
     public class TableDefinition
     {
         public TableBlockType Type { get; set; }
@@ -16,9 +13,9 @@ namespace ApiDocs.Validation
 
         public TableDefinition(TableBlockType type, IEnumerable<ItemDefinition> rows, string headerText)
         {
-            Type = type;
-            Rows = rows.ToArray();
-            Title = headerText;
+            this.Type = type;
+            this.Rows = rows.ToArray();
+            this.Title = headerText;
         }
     }
 }

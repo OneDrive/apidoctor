@@ -1,21 +1,18 @@
-﻿using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Net;
-using System.IO;
-using System.Threading.Tasks;
-
-namespace ApiDocs.ConsoleApp
+﻿namespace ApiDocs.ConsoleApp.Auth
 {
+    using System;
+    using System.IO;
+    using System.Net;
+    using System.Threading.Tasks;
+    using Newtonsoft.Json;
+
     public class OAuthTokenGenerator
     {
-        public static async Task<TokenResponse> RedeemRefreshToken(Account account)
+        public static async Task<TokenResponse> RedeemRefreshTokenAsync(Account account)
         {
             try
             {
-                return await RedeemRefreshToken(account.TokenService, account.RefreshToken, account.ClientId, account.ClientSecret, account.RedirectUri);
+                return await RedeemRefreshTokenAsync(account.TokenService, account.RefreshToken, account.ClientId, account.ClientSecret, account.RedirectUri);
             }
             catch (Exception ex)
             {
@@ -25,9 +22,9 @@ namespace ApiDocs.ConsoleApp
         }
 
 
-        public static async Task<TokenResponse> RedeemRefreshToken(string tokenService, string refreshToken, string clientId, string clientSecret, string redirectUri)
+        public static async Task<TokenResponse> RedeemRefreshTokenAsync(string tokenService, string refreshToken, string clientId, string clientSecret, string redirectUri)
         {
-            HttpWebRequest request = HttpWebRequest.CreateHttp(tokenService);
+            HttpWebRequest request = WebRequest.CreateHttp(tokenService);
             request.ContentType = "application/x-www-form-urlencoded";
             request.Method = "POST";
 
@@ -47,13 +44,13 @@ namespace ApiDocs.ConsoleApp
             if (null != response && response.StatusCode == HttpStatusCode.OK)
             {
                 var responseStream = response.GetResponseStream();
-                var reader = new StreamReader(responseStream);
-                return JsonConvert.DeserializeObject<TokenResponse>(await reader.ReadToEndAsync());
+                if (null != responseStream)
+                {
+                    var reader = new StreamReader(responseStream);
+                    return JsonConvert.DeserializeObject<TokenResponse>(await reader.ReadToEndAsync());
+                }
             }
-            else
-            {
-                return null;
-            }
+            return null;
         }
     }
 

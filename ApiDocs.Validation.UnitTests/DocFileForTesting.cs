@@ -9,19 +9,19 @@ namespace ApiDocs.Validation.UnitTests
 {
     public class DocFileForTesting : DocFile
     {
-        private string _contentsOfFile;
+        private readonly string contentsOfFile;
         public DocFileForTesting(string contentsOfFile, string fullPath, string displayName, DocSet parent)
             : base()
         {
-            _contentsOfFile = contentsOfFile;
-            FullPath = fullPath;
-            DisplayName = displayName;
-            Parent = parent;
+            this.contentsOfFile = contentsOfFile;
+            this.FullPath = fullPath;
+            this.DisplayName = displayName;
+            this.Parent = parent;
         }
 
         protected override string GetContentsOfFile()
         {
-            return _contentsOfFile;
+            return this.contentsOfFile;
         }
 
     }

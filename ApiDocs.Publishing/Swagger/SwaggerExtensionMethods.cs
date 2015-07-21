@@ -1,11 +1,13 @@
-﻿using System;
-using ResourceName = System.String;
-using System.Collections.Generic;
-using System.Linq;
-using ApiDocs.Validation.Json;
+﻿using ResourceName = System.String;
 
-namespace ApiDocs.Validation
+namespace ApiDocs.Publishing.Swagger
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using ApiDocs.Validation;
+    using ApiDocs.Validation.Json;
+
     public static class SwaggerExtensionMethods
     {
     
@@ -22,7 +24,7 @@ namespace ApiDocs.Validation
             return originalResourceName.Replace('.', '_');
         }
 
-        internal static string SwaggerType(this Json.JsonDataType datatype)
+        internal static string SwaggerType(this Validation.Json.JsonDataType datatype)
         {
             switch (datatype)
             {
@@ -140,9 +142,8 @@ namespace ApiDocs.Validation
         /// <param name="method">Method.</param>
         internal static SwaggerMethod ToSwaggerMethod(this MethodDefinition method)
         {
-            var output = new SwaggerMethod();
-            
-            output.Summary = method.Title;
+            var output = new SwaggerMethod { Summary = method.Title };
+
             if (!string.IsNullOrEmpty(method.Description))
                 output.Description = method.Description;
             
@@ -173,7 +174,7 @@ namespace ApiDocs.Validation
 
         private static SwaggerResponse ToSwaggerResponse(this MethodDefinition method, out string httpStatusCode)
         {
-            Http.HttpParser parser = new Http.HttpParser();
+            Validation.Http.HttpParser parser = new Validation.Http.HttpParser();
             var response = parser.ParseHttpResponse(method.ExpectedResponse);
 
             httpStatusCode = response.StatusCode.ToString();
@@ -187,7 +188,7 @@ namespace ApiDocs.Validation
 
         internal static IEnumerable<ParameterDefinition> MissingRequestParameters(this MethodDefinition method, bool queryStringOnly = false)
         {
-            Http.HttpParser parser = new Http.HttpParser();
+            Validation.Http.HttpParser parser = new Validation.Http.HttpParser();
             var request = parser.ParseHttpRequest(method.Request);
             string urlString = request.Url;
 

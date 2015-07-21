@@ -11,8 +11,8 @@ namespace ApiDocs.Validation.OData
     {
         public EntityType()
         {
-            Properties = new List<Property>();
-            NavigationProperties = new List<NavigationProperty>();
+            this.Properties = new List<Property>();
+            this.NavigationProperties = new List<NavigationProperty>();
         }
 
         public List<NavigationProperty> NavigationProperties { get; set; }
@@ -20,10 +20,9 @@ namespace ApiDocs.Validation.OData
         public static new string ElementName { get { return "EntityType"; } }
         public static new EntityType FromXml(XElement xml)
         {
-            if (xml.Name.LocalName != EntityType.ElementName) throw new ArgumentException("xml is not an EntityType element");
+            if (xml.Name.LocalName != ElementName) throw new ArgumentException("xml is not an EntityType element");
 
-            var obj = new EntityType();
-            obj.Name = xml.AttributeValue("Name");
+            var obj = new EntityType { Name = xml.AttributeValue("Name") };
 
             obj.Properties.AddRange(from e in xml.Elements()
                                     where e.Name.LocalName == Property.ElementName

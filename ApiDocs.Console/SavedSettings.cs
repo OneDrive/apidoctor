@@ -25,15 +25,15 @@
 
         public SavedSettings(string appname, string dataFilename)
         {
-            AppName = appname;
-            DataFilename = dataFilename;
+            this.AppName = appname;
+            this.DataFilename = dataFilename;
 
-            Load();
+            this.Load();
         }
 
         public void Load()
         {
-            var dataFile = PathToAppDataFile;
+            var dataFile = this.PathToAppDataFile;
             if (!File.Exists(dataFile))
                 return;
 
@@ -53,7 +53,7 @@
 
         public void Save()
         {
-            var dataFile = PathToAppDataFile;
+            var dataFile = this.PathToAppDataFile;
             try
             {
                 var contents = JsonConvert.SerializeObject(this);
@@ -73,10 +73,10 @@
             get
             {
                 var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-                var appFolderPath = Path.Combine(appDataPath, AppName);
+                var appFolderPath = Path.Combine(appDataPath, this.AppName);
                 Directory.CreateDirectory(appFolderPath);
 
-                return Path.Combine(appFolderPath, DataFilename);
+                return Path.Combine(appFolderPath, this.DataFilename);
             }
         }
 

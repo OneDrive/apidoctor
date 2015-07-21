@@ -8,6 +8,8 @@ using Newtonsoft.Json;
 
 namespace ApiDocs.Validation
 {
+    using ApiDocs.Validation.Config;
+    using ApiDocs.Validation.Params;
 
     public class ScenarioFile : ConfigFile
     {
@@ -18,7 +20,7 @@ namespace ApiDocs.Validation
         {
             get
             {
-                return Scenarios != null;
+                return this.Scenarios != null;
             }
         }
     }

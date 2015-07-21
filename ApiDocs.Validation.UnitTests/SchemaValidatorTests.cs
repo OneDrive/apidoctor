@@ -11,12 +11,14 @@ using System.Threading.Tasks;
 
 namespace ApiDocs.Validation.UnitTests
 {
+    using ApiDocs.Validation.Error;
+
     [TestFixture]
 
     public class SchemaValidatorTests
     {
 
-        private static JsonSerializerSettings settings = new JsonSerializerSettings { DateFormatHandling = Newtonsoft.Json.DateFormatHandling.IsoDateFormat };
+        private static readonly JsonSerializerSettings Settings = new JsonSerializerSettings { DateFormatHandling = Newtonsoft.Json.DateFormatHandling.IsoDateFormat };
 
         [Test]
         public void SimpleTypeValidationValid()
@@ -32,7 +34,7 @@ namespace ApiDocs.Validation.UnitTests
                 floatProp = 123123.1231231231
             };
 
-            string json = JsonConvert.SerializeObject(newObj, settings);
+            string json = JsonConvert.SerializeObject(newObj, Settings);
 
             ValidationError[] errors;
             Assert.IsTrue(schema.ValidateJson(new JsonExample(json), out errors, null, null));
@@ -53,7 +55,7 @@ namespace ApiDocs.Validation.UnitTests
                 floatProp = 123123.1231231231
             };
 
-            string json = JsonConvert.SerializeObject(newObj, settings);
+            string json = JsonConvert.SerializeObject(newObj, Settings);
 
             ValidationError[] errors;
             Assert.IsFalse(schema.ValidateJson(new JsonExample(json), out errors, null, null));
@@ -76,7 +78,7 @@ namespace ApiDocs.Validation.UnitTests
                 floatProp = 123123.1231231231
             };
 
-            string json = JsonConvert.SerializeObject(newObj, settings);
+            string json = JsonConvert.SerializeObject(newObj, Settings);
 
             ValidationError[] errors;
             Assert.IsFalse(schema.ValidateJson(new JsonExample(json), out errors, null, null));
@@ -97,7 +99,7 @@ namespace ApiDocs.Validation.UnitTests
                 floatProp = 123123.1231231231
             };
 
-            string json = JsonConvert.SerializeObject(newObj, settings);
+            string json = JsonConvert.SerializeObject(newObj, Settings);
 
             ValidationError[] errors;
             Assert.IsFalse(schema.ValidateJson(new JsonExample(json), out errors, null, null));
@@ -119,7 +121,7 @@ namespace ApiDocs.Validation.UnitTests
                 floatProp = 123123.1231231231
             };
 
-            string json = JsonConvert.SerializeObject(newObj, settings);
+            string json = JsonConvert.SerializeObject(newObj, Settings);
 
             ValidationError[] errors;
             Assert.IsFalse(schema.ValidateJson(new JsonExample(json), out errors, null, null));

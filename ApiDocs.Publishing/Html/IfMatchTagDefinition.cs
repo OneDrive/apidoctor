@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ApiDocs.Publishing
+namespace ApiDocs.Publishing.Html
 {
     public class IfMatchTagDefinition : TagDefinition
     {
@@ -13,11 +13,6 @@ namespace ApiDocs.Publishing
             : base("ifmatch")
         {
 
-        }
-
-        public override void GetText(System.IO.TextWriter writer, Dictionary<string, object> arguments, Scope context)
-        {
-            base.GetText(writer, arguments, context);
         }
 
         protected override IEnumerable<TagParameter> GetParameters()
@@ -47,7 +42,7 @@ namespace ApiDocs.Publishing
 
         public override bool ShouldCreateSecondaryGroup(TagDefinition definition)
         {
-            return GetChildTags().Contains(definition.Name);
+            return this.GetChildTags().Contains(definition.Name);
         }
 
         public override IEnumerable<TagParameter> GetChildContextParameters()
@@ -60,8 +55,7 @@ namespace ApiDocs.Publishing
     {
         protected override IEnumerable<string> GetClosingTags()
         {
-            List<string> tags = new List<string>(base.GetClosingTags());
-            tags.Add("ifmatch");
+            var tags = new List<string>(base.GetClosingTags()) { "ifmatch" };
             return tags;
         }
     }
@@ -70,8 +64,7 @@ namespace ApiDocs.Publishing
     {
         protected override IEnumerable<string> GetClosingTags()
         {
-            List<string> tags = new List<string>(base.GetClosingTags());
-            tags.Add("ifmatch");
+            var tags = new List<string>(base.GetClosingTags()) { "ifmatch" };
             return tags;
         }
     }

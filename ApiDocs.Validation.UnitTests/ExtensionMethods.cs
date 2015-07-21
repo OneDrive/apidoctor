@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 
 namespace ApiDocs.Validation.UnitTests
 {
+    using ApiDocs.Validation.Error;
+
     static class ExtensionMethods
     {
         internal static IEnumerable<ValidationError> WarningsOrErrorsOnly(this IEnumerable<ValidationError> errors)

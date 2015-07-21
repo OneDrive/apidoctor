@@ -1,27 +1,25 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ApiDocs.Validation
+﻿namespace ApiDocs.Validation.Params
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+
     public static class RequestDefinitionExtensions
     {
-
         /// <summary>
         /// Locate the Http.HttpRequest instance for this request definition either by 
         /// parsing the RawHttpRequest or resolving MethodName into a request.
         /// </summary>
         /// <param name="definition"></param>
         /// <param name="baseUrl"></param>
+        /// <param name="documents"></param>
         /// <returns></returns>
         public static Http.HttpRequest GetHttpRequest(this BasicRequestDefinition definition, string baseUrl, DocSet documents)
         {
             Http.HttpRequest foundRequest = null;
             if (!string.IsNullOrEmpty(definition.RawHttpRequest))
             {
-                foundRequest = ParseHttpRequest(definition.RawHttpRequest, baseUrl);
+                foundRequest = ParseHttpRequest(definition.RawHttpRequest);
             }
             else if (!string.IsNullOrEmpty(definition.MethodName))
             {
@@ -43,10 +41,10 @@ namespace ApiDocs.Validation
                 throw new Exception(string.Format("Failed to locate method {0} in the docset.", methodName));
             }
 
-            return ParseHttpRequest(foundMethod.Request, baseUrl);
+            return ParseHttpRequest(foundMethod.Request);
         }
 
-        private static Http.HttpRequest ParseHttpRequest(string rawHttpRequest, string baseUrl)
+        private static Http.HttpRequest ParseHttpRequest(string rawHttpRequest)
         {
             Http.HttpParser parser = new Http.HttpParser();
             Http.HttpRequest request = parser.ParseHttpRequest(rawHttpRequest);
@@ -58,8 +56,7 @@ namespace ApiDocs.Validation
         /// Updates an HttpRequest with values from the request-parameters dictionary
         /// </summary>
         /// <param name="request"></param>
-        /// <param name="requestParameters"></param>
-        /// <param name="storedValues"></param>
+        /// <param name="placeholderValues"></param>
         public static void RewriteRequestWithParameters(this Http.HttpRequest request, IEnumerable<PlaceholderValue> placeholderValues)
         {
             // URL
@@ -75,7 +72,7 @@ namespace ApiDocs.Validation
 
             // Json
             var jsonParams = from pv in placeholderValues where pv.Location == PlaceholderLocation.Json select pv;
-            if (jsonParams.Count() > 0 && request.IsMatchingContentType("application/json"))
+            if (jsonParams.Any() && request.IsMatchingContentType("application/json"))
             {
                 request.Body = MethodDefinition.RewriteJsonBodyWithParameters(request.Body, jsonParams);
             }
@@ -102,19 +99,14 @@ namespace ApiDocs.Validation
         /// <returns></returns>
         public static PlaceholderValue ConvertToPlaceholderValue(string key, string value, Dictionary<string, string> storedValues)
         {
-            PlaceholderValue v = new PlaceholderValue();
-            v.PlaceholderKey = key;
-            v.DefinedValue = value;
-            v.Location = BasicRequestDefinition.LocationForKey(key);
+            PlaceholderValue v = new PlaceholderValue
+            {
+                PlaceholderKey = key,
+                DefinedValue = value,
+                Location = BasicRequestDefinition.LocationForKey(key)
+            };
 
-            if (BasicRequestDefinition.LocationForKey(value) == PlaceholderLocation.StoredValue)
-            {
-                v.Value = storedValues[value];
-            }
-            else
-            {
-                v.Value = value;
-            }
+            v.Value = BasicRequestDefinition.LocationForKey(value) == PlaceholderLocation.StoredValue ? storedValues[value] : value;
 
             System.Diagnostics.Debug.WriteLine("Converting \"{0}: {1}\" into loc={2},value={3}", key, value, v.Location, v.Value);
 

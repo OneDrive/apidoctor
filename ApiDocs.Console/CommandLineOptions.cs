@@ -1,13 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using CommandLine;
 using CommandLine.Text;
 
 namespace ApiDocs.ConsoleApp
 {
+    using System.Data.SqlTypes;
+    using ApiDocs.ConsoleApp.Auth;
+    using ApiDocs.Validation.Writers;
+
     class CommandLineOptions
     {
         public const string VerbPrint = "print";
@@ -19,12 +21,6 @@ namespace ApiDocs.ConsoleApp
         public const string VerbMetadata = "check-metadata";
         public const string VerbAbout = "about";
         
-
-        public CommandLineOptions()
-        {
-
-        }
-
         [VerbOption(VerbPrint, HelpText="Print files, resources, and methods discovered in the documentation.")]
         public PrintOptions PrintVerbOptions { get; set; }
 
@@ -117,23 +113,20 @@ namespace ApiDocs.ConsoleApp
         /// <returns></returns>
         public override bool HasRequiredProperties(out string[] missingArguments)
         {
-            List<string> props = new List<string>();
-
-            string value = DocumentationSetPath;
+            string value = this.DocumentationSetPath;
             if (!MakePropertyValid(ref value, Program.DefaultSettings.DocumentationPath))
             {
-                
-                DocumentationSetPath = Environment.CurrentDirectory;
+                this.DocumentationSetPath = Environment.CurrentDirectory;
             }
             else
             {
-                DocumentationSetPath = value;
+                this.DocumentationSetPath = value;
             }
 
-            FancyConsole.WriteLine("Documentation path: " + DocumentationSetPath);
+            FancyConsole.WriteLine("Documentation path: " + this.DocumentationSetPath);
 
-            missingArguments = props.ToArray();
-            return missingArguments.Length == 0;
+            missingArguments = new string[0];
+            return true;
         }
     }
 
@@ -159,8 +152,8 @@ namespace ApiDocs.ConsoleApp
 
         public override bool HasRequiredProperties(out string[] missingArguments)
         {
-            if (string.IsNullOrEmpty(DocumentationPath) && string.IsNullOrEmpty(AccessToken) &&
-                string.IsNullOrEmpty(ServiceUrl) && !ResetStoredValues && !PrintValues)
+            if (string.IsNullOrEmpty(this.DocumentationPath) && string.IsNullOrEmpty(this.AccessToken) &&
+                string.IsNullOrEmpty(this.ServiceUrl) && !this.ResetStoredValues && !this.PrintValues)
             {
                 missingArguments = new string[] { "One or more arguments are required. Check the usage of this command for more information." };
             }
@@ -195,7 +188,7 @@ namespace ApiDocs.ConsoleApp
                 return false;
 
 
-            if (!PrintFiles && !PrintResources && !PrintMethods)
+            if (!this.PrintFiles && !this.PrintResources && !this.PrintMethods)
             {
                 missingArguments = new string[] { "One or more arguments to specify what to display are required." };
             }
@@ -223,11 +216,10 @@ namespace ApiDocs.ConsoleApp
     {
         private const string AccessTokenArgument = "access-token";
         private const string ServiceUrlArgument = "url";
-        private const string ParameterFileArgument = "scenarios";
 
         public CheckServiceOptions()
         {
-            FoundAccounts = new List<Account>();
+            this.FoundAccounts = new List<Account>();
         }
 
         // Three ways to "connect" to an account
@@ -260,13 +252,10 @@ namespace ApiDocs.ConsoleApp
 
         public override bool HasRequiredProperties(out string[] missingArguments)
         {
-            bool result = base.HasRequiredProperties(out missingArguments);
+            var result = base.HasRequiredProperties(out missingArguments);
             if (!result) return result;
 
             List<string> props = new List<string>(missingArguments);
-
-            string checkValue = null;
-
             Program.LoadCurrentConfiguration(this);
 
             if (string.IsNullOrEmpty(this.AccessToken))
@@ -277,7 +266,7 @@ namespace ApiDocs.ConsoleApp
                     accounts = Program.CurrentConfiguration.Accounts;
                 if (null != accounts)
                 {
-                    FoundAccounts.AddRange(accounts);
+                    this.FoundAccounts.AddRange(accounts);
                 }
 
                 // Try to add an account from environment variables
@@ -285,35 +274,35 @@ namespace ApiDocs.ConsoleApp
                 {
                     var account = Account.CreateAccountFromEnvironmentVariables();
                     account.ServiceUrl = this.ServiceRootUrl;
-                    FoundAccounts.Add(account);
+                    this.FoundAccounts.Add(account);
                 }
                 catch (InvalidOperationException) { }
             }
 
-            bool hasAccount = (FoundAccounts.Select(x => x.Enabled).Count() > 0);
+            var hasAccount = (this.FoundAccounts.Select(x => x.Enabled).Any());
 
             if (!hasAccount)
             {
-                checkValue = AccessToken;
+                string checkValue = this.AccessToken;
                 if (!MakePropertyValid(ref checkValue, Program.DefaultSettings.AccessToken))
                 {
                     props.Add(AccessTokenArgument);
                 }
                 else
                 {
-                    AccessToken = checkValue;
+                    this.AccessToken = checkValue;
                 }
 
-                checkValue = ServiceRootUrl;
+                checkValue = this.ServiceRootUrl;
                 if (!MakePropertyValid(ref checkValue, Program.DefaultSettings.ServiceUrl))
                 {
                     props.Add(ServiceUrlArgument);
                 }
-                ServiceRootUrl = checkValue;
+                this.ServiceRootUrl = checkValue;
 
-                if (!string.IsNullOrEmpty(AccessToken) && !string.IsNullOrEmpty(ServiceRootUrl))
+                if (!string.IsNullOrEmpty(this.AccessToken) && !string.IsNullOrEmpty(this.ServiceRootUrl))
                 {
-                    FoundAccounts.Add(new Account { Name = "CommandLineAccount", Enabled = true, AccessToken = this.AccessToken, ServiceUrl = this.ServiceRootUrl });
+                    this.FoundAccounts.Add(new Account { Name = "CommandLineAccount", Enabled = true, AccessToken = this.AccessToken, ServiceUrl = this.ServiceRootUrl });
                 }
             }
 
@@ -335,9 +324,9 @@ namespace ApiDocs.ConsoleApp
         public string TemplateFolder { get; set; }
 
         [Option("line-ending",
-            DefaultValue=ApiDocs.Validation.LineEndings.Default,
+            DefaultValue=LineEndings.Default,
             HelpText="Change the line endings for output files. Values: default, windows, unix, or macintosh")]
-        public ApiDocs.Validation.LineEndings LineEndings { get; set; } 
+        public LineEndings LineEndings { get; set; } 
 
 
         #region Swagger2 output controls
@@ -367,18 +356,18 @@ namespace ApiDocs.ConsoleApp
             }
 
             List<string> missingArgs = new List<string>();
-            if (Format == PublishFormat.Mustache)
+            if (this.Format == PublishFormat.Mustache)
             {
-                if (string.IsNullOrEmpty(TemplateFolder))
+                if (string.IsNullOrEmpty(this.TemplateFolder))
                     missingArgs.Add("template");
             }
-            if (Format == PublishFormat.Swagger2)
+            if (this.Format == PublishFormat.Swagger2)
             {
-                if (string.IsNullOrEmpty(Title))
+                if (string.IsNullOrEmpty(this.Title))
                     missingArgs.Add("swagger-title");
-                if (string.IsNullOrEmpty(Description))
+                if (string.IsNullOrEmpty(this.Description))
                     missingArgs.Add("swagger-description");
-                if (string.IsNullOrEmpty(Version))
+                if (string.IsNullOrEmpty(this.Version))
                     missingArgs.Add("swagger-version");
             }
 

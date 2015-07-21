@@ -1,9 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-
-namespace ApiDocs.Validation
+﻿namespace ApiDocs.Validation.Http
 {
+    using System.Collections.Generic;
+    using System.Linq;
+    using ApiDocs.Validation.Config;
+    using ApiDocs.Validation.Error;
+
     public static class HttpValidationExtensionMethods
     {
         /// <summary>
@@ -12,7 +13,8 @@ namespace ApiDocs.Validation
         /// </summary>
         /// <returns>The http request.</returns>
         /// <param name="request">Request.</param>
-        /// <param name="requirements">Requirements.</param>
+        /// <param name="sourceFile"></param>
+        /// <param name="apiRequirements"></param>
         public static ValidationResult<bool> IsRequestValid(this Http.HttpRequest request, string sourceFile, ApiRequirements apiRequirements)
         {
             if (null == apiRequirements || null == apiRequirements.HttpRequest)

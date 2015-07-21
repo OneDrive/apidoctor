@@ -10,6 +10,8 @@ using System.Threading.Tasks;
 
 namespace ApiDocs.Validation.UnitTests
 {
+    using ApiDocs.Validation.Error;
+
     [TestFixture]
     public class ResourceStringValidationTests
     {

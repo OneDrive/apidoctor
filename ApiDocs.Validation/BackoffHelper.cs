@@ -9,13 +9,12 @@ namespace ApiDocs.Validation
 
         public int BaseTimeMilliseconds { get; set; }
 
-        private readonly Random _random;
+        private readonly Random random = new Random();
 
         public BackoffHelper()
         {
-            MaximumTimeMilliseconds = 5000;
-            BaseTimeMilliseconds = 100;
-            _random = new Random();
+            this.MaximumTimeMilliseconds = 5000;
+            this.BaseTimeMilliseconds = 100;
         }
 
         /// <summary>
@@ -23,12 +22,11 @@ namespace ApiDocs.Validation
         /// </summary>
         /// <returns>A task that completes after the duration of the delay.</returns>
         /// <param name="errorCount">The number of times an error has occured for this particular command / session.</param>
-        public async Task FullJitterBackoffDelay(int errorCount)
+        public async Task FullJitterBackoffDelayAsync(int errorCount)
         {
-            double expectedBackoffTime = Math.Min(MaximumTimeMilliseconds, 
-                BaseTimeMilliseconds * Math.Pow(2 , errorCount));
+            double expectedBackoffTime = Math.Min(this.MaximumTimeMilliseconds, this.BaseTimeMilliseconds * Math.Pow(2 , errorCount));
 
-            var sleepDuration = Between(_random, 0, (int)expectedBackoffTime);
+            var sleepDuration = Between(this.random, 0, (int)expectedBackoffTime);
 
             System.Diagnostics.Debug.WriteLine("Waiting for: {0} milliseconds", sleepDuration);
             await Task.Delay(sleepDuration);
@@ -43,16 +41,10 @@ namespace ApiDocs.Validation
         }
 
 
-        private static BackoffHelper _defaultInstance = null;
+        private static BackoffHelper defaultInstance;
         public static BackoffHelper Default
         {
-            get {
-                if (_defaultInstance == null)
-                {
-                    _defaultInstance = new BackoffHelper();
-                }
-                return _defaultInstance;
-            }
+            get { return defaultInstance ?? (defaultInstance = new BackoffHelper()); }
         }
     }
 }

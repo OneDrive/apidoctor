@@ -69,14 +69,14 @@ namespace ApiDocs.Validation.Json
         /// <summary>
         /// Sets the value of a property in a dynamic object based on a json path
         /// </summary>
-        /// <param name="source"></param>
+        /// <param name="json"></param>
         /// <param name="path"></param>
         /// <param name="value"></param>
         /// <returns></returns>
         public static string SetValueForJsonPath(string json, string path, object value)
         {
             object originalObject = (JContainer)JsonConvert.DeserializeObject(json);
-            object jsonObject = originalObject;
+            var jsonObject = originalObject;
 
             var currentComponent = DecomposePath(path);
             if (currentComponent.IsRoot)
@@ -87,7 +87,8 @@ namespace ApiDocs.Validation.Json
                 jsonObject = currentComponent.GetObjectForPart(jsonObject, true);
                 currentComponent = currentComponent.Child;
             }            
-            if (null != jsonObject)
+
+            if (null != jsonObject && null != currentComponent)
             {
                 currentComponent.SetValueForPart(jsonObject, value);
             }
@@ -103,25 +104,24 @@ namespace ApiDocs.Validation.Json
         /// <returns></returns>
         private static JsonPathPart DecomposePath(string path)
         {
-            const string JsonPathStarter = "$.";
+            const string jsonPathStarter = "$.";
 
             if (path == "$")
                 return JsonPathPart.Root;
 
-            if (!path.StartsWith(JsonPathStarter))
+            if (!path.StartsWith(jsonPathStarter))
                 throw new ArgumentException(
                     string.Format("Path \"{0}\" doesn't appear to conform to JSONpath syntax.", path),
                     "path");
 
-            List<JsonPathPart> pathParts = new List<JsonPathPart>();
-            pathParts.Add(JsonPathPart.Root);
+            List<JsonPathPart> pathParts = new List<JsonPathPart> { JsonPathPart.Root };
 
             StringBuilder reader = new StringBuilder();
             JsonPathPart partBeingRead = new JsonPathPart();
 
             PathParserState state = PathParserState.ReadingPropertyName;
 
-            for (int i = JsonPathStarter.Length; i < path.Length; i++)
+            for (int i = jsonPathStarter.Length; i < path.Length; i++)
             {
                 // Walk through all the characters of the string and build up the path parts.
                 char thisChar = path[i];
@@ -234,17 +234,10 @@ namespace ApiDocs.Validation.Json
         {
             public JsonPathPart()
             {
-                ArrayIndex = -1;
+                this.ArrayIndex = -1;
             }
 
-            public JsonPathPart(JsonPathPart parent) : this()
-            {
-                Parent = parent;
-                if (null != parent)
-                    parent.Child = this;
-            }
-
-            public bool IsRoot { get { return PropertyName == "$";}}
+            public bool IsRoot { get { return this.PropertyName == "$";}}
 
             public string PropertyName { get; set; }
 
@@ -259,11 +252,11 @@ namespace ApiDocs.Validation.Json
                 get { return new JsonPathPart { PropertyName = "$" }; }
             }
 
-
             /// <summary>
             /// Return the value of the property referred to by the current JsonPathPart instance
             /// </summary>
-            /// <param name="jsonObject"></param>
+            /// <param name="source"></param>
+            /// <param name="createIfMissing"></param>
             /// <returns></returns>
             public object GetObjectForPart(object source, bool createIfMissing = false)
             {
@@ -273,22 +266,22 @@ namespace ApiDocs.Validation.Json
                 {
                     try
                     {
-                        foundValue = container[PropertyName];
+                        foundValue = container[this.PropertyName];
                     }
                     catch (Exception ex)
                     {
-                        throw new JsonPathException(string.Format("Couldn't locate property {0}", PropertyName), ex);
+                        throw new JsonPathException(string.Format("Couldn't locate property {0}", this.PropertyName), ex);
                     }
 
-                    if (foundValue == null && (Child != null || ArrayIndex >= 0))
+                    if (foundValue == null && (this.Child != null || this.ArrayIndex >= 0))
                     {
                         if (!createIfMissing)
                         {
-                            throw new JsonPathException(string.Format("Property {0} was null or missing. Cannot continue to evaluate path.", PropertyName));
+                            throw new JsonPathException(string.Format("Property {0} was null or missing. Cannot continue to evaluate path.", this.PropertyName));
                         }
 
-                        container[PropertyName] = new JObject();
-                        foundValue = container[PropertyName];
+                        container[this.PropertyName] = new JObject();
+                        foundValue = container[this.PropertyName];
                     }
                 }
                 else
@@ -296,11 +289,14 @@ namespace ApiDocs.Validation.Json
                     throw new JsonPathException("Unsupported object type: " + source.ToString());
                 }
 
-                if (ArrayIndex >= 0)
+                if (this.ArrayIndex >= 0)
                 {
                     try
                     {
-                        foundValue= ((dynamic)foundValue)[ArrayIndex];
+                        if (foundValue != null)
+                        {
+                            foundValue= ((dynamic)foundValue)[this.ArrayIndex];
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -325,11 +321,11 @@ namespace ApiDocs.Validation.Json
                     {
                         if (null == value)
                         {
-                            container[PropertyName] = null;
+                            container[this.PropertyName] = null;
                         }
                         else
                         {
-                            container[PropertyName] = JToken.FromObject(value);
+                            container[this.PropertyName] = JToken.FromObject(value);
                         }
                     }
                     catch (Exception ex)

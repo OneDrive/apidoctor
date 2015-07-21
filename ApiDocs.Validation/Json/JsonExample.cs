@@ -11,8 +11,8 @@ namespace ApiDocs.Validation.Json
 
         public JsonExample(string json, CodeBlockAnnotation annotation = null)
         {
-            JsonData = json;
-            Annotation = annotation ?? new CodeBlockAnnotation();
+            this.JsonData = json;
+            this.Annotation = annotation ?? new CodeBlockAnnotation();
         }
 
         public string JsonData { get; set; }

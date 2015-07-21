@@ -1,10 +1,9 @@
-﻿using System;
-using Newtonsoft.Json;
-using System.Collections.Generic;
-using System.Linq;
-
-namespace ApiDocs.Validation
+﻿namespace ApiDocs.Publishing.Swagger
 {
+    using System.Collections.Generic;
+    using System.Linq;
+    using Newtonsoft.Json;
+
     internal class SwaggerResource
     {
 
@@ -35,16 +34,16 @@ namespace ApiDocs.Validation
 
         public SwaggerMethod()
         {
-            Parameters = new List<SwaggerParameter>();
-            Tags = new List<string>();
-            Responses = new Dictionary<string, SwaggerResponse>();
+            this.Parameters = new List<SwaggerParameter>();
+            this.Tags = new List<string>();
+            this.Responses = new Dictionary<string, SwaggerResponse>();
 
-            Security = new List<Dictionary<string, string[]>>();
+            this.Security = new List<Dictionary<string, string[]>>();
         }
 
         public void AddRequiredSecurityRoles(string provider, IEnumerable<string> roles)
         {
-            Security.Add(new Dictionary<string, string[]> 
+            this.Security.Add(new Dictionary<string, string[]> 
             { 
                 { provider, roles.ToArray() }
             });
@@ -83,7 +82,7 @@ namespace ApiDocs.Validation
     {
         public SwaggerResponse()
         {
-            Description = string.Empty;
+            this.Description = string.Empty;
         }
 
         [JsonProperty("description", NullValueHandling=NullValueHandling.Ignore)]

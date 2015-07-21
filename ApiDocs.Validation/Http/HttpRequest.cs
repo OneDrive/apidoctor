@@ -12,7 +12,7 @@
     {
         public HttpRequest()
         {
-            Headers = new WebHeaderCollection();
+            this.Headers = new WebHeaderCollection();
         }
 
         public string Method { get; set; }
@@ -23,32 +23,32 @@
         {
             get
             {
-                return Headers["Accept"];
+                return this.Headers["Accept"];
             }
             set
             {
-                Headers["Accept"] = value;
+                this.Headers["Accept"] = value;
             }
         }
 
         public string Authorization
         {
-            get { return Headers["Authorization"]; }
-            set { Headers["Authorization"] = value; }
+            get { return this.Headers["Authorization"]; }
+            set { this.Headers["Authorization"] = value; }
         }
 
         public string ContentType
         {
-            get { return Headers["content-type"]; }
-            set { Headers["content-type"] = value; }
+            get { return this.Headers["content-type"]; }
+            set { this.Headers["content-type"] = value; }
         }
 
         public bool IsMatchingContentType(string expectedContentType)
         {
-            if (string.IsNullOrEmpty(ContentType))
+            if (string.IsNullOrEmpty(this.ContentType))
                 return false;
 
-            string[] contentTypeParts = ContentType.Split(new char[] { ';' });
+            string[] contentTypeParts = this.ContentType.Split(new char[] { ';' });
             return contentTypeParts.Length > 0 && contentTypeParts[0].Equals(expectedContentType, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -66,47 +66,40 @@
                 effectiveUrl += this.Url;
             }
 
-            HttpWebRequest request = HttpWebRequest.CreateHttp(effectiveUrl);
+            HttpWebRequest request = WebRequest.CreateHttp(effectiveUrl);
             request.AllowAutoRedirect = false;
-            request.Method = Method;
+            request.Method = this.Method;
             request.KeepAlive = true;
             request.ServicePoint.Expect100Continue = false;
 
-            foreach (var key in Headers.AllKeys)
+            foreach (var key in this.Headers.AllKeys)
             {
                 switch (key.ToLower())
                 {
                     case "accept":
-                        request.Accept = Headers[key];
+                        request.Accept = this.Headers[key];
                         break;
                     case "content-type":
-                        request.ContentType = Headers[key];
+                        request.ContentType = this.Headers[key];
                         break;
                     case "content-length":
                         // Don't set these headers
                         break;
                     case "if-modified-since":
-                        if (Headers[key].Equals("current_time"))
-                        {
-                            request.IfModifiedSince = DateTime.Now;
-                        }
-                        else
-                        {
-                            request.IfModifiedSince = Convert.ToDateTime(Headers[key]);
-                        }
+                        request.IfModifiedSince = this.Headers[key].Equals("current_time") ? DateTime.Now : Convert.ToDateTime(this.Headers[key]);
                         break;
                     default:
-                        request.Headers.Add(key, Headers[key]);
+                        request.Headers.Add(key, this.Headers[key]);
                         break;
                 }
             }
 
-            if (Body != null)
+            if (this.Body != null)
             {
                 using (var stream = request.GetRequestStream())
                 {
                     var writer = new StreamWriter(stream);
-                    writer.Write(Body);
+                    writer.Write(this.Body);
                     writer.Flush();
                 }
             }
@@ -126,26 +119,26 @@
         public string FullHttpText()
         {
             StringBuilder sb = new StringBuilder();
-            sb.Append(Method);
+            sb.Append(this.Method);
             sb.Append(" ");
-            sb.Append(Url);
+            sb.Append(this.Url);
             sb.Append(" ");
             sb.AppendLine("HTTP/1.1");
-            foreach (string header in Headers.AllKeys)
+            foreach (string header in this.Headers.AllKeys)
             {
-                if (header.Equals("authorization", StringComparison.OrdinalIgnoreCase) && Headers[header].Length > 30)
+                if (header.Equals("authorization", StringComparison.OrdinalIgnoreCase) && this.Headers[header].Length > 30)
                 {
-                    sb.AppendFormat("{0}: {1}...", header, Headers[header].Substring(0, 30));
+                    sb.AppendFormat("{0}: {1}...", header, this.Headers[header].Substring(0, 30));
                 }
                 else
                 {
-                    sb.AppendFormat("{0}: {1}", header, Headers[header]);
+                    sb.AppendFormat("{0}: {1}", header, this.Headers[header]);
                 }
 
                 sb.AppendLine();
             }
             sb.AppendLine();
-            sb.Append(Body);
+            sb.Append(this.Body);
             
             return sb.ToString();
         }
@@ -161,7 +154,7 @@
                 if (retryCount < ValidationConfig.RetryAttemptsOnServiceUnavailableResponse)
                 {
                     // Do "full jitter" back off
-                    await BackoffHelper.Default.FullJitterBackoffDelay(retryCount);
+                    await BackoffHelper.Default.FullJitterBackoffDelayAsync(retryCount);
 
                     // Try the request again
                     return await this.GetResponseAsync(baseUrl, retryCount + 1);

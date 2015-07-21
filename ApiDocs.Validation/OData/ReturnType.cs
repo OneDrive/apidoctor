@@ -15,12 +15,14 @@ namespace ApiDocs.Validation.OData
 
         internal static ReturnType FromXml(System.Xml.Linq.XElement xml)
         {
-            if (xml.Name.LocalName != ReturnType.ElementName) throw new ArgumentException("xml wasn't a ReturnType element");
+            if (xml.Name.LocalName != ElementName) throw new ArgumentException("xml wasn't a ReturnType element");
 
-            var obj = new ReturnType();
-            obj.Type = xml.AttributeValue("Type");
-            obj.Nullable = xml.AttributeValue("Nullable").ToBoolean();
-            
+            var obj = new ReturnType
+            {
+                Type = xml.AttributeValue("Type"),
+                Nullable = xml.AttributeValue("Nullable").ToBoolean()
+            };
+
             return obj;
         }
 

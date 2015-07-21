@@ -43,9 +43,7 @@ namespace ApiDocs.Validation.OData
             if (null != matchingComplexType) return matchingComplexType;
 
             var matchingEntityType = (from et in schema.Entities where et.Name == typeName select et).FirstOrDefault();
-            if (null != matchingEntityType) return matchingEntityType;
-
-            return null;
+            return matchingEntityType;
         }
     }
 }

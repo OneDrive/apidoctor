@@ -10,14 +10,14 @@
     {
         public ResourceDefinition(CodeBlockAnnotation annotation, string jsonContent, DocFile source)
         {
-            Metadata = annotation;
-            OriginalExample = jsonContent;
-            SourceFile = source;
+            this.Metadata = annotation;
+            this.OriginalExample = jsonContent;
+            this.SourceFile = source;
 
             try
             {
                 object inputObject = JsonConvert.DeserializeObject(jsonContent);
-                JsonExample = JsonConvert.SerializeObject(inputObject, Formatting.Indented);
+                this.JsonExample = JsonConvert.SerializeObject(inputObject, Formatting.Indented);
             }
             catch (Exception ex)
             {
@@ -39,7 +39,7 @@
         /// <summary>
         /// The type identifier for the resource defined in this class
         /// </summary>
-        public string ResourceType { get { return Metadata.ResourceType; } }
+        public string ResourceType { get { return this.Metadata.ResourceType; } }
 
         /// <summary>
         /// Parsed and reformatted json resource read from the documentation

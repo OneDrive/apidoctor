@@ -15,7 +15,7 @@ namespace ApiDocs.Validation
 
         public ItemDefinition()
         {
-            Parameters = new List<ParameterDefinition>();
+            this.Parameters = new List<ParameterDefinition>();
         }
 
     }

@@ -18,38 +18,30 @@ namespace ApiDocs.ConsoleApp
         public const ConsoleColor ConsoleSuccessColor = ConsoleColor.Green;
 
         
-        private static string _logFileName;
-        private static StreamWriter _logWriter;
+        private static string logFileName;
+        private static StreamWriter logWriter;
 
         public static bool WriteVerboseOutput { get; set; }
 
         public static string LogFileName 
         {
-            get { return _logFileName; }
+            get { return logFileName; }
             set
             {
-                _logFileName = value;
-                if (!string.IsNullOrEmpty(_logFileName))
-                {
-                    _logWriter = new StreamWriter(_logFileName, false);
-                    _logWriter.AutoFlush = true;
-                }
-                else
-                {
-                    _logWriter = null;
-                }
+                logFileName = value;
+                logWriter = !string.IsNullOrEmpty(logFileName) ? new StreamWriter(logFileName, false) { AutoFlush = true } : null;
             }
         }
 
         public static void Write(string output)
         {
-            if (null != _logWriter) _logWriter.Write(output);
+            if (null != logWriter) logWriter.Write(output);
             Console.Write(output);
         }
 
         public static void Write(ConsoleColor color, string output)
         {
-            if (null != _logWriter) _logWriter.Write(output);
+            if (null != logWriter) logWriter.Write(output);
 
             Console.ForegroundColor = color;
             Console.Write(output);
@@ -58,13 +50,13 @@ namespace ApiDocs.ConsoleApp
 
         public static void Write(string format, params object[] values)
         {
-            if (null != _logWriter) _logWriter.Write(format, values);
+            if (null != logWriter) logWriter.Write(format, values);
             Console.Write(format, values);
         }
 
         public static void Write(ConsoleColor color, string format, params object[] values)
         {
-            if (null != _logWriter) _logWriter.Write(format, values);
+            if (null != logWriter) logWriter.Write(format, values);
 
             Console.ForegroundColor = color;
             Console.Write(format, values);
@@ -73,25 +65,25 @@ namespace ApiDocs.ConsoleApp
 
         public static void WriteLine()
         {
-            if (null != _logWriter) _logWriter.WriteLine();
+            if (null != logWriter) logWriter.WriteLine();
             Console.WriteLine();
         }
 
         public static void WriteLine(string format, params object[] values)
         {
-            if (null != _logWriter) _logWriter.WriteLine(format, values);
+            if (null != logWriter) logWriter.WriteLine(format, values);
             Console.WriteLine(format, values);
         }
 
         public static void WriteLine(string output)
         {
-            if (null != _logWriter) _logWriter.WriteLine(output);
+            if (null != logWriter) logWriter.WriteLine(output);
             Console.WriteLine(output);
         }
 
         public static void WriteLine(ConsoleColor color, string format, params object[] values)
         {
-            if (null != _logWriter) _logWriter.WriteLine(format, values);
+            if (null != logWriter) logWriter.WriteLine(format, values);
 
             Console.ForegroundColor = color;
             Console.WriteLine(format, values);

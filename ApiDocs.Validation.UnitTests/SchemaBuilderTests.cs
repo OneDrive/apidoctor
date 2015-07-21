@@ -106,13 +106,13 @@ namespace ApiDocs.Validation.UnitTests
                 switch (prop.Name)
                 {
                     case "arrayTypeA":
-                        CheckJsonProperty(prop, expectedType: JsonDataType.ODataType, odataTypeName: "resource.a", isArray: true, customMembersIsNull: true);
+                        this.CheckJsonProperty(prop, expectedType: JsonDataType.ODataType, odataTypeName: "resource.a", isArray: true, customMembersIsNull: true);
                         break;
                     case "complexTypeB":
-                        CheckJsonProperty(prop, expectedType: JsonDataType.ODataType, odataTypeName: "resource.b", isArray: false, customMembersIsNull: true);
+                        this.CheckJsonProperty(prop, expectedType: JsonDataType.ODataType, odataTypeName: "resource.b", isArray: false, customMembersIsNull: true);
                         break;
                     case "simpleType":
-                        CheckJsonProperty(prop, expectedType: JsonDataType.String, isArray: false, customMembersIsNull: true);
+                        this.CheckJsonProperty(prop, expectedType: JsonDataType.String, isArray: false, customMembersIsNull: true);
                         break;
                     default:
                         Assert.Fail("Unexpected property name: " + prop.Name);

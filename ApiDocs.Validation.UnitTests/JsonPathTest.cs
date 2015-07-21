@@ -37,7 +37,7 @@ namespace ApiDocs.Validation.UnitTests
 
         public string GetJson()
         {
-            var jsonString = JsonConvert.SerializeObject(GetJsonObject());
+            var jsonString = JsonConvert.SerializeObject(this.GetJsonObject());
             return jsonString;
         }
 
@@ -45,7 +45,7 @@ namespace ApiDocs.Validation.UnitTests
         [Test]
         public void JsonPathRootObject()
         {
-            var json = GetJson();
+            var json = this.GetJson();
             var value = JsonPath.ValueFromJsonPath(json, "$");
 
             var resultJson = JsonConvert.SerializeObject(value);
@@ -56,22 +56,22 @@ namespace ApiDocs.Validation.UnitTests
         [ExpectedException(ExpectedException=typeof(JsonPathException))]
         public void JsonPathInvalidPath()
         {
-            JsonPath.ValueFromJsonPath(GetJson(), "$.nothing.foo");
+            JsonPath.ValueFromJsonPath(this.GetJson(), "$.nothing.foo");
         }
 
         [Test]
         public void JsonPathTopLevelValue()
         {
-            var value = JsonPath.ValueFromJsonPath(GetJson(), "$.id");
+            var value = JsonPath.ValueFromJsonPath(this.GetJson(), "$.id");
             Assert.AreEqual("1234", value);
         }
 
         [Test]
         public void JsonPathSecondLevelObjectValue()
         {
-            var value = JsonPath.ValueFromJsonPath(GetJson(), "$.thumbnails.small");
+            var value = JsonPath.ValueFromJsonPath(this.GetJson(), "$.thumbnails.small");
 
-            dynamic obj = GetJsonObject();
+            dynamic obj = this.GetJsonObject();
             var smallThumbnailObject = obj["thumbnails"].small;
 
             var foundObjectJson = JsonConvert.SerializeObject(value);
@@ -83,16 +83,16 @@ namespace ApiDocs.Validation.UnitTests
         [Test]
         public void JsonPathThirdLevelValue()
         {
-            var value = JsonPath.ValueFromJsonPath(GetJson(), "$.thumbnails.small.url");
+            var value = JsonPath.ValueFromJsonPath(this.GetJson(), "$.thumbnails.small.url");
             Assert.AreEqual("http://small", value);
         }
 
         [Test]
         public void JsonPathArrayTest()
         {
-            var value = JsonPath.ValueFromJsonPath(GetJson(), "$.children[0]");
+            var value = JsonPath.ValueFromJsonPath(this.GetJson(), "$.children[0]");
 
-            dynamic obj = GetJsonObject();
+            dynamic obj = this.GetJsonObject();
             var firstChild = obj["children"][0];
 
             var foundObjectJson = JsonConvert.SerializeObject(value);
@@ -104,21 +104,21 @@ namespace ApiDocs.Validation.UnitTests
         [Test]
         public void JsonPathArrayWithSecondLevelTest()
         {
-            var value = JsonPath.ValueFromJsonPath(GetJson(), "$.children[0].name");
+            var value = JsonPath.ValueFromJsonPath(this.GetJson(), "$.children[0].name");
             Assert.AreEqual("first_file.txt", value);
         }
 
         [Test]
         public void JsonPathWithPeriodInPropertyNameTest()
         {
-            var value = JsonPath.ValueFromJsonPath(GetJson(), "$.['@content.downloadUrl']");
+            var value = JsonPath.ValueFromJsonPath(this.GetJson(), "$.['@content.downloadUrl']");
             Assert.AreEqual("https://foobar.com/something", value);
         }
 
         [Test]
         public void JsonPathSetTopLevelValue()
         {
-            string modifiedJson = JsonPath.SetValueForJsonPath(GetJson(), "$.id", "5678");
+            string modifiedJson = JsonPath.SetValueForJsonPath(this.GetJson(), "$.id", "5678");
 
             dynamic result = JsonConvert.DeserializeObject(modifiedJson);
             Assert.AreEqual(JsonPath.ConvertValueForOutput(result.id), "5678");
@@ -127,7 +127,7 @@ namespace ApiDocs.Validation.UnitTests
         [Test]
         public void JsonPathSetSecondLevelValue()
         {
-            string modifiedJson = JsonPath.SetValueForJsonPath(GetJson(), "$.another.value", "something-else-completely");
+            string modifiedJson = JsonPath.SetValueForJsonPath(this.GetJson(), "$.another.value", "something-else-completely");
 
             dynamic result = JsonConvert.DeserializeObject(modifiedJson);
             Assert.AreEqual(JsonPath.ConvertValueForOutput(result.another.value), "something-else-completely");
@@ -136,7 +136,7 @@ namespace ApiDocs.Validation.UnitTests
         [Test]
         public void JsonPathSetArrayValue()
         {
-            string modifiedJson = JsonPath.SetValueForJsonPath(GetJson(), "$.children[0].name", "something-else-completely");
+            string modifiedJson = JsonPath.SetValueForJsonPath(this.GetJson(), "$.children[0].name", "something-else-completely");
 
             dynamic result = JsonConvert.DeserializeObject(modifiedJson);
             Assert.AreEqual(JsonPath.ConvertValueForOutput(result.children[0].name), "something-else-completely");
@@ -145,7 +145,7 @@ namespace ApiDocs.Validation.UnitTests
         [Test]
         public void JsonPathSetNewTopLevelValue()
         {
-            string modifiedJson = JsonPath.SetValueForJsonPath(GetJson(), "$.zippy", "do-dah");
+            string modifiedJson = JsonPath.SetValueForJsonPath(this.GetJson(), "$.zippy", "do-dah");
 
             dynamic result = JsonConvert.DeserializeObject(modifiedJson);
             Assert.AreEqual(JsonPath.ConvertValueForOutput(result.zippy), "do-dah");
@@ -154,7 +154,7 @@ namespace ApiDocs.Validation.UnitTests
         [Test]
         public void JsonPathSetNewSecondLevelValue()
         {
-            string modifiedJson = JsonPath.SetValueForJsonPath(GetJson(), "$.zippy.foo", "do-dah");
+            string modifiedJson = JsonPath.SetValueForJsonPath(this.GetJson(), "$.zippy.foo", "do-dah");
 
             dynamic result = JsonConvert.DeserializeObject(modifiedJson);
             Assert.AreEqual(JsonPath.ConvertValueForOutput(result.zippy.foo), "do-dah");

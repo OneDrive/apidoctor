@@ -1,16 +1,21 @@
-﻿using System;
-using System.Threading.Tasks;
-using System.IO;
-using System.Linq;
-using System.Collections.Generic;
-using System.Text;
-
-namespace ApiDocs.Validation
+﻿namespace ApiDocs.Publishing.Html
 {
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+    using System.Text.RegularExpressions;
+    using System.Threading.Tasks;
+    using ApiDocs.Validation;
+    using ApiDocs.Validation.Error;
+    using ApiDocs.Validation.Json;
+    using ApiDocs.Validation.Writers;
+    using Newtonsoft.Json;
+
     public class DocumentPublisherHtml : DocumentPublisher
     {
-        protected string _templateFolderPath;
-        protected string _templateHtml;
+        protected string TemplateFolderPath;
+        protected string TemplateHtml;
 
         private const string HtmlOutputExtension = ".htm";
         private const string TemplateHtmlFilename = "template.htm";
@@ -18,7 +23,7 @@ namespace ApiDocs.Validation
         public DocumentPublisherHtml(DocSet docs, string templateFolderPath) 
             : base(docs)
         {
-            _templateFolderPath = templateFolderPath;
+            this.TemplateFolderPath = templateFolderPath;
         }
 
         /// <summary>
@@ -26,13 +31,13 @@ namespace ApiDocs.Validation
         /// </summary>
         protected virtual void LoadTemplate()
         {
-            DirectoryInfo dir = new DirectoryInfo(_templateFolderPath);
+            DirectoryInfo dir = new DirectoryInfo(this.TemplateFolderPath);
             if (!dir.Exists)
             {
                 return;
             }
 
-            _templateFolderPath = dir.FullName;
+            this.TemplateFolderPath = dir.FullName;
 
             var templateFilePath = Path.Combine(dir.FullName, TemplateHtmlFilename);
             if (!File.Exists(templateFilePath))
@@ -41,7 +46,7 @@ namespace ApiDocs.Validation
             }
 
             Console.WriteLine("Using template: {0}", templateFilePath);
-            _templateHtml = File.ReadAllText(templateFilePath);
+            this.TemplateHtml = File.ReadAllText(templateFilePath);
         }
 
         /// <summary>
@@ -52,9 +57,9 @@ namespace ApiDocs.Validation
         protected override void ConfigureOutputDirectory(DirectoryInfo destinationRoot)
         {
             // Copy everything in the template folder to the output folder except template.htm
-            if (null != _templateFolderPath)
+            if (null != this.TemplateFolderPath)
             {
-                DirectoryInfo templateFolder = new DirectoryInfo(_templateFolderPath);
+                DirectoryInfo templateFolder = new DirectoryInfo(this.TemplateFolderPath);
 
                 var templateFiles = templateFolder.GetFiles();
                 foreach (var file in templateFiles)
@@ -70,9 +75,9 @@ namespace ApiDocs.Validation
                     DirectoryCopy(folder, Path.Combine(destinationRoot.FullName, folder.Name), true);
                 }
 
-                if (string.IsNullOrEmpty(_templateHtml) && !string.IsNullOrEmpty(_templateFolderPath))
+                if (string.IsNullOrEmpty(this.TemplateHtml) && !string.IsNullOrEmpty(this.TemplateFolderPath))
                 {
-                    LoadTemplate();
+                    this.LoadTemplate();
                 }
             }
         }
@@ -147,12 +152,14 @@ namespace ApiDocs.Validation
         /// <returns></returns>
         protected virtual MarkdownDeep.Markdown GetMarkdownConverter()
         {
-            var converter = new MarkdownDeep.Markdown();
-            converter.ExtraMode = true;
-            converter.NewWindowForExternalLinks = true;
-            converter.SafeMode = true;
-            converter.AutoHeadingIDs = true;
-            converter.QualifyUrl = QualifyUrl;
+            var converter = new MarkdownDeep.Markdown
+            {
+                ExtraMode = true,
+                NewWindowForExternalLinks = true,
+                SafeMode = true,
+                AutoHeadingIDs = true,
+                QualifyUrl = this.QualifyUrl
+            };
             return converter;
         }
 
@@ -170,7 +177,7 @@ namespace ApiDocs.Validation
 
             string filePath, bookmark;
             SplitUrlPathAndBookmark(url, out filePath, out bookmark);
-            foreach (var extension in scannableExtensions)
+            foreach (var extension in this.ScannableExtensions)
             {
                 if (filePath.EndsWith(extension))
                 {
@@ -180,11 +187,11 @@ namespace ApiDocs.Validation
             return url;
         }
 
-        protected override async Task PublishFileToDestination(FileInfo sourceFile, DirectoryInfo destinationRoot, DocFile page)
+        protected override async Task PublishFileToDestinationAsync(FileInfo sourceFile, DirectoryInfo destinationRoot, DocFile page)
         {
-            LogMessage(new ValidationMessage(sourceFile.Name, "Publishing file to HTML"));
+            this.LogMessage(new ValidationMessage(sourceFile.Name, "Publishing file to HTML"));
 
-            var destinationPath = GetPublishedFilePath(sourceFile, destinationRoot, HtmlOutputExtension);
+            var destinationPath = this.GetPublishedFilePath(sourceFile, destinationRoot, HtmlOutputExtension);
 
             StringWriter writer = new StringWriter();
             StreamReader reader = new StreamReader(sourceFile.OpenRead());
@@ -194,22 +201,18 @@ namespace ApiDocs.Validation
             while ((nextLine = await reader.ReadLineAsync()) != null)
             {
                 lineNumber++;
-                if (IsDoubleBlockQuote(nextLine))
+                if (this.IsDoubleBlockQuote(nextLine))
                 {
-                    LogMessage(new ValidationMessage(string.Concat(sourceFile.Name, ":", lineNumber), "Removing DoubleBlockQuote"));
+                    this.LogMessage(new ValidationMessage(string.Concat(sourceFile.Name, ":", lineNumber), "Removing DoubleBlockQuote"));
                     continue;
                 }
                 await writer.WriteLineAsync(nextLine);
             }
 
-            var converter = GetMarkdownConverter();
+            var converter = this.GetMarkdownConverter();
             var html = converter.Transform(writer.ToString());
 
-            var pageData = page.Annotation;
-            if (null == pageData)
-            {
-                pageData = new PageAnnotation();
-            }
+            var pageData = page.Annotation ?? new PageAnnotation();
             if (string.IsNullOrEmpty(pageData.Title))
             {
                pageData.Title = (from b in converter.Blocks
@@ -217,14 +220,14 @@ namespace ApiDocs.Validation
                              select b.Content).FirstOrDefault();
             }
             page.Annotation = pageData;
-            await WriteHtmlDocumentAsync(html, page, destinationPath, destinationRoot.FullName);
+            await this.WriteHtmlDocumentAsync(html, page, destinationPath, destinationRoot.FullName);
         }
 
         /// <summary>
         /// Apply the HTML template to the parameters and write the file to the destination.
         /// </summary>
         /// <param name="bodyHtml"></param>
-        /// <param name="pageData"></param>
+        /// <param name="page"></param>
         /// <param name="destinationFile"></param>
         /// <param name="rootDestinationFolder"></param>
         /// <returns></returns>
@@ -232,15 +235,12 @@ namespace ApiDocs.Validation
         {
             List<string> variablesToReplace = new List<string>();
             string pageHtml = null;
-            if (_templateHtml != null)
+            if (this.TemplateHtml != null)
             {
-                var matches = ExtensionMethods.PathVariableRegex.Matches(_templateHtml);
-                foreach (System.Text.RegularExpressions.Match match in matches)
-                {
-                    variablesToReplace.Add(match.Groups[0].Value);
-                }
+                var matches = ExtensionMethods.PathVariableRegex.Matches(this.TemplateHtml);
+                variablesToReplace.AddRange(from Match match in matches select match.Groups[0].Value);
 
-                string templateHtmlForThisPage = _templateHtml;
+                string templateHtmlForThisPage = this.TemplateHtml;
 
                 foreach (var key in variablesToReplace.ToArray())
                 {
@@ -254,7 +254,7 @@ namespace ApiDocs.Validation
                     }
                     else if (key.StartsWith("{if "))
                     {
-                        string value = ParseDocumentIfStatement(key, destinationFile);
+                        string value = this.ParseDocumentIfStatement(key, destinationFile);
                         templateHtmlForThisPage = templateHtmlForThisPage.Replace(key, value);
                     }
                     else
@@ -269,10 +269,10 @@ namespace ApiDocs.Validation
             }
             else
             {
-                pageHtml = string.Concat(string.Format(htmlHeader, page.Annotation.Title, htmlStyles), bodyHtml, htmlFooter);
+                pageHtml = string.Concat(string.Format(HtmlHeader, page.Annotation.Title, HtmlStyles), bodyHtml, HtmlFooter);
             }
 
-            pageHtml = await ConvertLineEndings(pageHtml, OutputLineEndings);
+            pageHtml = await this.ConvertLineEndingsAsync(pageHtml, this.OutputLineEndings);
             using (var outputWriter = new StreamWriter(destinationFile))
             {
                 await outputWriter.WriteAsync(pageHtml);
@@ -290,34 +290,39 @@ namespace ApiDocs.Validation
             IfQueryData data = Newtonsoft.Json.JsonConvert.DeserializeObject<IfQueryData>("{" + query + "}");
 
             string returnValue = string.Empty;
-            switch (data.field)
+            switch (data.Field)
             {
                 case "filename":
-                    bool filenameMatches = data.value.Equals(Path.GetFileName(containingFilePath), StringComparison.OrdinalIgnoreCase);
-                    if (data.invert)
+                    bool filenameMatches = data.Value.Equals(Path.GetFileName(containingFilePath), StringComparison.OrdinalIgnoreCase);
+                    if (data.Invert)
                         filenameMatches = !filenameMatches;
                     if (filenameMatches)
                     {
-                        returnValue = data.output;
+                        returnValue = data.Output;
                     }
                     break;
                 default:
-                    throw new NotSupportedException("Unsupported query on field named " + data.field);
+                    throw new NotSupportedException("Unsupported query on field named " + data.Field);
             }
 
             return returnValue;
 
         }
 
+        // ReSharper disable once ClassNeverInstantiated.Local
         class IfQueryData
         {
-            public string field { get; set; }
-            public string value { get; set; }
-            public string output { get; set; }
-            public bool invert { get; set; }
+            [JsonProperty("field")]
+            public string Field { get; set; }
+            [JsonProperty("value")]
+            public string Value { get; set; }
+            [JsonProperty("output")]
+            public string Output { get; set; }
+            [JsonProperty("invert")]
+            public bool Invert { get; set; }
         }
 
-        private const string htmlHeader = @"<html>
+        private const string HtmlHeader = @"<html>
 <head>
 <title>{0}</title>
 <style>
@@ -326,7 +331,7 @@ namespace ApiDocs.Validation
 </head>
 <body>
 ";
-        private const string htmlStyles = @"
+        private const string HtmlStyles = @"
 body { font-family: sans-serif; }
 p { font-family: sans-serif; }
 tr { font-family: sans-serif; }
@@ -348,7 +353,7 @@ h5 { font-size: 1em; }
 h1, h2, h3, h4, h5 { margin-top: 1em; margin-bottom: 16px; font-weight: bold; line-height: 1.4;}
 ";
 
-        private const string htmlFooter = @"
+        private const string HtmlFooter = @"
 </body></html>
 ";
     }

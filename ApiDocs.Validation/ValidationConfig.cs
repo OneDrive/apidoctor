@@ -10,11 +10,11 @@ namespace ApiDocs.Validation
     {
         static ValidationConfig()
         {
-            ValidationConfig.ExpectedResponseAsRequiredProperties = true;
-            ValidationConfig.AdditionalHttpHeaders = new string[0];
-            ValidationConfig.RetryAttemptsOnServiceUnavailableResponse = 4; // Try 1 + 4 retries = 5 total attempts
-            ValidationConfig.MaximumBackoffMilliseconds = 5000;
-            ValidationConfig.BaseBackoffMilliseconds = 100;
+            ExpectedResponseAsRequiredProperties = true;
+            AdditionalHttpHeaders = new string[0];
+            RetryAttemptsOnServiceUnavailableResponse = 4; // Try 1 + 4 retries = 5 total attempts
+            MaximumBackoffMilliseconds = 5000;
+            BaseBackoffMilliseconds = 100;
         }
 
         /// <summary>

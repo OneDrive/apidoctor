@@ -15,7 +15,7 @@ namespace ApiDocs.Validation.OData
     public class ODataParser
     {
 
-        private static IDictionary<string, object> ODataSimpleTypeExamples = new Dictionary<string, object>() {
+        private static readonly IDictionary<string, object> ODataSimpleTypeExamples = new Dictionary<string, object>() {
             { "Edm.String", "string" },
             { "Edm.Boolean", false },
             { "Edm.Int64", 1234567890 },
@@ -36,25 +36,28 @@ namespace ApiDocs.Validation.OData
             return schemas;
         }
 
-        public static async Task<List<Schema>> ReadSchemaFromMetadataUrl(Uri remoteUrl)
+        public static async Task<List<Schema>> ReadSchemaFromMetadataUrlAsync(Uri remoteUrl)
         {
-            var request = HttpWebRequest.CreateHttp(remoteUrl);
+            var request = WebRequest.CreateHttp(remoteUrl);
             var response = await request.GetResponseAsync();
             var httpResponse = response as HttpWebResponse;
             if (httpResponse == null)
                 return null;
 
-            string remoteMetadataContents;
+            string remoteMetadataContents = null;
             using (var stream = httpResponse.GetResponseStream())
             {
-                System.IO.StreamReader reader = new System.IO.StreamReader(stream);
-                remoteMetadataContents = await reader.ReadToEndAsync();
+                if (null != stream)
+                {
+                    System.IO.StreamReader reader = new System.IO.StreamReader(stream);
+                    remoteMetadataContents = await reader.ReadToEndAsync();
+                }
             }
 
             return ReadSchemaFromMetadata(remoteMetadataContents);
         }
 
-        public static async Task<List<Schema>> ReadSchemaFromFile(string path)
+        public static async Task<List<Schema>> ReadSchemaFromFileAsync(string path)
         {
             System.IO.StreamReader reader = new System.IO.StreamReader(path);
             string localMetadataContents = await reader.ReadToEndAsync();
@@ -107,18 +110,10 @@ namespace ApiDocs.Validation.OData
 
         private static Dictionary<string, object> BuildDictionaryExample(ComplexType ct, IEnumerable<Schema> otherSchema)
         {
-            Dictionary<string, object> dict = new Dictionary<string, object>();
-            foreach (var prop in ct.Properties)
-            {
-                if (prop.Type != "Edm.Stream")
-                {
-                    dict.Add(prop.Name, ExampleOfType(prop.Type, otherSchema));
-                }
-            }
-            return dict;
+            return ct.Properties.Where(prop => prop.Type != "Edm.Stream").ToDictionary(prop => prop.Name, prop => ExampleOfType(prop.Type, otherSchema));
         }
 
-        private static string CollectionPrefix = "Collection(";
+        private static readonly string CollectionPrefix = "Collection(";
         private static object ExampleOfType(string typeIdentifier, IEnumerable<Schema> otherSchemas)
         {
             if (typeIdentifier.StartsWith(CollectionPrefix) && typeIdentifier.EndsWith(")"))
