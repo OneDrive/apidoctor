@@ -1,24 +1,20 @@
-﻿using Newtonsoft.Json;
-using NUnit.Framework;
-using ApiDocs.Validation;
-using ApiDocs.Validation.Http;
-using ApiDocs.Validation.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ApiDocs.Validation.UnitTests
+﻿namespace ApiDocs.Validation.UnitTests
 {
+    using System;
+    using System.Linq;
     using ApiDocs.Validation.Error;
+    using ApiDocs.Validation.Http;
+    using ApiDocs.Validation.Json;
+    using ApiDocs.Validation.UnitTests.Properties;
+    using Newtonsoft.Json;
+    using NUnit.Framework;
 
     [TestFixture]
 
     public class SchemaValidatorTests
     {
 
-        private static readonly JsonSerializerSettings Settings = new JsonSerializerSettings { DateFormatHandling = Newtonsoft.Json.DateFormatHandling.IsoDateFormat };
+        private static readonly JsonSerializerSettings Settings = new JsonSerializerSettings { DateFormatHandling = DateFormatHandling.IsoDateFormat };
 
         [Test]
         public void SimpleTypeValidationValid()
@@ -133,7 +129,7 @@ namespace ApiDocs.Validation.UnitTests
         public void TruncatedExampleWithRequiredPropertiesTest()
         {
             DocSet docSet = new DocSet();
-            DocFile testFile = new DocFileForTesting(Properties.Resources.ExampleValidateResponse, "\test\test.md", "test.md", docSet);
+            DocFile testFile = new DocFileForTesting(Resources.ExampleValidateResponse, "\test\test.md", "test.md", docSet);
 
             ValidationError[] detectedErrors;
             testFile.Scan(out detectedErrors);
@@ -159,7 +155,7 @@ namespace ApiDocs.Validation.UnitTests
         public void TruncatedExampleSelectStatementOnChildren()
         {
             DocSet docSet = new DocSet();
-            DocFile testFile = new DocFileForTesting(Properties.Resources.ExampleValidationSelectStatement, "\test\test.md", "test.md", docSet);
+            DocFile testFile = new DocFileForTesting(Resources.ExampleValidationSelectStatement, "\test\test.md", "test.md", docSet);
 
             ValidationError[] detectedErrors;
             testFile.Scan(out detectedErrors);
@@ -183,7 +179,7 @@ namespace ApiDocs.Validation.UnitTests
         public void TruncatedExampleSelectStatementOnChildrenExpectFailure()
         {
             DocSet docSet = new DocSet();
-            DocFile testFile = new DocFileForTesting(Properties.Resources.ExampleValidationSelectStatementFailure, "\test\test.md", "test.md", docSet);
+            DocFile testFile = new DocFileForTesting(Resources.ExampleValidationSelectStatementFailure, "\test\test.md", "test.md", docSet);
 
             ValidationError[] detectedErrors;
             testFile.Scan(out detectedErrors);

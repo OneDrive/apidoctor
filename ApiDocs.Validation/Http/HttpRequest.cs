@@ -1,9 +1,7 @@
 ﻿namespace ApiDocs.Validation.Http
 {
     using System;
-    using System.Collections.Generic;
     using System.IO;
-    using System.Linq;
     using System.Net;
     using System.Text;
     using System.Threading.Tasks;
@@ -147,7 +145,7 @@
         public async Task<HttpResponse> GetResponseAsync(string baseUrl, int retryCount = 0)
         {
             var webRequest = this.PrepareHttpWebRequest(baseUrl);
-            var response = await Http.HttpResponse.ResponseFromHttpWebResponseAsync(webRequest);
+            var response = await HttpResponse.ResponseFromHttpWebResponseAsync(webRequest);
 
             if (IsRetryableError(response))
             {
@@ -164,7 +162,7 @@
             return response;
         }
 
-        public static bool IsRetryableError(Http.HttpResponse response)
+        public static bool IsRetryableError(HttpResponse response)
         {
             return (response.StatusCode >= 500 && response.StatusCode < 600);
         }

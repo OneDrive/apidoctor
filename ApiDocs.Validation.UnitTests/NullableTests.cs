@@ -1,17 +1,11 @@
-﻿using Newtonsoft.Json;
-using NUnit.Framework;
-using ApiDocs.Validation;
-using ApiDocs.Validation.Http;
-using ApiDocs.Validation.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ApiDocs.Validation.UnitTests
+﻿namespace ApiDocs.Validation.UnitTests
 {
+    using System.Collections.Generic;
+    using System.Linq;
     using ApiDocs.Validation.Error;
+    using ApiDocs.Validation.Json;
+    using Newtonsoft.Json;
+    using NUnit.Framework;
 
     [TestFixture]
     public class NullableTests
@@ -32,7 +26,7 @@ namespace ApiDocs.Validation.UnitTests
             var testExample = new JsonExample(json);
             ValidationError[] errors;
 
-            Assert.IsTrue(nullableSchema.ValidateJson(testExample, out errors, new Dictionary<string,ApiDocs.Validation.Json.JsonSchema>(), new ValidationOptions()));
+            Assert.IsTrue(nullableSchema.ValidateJson(testExample, out errors, new Dictionary<string,JsonSchema>(), new ValidationOptions()));
             Assert.AreEqual(0, errors.Length);
         }
 
@@ -52,7 +46,7 @@ namespace ApiDocs.Validation.UnitTests
             var testExample = new JsonExample(json);
             ValidationError[] errors;
 
-            Assert.IsFalse(nullableSchema.ValidateJson(testExample, out errors, new Dictionary<string, ApiDocs.Validation.Json.JsonSchema>(), new ValidationOptions()));
+            Assert.IsFalse(nullableSchema.ValidateJson(testExample, out errors, new Dictionary<string, JsonSchema>(), new ValidationOptions()));
             Assert.AreEqual(1, errors.Length);
 
             var error = errors.First();

@@ -1,16 +1,10 @@
-﻿using NUnit.Framework;
-using ApiDocs.Validation;
-using ApiDocs.Validation.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-
-namespace ApiDocs.Validation.UnitTests
+﻿namespace ApiDocs.Validation.UnitTests
 {
+    using System.Linq;
     using ApiDocs.Validation.Error;
+    using ApiDocs.Validation.Json;
+    using ApiDocs.Validation.UnitTests.Properties;
+    using NUnit.Framework;
 
     [TestFixture]
     public class ResourceStringValidationTests
@@ -19,7 +13,7 @@ namespace ApiDocs.Validation.UnitTests
         static DocFile GetDocFile()
         {
             DocSet docSet = new DocSet();
-            DocFile testFile = new DocFileForTesting(Properties.Resources.ExampleResources, "\resources.md", "\resources.md", docSet);
+            DocFile testFile = new DocFileForTesting(Resources.ExampleResources, "\resources.md", "\resources.md", docSet);
 
             ValidationError[] detectedErrors;
             testFile.Scan(out detectedErrors);

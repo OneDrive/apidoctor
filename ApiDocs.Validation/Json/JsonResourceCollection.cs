@@ -3,11 +3,8 @@
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Text;
-    using System.Threading.Tasks;
     using ApiDocs.Validation.Error;
-    using Newtonsoft.Json;
-    using Newtonsoft.Json.Linq;
+    using ApiDocs.Validation.Http;
 
     public class JsonResourceCollection
     {
@@ -75,7 +72,7 @@
         /// <param name="expectedResponse"></param>
         /// <param name="schemaErrors"></param>
         /// <returns></returns>
-        internal bool ValidateResponseMatchesSchema(MethodDefinition method, Http.HttpResponse actualResponse, Http.HttpResponse expectedResponse, out ValidationError[] schemaErrors)
+        internal bool ValidateResponseMatchesSchema(MethodDefinition method, HttpResponse actualResponse, HttpResponse expectedResponse, out ValidationError[] schemaErrors)
         {
             List<ValidationError> newErrors = new List<ValidationError>();
 

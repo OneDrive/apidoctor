@@ -1,11 +1,11 @@
-﻿using System;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System.Text;
-using System.Collections.Generic;
-
-namespace ApiDocs.Validation.Json
+﻿namespace ApiDocs.Validation.Json
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Text;
+    using Newtonsoft.Json;
+    using Newtonsoft.Json.Linq;
+
     public class JsonPath
     {
         /// <summary>

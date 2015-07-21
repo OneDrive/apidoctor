@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ApiDocs.Validation
+﻿namespace ApiDocs.Validation
 {
+    using System;
+
     [Serializable]
     public class SchemaBuildException : Exception
     {

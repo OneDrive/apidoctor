@@ -2,10 +2,15 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
+    using System.IO;
     using System.Linq;
     using System.Text;
-    using System.Threading.Tasks;
+    using System.Text.RegularExpressions;
     using ApiDocs.Validation.Error;
+    using ApiDocs.Validation.Json;
+    using MarkdownDeep;
+    using Newtonsoft.Json.Linq;
 
     public static class ExtensionMethods
     {
@@ -78,11 +83,11 @@
             }
         }
 
-        public static bool TryGetPropertyValue<T>(this Newtonsoft.Json.Linq.JContainer container, string propertyName, out T value )
+        public static bool TryGetPropertyValue<T>(this JContainer container, string propertyName, out T value )
         {
             try
             {
-                Newtonsoft.Json.Linq.JValue storedValue = (Newtonsoft.Json.Linq.JValue)container[propertyName];
+                JValue storedValue = (JValue)container[propertyName];
                 if (storedValue == null)
                 {
                     value = default(T);
@@ -101,7 +106,7 @@
             }
         }
 
-        public static T PropertyValue<T>(this Newtonsoft.Json.Linq.JContainer container, string propertyName, T defaultValue)
+        public static T PropertyValue<T>(this JContainer container, string propertyName, T defaultValue)
         {
             T storedValue;
             if (container.TryGetPropertyValue(propertyName, out storedValue))
@@ -112,7 +117,7 @@
 
         public static string FirstLineOnly(this string input)
         {
-            System.IO.StringReader reader = new System.IO.StringReader(input);
+            StringReader reader = new StringReader(input);
             return reader.ReadLine();
         }
 
@@ -132,7 +137,7 @@
         }
 
 
-        public static string ValueForColumn(this string[] rowValues, MarkdownDeep.IMarkdownTable table, params string[] possibleHeaderNames)
+        public static string ValueForColumn(this string[] rowValues, IMarkdownTable table, params string[] possibleHeaderNames)
         {
             var headers = table.ColumnHeaders;
 
@@ -150,7 +155,7 @@
                 }
             }
 
-            System.Diagnostics.Debug.WriteLine("Failed to find header matching '{0}' in table with headers: {1}", 
+            Debug.WriteLine("Failed to find header matching '{0}' in table with headers: {1}", 
                 possibleHeaderNames.ComponentsJoinedByString(","),
                 table.ColumnHeaders.ComponentsJoinedByString(","));
             return null;
@@ -166,27 +171,27 @@
             return -1;
         }
 
-        public static Json.JsonDataType ToDataType(this string value, Action<ValidationError> addErrorAction = null)
+        public static JsonDataType ToDataType(this string value, Action<ValidationError> addErrorAction = null)
         {
-            Json.JsonDataType output;
-            if (Enum.TryParse<Json.JsonDataType>(value, true, out output))
+            JsonDataType output;
+            if (Enum.TryParse<JsonDataType>(value, true, out output))
                 return output;
             if (null == value)
-                return Json.JsonDataType.Object;
+                return JsonDataType.Object;
             if (value.ToLower().Contains("string"))
-                return Json.JsonDataType.String;
+                return JsonDataType.String;
             if (value.Equals("etag", StringComparison.OrdinalIgnoreCase))
-                return Json.JsonDataType.String;
+                return JsonDataType.String;
             if (value.Equals("range", StringComparison.OrdinalIgnoreCase))
-                return Json.JsonDataType.String;
+                return JsonDataType.String;
             if (value.ToLower().Contains("timestamp"))
-                return Json.JsonDataType.String;
+                return JsonDataType.String;
 
             if (null != addErrorAction)
             {
                 addErrorAction(new ValidationWarning(ValidationErrorCode.TypeConversionFailure, "Couldn't convert '{0}' into Json.JsonDataType enumeration. Assuming Object type.", value));
             }
-            return Json.JsonDataType.Object;
+            return JsonDataType.Object;
         }
 
         public static bool IsRequired(this string description)
@@ -196,16 +201,16 @@
             return description.StartsWith("required.", StringComparison.OrdinalIgnoreCase);
         }
 
-        public static bool IsHeaderBlock(this MarkdownDeep.Block block)
+        public static bool IsHeaderBlock(this Block block)
         {
             switch (block.BlockType)
             {
-                case MarkdownDeep.BlockType.h1:
-                case MarkdownDeep.BlockType.h2:
-                case MarkdownDeep.BlockType.h3:
-                case MarkdownDeep.BlockType.h4:
-                case MarkdownDeep.BlockType.h5:
-                case MarkdownDeep.BlockType.h6:
+                case BlockType.h1:
+                case BlockType.h2:
+                case BlockType.h3:
+                case BlockType.h4:
+                case BlockType.h5:
+                case BlockType.h6:
                     return true;
                 default:
                     return false;
@@ -245,7 +250,7 @@
             throw new NotSupportedException(string.Format("Couldn't convert this value to a boolean: {0}", input));
         }
 
-        public static System.Text.RegularExpressions.Regex PathVariableRegex = new System.Text.RegularExpressions.Regex(@"\{(?<var>.+?)\}", System.Text.RegularExpressions.RegexOptions.Compiled);
+        public static Regex PathVariableRegex = new Regex(@"\{(?<var>.+?)\}", RegexOptions.Compiled);
 
         public static string FlattenVariableNames(this string input)
         {

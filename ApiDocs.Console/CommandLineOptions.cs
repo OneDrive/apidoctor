@@ -1,14 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using CommandLine;
-using CommandLine.Text;
-
-namespace ApiDocs.ConsoleApp
+﻿namespace ApiDocs.ConsoleApp
 {
-    using System.Data.SqlTypes;
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
     using ApiDocs.ConsoleApp.Auth;
     using ApiDocs.Validation.Writers;
+    using CommandLine;
+    using CommandLine.Text;
 
     class CommandLineOptions
     {

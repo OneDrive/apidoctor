@@ -1,11 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ApiDocs.Validation.OData
+﻿namespace ApiDocs.Validation.OData
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Xml.Linq;
+
     public class Schema
     {
         public string Namespace { get; set; }
@@ -13,7 +12,7 @@ namespace ApiDocs.Validation.OData
         public List<ComplexType> ComplexTypes { get; set; }
         public List<EntityContainer> EntityContainers { get; set; }
         public List<Function> Functions { get; set; }
-        public List<OData.Action> Actions { get; set; }
+        public List<Action> Actions { get; set; }
         public List<Term> Terms { get; set; }
 
         public Schema()
@@ -29,7 +28,7 @@ namespace ApiDocs.Validation.OData
 
         public static string ElementName { get { return "Schema"; } }
 
-        internal static Schema FromXml(System.Xml.Linq.XElement xml)
+        internal static Schema FromXml(XElement xml)
         {
             if (xml.Name.LocalName != ElementName) throw new ArgumentException("xml was not a Schema element");
 
@@ -52,8 +51,8 @@ namespace ApiDocs.Validation.OData
                                    select Function.FromXml(e));
 
             obj.Actions.AddRange(from e in xml.Elements()
-                                 where e.Name.LocalName == OData.Action.ElementName
-                                 select OData.Action.FromXml(e));
+                                 where e.Name.LocalName == Action.ElementName
+                                 select Action.FromXml(e));
 
             obj.Terms.AddRange(from e in xml.Elements()
                                where e.Name.LocalName == Term.ElementName

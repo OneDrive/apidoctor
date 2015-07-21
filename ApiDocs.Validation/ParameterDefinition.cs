@@ -1,12 +1,8 @@
-﻿using ApiDocs.Validation.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ApiDocs.Validation
+﻿namespace ApiDocs.Validation
 {
+    using System.Collections.Generic;
+    using ApiDocs.Validation.Json;
+
     public class ParameterDefinition : ItemDefinition
     {
         /// <summary>

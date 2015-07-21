@@ -3,12 +3,12 @@ namespace ApiDocs.Validation
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
-    using System.Linq;
-    using System.Text;
-    using System.Threading.Tasks;
     using System.IO;
+    using System.Linq;
     using ApiDocs.Validation.Error;
     using ApiDocs.Validation.TableSpec;
+    using MarkdownDeep;
+    using Newtonsoft.Json;
 
     /// <summary>
     /// A documentation file that may contain one more resources or API methods
@@ -79,9 +79,9 @@ namespace ApiDocs.Validation
         /// <summary>
         /// Raw Markdown parsed blocks
         /// </summary>
-        protected MarkdownDeep.Block[] OriginalMarkdownBlocks { get; set; }
+        protected Block[] OriginalMarkdownBlocks { get; set; }
 
-        protected List<MarkdownDeep.LinkInfo> MarkdownLinks {get;set;}
+        protected List<LinkInfo> MarkdownLinks {get;set;}
 
         public DocSet Parent { get; protected set; }
 
@@ -109,7 +109,7 @@ namespace ApiDocs.Validation
 
         protected void TransformMarkdownIntoBlocksAndLinks(string inputMarkdown)
         {
-            MarkdownDeep.Markdown md = new MarkdownDeep.Markdown
+            Markdown md = new Markdown
             {
                 SafeMode = false,
                 ExtraMode = true
@@ -117,7 +117,7 @@ namespace ApiDocs.Validation
 
             this.HtmlContent = md.Transform(inputMarkdown);
             this.OriginalMarkdownBlocks = md.Blocks;
-            this.MarkdownLinks = new List<MarkdownDeep.LinkInfo>(md.FoundLinks);
+            this.MarkdownLinks = new List<LinkInfo>(md.FoundLinks);
         }
 
         protected virtual string GetContentsOfFile()
@@ -157,7 +157,7 @@ namespace ApiDocs.Validation
             return this.ParseMarkdownBlocks(out errors);
         }
 
-        private static bool IsHeaderBlock(MarkdownDeep.Block block, int maxDepth = 2)
+        private static bool IsHeaderBlock(Block block, int maxDepth = 2)
         {
             if (null == block)
             {
@@ -165,24 +165,24 @@ namespace ApiDocs.Validation
             }
 
             var blockType = block.BlockType;
-            if (maxDepth >= 1 && blockType == MarkdownDeep.BlockType.h1) 
+            if (maxDepth >= 1 && blockType == BlockType.h1) 
                 return true;
-            if (maxDepth >= 2 && blockType == MarkdownDeep.BlockType.h2)
+            if (maxDepth >= 2 && blockType == BlockType.h2)
                 return true;
-            if (maxDepth >= 3 && blockType == MarkdownDeep.BlockType.h3)
+            if (maxDepth >= 3 && blockType == BlockType.h3)
                 return true;
-            if (maxDepth >= 4 && blockType == MarkdownDeep.BlockType.h4)
+            if (maxDepth >= 4 && blockType == BlockType.h4)
                 return true;
-            if (maxDepth >= 5 && blockType == MarkdownDeep.BlockType.h5)
+            if (maxDepth >= 5 && blockType == BlockType.h5)
                 return true;
-            if (maxDepth >= 6 && blockType == MarkdownDeep.BlockType.h6)
+            if (maxDepth >= 6 && blockType == BlockType.h6)
                 return true;
                     
             return false;
         }
 
 
-        protected string PreviewOfBlockContent(MarkdownDeep.Block block)
+        protected string PreviewOfBlockContent(Block block)
         {
             if (block == null) return string.Empty;
             if (block.Content == null) return string.Empty;
@@ -207,7 +207,7 @@ namespace ApiDocs.Validation
             string methodTitle = null;
             string methodDescription = null;
 
-            MarkdownDeep.Block previousHeaderBlock = null;
+            Block previousHeaderBlock = null;
 
             List<object> foundElements = new List<object>();
 
@@ -230,7 +230,7 @@ namespace ApiDocs.Validation
                     methodDescription = null;       // Clear this because we don't want new title + old description
                     detectedErrors.Add(new ValidationMessage(null, "Found title: {0}", methodTitle));
                 }
-                else if (block.BlockType == MarkdownDeep.BlockType.p)
+                else if (block.BlockType == BlockType.p)
                 {
                     if (null == previousHeaderBlock)
                     {
@@ -242,15 +242,15 @@ namespace ApiDocs.Validation
                     detectedErrors.Add(new ValidationMessage(null, "Found description: {0}", methodDescription));
                 }
                 }
-                else if (block.BlockType == MarkdownDeep.BlockType.html)
+                else if (block.BlockType == BlockType.html)
                 {
                     // If the next block is a codeblock we've found a metadata + codeblock pair
-                    MarkdownDeep.Block nextBlock = null;
+                    Block nextBlock = null;
                     if (i + 1 < this.OriginalMarkdownBlocks.Length)
                     {
                         nextBlock = this.OriginalMarkdownBlocks[i + 1];
                     }
-                    if (null != nextBlock && nextBlock.BlockType == MarkdownDeep.BlockType.codeblock)
+                    if (null != nextBlock && nextBlock.BlockType == BlockType.codeblock)
                     {
                         // html + codeblock = likely request or response!
                         ItemDefinition definition = null;
@@ -289,9 +289,9 @@ namespace ApiDocs.Validation
                         }
                     }
                 }
-                else if (block.BlockType == MarkdownDeep.BlockType.table_spec)
+                else if (block.BlockType == BlockType.table_spec)
                 {
-                    MarkdownDeep.Block blockBeforeTable = (i - 1 >= 0) ? this.OriginalMarkdownBlocks[i - 1] : null;
+                    Block blockBeforeTable = (i - 1 >= 0) ? this.OriginalMarkdownBlocks[i - 1] : null;
                     if (null == blockBeforeTable) continue;
 
                     ValidationError[] parseErrors;
@@ -299,7 +299,7 @@ namespace ApiDocs.Validation
                     if (null != parseErrors) detectedErrors.AddRange(parseErrors);
 
                     detectedErrors.Add(new ValidationMessage(null, "Found table: {0}. Rows:\r\n{1}", table.Type,
-                        (from r in table.Rows select Newtonsoft.Json.JsonConvert.SerializeObject(r, Newtonsoft.Json.Formatting.Indented)).ComponentsJoinedByString(" ,\r\n")));
+                        (from r in table.Rows select JsonConvert.SerializeObject(r, Formatting.Indented)).ComponentsJoinedByString(" ,\r\n")));
 
                     foundElements.Add(table);
                 }
@@ -339,11 +339,11 @@ namespace ApiDocs.Validation
             return content;
         }
 
-        private PageAnnotation ParsePageAnnotation(MarkdownDeep.Block block)
+        private PageAnnotation ParsePageAnnotation(Block block)
         {
             try
             {
-                var response = Newtonsoft.Json.JsonConvert.DeserializeObject<PageAnnotation>(StripHtmlCommentTags(block.Content));
+                var response = JsonConvert.DeserializeObject<PageAnnotation>(StripHtmlCommentTags(block.Content));
                 if (null != response && response.Type.Equals(PageAnnotationType, StringComparison.OrdinalIgnoreCase))
                     return response;
             }
@@ -528,15 +528,15 @@ namespace ApiDocs.Validation
         /// </summary>
         /// <returns>The code blocks.</returns>
         /// <param name="blocks">Blocks.</param>
-        protected static List<MarkdownDeep.Block> FindCodeBlocks(MarkdownDeep.Block[] blocks)
+        protected static List<Block> FindCodeBlocks(Block[] blocks)
         {
-            var blockList = new List<MarkdownDeep.Block>();
+            var blockList = new List<Block>();
             foreach (var block in blocks)
             {
                 switch (block.BlockType)
                 {
-                    case MarkdownDeep.BlockType.codeblock:
-                    case MarkdownDeep.BlockType.html:
+                    case BlockType.codeblock:
+                    case BlockType.html:
                         blockList.Add(block);
                         break;
                     default:
@@ -552,12 +552,12 @@ namespace ApiDocs.Validation
         /// </summary>
         /// <param name="metadata"></param>
         /// <param name="code"></param>
-        public ItemDefinition ParseCodeBlock(MarkdownDeep.Block metadata, MarkdownDeep.Block code)
+        public ItemDefinition ParseCodeBlock(Block metadata, Block code)
         {
-            if (metadata.BlockType != MarkdownDeep.BlockType.html)
+            if (metadata.BlockType != BlockType.html)
                 throw new ArgumentException("metadata block does not appear to be metadata");
 
-            if (code.BlockType != MarkdownDeep.BlockType.codeblock)
+            if (code.BlockType != BlockType.codeblock)
                 throw new ArgumentException("code block does not appear to be code");
 
             var metadataJsonString = metadata.Content.Substring(4, metadata.Content.Length - 9);
@@ -590,7 +590,7 @@ namespace ApiDocs.Validation
                         }
                         else
                         {
-                            pairedRequest = this.requests.Last();
+                            pairedRequest = Enumerable.Last(this.requests);
                         }
 
                         if (null == pairedRequest)
@@ -611,13 +611,13 @@ namespace ApiDocs.Validation
                     return null;
                 case CodeBlockType.SimulatedResponse:
                     {
-                        var method = this.requests.Last();
+                        var method = Enumerable.Last(this.requests);
                         method.AddSimulatedResponse(code.Content, annotation);
                         return method;
                     }
                 case CodeBlockType.TestParams:
                     {
-                        var method = this.requests.Last();
+                        var method = Enumerable.Last(this.requests);
                         method.AddTestParams(code.Content);
                         return method;
                     }

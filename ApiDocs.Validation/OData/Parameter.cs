@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace ApiDocs.Validation.OData
+﻿namespace ApiDocs.Validation.OData
 {
+    using System;
+    using System.Xml.Linq;
 
     //<Parameter Name="bindingParameter" Type="oneDrive.item" Nullable="false"/>
 
@@ -17,7 +14,7 @@ namespace ApiDocs.Validation.OData
         
         public static string ElementName { get { return "Parameter"; } }
 
-        internal static Parameter FromXml(System.Xml.Linq.XElement xml)
+        internal static Parameter FromXml(XElement xml)
         {
             if (xml.Name.LocalName != ElementName) throw new ArgumentException("xml wasn't a Parameter element");
 

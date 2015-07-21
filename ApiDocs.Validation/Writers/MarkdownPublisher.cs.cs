@@ -1,6 +1,7 @@
 ﻿namespace ApiDocs.Validation.Writers
 {
     using System.IO;
+    using System.Text;
     using System.Threading.Tasks;
     using ApiDocs.Validation.Error;
 
@@ -23,7 +24,7 @@
 		    this.LogMessage(new ValidationMessage(sourceFile.Name, "Scanning text file for internal content."));
 
             var outputPath = this.GetPublishedFilePath(sourceFile, destinationRoot);
-            var writer = new StreamWriter(outputPath, false, System.Text.Encoding.UTF8) { AutoFlush = true };
+            var writer = new StreamWriter(outputPath, false, Encoding.UTF8) { AutoFlush = true };
 
 			StreamReader reader = new StreamReader(sourceFile.OpenRead());
 

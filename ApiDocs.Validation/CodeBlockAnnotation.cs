@@ -1,12 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
-namespace ApiDocs.Validation
+﻿namespace ApiDocs.Validation
 {
+    using System;
+    using System.Diagnostics;
+    using Newtonsoft.Json;
+    using Newtonsoft.Json.Converters;
+
     public class CodeBlockAnnotation
     {
         /// <summary>
@@ -59,7 +57,7 @@ namespace ApiDocs.Validation
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine("Error parsing JSON annotation: " + ex.Message);
+                Debug.WriteLine("Error parsing JSON annotation: " + ex.Message);
                 return new CodeBlockAnnotation() { BlockType = CodeBlockType.Ignored };
             }
         }

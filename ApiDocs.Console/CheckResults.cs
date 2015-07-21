@@ -1,12 +1,8 @@
-﻿using ApiDocs.Validation;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ApiDocs.ConsoleApp
+﻿namespace ApiDocs.ConsoleApp
 {
+    using System.Collections.Generic;
+    using System.Linq;
+    using ApiDocs.Validation;
     using ApiDocs.Validation.Error;
 
     public class CheckResults

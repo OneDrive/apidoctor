@@ -1,12 +1,9 @@
-﻿using Mustache;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ApiDocs.Publishing.Html
+﻿namespace ApiDocs.Publishing.Html
 {
+    using System.Collections.Generic;
+    using System.Linq;
+    using Mustache;
+
     public class IfMatchTagDefinition : TagDefinition
     {
         public IfMatchTagDefinition()

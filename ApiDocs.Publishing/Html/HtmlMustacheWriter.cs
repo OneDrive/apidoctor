@@ -6,10 +6,11 @@
     using System.Linq;
     using System.Threading.Tasks;
     using ApiDocs.Validation;
+    using Mustache;
 
     public class HtmlMustacheWriter : DocumentPublisherHtml
     {
-        private Mustache.Generator generator;
+        private Generator generator;
         private FileTagDefinition fileTag;
 
         public bool CollapseTocToActiveGroup { get; set; }
@@ -28,7 +29,7 @@
             {
                 this.fileTag = new FileTagDefinition();
 
-                Mustache.FormatCompiler compiler = new Mustache.FormatCompiler() { RemoveNewLines = false };
+                FormatCompiler compiler = new FormatCompiler() { RemoveNewLines = false };
                 
                 compiler.RegisterTag(this.fileTag, true);
                 compiler.RegisterTag(new IfMatchTagDefinition(), true);
@@ -50,7 +51,7 @@
         //{
         //    Console.WriteLine("ValueRequested: " + e.Value);
         //}
-        void Generator_KeyNotFound(object sender, Mustache.KeyNotFoundEventArgs e)
+        void Generator_KeyNotFound(object sender, KeyNotFoundEventArgs e)
         {
             //Console.WriteLine("KeyNotFound: " + e.Key);
 

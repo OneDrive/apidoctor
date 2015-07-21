@@ -2,7 +2,10 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Linq;
+    using ApiDocs.Validation.Http;
+    using ApiDocs.Validation.Json;
 
     public static class RequestDefinitionExtensions
     {
@@ -14,9 +17,9 @@
         /// <param name="baseUrl"></param>
         /// <param name="documents"></param>
         /// <returns></returns>
-        public static Http.HttpRequest GetHttpRequest(this BasicRequestDefinition definition, string baseUrl, DocSet documents)
+        public static HttpRequest GetHttpRequest(this BasicRequestDefinition definition, string baseUrl, DocSet documents)
         {
-            Http.HttpRequest foundRequest = null;
+            HttpRequest foundRequest = null;
             if (!string.IsNullOrEmpty(definition.RawHttpRequest))
             {
                 foundRequest = ParseHttpRequest(definition.RawHttpRequest);
@@ -29,7 +32,7 @@
             return foundRequest;
         }
 
-        private static Http.HttpRequest LookupHttpRequestForMethod(string methodName, string baseUrl, DocSet docset)
+        private static HttpRequest LookupHttpRequestForMethod(string methodName, string baseUrl, DocSet docset)
         {
             var queryForMethod = from m in docset.Methods
                                  where m.Identifier == methodName
@@ -44,10 +47,10 @@
             return ParseHttpRequest(foundMethod.Request);
         }
 
-        private static Http.HttpRequest ParseHttpRequest(string rawHttpRequest)
+        private static HttpRequest ParseHttpRequest(string rawHttpRequest)
         {
-            Http.HttpParser parser = new Http.HttpParser();
-            Http.HttpRequest request = parser.ParseHttpRequest(rawHttpRequest);
+            HttpParser parser = new HttpParser();
+            HttpRequest request = parser.ParseHttpRequest(rawHttpRequest);
             return request;
         }
 
@@ -57,7 +60,7 @@
         /// </summary>
         /// <param name="request"></param>
         /// <param name="placeholderValues"></param>
-        public static void RewriteRequestWithParameters(this Http.HttpRequest request, IEnumerable<PlaceholderValue> placeholderValues)
+        public static void RewriteRequestWithParameters(this HttpRequest request, IEnumerable<PlaceholderValue> placeholderValues)
         {
             // URL
             request.Url = MethodDefinition.RewriteUrlWithParameters(request.Url, from pv in placeholderValues where pv.Location == PlaceholderLocation.Url select pv);
@@ -108,7 +111,7 @@
 
             v.Value = BasicRequestDefinition.LocationForKey(value) == PlaceholderLocation.StoredValue ? storedValues[value] : value;
 
-            System.Diagnostics.Debug.WriteLine("Converting \"{0}: {1}\" into loc={2},value={3}", key, value, v.Location, v.Value);
+            Debug.WriteLine("Converting \"{0}: {1}\" into loc={2},value={3}", key, value, v.Location, v.Value);
 
             return v;
         }
@@ -128,7 +131,7 @@
             return false;
         }
 
-        public static string ValueForKeyedIdentifier(this Http.HttpResponse response, string key)
+        public static string ValueForKeyedIdentifier(this HttpResponse response, string key)
         {
             var keyType = BasicRequestDefinition.LocationForKey(key);
             switch (keyType)
@@ -148,7 +151,7 @@
                         throw new NotSupportedException(string.Format("Cannot read JPath property from response with content-type: {0}", response.ContentType));
                     }
 
-                    return Json.JsonPath.ValueFromJsonPath(response.Body, key).ToString();
+                    return JsonPath.ValueFromJsonPath(response.Body, key).ToString();
                 default:
                     throw new NotSupportedException(string.Format("Unsupported location for keyed identifier {0}: {1}", key, keyType));
             }

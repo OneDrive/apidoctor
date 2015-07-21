@@ -8,8 +8,8 @@
     using System.Threading.Tasks;
     using ApiDocs.Validation;
     using ApiDocs.Validation.Error;
-    using ApiDocs.Validation.Json;
     using ApiDocs.Validation.Writers;
+    using MarkdownDeep;
     using Newtonsoft.Json;
 
     public class DocumentPublisherHtml : DocumentPublisher
@@ -150,9 +150,9 @@
         /// Initialize and configure the Markdown to HTML converter.
         /// </summary>
         /// <returns></returns>
-        protected virtual MarkdownDeep.Markdown GetMarkdownConverter()
+        protected virtual Markdown GetMarkdownConverter()
         {
-            var converter = new MarkdownDeep.Markdown
+            var converter = new Markdown
             {
                 ExtraMode = true,
                 NewWindowForExternalLinks = true,
@@ -172,7 +172,7 @@
         {
             if (url.StartsWith("#"))
                 return url;
-            if (MarkdownDeep.Utils.IsUrlFullyQualified(url))
+            if (Utils.IsUrlFullyQualified(url))
                 return url;
 
             string filePath, bookmark;
@@ -216,7 +216,7 @@
             if (string.IsNullOrEmpty(pageData.Title))
             {
                pageData.Title = (from b in converter.Blocks
-                             where b.BlockType == MarkdownDeep.BlockType.h1
+                             where b.BlockType == BlockType.h1
                              select b.Content).FirstOrDefault();
             }
             page.Annotation = pageData;
@@ -287,7 +287,7 @@
                 throw new ArgumentException("key doesn't look like a valid if query");
 
             string query = key.Substring(5, key.Length - 7);
-            IfQueryData data = Newtonsoft.Json.JsonConvert.DeserializeObject<IfQueryData>("{" + query + "}");
+            IfQueryData data = JsonConvert.DeserializeObject<IfQueryData>("{" + query + "}");
 
             string returnValue = string.Empty;
             switch (data.Field)

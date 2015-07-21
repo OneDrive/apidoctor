@@ -15,7 +15,7 @@
         /// <param name="request">Request.</param>
         /// <param name="sourceFile"></param>
         /// <param name="apiRequirements"></param>
-        public static ValidationResult<bool> IsRequestValid(this Http.HttpRequest request, string sourceFile, ApiRequirements apiRequirements)
+        public static ValidationResult<bool> IsRequestValid(this HttpRequest request, string sourceFile, ApiRequirements apiRequirements)
         {
             if (null == apiRequirements || null == apiRequirements.HttpRequest)
                 return new ValidationResult<bool>(true);
@@ -72,7 +72,7 @@
             return contentTypeHeaderValue.Substring(0, splitIndex).TrimEnd();
         }
 
-        public static ValidationResult<bool> IsResponseValid(this Http.HttpResponse response, string sourceFile, ApiRequirements requirements)
+        public static ValidationResult<bool> IsResponseValid(this HttpResponse response, string sourceFile, ApiRequirements requirements)
         {
             if (null == requirements || null == requirements.HttpResponse)
                 return new ValidationResult<bool>(true);

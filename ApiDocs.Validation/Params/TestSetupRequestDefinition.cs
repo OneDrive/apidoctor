@@ -5,6 +5,7 @@
     using System.Linq;
     using System.Threading.Tasks;
     using ApiDocs.Validation.Error;
+    using ApiDocs.Validation.Http;
     using Newtonsoft.Json;
 
     public class TestSetupRequestDefinition : BasicRequestDefinition
@@ -57,7 +58,7 @@
             
             // Get the HttpRequest, either from MethodName or by parsing HttpRequest
 
-            Http.HttpRequest request = null;
+            HttpRequest request = null;
             try
             {
                 request = this.GetHttpRequest(baseUrl, documents);

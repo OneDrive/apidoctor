@@ -1,11 +1,10 @@
-﻿using System;
-using NUnit.Framework;
-using Newtonsoft.Json;
-using ApiDocs.Validation.Json;
-using System.Collections.Generic;
-
-namespace ApiDocs.Validation.UnitTests
+﻿namespace ApiDocs.Validation.UnitTests
 {
+    using System.Collections.Generic;
+    using ApiDocs.Validation.Json;
+    using Newtonsoft.Json;
+    using NUnit.Framework;
+
     [TestFixture]
     public class JsonPathTest
     {

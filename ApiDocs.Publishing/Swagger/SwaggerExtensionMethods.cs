@@ -6,6 +6,7 @@ namespace ApiDocs.Publishing.Swagger
     using System.Collections.Generic;
     using System.Linq;
     using ApiDocs.Validation;
+    using ApiDocs.Validation.Http;
     using ApiDocs.Validation.Json;
 
     public static class SwaggerExtensionMethods
@@ -24,13 +25,13 @@ namespace ApiDocs.Publishing.Swagger
             return originalResourceName.Replace('.', '_');
         }
 
-        internal static string SwaggerType(this Validation.Json.JsonDataType datatype)
+        internal static string SwaggerType(this JsonDataType datatype)
         {
             switch (datatype)
             {
-                case ApiDocs.Validation.Json.JsonDataType.ODataType:
+                case JsonDataType.ODataType:
                     throw new ArgumentException();
-                case ApiDocs.Validation.Json.JsonDataType.Object:
+                case JsonDataType.Object:
                     return "object";
                 default:
                     return datatype.ToString().ToLower();
@@ -79,12 +80,12 @@ namespace ApiDocs.Publishing.Swagger
             return definition;
         }
             
-        internal static object AsSwaggerProperty(this ApiDocs.Validation.Json.JsonProperty property)
+        internal static object AsSwaggerProperty(this JsonProperty property)
         {
             return SwaggerProperty(property);
         }
 
-        internal static object ExpectedResponseAsSwaggerProperty(this ApiDocs.Validation.MethodDefinition method)
+        internal static object ExpectedResponseAsSwaggerProperty(this MethodDefinition method)
         {
 
             string resourceType = null;
@@ -103,7 +104,7 @@ namespace ApiDocs.Publishing.Swagger
             return SwaggerPropertyForResponse(method);
         }
 
-        internal static SwaggerParameter ToSwaggerParameter(this ApiDocs.Validation.ParameterDefinition parameter)
+        internal static SwaggerParameter ToSwaggerParameter(this ParameterDefinition parameter)
         {
             SwaggerParameter p = new SwaggerParameter()
             {
@@ -174,7 +175,7 @@ namespace ApiDocs.Publishing.Swagger
 
         private static SwaggerResponse ToSwaggerResponse(this MethodDefinition method, out string httpStatusCode)
         {
-            Validation.Http.HttpParser parser = new Validation.Http.HttpParser();
+            HttpParser parser = new HttpParser();
             var response = parser.ParseHttpResponse(method.ExpectedResponse);
 
             httpStatusCode = response.StatusCode.ToString();
@@ -188,7 +189,7 @@ namespace ApiDocs.Publishing.Swagger
 
         internal static IEnumerable<ParameterDefinition> MissingRequestParameters(this MethodDefinition method, bool queryStringOnly = false)
         {
-            Validation.Http.HttpParser parser = new Validation.Http.HttpParser();
+            HttpParser parser = new HttpParser();
             var request = parser.ParseHttpRequest(method.Request);
             string urlString = request.Url;
 

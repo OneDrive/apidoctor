@@ -1,15 +1,8 @@
-﻿using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ApiDocs.ConsoleApp
+﻿namespace ApiDocs.ConsoleApp
 {
     using ApiDocs.ConsoleApp.Auth;
     using ApiDocs.Validation.Config;
+    using Newtonsoft.Json;
 
     public class AppConfigFile : ConfigFile
     {

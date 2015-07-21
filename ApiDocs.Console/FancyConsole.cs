@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.IO;
-
-namespace ApiDocs.ConsoleApp
+﻿namespace ApiDocs.ConsoleApp
 {
+    using System;
+    using System.IO;
+
     public class FancyConsole
     {
         public const ConsoleColor ConsoleDefaultColor = ConsoleColor.White;
@@ -106,7 +102,7 @@ namespace ApiDocs.ConsoleApp
 
         public static void WriteLineIndented(string indentString, string format, params object[] values)
         {
-            using (System.IO.StringReader reader = new System.IO.StringReader(string.Format(format, values)))
+            using (StringReader reader = new StringReader(string.Format(format, values)))
             {
                 string line;
                 while ((line = reader.ReadLine()) != null)
@@ -118,7 +114,7 @@ namespace ApiDocs.ConsoleApp
 
         public static void WriteLineIndented(string indentString, string output)
         {
-            using (System.IO.StringReader reader = new System.IO.StringReader(output))
+            using (StringReader reader = new StringReader(output))
             {
                 string line;
                 while ((line = reader.ReadLine()) != null)

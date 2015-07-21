@@ -1,11 +1,4 @@
-﻿using ApiDocs.Validation;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ApiDocs.Validation.UnitTests
+﻿namespace ApiDocs.Validation.UnitTests
 {
     public class DocFileForTesting : DocFile
     {

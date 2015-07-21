@@ -2,19 +2,20 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.IO;
     using System.Linq;
     using System.Net;
     using System.Text;
     using System.Threading.Tasks;
-    using System.IO;
     using ApiDocs.Validation.Error;
+    using Newtonsoft.Json;
 
     public class HttpResponse
     {
         public string HttpVersion { get; set; }
         public int StatusCode { get; set; }
         public string StatusMessage { get; set; }
-        public System.Net.WebHeaderCollection Headers { get; set; }
+        public WebHeaderCollection Headers { get; set; }
         public string Body { get; set; }
         public TimeSpan CallDuration { get; set; }
         public bool WasSuccessful { get { return this.StatusCode >= 200 && this.StatusCode < 300; } }
@@ -114,8 +115,8 @@
             {
                 try
                 {
-                    var jsonObject = Newtonsoft.Json.JsonConvert.DeserializeObject(body);
-                    sb.Append(Newtonsoft.Json.JsonConvert.SerializeObject(jsonObject, Newtonsoft.Json.Formatting.Indented));
+                    var jsonObject = JsonConvert.DeserializeObject(body);
+                    sb.Append(JsonConvert.SerializeObject(jsonObject, Formatting.Indented));
                 }
                 catch (Exception)
                 {

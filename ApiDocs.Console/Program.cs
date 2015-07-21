@@ -1,21 +1,23 @@
-﻿using Newtonsoft.Json;
-using ApiDocs.Publishing;
-using ApiDocs.Validation;
-using ApiDocs.Validation.Http;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ApiDocs.ConsoleApp
+﻿namespace ApiDocs.ConsoleApp
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Diagnostics;
+    using System.Linq;
+    using System.Threading.Tasks;
+    using ApiDocs.ConsoleApp.AppVeyor;
     using ApiDocs.ConsoleApp.Auth;
+    using ApiDocs.Publishing.Html;
     using ApiDocs.Publishing.Swagger;
+    using ApiDocs.Validation;
     using ApiDocs.Validation.Error;
+    using ApiDocs.Validation.Http;
+    using ApiDocs.Validation.OData;
     using ApiDocs.Validation.Params;
     using ApiDocs.Validation.Writers;
-    using ApiDocs.Publishing.Html;
+    using CommandLine;
+    using Newtonsoft.Json;
+    using Nito.AsyncEx;
 
     class Program
     {
@@ -23,12 +25,12 @@ namespace ApiDocs.ConsoleApp
         private const int ExitCodeSuccess = 0;
 
         public static readonly SavedSettings DefaultSettings = new SavedSettings("ApiTestTool", "settings.json");
-        public static readonly AppVeyor.BuildWorkerApi BuildWorker = new AppVeyor.BuildWorkerApi();
+        public static readonly BuildWorkerApi BuildWorker = new BuildWorkerApi();
         public static AppConfigFile CurrentConfiguration { get; private set; }
 
         static void Main(string[] args)
         {
-            ApiDocs.Validation.LogHelper.ProvideLogHelper(new LogRecorder());
+            LogHelper.ProvideLogHelper(new LogRecorder());
 
             FancyConsole.WriteLine(ConsoleColor.Green, "apidocs.exe Copyright (c) 2015 Microsoft Corporation.");
             FancyConsole.WriteLine();
@@ -40,7 +42,7 @@ namespace ApiDocs.ConsoleApp
             BaseOptions verbOptions = null;
 
             var options = new CommandLineOptions();
-            if (!CommandLine.Parser.Default.ParseArguments(args, options,
+            if (!Parser.Default.ParseArguments(args, options,
               (verb, subOptions) =>
               {
                   // if parsing succeeds the verb name and correct instance
@@ -54,7 +56,7 @@ namespace ApiDocs.ConsoleApp
 
             if (verbOptions.AttachDebugger)
             {
-                System.Diagnostics.Debugger.Launch();
+                Debugger.Launch();
             }
 
             if (!string.IsNullOrEmpty(verbOptions.AppVeyorServiceUrl))
@@ -70,7 +72,7 @@ namespace ApiDocs.ConsoleApp
 
             FancyConsole.LogFileName = verbOptions.LogFile;
 
-            Nito.AsyncEx.AsyncContext.Run(() => RunInvokedMethodAsync(options, verbName, verbOptions));
+            AsyncContext.Run(() => RunInvokedMethodAsync(options, verbName, verbOptions));
         }
 
         public static void LoadCurrentConfiguration(DocSetOptions options)
@@ -245,14 +247,14 @@ namespace ApiDocs.ConsoleApp
         {
             var message = string.Format(format, variables);
             FancyConsole.WriteLine(FancyConsole.ConsoleWarningColor, message);
-            Task.Run(() => BuildWorker.AddMessageAsync(message, AppVeyor.MessageCategory.Warning));
+            Task.Run(() => BuildWorker.AddMessageAsync(message, MessageCategory.Warning));
         }
 
         public static void RecordError(string format, params object[] variables)
         {
             var message = string.Format(format, variables);
             FancyConsole.WriteLine(FancyConsole.ConsoleErrorColor, message);
-            Task.Run(() => BuildWorker.AddMessageAsync(message, AppVeyor.MessageCategory.Error));
+            Task.Run(() => BuildWorker.AddMessageAsync(message, MessageCategory.Error));
         }
 
         private static async Task PrintDocInformationAsync(PrintOptions options)
@@ -318,13 +320,13 @@ namespace ApiDocs.ConsoleApp
 
             foreach (var error in errors)
             {
-                AppVeyor.MessageCategory category;
+                MessageCategory category;
                 if (error.IsWarning)
-                    category = AppVeyor.MessageCategory.Warning;
+                    category = MessageCategory.Warning;
                 else if (error.IsError)
-                    category = AppVeyor.MessageCategory.Error;
+                    category = MessageCategory.Error;
                 else
-                    category = AppVeyor.MessageCategory.Information;
+                    category = MessageCategory.Information;
 
                 string message = string.Format("{1}: {0}", error.Message.FirstLineOnly(), error.Code);
                 await TestReport.LogMessageAsync(message, category);
@@ -474,7 +476,7 @@ namespace ApiDocs.ConsoleApp
 
                 if (string.IsNullOrEmpty(method.ExpectedResponse))
                 {
-                    await TestReport.FinishTestAsync(testName, AppVeyor.TestOutcome.Failed, "Null response where one was expected.");
+                    await TestReport.FinishTestAsync(testName, TestOutcome.Failed, "Null response where one was expected.");
                     results.FailureCount++;
                     continue;
                 }
@@ -542,7 +544,7 @@ namespace ApiDocs.ConsoleApp
                 WriteValidationError(indent, error);
             }
 
-            AppVeyor.TestOutcome outcome = AppVeyor.TestOutcome.None;
+            TestOutcome outcome = TestOutcome.None;
             string outputMessage = null;
             if (errors.WereErrors())
             {
@@ -550,7 +552,7 @@ namespace ApiDocs.ConsoleApp
                 //if (null != failureMessage)
                 //    FancyConsole.WriteLine(FancyConsole.ConsoleErrorColor, failureMessage);
                 outputMessage = errors.First().Message.FirstLineOnly();
-                outcome = AppVeyor.TestOutcome.Failed;
+                outcome = TestOutcome.Failed;
             }
             else if (!silenceWarnings && errors.WereWarnings())
             {
@@ -558,7 +560,7 @@ namespace ApiDocs.ConsoleApp
                 //if (null != warningMessage)
                 //    FancyConsole.WriteLine(FancyConsole.ConsoleWarningColor, warningMessage);
                 outputMessage = errors.First().Message.FirstLineOnly();
-                outcome = AppVeyor.TestOutcome.Passed;
+                outcome = TestOutcome.Passed;
             }
             else
             {
@@ -566,7 +568,7 @@ namespace ApiDocs.ConsoleApp
                 //if (null != successMessage)
                 //    FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, successMessage);
                 outputMessage = successMessage;
-                outcome = AppVeyor.TestOutcome.Passed;
+                outcome = TestOutcome.Passed;
             }
 
             // Record this test's outcome in the build worker API
@@ -576,7 +578,7 @@ namespace ApiDocs.ConsoleApp
                 await TestReport.FinishTestAsync(testName, outcome, outputMessage, stdOut: errorMessage);
             }
 
-            return outcome == AppVeyor.TestOutcome.Passed;
+            return outcome == TestOutcome.Passed;
         }
 
         private static void WriteValidationError(string indent, ValidationError error)
@@ -708,7 +710,7 @@ namespace ApiDocs.ConsoleApp
                         if (enabledScenarios.FirstOrDefault() == null)
                         {
                             TestReport.StartTest(method.Identifier, method.SourceFile.DisplayName);
-                            await TestReport.FinishTestAsync(method.Identifier, AppVeyor.TestOutcome.Skipped, "All scenarios for this method were disabled.");
+                            await TestReport.FinishTestAsync(method.Identifier, TestOutcome.Skipped, "All scenarios for this method were disabled.");
                             FancyConsole.Write(FancyConsole.ConsoleHeaderColor, "Skipped test: {0}.", method.Identifier);
                             FancyConsole.WriteLine(FancyConsole.ConsoleWarningColor, " All scenarios for test were disabled.", method.Identifier);
                         }
@@ -743,7 +745,7 @@ namespace ApiDocs.ConsoleApp
             var exitCode = failure ? ExitCodeFailure : ExitCodeSuccess;
 #if DEBUG
             Console.WriteLine("Exit code: " + exitCode);
-            if (System.Diagnostics.Debugger.IsAttached)
+            if (Debugger.IsAttached)
             {
                 Console.WriteLine();
                 Console.Write("Press any key to exit.");
@@ -885,7 +887,7 @@ namespace ApiDocs.ConsoleApp
         }
 
 
-        private static async Task<List<ApiDocs.Validation.OData.Schema>> TryGetMetadataSchemasAsync(CheckMetadataOptions options)
+        private static async Task<List<Schema>> TryGetMetadataSchemasAsync(CheckMetadataOptions options)
         {
             if (string.IsNullOrEmpty(options.ServiceMetadataLocation))
             {
@@ -902,17 +904,17 @@ namespace ApiDocs.ConsoleApp
 
             FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, "Loading service metadata from '{0}'...", options.ServiceMetadataLocation);
 
-            List<ApiDocs.Validation.OData.Schema> schemas;
+            List<Schema> schemas;
             try
             {
                 Uri metadataUrl;
                 if (Uri.TryCreate(options.ServiceMetadataLocation, UriKind.Absolute, out metadataUrl))
                 {
-                    schemas = await ApiDocs.Validation.OData.ODataParser.ReadSchemaFromMetadataUrlAsync(metadataUrl);
+                    schemas = await ODataParser.ReadSchemaFromMetadataUrlAsync(metadataUrl);
                 }
                 else
                 {
-                    schemas = await ApiDocs.Validation.OData.ODataParser.ReadSchemaFromFileAsync(options.ServiceMetadataLocation);
+                    schemas = await ODataParser.ReadSchemaFromFileAsync(options.ServiceMetadataLocation);
                 }
             }
             catch (Exception ex)
@@ -927,7 +929,7 @@ namespace ApiDocs.ConsoleApp
         private static async Task<bool> CheckServiceMetadataAsync(CheckMetadataOptions options)
         {
 
-            List<ApiDocs.Validation.OData.Schema> schemas = await TryGetMetadataSchemasAsync(options);
+            List<Schema> schemas = await TryGetMetadataSchemasAsync(options);
             if (null == schemas)
                 return false;
 
@@ -938,7 +940,7 @@ namespace ApiDocs.ConsoleApp
             const string testname = "validate-service-metadata";
             TestReport.StartTest(testname);
 
-            List<ResourceDefinition> foundResources = ApiDocs.Validation.OData.ODataParser.GenerateResourcesFromSchemas(schemas);
+            List<ResourceDefinition> foundResources = ODataParser.GenerateResourcesFromSchemas(schemas);
             CheckResults results = new CheckResults();
 
             List<ValidationError> collectedErrors = new List<ValidationError>();
@@ -969,14 +971,14 @@ namespace ApiDocs.ConsoleApp
 
             var output = (from e in collectedErrors select e.ErrorText).ComponentsJoinedByString("\r\n");
 
-            await TestReport.FinishTestAsync(testname, results.WereFailures ? AppVeyor.TestOutcome.Failed : AppVeyor.TestOutcome.Passed, stdOut:output);
+            await TestReport.FinishTestAsync(testname, results.WereFailures ? TestOutcome.Failed : TestOutcome.Passed, stdOut:output);
 
             results.PrintToConsole();
             return !results.WereFailures;
         }
     }
 
-    class LogRecorder : ApiDocs.Validation.ILogHelper
+    class LogRecorder : ILogHelper
     {
         public void RecordFailure(string message)
         {

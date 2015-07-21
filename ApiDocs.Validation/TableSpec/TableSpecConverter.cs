@@ -3,6 +3,8 @@
     using System.Collections.Generic;
     using System.Linq;
     using ApiDocs.Validation.Error;
+    using ApiDocs.Validation.Json;
+    using MarkdownDeep;
 
     /// <summary>
     /// Manages to convert between a tablespec MarkdownDeep.Block object and useful object model
@@ -17,7 +19,7 @@
         /// <param name="lastHeaderBlock"></param>
         /// <param name="errors"></param>
         /// <returns></returns>
-        public static TableDefinition ParseTableSpec(MarkdownDeep.Block tableSpecBlock, MarkdownDeep.Block lastHeaderBlock, out ValidationError[] errors)
+        public static TableDefinition ParseTableSpec(Block tableSpecBlock, Block lastHeaderBlock, out ValidationError[] errors)
         {
             List<ValidationError> discoveredErrors = new List<ValidationError>();
             List<ItemDefinition> items = new List<ItemDefinition>();
@@ -88,7 +90,7 @@
         /// </summary>
         /// <param name="table"></param>
         /// <returns></returns>
-        private static IEnumerable<ErrorDefinition> ParseErrorTable(MarkdownDeep.IMarkdownTable table)
+        private static IEnumerable<ErrorDefinition> ParseErrorTable(IMarkdownTable table)
         {
             var records = from r in table.RowValues
                           select new ErrorDefinition 
@@ -102,7 +104,7 @@
             return records;
         }
 
-        private static IEnumerable<ParameterDefinition> ParseParameterTable(MarkdownDeep.IMarkdownTable table, ParameterLocation location)
+        private static IEnumerable<ParameterDefinition> ParseParameterTable(IMarkdownTable table, ParameterLocation location)
         {
             var records = from r in table.RowValues
                           select new ParameterDefinition
@@ -116,20 +118,20 @@
             return records;
         }
 
-        private static IEnumerable<ParameterDefinition> ParseHeadersTable(MarkdownDeep.IMarkdownTable table)
+        private static IEnumerable<ParameterDefinition> ParseHeadersTable(IMarkdownTable table)
         {
             var records = from r in table.RowValues
                           select new ParameterDefinition
                           {
                               Name = r.ValueForColumn(table, "Name", "Header Name"),
-                              Type = Json.JsonDataType.String,
+                              Type = JsonDataType.String,
                               Description = r.ValueForColumn(table, "Description"),
                               Location = ParameterLocation.Header
                           };
             return records;
         }
 
-        private static IEnumerable<EnumerationDefinition> ParseEnumerationTable(MarkdownDeep.IMarkdownTable table)
+        private static IEnumerable<EnumerationDefinition> ParseEnumerationTable(IMarkdownTable table)
         {
             var records = from r in table.RowValues
                           select new EnumerationDefinition
@@ -140,7 +142,7 @@
             return records;
         }
 
-        private static IEnumerable<AuthScopeDefinition> ParseAuthScopeTable(MarkdownDeep.IMarkdownTable table)
+        private static IEnumerable<AuthScopeDefinition> ParseAuthScopeTable(IMarkdownTable table)
         {
             var records = from r in table.RowValues
                           select new AuthScopeDefinition
@@ -172,7 +174,7 @@
                     select CommonHeaderContentMap[key]).FirstOrDefault();
         }
 
-        private static TableBlockType TableShapeMatch(MarkdownDeep.IMarkdownTable table)
+        private static TableBlockType TableShapeMatch(IMarkdownTable table)
         {
             return TableBlockType.Unknown;
         }

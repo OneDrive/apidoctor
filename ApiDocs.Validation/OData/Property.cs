@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Xml.Linq;
-
-namespace ApiDocs.Validation.OData
+﻿namespace ApiDocs.Validation.OData
 {
+    using System;
+    using System.Xml.Linq;
+
     public class Property
     {
         public string Name { get; set; }

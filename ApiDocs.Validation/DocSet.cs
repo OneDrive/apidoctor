@@ -2,14 +2,16 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
+    using System.IO;
     using System.Linq;
     using System.Text;
-    using System.Threading.Tasks;
-    using System.IO;
     using ApiDocs.Validation.Config;
     using ApiDocs.Validation.Error;
     using ApiDocs.Validation.Http;
+    using ApiDocs.Validation.Json;
     using ApiDocs.Validation.Params;
+    using Newtonsoft.Json;
 
     public class DocSet
     {
@@ -18,7 +20,7 @@
         #endregion
 
         #region Instance Variables
-        readonly Json.JsonResourceCollection resourceCollection = new Json.JsonResourceCollection();
+        readonly JsonResourceCollection resourceCollection = new JsonResourceCollection();
         #endregion
 
         #region Properties
@@ -35,7 +37,7 @@
         public ResourceDefinition[] Resources { get; private set; }
         public MethodDefinition[] Methods { get; private set; }
 
-        public Json.JsonResourceCollection ResourceCollection { get { return this.resourceCollection; } }
+        public JsonResourceCollection ResourceCollection { get { return this.resourceCollection; } }
         
         public List<ScenarioDefinition> TestScenarios {get; internal set;}
 
@@ -132,7 +134,7 @@
             {
                 using (var reader = file.OpenText())
                 {
-                    var config = Newtonsoft.Json.JsonConvert.DeserializeObject<T>(reader.ReadToEnd());
+                    var config = JsonConvert.DeserializeObject<T>(reader.ReadToEnd());
                     if (null != config && config.IsValid)
                     {
                         validConfigurationFiles.Add(config);
@@ -196,7 +198,7 @@
         /// <param name="silenceWarnings"></param>
         /// <param name="scenario"></param>
         /// <returns></returns>
-        public bool ValidateApiMethod(MethodDefinition method, Http.HttpResponse actualResponse, Http.HttpResponse expectedResponse, out ValidationError[] errors, bool silenceWarnings, ScenarioDefinition scenario)
+        public bool ValidateApiMethod(MethodDefinition method, HttpResponse actualResponse, HttpResponse expectedResponse, out ValidationError[] errors, bool silenceWarnings, ScenarioDefinition scenario)
         {
             if (null == method) throw new ArgumentNullException("method");
             if (null == actualResponse) throw new ArgumentNullException("actualResponse");
@@ -338,7 +340,7 @@
 
         internal static string RelativePathToFile(string fileFullName, string rootFolderPath, bool urlStyle = false)
         {
-            System.Diagnostics.Debug.Assert(fileFullName.StartsWith(rootFolderPath), "fileFullName doesn't start with the source folder path");
+            Debug.Assert(fileFullName.StartsWith(rootFolderPath), "fileFullName doesn't start with the source folder path");
 
             var path = fileFullName.Substring(rootFolderPath.Length);
             if (urlStyle)
@@ -422,7 +424,7 @@
         {
             // Translate path into what we're looking for
             string[] pathComponents = path.Split(new char[] { '/', '\\' });
-            string pathSeperator = System.IO.Path.DirectorySeparatorChar.ToString();
+            string pathSeperator = Path.DirectorySeparatorChar.ToString();
             string displayName = pathSeperator + pathComponents.ComponentsJoinedByString(pathSeperator);
 
             var query = from f in this.Files

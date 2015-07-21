@@ -1,8 +1,9 @@
-﻿using System;
-using System.Threading.Tasks;
-
-namespace ApiDocs.Validation
+﻿namespace ApiDocs.Validation
 {
+    using System;
+    using System.Diagnostics;
+    using System.Threading.Tasks;
+
     public class BackoffHelper
     {
         public int MaximumTimeMilliseconds { get; set; }
@@ -28,7 +29,7 @@ namespace ApiDocs.Validation
 
             var sleepDuration = Between(this.random, 0, (int)expectedBackoffTime);
 
-            System.Diagnostics.Debug.WriteLine("Waiting for: {0} milliseconds", sleepDuration);
+            Debug.WriteLine("Waiting for: {0} milliseconds", sleepDuration);
             await Task.Delay(sleepDuration);
         }
 

@@ -1,13 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
-using System.Net;
-
-namespace ApiDocs.Validation.OData
+﻿namespace ApiDocs.Validation.OData
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Diagnostics;
+    using System.IO;
+    using System.Linq;
+    using System.Net;
+    using System.Threading.Tasks;
+    using System.Xml.Linq;
+    using Newtonsoft.Json;
+
     /// <summary>
     /// Converts OData input into json examples which can be validated against our 
     /// ResourceDefinitions in a DocSet.
@@ -49,7 +51,7 @@ namespace ApiDocs.Validation.OData
             {
                 if (null != stream)
                 {
-                    System.IO.StreamReader reader = new System.IO.StreamReader(stream);
+                    StreamReader reader = new StreamReader(stream);
                     remoteMetadataContents = await reader.ReadToEndAsync();
                 }
             }
@@ -59,7 +61,7 @@ namespace ApiDocs.Validation.OData
 
         public static async Task<List<Schema>> ReadSchemaFromFileAsync(string path)
         {
-            System.IO.StreamReader reader = new System.IO.StreamReader(path);
+            StreamReader reader = new StreamReader(path);
             string localMetadataContents = await reader.ReadToEndAsync();
 
             return ReadSchemaFromMetadata(localMetadataContents);
@@ -105,7 +107,7 @@ namespace ApiDocs.Validation.OData
         private static string BuildJsonExample(ComplexType ct, IEnumerable<Schema> otherSchema)
         {
             Dictionary<string, object> dict = BuildDictionaryExample(ct, otherSchema);
-            return Newtonsoft.Json.JsonConvert.SerializeObject(dict);
+            return JsonConvert.SerializeObject(dict);
         }
 
         private static Dictionary<string, object> BuildDictionaryExample(ComplexType ct, IEnumerable<Schema> otherSchema)
@@ -138,7 +140,7 @@ namespace ApiDocs.Validation.OData
             ComplexType matchingType = otherSchemas.FindTypeWithIdentifier(typeIdentifier);
             if (null == matchingType)
             {
-                System.Diagnostics.Debug.WriteLine("Failed to find an example for type: " + typeIdentifier);
+                Debug.WriteLine("Failed to find an example for type: " + typeIdentifier);
                 return new { datatype = typeIdentifier };
             }
             else

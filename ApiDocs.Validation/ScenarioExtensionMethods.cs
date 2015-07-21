@@ -1,16 +1,13 @@
-﻿using Newtonsoft.Json.Linq;
-using ApiDocs.Validation.Json;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ApiDocs.Validation
+﻿namespace ApiDocs.Validation
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
     using ApiDocs.Validation.Error;
+    using ApiDocs.Validation.Http;
+    using ApiDocs.Validation.Json;
     using ApiDocs.Validation.Params;
+    using Newtonsoft.Json.Linq;
 
     internal static class InternalScenarioExtensionMethods
     {
@@ -21,7 +18,7 @@ namespace ApiDocs.Validation
         /// <param name="scenario"></param>
         /// <param name="actualResponse"></param>
         /// <param name="detectedErrors"></param>
-        public static void ValidateExpectations(this ScenarioDefinition scenario, Http.HttpResponse actualResponse, List<ValidationError> detectedErrors)
+        public static void ValidateExpectations(this ScenarioDefinition scenario, HttpResponse actualResponse, List<ValidationError> detectedErrors)
         {
             if (scenario == null) throw new ArgumentNullException("scenario");
             if (actualResponse == null) throw new ArgumentNullException("actualResponse");
@@ -47,7 +44,7 @@ namespace ApiDocs.Validation
                         break;
 
                     case PlaceholderLocation.Json:
-                        object value = Json.JsonPath.ValueFromJsonPath(actualResponse.Body, keyIndex);
+                        object value = JsonPath.ValueFromJsonPath(actualResponse.Body, keyIndex);
                         ExpectationSatisfied(key, value, expectedValues, detectedErrors);
                         break;
 

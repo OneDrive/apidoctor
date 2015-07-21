@@ -1,11 +1,8 @@
 ﻿namespace ApiDocs.ConsoleApp
 {
     using System;
-    using System.Collections.Generic;
+    using System.Diagnostics;
     using System.IO;
-    using System.Linq;
-    using System.Text;
-    using System.Threading.Tasks;
     using Newtonsoft.Json;
 
     public class SavedSettings
@@ -47,7 +44,7 @@
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine(string.Format("Failed to read saved settings file: {0}", ex.Message));
+                Debug.WriteLine(string.Format("Failed to read saved settings file: {0}", ex.Message));
             }
         }
 
@@ -64,7 +61,7 @@
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine(string.Format("Failed to write saved settings file: {0}", ex.Message));
+                Debug.WriteLine(string.Format("Failed to write saved settings file: {0}", ex.Message));
             }
         }
 

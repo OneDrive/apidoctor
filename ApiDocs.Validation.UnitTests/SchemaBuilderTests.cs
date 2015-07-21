@@ -1,14 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using NUnit.Framework;
-using ApiDocs.Validation.Json;
-using Newtonsoft.Json;
-
-namespace ApiDocs.Validation.UnitTests
+﻿namespace ApiDocs.Validation.UnitTests
 {
+    using System;
+    using ApiDocs.Validation.Json;
+    using Newtonsoft.Json;
+    using NUnit.Framework;
 
     [TestFixture]
     public class SchemaBuilderTests
@@ -122,7 +117,7 @@ namespace ApiDocs.Validation.UnitTests
         }
 
         [Test]
-        [ExpectedException(ExpectedException=typeof(ApiDocs.Validation.SchemaBuildException))]
+        [ExpectedException(ExpectedException=typeof(SchemaBuildException))]
         public void InvalidJsonMissingCommaSchema()
         {
             string badJson = "{ \"prop\": \"value\" \"prop2\": \"value\" }";
@@ -130,7 +125,7 @@ namespace ApiDocs.Validation.UnitTests
         }
 
         [Test]
-        [ExpectedException(ExpectedException = typeof(ApiDocs.Validation.SchemaBuildException))]
+        [ExpectedException(ExpectedException = typeof(SchemaBuildException))]
         public void InvalidJsonMissingBraceSchema()
         {
             string badJson = "{ \"prop\": \"value\", \"prop2\": \"value\" ";

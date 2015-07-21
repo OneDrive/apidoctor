@@ -1,12 +1,9 @@
-﻿using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ApiDocs.Validation
+﻿namespace ApiDocs.Validation
 {
+    using System;
+    using System.Linq;
+    using Newtonsoft.Json;
+
     /// <summary>
     /// Page annotation allows you to make page-level annotations for a variety of reasons
     /// </summary>

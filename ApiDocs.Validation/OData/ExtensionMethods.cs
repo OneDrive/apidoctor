@@ -1,11 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ApiDocs.Validation.OData
+﻿namespace ApiDocs.Validation.OData
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Xml.Linq;
+
     internal static class ExtensionMethods
     {
         internal static bool ToBoolean(this string source)
@@ -19,7 +18,7 @@ namespace ApiDocs.Validation.OData
             throw new ArgumentException(string.Format("Failed to convert {0} into a boolean", source));
         }
 
-        internal static string AttributeValue(this System.Xml.Linq.XElement xml, System.Xml.Linq.XName attributeName)
+        internal static string AttributeValue(this XElement xml, XName attributeName)
         {
             var attribute = xml.Attribute(attributeName);
             if (null == attribute)

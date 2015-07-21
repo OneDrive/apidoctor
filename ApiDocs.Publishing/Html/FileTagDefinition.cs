@@ -1,12 +1,9 @@
-﻿using Scope = Mustache.Scope;
-using TagDefinition = Mustache.TagDefinition;
-using TagParameter = Mustache.TagParameter;
-
-namespace ApiDocs.Publishing.Html
+﻿namespace ApiDocs.Publishing.Html
 {
     using System.Collections.Generic;
     using System.IO;
     using ApiDocs.Validation;
+    using Mustache;
 
     public class FileTagDefinition : TagDefinition
     {
@@ -18,7 +15,7 @@ namespace ApiDocs.Publishing.Html
         public string RootDestinationFolder { get; set; }
         public string DestinationFile { get; set; }
 
-        public override void GetText(System.IO.TextWriter writer, Dictionary<string, object> arguments, Scope context)
+        public override void GetText(TextWriter writer, Dictionary<string, object> arguments, Scope context)
         {
             var filenameToReplace = arguments["filename"] as string;
             if (null != filenameToReplace)

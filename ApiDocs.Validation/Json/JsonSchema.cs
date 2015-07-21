@@ -2,10 +2,10 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.Linq;
-    using System.Text;
-    using System.Threading.Tasks;
     using ApiDocs.Validation.Error;
+    using ApiDocs.Validation.Http;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
 
@@ -56,7 +56,7 @@
         /// <returns></returns>
         public bool ValidateExpectedResponse(MethodDefinition method, out ValidationError[] errors)
         {
-            Http.HttpParser parser = new Http.HttpParser();
+            HttpParser parser = new HttpParser();
             var response = parser.ParseHttpResponse(method.ExpectedResponse);
             
             JsonExample example = new JsonExample(response.Body, method.ExpectedResponseMetadata);
@@ -78,7 +78,7 @@
             JContainer obj = null;
             try
             {
-                var settings = new JsonSerializerSettings { DateParseHandling = Newtonsoft.Json.DateParseHandling.None, NullValueHandling = NullValueHandling.Include, DefaultValueHandling = DefaultValueHandling.Include };
+                var settings = new JsonSerializerSettings { DateParseHandling = DateParseHandling.None, NullValueHandling = NullValueHandling.Include, DefaultValueHandling = DefaultValueHandling.Include };
                 obj = (JContainer)JsonConvert.DeserializeObject(jsonInput.JsonData, settings);
             }
             catch (Exception ex)
@@ -392,7 +392,7 @@
                 case ExpectedStringFormat.Iso8601Date:
                     {
                         DateTime output;
-                        bool result = (DateTime.TryParseExact(inputProperty.OriginalValue, Iso8601Formats, System.Globalization.DateTimeFormatInfo.InvariantInfo, System.Globalization.DateTimeStyles.None, out output));
+                        bool result = (DateTime.TryParseExact(inputProperty.OriginalValue, Iso8601Formats, DateTimeFormatInfo.InvariantInfo, DateTimeStyles.None, out output));
                         if (!result)
                         {
                             detectedErrorsCollection.Add(new ValidationError(ValidationErrorCode.InvalidDateTimeString, null, "Invalid ISO 8601 date-time string in property: {1}: {0}", inputProperty.OriginalValue, schemaProperty.Name));

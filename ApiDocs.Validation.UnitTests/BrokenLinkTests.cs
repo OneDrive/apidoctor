@@ -1,14 +1,10 @@
-﻿using NUnit.Framework;
-using ApiDocs.Validation;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ApiDocs.Validation.UnitTests
+﻿namespace ApiDocs.Validation.UnitTests
 {
+    using System;
+    using System.IO;
+    using System.Linq;
     using ApiDocs.Validation.Error;
+    using NUnit.Framework;
 
     [TestFixture]
     public class BrokenLinkTests
@@ -153,7 +149,7 @@ This link goes [up one level](../anotherfile.md)
         public Func<string, bool> IsLinkValid { get; set; }
 
 
-        protected override DocFile.LinkValidationResult VerifyRelativeLink(System.IO.FileInfo sourceFile, string linkUrl, string docSetBasePath, out string relativeFileName)
+        protected override LinkValidationResult VerifyRelativeLink(FileInfo sourceFile, string linkUrl, string docSetBasePath, out string relativeFileName)
         {
             relativeFileName = null;
             if (null != this.IsLinkValid)

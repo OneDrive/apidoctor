@@ -1,15 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
-
-namespace ApiDocs.Validation
+﻿namespace ApiDocs.Validation
 {
+    using System.Collections.Generic;
+    using System.Linq;
     using ApiDocs.Validation.Config;
     using ApiDocs.Validation.Params;
+    using Newtonsoft.Json;
 
     public class ScenarioFile : ConfigFile
     {

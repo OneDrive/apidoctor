@@ -1,14 +1,12 @@
-﻿using System.Collections.Generic;
-using ApiDocs.Validation.Json;
-
-namespace ApiDocs.Validation
+﻿namespace ApiDocs.Validation
 {
     using System;
-    using System.Net;
+    using System.Collections.Generic;
     using System.Linq;
-    using ApiDocs.Validation.Http;
     using System.Threading.Tasks;
     using ApiDocs.Validation.Error;
+    using ApiDocs.Validation.Http;
+    using ApiDocs.Validation.Json;
     using ApiDocs.Validation.Params;
     using Newtonsoft.Json;
 
@@ -112,7 +110,7 @@ namespace ApiDocs.Validation
 
         public void AddTestParams(string rawContent)
         {
-            var scenarios = Newtonsoft.Json.JsonConvert.DeserializeObject<ScenarioDefinition[]>(rawContent);
+            var scenarios = JsonConvert.DeserializeObject<ScenarioDefinition[]>(rawContent);
             if (null != scenarios)
             {
                 foreach (var scenario in scenarios)
@@ -238,7 +236,7 @@ namespace ApiDocs.Validation
 
             foreach (var parameter in jsonParameters)
             {
-                jsonSource = Json.JsonPath.SetValueForJsonPath(jsonSource, parameter.PlaceholderKey, parameter.Value);
+                jsonSource = JsonPath.SetValueForJsonPath(jsonSource, parameter.PlaceholderKey, parameter.Value);
             }
 
             return jsonSource;
@@ -323,7 +321,7 @@ namespace ApiDocs.Validation
         #region Parameter Parsing
         public void SplitRequestUrl(out string relativePath, out string queryString, out string httpMethod)
         {
-            var parser = new Http.HttpParser();
+            var parser = new HttpParser();
             var request = parser.ParseHttpRequest(this.Request);
             httpMethod = request.Method;
 

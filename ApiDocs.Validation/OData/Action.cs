@@ -1,11 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Xml.Linq;
-
-namespace ApiDocs.Validation.OData
+﻿namespace ApiDocs.Validation.OData
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Xml.Linq;
+
     public class Action
     {
         public string Name { get; set; }
@@ -20,10 +19,10 @@ namespace ApiDocs.Validation.OData
 
 
         public static string ElementName { get { return "Action"; } }
-        public static OData.Action FromXml(XElement xml)
+        public static Action FromXml(XElement xml)
         {
             if (xml.Name.LocalName != ElementName) throw new ArgumentException("xml was not a Action element");
-            var obj = new OData.Action
+            var obj = new Action
             {
                 Name = xml.AttributeValue("Name"),
                 IsBound = xml.AttributeValue("IsBound").ToBoolean()

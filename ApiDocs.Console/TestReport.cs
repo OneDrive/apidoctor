@@ -1,15 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ApiDocs.ConsoleApp
+﻿namespace ApiDocs.ConsoleApp
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Threading.Tasks;
+    using ApiDocs.ConsoleApp.AppVeyor;
+
     public static class TestReport
     {
         private const string TestFrameworkName = "apidocs";
-        private static AppVeyor.BuildWorkerApi BuildWorkerApi { get { return Program.BuildWorker; } }
+        private static BuildWorkerApi BuildWorkerApi { get { return Program.BuildWorker; } }
         private static readonly Dictionary<string, long> TestStartTimes = new Dictionary<string, long>();
         private static readonly Dictionary<string, string> TestStartFilename = new Dictionary<string, string>();
 
@@ -30,7 +29,7 @@ namespace ApiDocs.ConsoleApp
         }
 
 
-        public static async Task FinishTestAsync(string testName, AppVeyor.TestOutcome outcome, string message = null, string filename = null, string stdOut = null)
+        public static async Task FinishTestAsync(string testName, TestOutcome outcome, string message = null, string filename = null, string stdOut = null)
         {
             var endTime = DateTimeOffset.Now.Ticks;
 
@@ -56,10 +55,10 @@ namespace ApiDocs.ConsoleApp
 
             switch (outcome)
             {
-                case AppVeyor.TestOutcome.Failed:
+                case TestOutcome.Failed:
                     FancyConsole.Write(ConsoleColor.Red, " Failed: {0}", message);
                     break;
-                case AppVeyor.TestOutcome.Passed:
+                case TestOutcome.Passed:
                     FancyConsole.Write(ConsoleColor.Green, " Passed: {0}", message);
                     break;
                 default:
@@ -73,7 +72,7 @@ namespace ApiDocs.ConsoleApp
         }
 
 
-        internal static async Task LogMessageAsync(string message, AppVeyor.MessageCategory category = AppVeyor.MessageCategory.Information, string details = null)
+        internal static async Task LogMessageAsync(string message, MessageCategory category = MessageCategory.Information, string details = null)
         {
             await BuildWorkerApi.AddMessageAsync(message, category, details);
         }

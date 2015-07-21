@@ -2,7 +2,10 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
+    using System.IO;
     using System.Linq;
+    using System.Text.RegularExpressions;
     using System.Threading.Tasks;
     using ApiDocs.Validation;
     using ApiDocs.Validation.Writers;
@@ -74,8 +77,8 @@
                 Console.WriteLine(path.Key);
             }
 
-            string output = Newtonsoft.Json.JsonConvert.SerializeObject(swag, Formatting.Indented);
-            using (var outputFile = System.IO.File.CreateText(System.IO.Path.Combine(outputFolder, "swagger.json")))
+            string output = JsonConvert.SerializeObject(swag, Formatting.Indented);
+            using (var outputFile = File.CreateText(Path.Combine(outputFolder, "swagger.json")))
             {
                 outputFile.Write(output);
             }
@@ -246,7 +249,7 @@
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine("Couldn't save repeated method {0} for path {1} (from {2}). Copying query parameters.", httpMethod, relativePath, method.SourceFile.DisplayName);
+                    Debug.WriteLine("Couldn't save repeated method {0} for path {1} (from {2}). Copying query parameters.", httpMethod, relativePath, method.SourceFile.DisplayName);
                     var existing = restPathNode[httpMethod];
                     
                     // Make sure any query string parameters on this method are included in the existing definition
@@ -273,7 +276,7 @@
             return false;
         }
 
-        private System.Text.RegularExpressions.Regex pathVariableRegex = new System.Text.RegularExpressions.Regex("{(?<var>.*)}");
+        private Regex pathVariableRegex = new Regex("{(?<var>.*)}");
     }
 
     public class SwaggerAuth
