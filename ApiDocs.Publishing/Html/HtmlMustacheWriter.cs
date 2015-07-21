@@ -6,6 +6,7 @@
     using System.Linq;
     using System.Threading.Tasks;
     using ApiDocs.Validation;
+    using ApiDocs.Validation.Writers;
     using Mustache;
 
     public class HtmlMustacheWriter : DocumentPublisherHtml
@@ -16,7 +17,7 @@
         public bool CollapseTocToActiveGroup { get; set; }
 
 
-        public HtmlMustacheWriter(DocSet docs, string templateFolderPath) : base(docs, templateFolderPath)
+        public HtmlMustacheWriter(DocSet docs, IPublishOptions options) : base(docs, options)
         {
             this.CollapseTocToActiveGroup = false;
         }
@@ -37,23 +38,23 @@
                 compiler.RegisterTag(new ExtendedElseIfTagDefinition(), false);
                 this.generator = compiler.Compile(this.TemplateHtml);
                 this.generator.KeyNotFound += this.Generator_KeyNotFound;
-                //_generator.ValueRequested += Generator_ValueRequested;
-                //_generator.KeyFound += Generator_KeyFound;
+                this.generator.ValueRequested += this.Generator_ValueRequested;
+                this.generator.KeyFound += this.Generator_KeyFound;
             }
         }
 
-        //void Generator_KeyFound(object sender, Mustache.KeyFoundEventArgs e)
-        //{
-        //    Console.WriteLine("KeyFound: " + e.Key);
-        //}
+        void Generator_KeyFound(object sender, Mustache.KeyFoundEventArgs e)
+        {
+            Console.WriteLine("KeyFound: " + e.Key);
+        }
 
-        //void Generator_ValueRequested(object sender, Mustache.ValueRequestEventArgs e)
-        //{
-        //    Console.WriteLine("ValueRequested: " + e.Value);
-        //}
+        void Generator_ValueRequested(object sender, Mustache.ValueRequestEventArgs e)
+        {
+            Console.WriteLine("ValueRequested: " + e.Value);
+        }
         void Generator_KeyNotFound(object sender, KeyNotFoundEventArgs e)
         {
-            //Console.WriteLine("KeyNotFound: " + e.Key);
+            Console.WriteLine("KeyNotFound: " + e.Key);
 
             e.Substitute = e.Key;
             e.Handled = true;
@@ -72,7 +73,6 @@
         {
             var tocHeaders = this.GetHeadersForSection(page.Annotation.Section, destinationFile, rootDestinationFolder, page);
 
-
             List<ValueObject<string>> htmlHeaders = new List<ValueObject<string>>();
             List<ValueObject<string>> htmlFooters = new List<ValueObject<string>>();
             if (page.Annotation.HeaderAdditions != null)
@@ -80,13 +80,15 @@
             if (page.Annotation.FooterAdditions != null)
                 htmlFooters.AddRange(from h in page.Annotation.FooterAdditions select new ValueObject<string> { Value = h });
 
-            var templateObject = new
+            dynamic templateObject = new System.Dynamic.ExpandoObject();
+            templateObject.Page = page.Annotation;
+            templateObject.Body = bodyHtml;
+            templateObject.Headers = tocHeaders;
+            templateObject.HtmlHeaderAdditions = htmlHeaders;
+            templateObject.HtmlFooterAdditions = htmlFooters;
+            templateObject.Source = new
             {
-                Page = page.Annotation,
-                Body = bodyHtml,
-                Headers = tocHeaders,
-                HtmlHeaderAdditions = htmlHeaders,
-                HtmlFooterAdditions = htmlFooters
+                MarkdownPath = page.UrlRelativePathFromRoot()
             };
 
             this.fileTag.DestinationFile = destinationFile;
@@ -104,7 +106,7 @@
         protected string RelativeUrlFromCurrentPage(DocFile docFile, string destinationFile, string rootDestinationFolder)
         {
             string linkDestinationRelative = docFile.DisplayName.TrimStart(new char[] { '\\', '/' });
-            var relativeLinkToDocFile = DocSet.RelativePathToRootFromFile(destinationFile, Path.Combine(rootDestinationFolder, linkDestinationRelative), true);
+            var relativeLinkToDocFile =  DocSet.RelativePathToRootFromFile(destinationFile, Path.Combine(rootDestinationFolder, linkDestinationRelative), true);
             var result = this.QualifyUrl(relativeLinkToDocFile);
             return result;
         }

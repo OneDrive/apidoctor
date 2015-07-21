@@ -106,6 +106,7 @@
     <Compile Include="Config\ConfigFile.cs" />
     <Compile Include="Config\ApiRequirementsFile.cs" />
     <Compile Include="Http\HttpValidationExtensionMethods.cs" />
+    <Compile Include="Writers\IPublishOptions.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\OSS\MarkdownDeep\MarkdownDeep.csproj">
