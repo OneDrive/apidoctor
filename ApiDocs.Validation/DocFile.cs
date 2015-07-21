@@ -617,7 +617,7 @@ namespace ApiDocs.Validation
                     }
                 case CodeBlockType.TestParams:
                     {
-                        var method = m_Requests.Last();
+                        var method = this.requests.Last();
                         method.AddTestParams(code.Content);
                         return method;
                     }
