@@ -75,7 +75,7 @@
         /// <returns>True if validation was successful, otherwise false.</returns>
         public bool ValidateJson(JsonExample jsonInput, out ValidationError[] errors, Dictionary<string, JsonSchema> otherSchemas, ValidationOptions options, JsonExample expectedJson = null)
         {
-            JContainer obj = null;
+            JContainer obj;
             try
             {
                 var settings = new JsonSerializerSettings { DateParseHandling = DateParseHandling.None, NullValueHandling = NullValueHandling.Include, DefaultValueHandling = DefaultValueHandling.Include };
@@ -119,7 +119,7 @@
                 this.ValidateCollectionObject(obj, annotation, otherSchemas, options.CollectionPropertyName, detectedErrors);
             }
             // otherwise verify the object matches this schema
-            else if (null != obj)
+            else
             {
                 if (null != expectedJson)
                 {

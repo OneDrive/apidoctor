@@ -114,7 +114,7 @@
         /// <returns></returns>
         protected JsonSchema GetJsonSchema(string resourceType, IList<ValidationError> errors, string jsonStringForFallbackIfMissingResource)
         {
-            JsonSchema schema = null;
+            JsonSchema schema;
             if (string.IsNullOrEmpty(resourceType))
             {
                 errors.Add(new ValidationMessage(null, "Resource type was null or missing, so we assume there is no response to validate."));

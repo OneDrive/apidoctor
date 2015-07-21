@@ -115,7 +115,7 @@
             {
                 foreach (var scenario in scenarios)
                 {
-                    Scenarios.Add(scenario);
+                    this.Scenarios.Add(scenario);
                 }
             }
         }
@@ -274,7 +274,7 @@
         internal void VerifyHttpRequest(List<ValidationError> detectedErrors)
         {
             HttpParser parser = new HttpParser();
-            HttpRequest request = null;
+            HttpRequest request;
             try
             {
                 request = parser.ParseHttpRequest(this.Request);

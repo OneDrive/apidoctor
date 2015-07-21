@@ -82,7 +82,7 @@
             }
 
 
-            if (expectedValues is IList<JToken>)
+            if (null != (expectedValues as IList<JToken>))
             {
                 if (((IList<JToken>)expectedValues).Any(possibleValue => JsonPath.TokenEquals(possibleValue, actualValue)))
                 {

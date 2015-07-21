@@ -63,7 +63,7 @@
             {
                 return input.Equals(convertedValue);
             }
-            return input == convertedValue;
+            return null == convertedValue;
         }
 
         /// <summary>
@@ -215,8 +215,6 @@
             {
                 if (i < pathParts.Count - 1)
                     pathParts[i].Child = pathParts[i + 1];
-                if (i > 0)
-                    pathParts[i].Parent = pathParts[i - 1];
             }
 
             return pathParts[0];
@@ -243,9 +241,7 @@
 
             public int ArrayIndex { get; set; }
 
-            public JsonPathPart Parent {get;set;}
-
-            public JsonPathPart Child {get;set;}
+            public JsonPathPart Child { get; set; }
 
             public static JsonPathPart Root
             {

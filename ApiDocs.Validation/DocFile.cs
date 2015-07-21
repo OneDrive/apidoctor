@@ -363,7 +363,7 @@ namespace ApiDocs.Validation
         /// <summary>
         /// Run post processing on the collection of elements found inside this doc file.
         /// </summary>
-        /// <param name="elementsFoundInDocument"></param>
+        /// <param name="elements"></param>
         /// <param name="postProcessingErrors"></param>
         private void PostProcessFoundElements(List<object> elements, out ValidationError[] postProcessingErrors)
         {
@@ -766,8 +766,15 @@ namespace ApiDocs.Validation
             while (linkUrl.StartsWith(".." + Path.DirectorySeparatorChar))
             {
                 var nextLevelParent = new DirectoryInfo(rootPath).Parent;
-                rootPath = nextLevelParent.FullName;
-                linkUrl = linkUrl.Substring(3);
+                if (null != nextLevelParent)
+                {
+                    rootPath = nextLevelParent.FullName;
+                    linkUrl = linkUrl.Substring(3);
+                }
+                else
+                {
+                    break;
+                }
             }
 
             if (rootPath.Length < docSetBasePath.Length)

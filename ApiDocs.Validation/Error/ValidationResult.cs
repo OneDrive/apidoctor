@@ -12,7 +12,7 @@
         {
             get
             {
-                var query = from m in this.Messages where m.IsError == true select m;
+                var query = from m in this.Messages where m.IsError select m;
                 return query.FirstOrDefault() != null;
             }
         }
@@ -21,7 +21,7 @@
         {
             get
             {
-                var query = from m in this.Messages where m.IsError == true || m.IsWarning == true select m;
+                var query = from m in this.Messages where m.IsError || m.IsWarning select m;
                 return query.FirstOrDefault() != null;
             }
         }

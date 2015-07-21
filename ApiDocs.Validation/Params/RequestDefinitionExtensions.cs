@@ -26,13 +26,13 @@
             }
             else if (!string.IsNullOrEmpty(definition.MethodName))
             {
-                foundRequest = LookupHttpRequestForMethod(definition.MethodName, baseUrl, documents);
+                foundRequest = LookupHttpRequestForMethod(definition.MethodName, documents);
             }
 
             return foundRequest;
         }
 
-        private static HttpRequest LookupHttpRequestForMethod(string methodName, string baseUrl, DocSet docset)
+        private static HttpRequest LookupHttpRequestForMethod(string methodName, DocSet docset)
         {
             var queryForMethod = from m in docset.Methods
                                  where m.Identifier == methodName
@@ -106,10 +106,13 @@
             {
                 PlaceholderKey = key,
                 DefinedValue = value,
-                Location = BasicRequestDefinition.LocationForKey(key)
+                Location = BasicRequestDefinition.LocationForKey(key),
+                Value =
+                    BasicRequestDefinition.LocationForKey(value) == PlaceholderLocation.StoredValue
+                        ? storedValues[value]
+                        : value
             };
 
-            v.Value = BasicRequestDefinition.LocationForKey(value) == PlaceholderLocation.StoredValue ? storedValues[value] : value;
 
             Debug.WriteLine("Converting \"{0}: {1}\" into loc={2},value={3}", key, value, v.Location, v.Value);
 
@@ -121,7 +124,7 @@
             if (string.IsNullOrEmpty(contentType))
                 return false;
 
-            string[] contentTypeParts = contentType.Split(new char[] { ';' });
+            string[] contentTypeParts = contentType.Split(';');
             if (contentTypeParts.Length > 0)
             {
                 string contentTypeId = contentTypeParts[0].Trim();

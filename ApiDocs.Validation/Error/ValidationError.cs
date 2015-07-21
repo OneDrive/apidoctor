@@ -141,8 +141,7 @@
 
         public static ValidationError NewConsolidatedError(ValidationErrorCode code, ValidationError[] errors, string message, params object[] parameters)
         {
-            ValidationError error = null;
-            error = errors.All(err => err.IsWarning) ? new ValidationWarning(code, null, message, parameters) : new ValidationError(code, null, message, parameters);
+            var error = errors.All(err => err.IsWarning) ? new ValidationWarning(code, null, message, parameters) : new ValidationError(code, null, message, parameters);
 
             error.InnerErrors = errors;
             return error;

@@ -149,7 +149,7 @@
                     // Check to see if we need to clean up / remove any ` marks
                     string tableCellContents = rowValues[index];
                     if (null != tableCellContents)
-                        return tableCellContents.Trim(new char[] { ' ', '`' });
+                        return tableCellContents.Trim(' ', '`');
                     else
                         return null;
                 }
@@ -174,7 +174,7 @@
         public static JsonDataType ToDataType(this string value, Action<ValidationError> addErrorAction = null)
         {
             JsonDataType output;
-            if (Enum.TryParse<JsonDataType>(value, true, out output))
+            if (Enum.TryParse(value, true, out output))
                 return output;
             if (null == value)
                 return JsonDataType.Object;

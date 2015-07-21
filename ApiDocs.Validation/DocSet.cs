@@ -45,7 +45,7 @@
         {
             get
             {
-                return this.ListFromFiles<AuthScopeDefinition>(x => x.AuthScopes);
+                return this.ListFromFiles(x => x.AuthScopes);
             }
         }
 
@@ -53,7 +53,7 @@
         {
             get
             {
-                return this.ListFromFiles<ErrorDefinition>(x => x.ErrorCodes);
+                return this.ListFromFiles(x => x.ErrorCodes);
             }
         }
 
@@ -66,7 +66,7 @@
             sourceFolderPath = ResolvePathWithUserRoot(sourceFolderPath);
             if (sourceFolderPath.EndsWith(Path.DirectorySeparatorChar.ToString()))
             {
-                sourceFolderPath = sourceFolderPath.TrimEnd(new char[] { Path.DirectorySeparatorChar });
+                sourceFolderPath = sourceFolderPath.TrimEnd(Path.DirectorySeparatorChar);
             }
 
             this.SourceFolderPath = sourceFolderPath;
@@ -284,7 +284,7 @@
             }
 
             foundErrors.AddRange(from o in orphanedPageIndex
-                                 where o.Value == true
+                                 where o.Value
                                  select new ValidationWarning(ValidationErrorCode.OrphanedDocumentPage, null, "Page {0} has no incoming links.", o.Key));
 
             errors = foundErrors.ToArray();
@@ -423,7 +423,7 @@
         internal DocFile LookupFileForPath(string path)
         {
             // Translate path into what we're looking for
-            string[] pathComponents = path.Split(new char[] { '/', '\\' });
+            string[] pathComponents = path.Split('/', '\\');
             string pathSeperator = Path.DirectorySeparatorChar.ToString();
             string displayName = pathSeperator + pathComponents.ComponentsJoinedByString(pathSeperator);
 

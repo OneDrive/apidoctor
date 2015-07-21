@@ -46,7 +46,7 @@
             if (string.IsNullOrEmpty(this.ContentType))
                 return false;
 
-            string[] contentTypeParts = this.ContentType.Split(new char[] { ';' });
+            string[] contentTypeParts = this.ContentType.Split(';');
             return contentTypeParts.Length > 0 && contentTypeParts[0].Equals(expectedContentType, StringComparison.OrdinalIgnoreCase);
         }
 

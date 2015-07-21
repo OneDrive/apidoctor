@@ -58,7 +58,7 @@
             
             // Get the HttpRequest, either from MethodName or by parsing HttpRequest
 
-            HttpRequest request = null;
+            HttpRequest request;
             try
             {
                 request = this.GetHttpRequest(baseUrl, documents);

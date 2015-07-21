@@ -195,12 +195,10 @@
 					// Skip output for that directory
 					continue;
 				}
-				else
-				{
-					var displayName = this.RelativeDirectoryPath(folder, true);
-				    this.LogMessage(new ValidationMessage(displayName, "Scanning directory."));
-					await this.PublishFromDirectoryAsync(folder, destinationRoot);
-				}
+			    
+                var displayName = this.RelativeDirectoryPath(folder, true);
+			    this.LogMessage(new ValidationMessage(displayName, "Scanning directory."));
+			    await this.PublishFromDirectoryAsync(folder, destinationRoot);
 			}
 		}
 
