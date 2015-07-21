@@ -5,13 +5,13 @@ VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MarkdownDeep", "MarkdownDeep\MarkdownDeep.csproj", "{1569ED47-C7C9-4261-B6F4-7445BD0F2C95}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OneDrive.ApiDocumentation.Validation", "OneDrive.ApiDocumentation.Validation\OneDrive.ApiDocumentation.Validation.csproj", "{33B10320-3802-49CF-8965-3510AE66D5EC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiDocs.Validation", "OneDrive.ApiDocumentation.Validation\ApiDocs.Validation.csproj", "{33B10320-3802-49CF-8965-3510AE66D5EC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OneDrive.ApiDocumentation.Console", "OneDrive.ApiDocumentation.CommandLine\OneDrive.ApiDocumentation.Console.csproj", "{A6F3993F-59C6-4985-ACF1-4D837D61E98F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiDocs.Console", "OneDrive.ApiDocumentation.CommandLine\ApiDocs.Console.csproj", "{A6F3993F-59C6-4985-ACF1-4D837D61E98F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OneDrive.UnitTests.ApiDocumentation.Validation", "OneDrive.UnitTests.ApiDocumentation.Validation\OneDrive.UnitTests.ApiDocumentation.Validation.csproj", "{EE3453F1-FD69-406C-9BD7-0643D6E999F3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiDocs.Validation.UnitTests", "OneDrive.UnitTests.ApiDocumentation.Validation\ApiDocs.Validation.UnitTests.csproj", "{EE3453F1-FD69-406C-9BD7-0643D6E999F3}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{464F5D09-2636-459F-96C9-C968FF4CA7B5}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Content", "Content", "{464F5D09-2636-459F-96C9-C968FF4CA7B5}"
 	ProjectSection(SolutionItems) = preProject
 		readme.md = readme.md
 	EndProjectSection
@@ -23,9 +23,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{8B3410
 		.nuget\NuGet.targets = .nuget\NuGet.targets
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OneDrive.ApiDocumentation.Publishing", "OneDrive.ApiDocumentation.Publishing\OneDrive.ApiDocumentation.Publishing.csproj", "{B675CF73-AA42-4A54-B5E7-FF5F155DA4A7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiDocs.Publishing", "OneDrive.ApiDocumentation.Publishing\ApiDocs.Publishing.csproj", "{B675CF73-AA42-4A54-B5E7-FF5F155DA4A7}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "mustache-sharp", "mustache-sharp\mustache-sharp\mustache-sharp.csproj", "{D71B378F-A4BA-4263-A4F0-07A49A0C528D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Open Source", "Open Source", "{8C71C3F5-7CFD-4143-B391-4D395A376B77}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft", "Microsoft", "{7C7E72AE-EC3D-4EB9-B919-165F794C4902}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -102,6 +106,14 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{1569ED47-C7C9-4261-B6F4-7445BD0F2C95} = {8C71C3F5-7CFD-4143-B391-4D395A376B77}
+		{33B10320-3802-49CF-8965-3510AE66D5EC} = {7C7E72AE-EC3D-4EB9-B919-165F794C4902}
+		{A6F3993F-59C6-4985-ACF1-4D837D61E98F} = {7C7E72AE-EC3D-4EB9-B919-165F794C4902}
+		{EE3453F1-FD69-406C-9BD7-0643D6E999F3} = {7C7E72AE-EC3D-4EB9-B919-165F794C4902}
+		{B675CF73-AA42-4A54-B5E7-FF5F155DA4A7} = {7C7E72AE-EC3D-4EB9-B919-165F794C4902}
+		{D71B378F-A4BA-4263-A4F0-07A49A0C528D} = {8C71C3F5-7CFD-4143-B391-4D395A376B77}
 	EndGlobalSection
 	GlobalSection(MonoDevelopProperties) = preSolution
 		StartupItem = OneDrive.ApiDocumentation.CommandLine\OneDrive.ApiDocumentation.Console.csproj

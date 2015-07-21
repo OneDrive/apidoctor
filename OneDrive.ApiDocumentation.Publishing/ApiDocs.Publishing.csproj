@@ -63,9 +63,9 @@
       <Project>{d71b378f-a4ba-4263-a4f0-07a49a0c528d}</Project>
       <Name>mustache-sharp</Name>
     </ProjectReference>
-    <ProjectReference Include="..\OneDrive.ApiDocumentation.Validation\OneDrive.ApiDocumentation.Validation.csproj">
+    <ProjectReference Include="..\OneDrive.ApiDocumentation.Validation\ApiDocs.Validation.csproj">
       <Project>{33b10320-3802-49cf-8965-3510ae66d5ec}</Project>
-      <Name>OneDrive.ApiDocumentation.Validation</Name>
+      <Name>ApiDocs.Validation</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
