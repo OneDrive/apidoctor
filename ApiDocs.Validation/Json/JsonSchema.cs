@@ -370,7 +370,20 @@
             }
         }
 
-        private static readonly string[] Iso8601Formats = new string[] { "yyyy-MM-dd", @"HH\:mm\:ss.fff", @"HH\:mm\:ss", @"yyyy-MM-ddTHH\:mm\:ssZ", @"yyyy-MM-ddTHH\:mm\:ss.fffZ", @"yyyy-MM-ddTHH\:mm\:ss.fffffffZ" };
+        private static readonly string[] Iso8601Formats =
+        {
+            "yyyy-MM-dd", 
+            @"HH\:mm\:ss.fff", 
+            @"HH\:mm\:ss",
+            @"yyyy-MM-ddTHH\:mm\:ssZ", 
+            @"yyyy-MM-ddTHH\:mm\:ss.fZ", 
+            @"yyyy-MM-ddTHH\:mm\:ss.ffZ", 
+            @"yyyy-MM-ddTHH\:mm\:ss.fffZ", 
+            @"yyyy-MM-ddTHH\:mm\:ss.ffffZ", 
+            @"yyyy-MM-ddTHH\:mm\:ss.fffffZ", 
+            @"yyyy-MM-ddTHH\:mm\:ss.ffffffZ", 
+            @"yyyy-MM-ddTHH\:mm\:ss.fffffffZ"
+        };
 
         private static PropertyValidationOutcome ValidateStringFormat(JsonProperty schemaProperty, JsonProperty inputProperty, List<ValidationError> detectedErrorsCollection)
         {
