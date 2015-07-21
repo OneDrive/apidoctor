@@ -1,12 +1,12 @@
 ﻿using System.Collections.Generic;
-using OneDrive.ApiDocumentation.Validation.Json;
+using ApiDocs.Validation.Json;
 
-namespace OneDrive.ApiDocumentation.Validation
+namespace ApiDocs.Validation
 {
     using System;
     using System.Net;
     using System.Linq;
-    using OneDrive.ApiDocumentation.Validation.Http;
+    using ApiDocs.Validation.Http;
     using System.Threading.Tasks;
     using Newtonsoft.Json;
 

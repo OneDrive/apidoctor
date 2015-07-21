@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Xml.Linq;
 
-namespace OneDrive.ApiDocumentation.Validation.OData
+namespace ApiDocs.Validation.OData
 {
     public class EntityContainer
     {

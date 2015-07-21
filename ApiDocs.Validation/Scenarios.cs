@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 
-namespace OneDrive.ApiDocumentation.Validation
+namespace ApiDocs.Validation
 {
 
     public class ScenarioFile : ConfigFile

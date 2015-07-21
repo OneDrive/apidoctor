@@ -1,4 +1,4 @@
-﻿using OneDrive.ApiDocumentation.Validation;
+﻿using ApiDocs.Validation;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace OneDrive.ApiDocumentation.Publishing
+namespace ApiDocs.Publishing
 {
     public class HtmlMustacheWriter : DocumentPublisherHtml
     {

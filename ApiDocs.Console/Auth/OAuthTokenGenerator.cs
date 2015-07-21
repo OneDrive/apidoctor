@@ -7,7 +7,7 @@ using System.Net;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace OneDrive.ApiDocumentation.ConsoleApp
+namespace ApiDocs.ConsoleApp
 {
     public class OAuthTokenGenerator
     {

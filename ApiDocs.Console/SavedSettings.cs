@@ -1,4 +1,4 @@
-﻿namespace OneDrive.ApiDocumentation.ConsoleApp
+﻿namespace ApiDocs.ConsoleApp
 {
     using System;
     using System.Collections.Generic;

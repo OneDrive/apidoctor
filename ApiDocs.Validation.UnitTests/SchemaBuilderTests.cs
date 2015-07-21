@@ -4,10 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using NUnit.Framework;
-using OneDrive.ApiDocumentation.Validation.Json;
+using ApiDocs.Validation.Json;
 using Newtonsoft.Json;
 
-namespace OneDrive.UnitTests.ApiDocumentation.Validation
+namespace ApiDocs.Validation.UnitTests
 {
 
     [TestFixture]
@@ -122,7 +122,7 @@ namespace OneDrive.UnitTests.ApiDocumentation.Validation
         }
 
         [Test]
-        [ExpectedException(ExpectedException=typeof(OneDrive.ApiDocumentation.Validation.SchemaBuildException))]
+        [ExpectedException(ExpectedException=typeof(ApiDocs.Validation.SchemaBuildException))]
         public void InvalidJsonMissingCommaSchema()
         {
             string badJson = "{ \"prop\": \"value\" \"prop2\": \"value\" }";
@@ -130,7 +130,7 @@ namespace OneDrive.UnitTests.ApiDocumentation.Validation
         }
 
         [Test]
-        [ExpectedException(ExpectedException = typeof(OneDrive.ApiDocumentation.Validation.SchemaBuildException))]
+        [ExpectedException(ExpectedException = typeof(ApiDocs.Validation.SchemaBuildException))]
         public void InvalidJsonMissingBraceSchema()
         {
             string badJson = "{ \"prop\": \"value\", \"prop2\": \"value\" ";

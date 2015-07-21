@@ -1,15 +1,15 @@
 ﻿using Newtonsoft.Json;
 using NUnit.Framework;
-using OneDrive.ApiDocumentation.Validation;
-using OneDrive.ApiDocumentation.Validation.Http;
-using OneDrive.ApiDocumentation.Validation.Json;
+using ApiDocs.Validation;
+using ApiDocs.Validation.Http;
+using ApiDocs.Validation.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace OneDrive.UnitTests.ApiDocumentation.Validation
+namespace ApiDocs.Validation.UnitTests
 {
     [TestFixture]
 

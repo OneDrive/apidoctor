@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using CommandLine;
 using CommandLine.Text;
 
-namespace OneDrive.ApiDocumentation.ConsoleApp
+namespace ApiDocs.ConsoleApp
 {
     class CommandLineOptions
     {
@@ -335,9 +335,9 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         public string TemplateFolder { get; set; }
 
         [Option("line-ending",
-            DefaultValue=OneDrive.ApiDocumentation.Validation.LineEndings.Default,
+            DefaultValue=ApiDocs.Validation.LineEndings.Default,
             HelpText="Change the line endings for output files. Values: default, windows, unix, or macintosh")]
-        public OneDrive.ApiDocumentation.Validation.LineEndings LineEndings { get; set; } 
+        public ApiDocs.Validation.LineEndings LineEndings { get; set; } 
 
 
         #region Swagger2 output controls

@@ -1,5 +1,5 @@
 ﻿using Mustache;
-using OneDrive.ApiDocumentation.Validation;
+using ApiDocs.Validation;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 
-namespace OneDrive.ApiDocumentation.Publishing
+namespace ApiDocs.Publishing
 {
     public class FileTagDefinition : TagDefinition
     {

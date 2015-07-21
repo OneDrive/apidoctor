@@ -1,4 +1,4 @@
-namespace OneDrive.ApiDocumentation.Validation
+namespace ApiDocs.Validation
 {
     using System;
     using System.Collections.Generic;

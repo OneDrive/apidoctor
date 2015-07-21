@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace OneDrive.ApiDocumentation.Validation
+namespace ApiDocs.Validation
 {
     public abstract class ConfigFile
     {

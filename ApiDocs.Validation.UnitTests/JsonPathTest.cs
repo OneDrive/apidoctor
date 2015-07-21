@@ -1,10 +1,10 @@
 ﻿using System;
 using NUnit.Framework;
 using Newtonsoft.Json;
-using OneDrive.ApiDocumentation.Validation.Json;
+using ApiDocs.Validation.Json;
 using System.Collections.Generic;
 
-namespace OneDrive.UnitTests.ApiDocumentation.Validation
+namespace ApiDocs.Validation.UnitTests
 {
     [TestFixture]
     public class JsonPathTest

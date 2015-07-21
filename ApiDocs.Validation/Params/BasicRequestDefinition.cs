@@ -1,6 +1,6 @@
 ﻿
 
-namespace OneDrive.ApiDocumentation.Validation
+namespace ApiDocs.Validation
 {
     using Newtonsoft.Json;
     using System;

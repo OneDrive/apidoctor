@@ -3,7 +3,7 @@ using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace OneDrive.ApiDocumentation.Validation
+namespace ApiDocs.Validation
 {
     internal class SwaggerResource
     {

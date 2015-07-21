@@ -4,7 +4,7 @@ using Newtonsoft.Json.Linq;
 using System.Text;
 using System.Collections.Generic;
 
-namespace OneDrive.ApiDocumentation.Validation.Json
+namespace ApiDocs.Validation.Json
 {
     public class JsonPath
     {

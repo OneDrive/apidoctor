@@ -1,11 +1,11 @@
-﻿using OneDrive.ApiDocumentation.Validation;
+﻿using ApiDocs.Validation;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace OneDrive.UnitTests.ApiDocumentation.Validation
+namespace ApiDocs.Validation.UnitTests
 {
     static class ExtensionMethods
     {

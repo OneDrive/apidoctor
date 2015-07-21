@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 
-namespace OneDrive.ApiDocumentation.Validation
+namespace ApiDocs.Validation
 {
     public class BackoffHelper
     {

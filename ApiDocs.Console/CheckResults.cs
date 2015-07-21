@@ -1,11 +1,11 @@
-﻿using OneDrive.ApiDocumentation.Validation;
+﻿using ApiDocs.Validation;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace OneDrive.ApiDocumentation.ConsoleApp
+namespace ApiDocs.ConsoleApp
 {
     public class CheckResults
     {

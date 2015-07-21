@@ -7,7 +7,7 @@
     <ProjectGuid>{33B10320-3802-49CF-8965-3510AE66D5EC}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>OneDrive.ApiDocumentation.Validation</RootNamespace>
+    <RootNamespace>ApiDocs.Validation</RootNamespace>
     <AssemblyName>OneDrive.ApiDocumentation.Validation</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -108,7 +108,7 @@
     <Compile Include="Http\HttpValidationExtensionMethods.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\MarkdownDeep\MarkdownDeep.csproj">
+    <ProjectReference Include="..\OSS\MarkdownDeep\MarkdownDeep.csproj">
       <Project>{1569ED47-C7C9-4261-B6F4-7445BD0F2C95}</Project>
       <Name>MarkdownDeep</Name>
     </ProjectReference>

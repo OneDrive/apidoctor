@@ -2,9 +2,9 @@
 using ResourceName = System.String;
 using System.Collections.Generic;
 using System.Linq;
-using OneDrive.ApiDocumentation.Validation.Json;
+using ApiDocs.Validation.Json;
 
-namespace OneDrive.ApiDocumentation.Validation
+namespace ApiDocs.Validation
 {
     public static class SwaggerExtensionMethods
     {
@@ -26,9 +26,9 @@ namespace OneDrive.ApiDocumentation.Validation
         {
             switch (datatype)
             {
-                case OneDrive.ApiDocumentation.Validation.Json.JsonDataType.ODataType:
+                case ApiDocs.Validation.Json.JsonDataType.ODataType:
                     throw new ArgumentException();
-                case OneDrive.ApiDocumentation.Validation.Json.JsonDataType.Object:
+                case ApiDocs.Validation.Json.JsonDataType.Object:
                     return "object";
                 default:
                     return datatype.ToString().ToLower();
@@ -77,12 +77,12 @@ namespace OneDrive.ApiDocumentation.Validation
             return definition;
         }
             
-        internal static object AsSwaggerProperty(this OneDrive.ApiDocumentation.Validation.Json.JsonProperty property)
+        internal static object AsSwaggerProperty(this ApiDocs.Validation.Json.JsonProperty property)
         {
             return SwaggerProperty(property);
         }
 
-        internal static object ExpectedResponseAsSwaggerProperty(this OneDrive.ApiDocumentation.Validation.MethodDefinition method)
+        internal static object ExpectedResponseAsSwaggerProperty(this ApiDocs.Validation.MethodDefinition method)
         {
 
             string resourceType = null;
@@ -101,7 +101,7 @@ namespace OneDrive.ApiDocumentation.Validation
             return SwaggerPropertyForResponse(method);
         }
 
-        internal static SwaggerParameter ToSwaggerParameter(this OneDrive.ApiDocumentation.Validation.ParameterDefinition parameter)
+        internal static SwaggerParameter ToSwaggerParameter(this ApiDocs.Validation.ParameterDefinition parameter)
         {
             SwaggerParameter p = new SwaggerParameter()
             {

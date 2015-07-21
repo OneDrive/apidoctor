@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace OneDrive.ApiDocumentation.Validation.Writers
+namespace ApiDocs.Validation.Writers
 {
     /// <summary>
     /// Generates a swagger json output for the methods defined in the API documentation

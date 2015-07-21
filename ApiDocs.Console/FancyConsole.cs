@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 
-namespace OneDrive.ApiDocumentation.ConsoleApp
+namespace ApiDocs.ConsoleApp
 {
     public class FancyConsole
     {

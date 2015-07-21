@@ -1,14 +1,14 @@
 ﻿using Newtonsoft.Json;
-using OneDrive.ApiDocumentation.Publishing;
-using OneDrive.ApiDocumentation.Validation;
-using OneDrive.ApiDocumentation.Validation.Http;
+using ApiDocs.Publishing;
+using ApiDocs.Validation;
+using ApiDocs.Validation.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace OneDrive.ApiDocumentation.ConsoleApp
+namespace ApiDocs.ConsoleApp
 {
     class Program
     {
@@ -21,7 +21,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
 
         static void Main(string[] args)
         {
-            OneDrive.ApiDocumentation.Validation.LogHelper.ProvideLogHelper(new LogRecorder());
+            ApiDocs.Validation.LogHelper.ProvideLogHelper(new LogRecorder());
 
             FancyConsole.WriteLine(ConsoleColor.Green, "apidocs.exe Copyright (c) 2015 Microsoft Corporation.");
             FancyConsole.WriteLine();
@@ -843,7 +843,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
                     publisher = new HtmlMustacheWriter(docs, options.TemplateFolder);
                     break;
                 case PublishOptions.PublishFormat.Swagger2:
-                    publisher = new OneDrive.ApiDocumentation.Validation.Writers.SwaggerWriter(docs, Program.DefaultSettings.ServiceUrl)
+                    publisher = new ApiDocs.Validation.Writers.SwaggerWriter(docs, Program.DefaultSettings.ServiceUrl)
                     {
                         Title = options.Title,
                         Description = options.Description,
@@ -880,7 +880,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         }
 
 
-        private static async Task<List<OneDrive.ApiDocumentation.Validation.OData.Schema>> TryGetMetadataSchemas(CheckMetadataOptions options)
+        private static async Task<List<ApiDocs.Validation.OData.Schema>> TryGetMetadataSchemas(CheckMetadataOptions options)
         {
             if (string.IsNullOrEmpty(options.ServiceMetadataLocation))
             {
@@ -898,16 +898,16 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, "Loading service metadata from '{0}'...", options.ServiceMetadataLocation);
 
             Uri metadataUrl;
-            List<OneDrive.ApiDocumentation.Validation.OData.Schema> schemas = new List<Validation.OData.Schema>();
+            List<ApiDocs.Validation.OData.Schema> schemas = new List<Validation.OData.Schema>();
             try
             {
                 if (Uri.TryCreate(options.ServiceMetadataLocation, UriKind.Absolute, out metadataUrl))
                 {
-                    schemas = await OneDrive.ApiDocumentation.Validation.OData.ODataParser.ReadSchemaFromMetadataUrl(metadataUrl);
+                    schemas = await ApiDocs.Validation.OData.ODataParser.ReadSchemaFromMetadataUrl(metadataUrl);
                 }
                 else
                 {
-                    schemas = await OneDrive.ApiDocumentation.Validation.OData.ODataParser.ReadSchemaFromFile(options.ServiceMetadataLocation);
+                    schemas = await ApiDocs.Validation.OData.ODataParser.ReadSchemaFromFile(options.ServiceMetadataLocation);
                 }
             }
             catch (Exception ex)
@@ -922,7 +922,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         private static async Task<bool> CheckServiceMetadata(CheckMetadataOptions options)
         {
 
-            List<OneDrive.ApiDocumentation.Validation.OData.Schema> schemas = await TryGetMetadataSchemas(options);
+            List<ApiDocs.Validation.OData.Schema> schemas = await TryGetMetadataSchemas(options);
             if (null == schemas)
                 return false;
 
@@ -933,7 +933,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
             const string testname = "validate-service-metadata";
             TestReport.StartTestAsync(testname);
 
-            List<ResourceDefinition> foundResources = OneDrive.ApiDocumentation.Validation.OData.ODataParser.GenerateResourcesFromSchemas(schemas);
+            List<ResourceDefinition> foundResources = ApiDocs.Validation.OData.ODataParser.GenerateResourcesFromSchemas(schemas);
             CheckResults results = new CheckResults();
 
             List<ValidationError> collectedErrors = new List<ValidationError>();
@@ -971,7 +971,7 @@ namespace OneDrive.ApiDocumentation.ConsoleApp
         }
     }
 
-    class LogRecorder : OneDrive.ApiDocumentation.Validation.ILogHelper
+    class LogRecorder : ApiDocs.Validation.ILogHelper
     {
         public void RecordFailure(string message)
         {

@@ -7,7 +7,7 @@
     <ProjectGuid>{EE3453F1-FD69-406C-9BD7-0643D6E999F3}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>OneDrive.UnitTests.ApiDocumentation.Validation</RootNamespace>
+    <RootNamespace>ApiDocs.Validation.UnitTests</RootNamespace>
     <AssemblyName>OneDrive.UnitTests.ApiDocumentation.Validation</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -87,7 +87,7 @@
     <None Include="test-docs\ExampleValidationSelectStatement.md" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\OneDrive.ApiDocumentation.Validation\ApiDocs.Validation.csproj">
+    <ProjectReference Include="..\ApiDocs.Validation\ApiDocs.Validation.csproj">
       <Project>{33B10320-3802-49CF-8965-3510AE66D5EC}</Project>
       <Name>ApiDocs.Validation</Name>
     </ProjectReference>

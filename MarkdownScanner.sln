@@ -7,7 +7,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MarkdownDeep", "OSS\Markdow
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiDocs.Validation", "ApiDocs.Validation\ApiDocs.Validation.csproj", "{33B10320-3802-49CF-8965-3510AE66D5EC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiDocs.Console", "ApiDocs.Console\ApiDocs.Console.csproj", "{A6F3993F-59C6-4985-ACF1-4D837D61E98F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiDocs.ConsoleApp", "ApiDocs.Console\ApiDocs.ConsoleApp.csproj", "{A6F3993F-59C6-4985-ACF1-4D837D61E98F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiDocs.Validation.UnitTests", "ApiDocs.Validation.UnitTests\ApiDocs.Validation.UnitTests.csproj", "{EE3453F1-FD69-406C-9BD7-0643D6E999F3}"
 EndProject

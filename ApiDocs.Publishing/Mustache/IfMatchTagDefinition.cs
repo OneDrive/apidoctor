@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace OneDrive.ApiDocumentation.Publishing
+namespace ApiDocs.Publishing
 {
     public class IfMatchTagDefinition : TagDefinition
     {

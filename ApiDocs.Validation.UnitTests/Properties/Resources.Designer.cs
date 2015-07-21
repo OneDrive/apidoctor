@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace OneDrive.UnitTests.ApiDocumentation.Validation.Properties {
+namespace ApiDocs.Validation.UnitTests.Properties {
     using System;
     
     
@@ -39,7 +39,7 @@ namespace OneDrive.UnitTests.ApiDocumentation.Validation.Properties {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("OneDrive.UnitTests.ApiDocumentation.Validation.Properties.Resources", typeof(Resources).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("ApiDocs.Validation.UnitTests.Properties.Resources", typeof(Resources).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -61,19 +61,28 @@ namespace OneDrive.UnitTests.ApiDocumentation.Validation.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to ## Resource with ISO 8601 timestamp
+        ///   Looks up a localized string similar to ## Resource with ISO 8601 timestamp, URL, and enumerated values.
         ///
-        ///&lt;!-- {&quot;blockType&quot;: &quot;resource&quot;, &quot;@odata.type&quot;: &quot;example.stringResourceValidation&quot; --&gt;
+        ///&lt;!-- { &quot;blockType&quot;: &quot;resource&quot;, &quot;@odata.type&quot;: &quot;example.resource&quot; } --&gt;
         ///```json
         ///{
-        ///	&quot;year&quot;: 2015,
+        ///	&quot;year&quot;: 1234,
         ///	&quot;downloadUrl&quot;: &quot;url&quot;,
         ///	&quot;createdDateTime&quot;: &quot;timestamp&quot;,
         ///	&quot;season&quot;: &quot;summer | fall | winter | spring&quot;,
         ///	&quot;ownerName&quot;: &quot;rgregg&quot;,
-        ///	&quot;contentType: &quot;string&quot;
+        ///	&quot;contentType&quot;: &quot;string&quot;
         ///}
-        ///```.
+        ///```
+        ///
+        ///## Example request/response that&apos;s completely valid
+        ///
+        ///&lt;!-- { &quot;blockType&quot;: &quot;request&quot;, &quot;name&quot;: &quot;valid-response&quot; } --&gt;
+        ///```http
+        ///GET /timestamp
+        ///```
+        ///
+        ///&lt;!-- { &quot;blockType&quot;: &quot;respon [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string ExampleResources {
             get {

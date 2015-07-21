@@ -6,9 +6,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace OneDrive.ApiDocumentation.ConsoleApp
+namespace ApiDocs.ConsoleApp
 {
-    public class AppConfigFile : OneDrive.ApiDocumentation.Validation.ConfigFile
+    public class AppConfigFile : ApiDocs.Validation.ConfigFile
     {
         [JsonProperty("accounts")]
         public Account[] Accounts { get; set; }

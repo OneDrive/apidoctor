@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace OneDrive.ApiDocumentation.Validation.OData
+namespace ApiDocs.Validation.OData
 {
     internal static class ExtensionMethods
     {

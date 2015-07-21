@@ -1,4 +1,4 @@
-﻿namespace OneDrive.ApiDocumentation.Validation.Json
+﻿namespace ApiDocs.Validation.Json
 {
     using System;
     using System.Collections.Generic;

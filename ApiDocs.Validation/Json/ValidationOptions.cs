@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace OneDrive.ApiDocumentation.Validation.Json
+namespace ApiDocs.Validation.Json
 {
     public class ValidationOptions
     {

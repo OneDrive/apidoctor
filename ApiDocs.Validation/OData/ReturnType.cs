@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace OneDrive.ApiDocumentation.Validation.OData
+namespace ApiDocs.Validation.OData
 {
     public class ReturnType
     {

@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
-namespace OneDrive.ApiDocumentation.Validation.OData
+namespace ApiDocs.Validation.OData
 {
     public class EntityType : ComplexType
     {

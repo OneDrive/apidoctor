@@ -1,15 +1,15 @@
 ﻿using Newtonsoft.Json;
 using NUnit.Framework;
-using OneDrive.ApiDocumentation.Validation;
-using OneDrive.ApiDocumentation.Validation.Http;
-using OneDrive.ApiDocumentation.Validation.Json;
+using ApiDocs.Validation;
+using ApiDocs.Validation.Http;
+using ApiDocs.Validation.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace OneDrive.UnitTests.ApiDocumentation.Validation
+namespace ApiDocs.Validation.UnitTests
 {
     [TestFixture]
     public class NullableTests
@@ -30,7 +30,7 @@ namespace OneDrive.UnitTests.ApiDocumentation.Validation
             var testExample = new JsonExample(json);
             ValidationError[] errors;
 
-            Assert.IsTrue(nullableSchema.ValidateJson(testExample, out errors, new Dictionary<string,OneDrive.ApiDocumentation.Validation.Json.JsonSchema>(), new ValidationOptions()));
+            Assert.IsTrue(nullableSchema.ValidateJson(testExample, out errors, new Dictionary<string,ApiDocs.Validation.Json.JsonSchema>(), new ValidationOptions()));
             Assert.AreEqual(0, errors.Length);
         }
 
@@ -50,7 +50,7 @@ namespace OneDrive.UnitTests.ApiDocumentation.Validation
             var testExample = new JsonExample(json);
             ValidationError[] errors;
 
-            Assert.IsFalse(nullableSchema.ValidateJson(testExample, out errors, new Dictionary<string, OneDrive.ApiDocumentation.Validation.Json.JsonSchema>(), new ValidationOptions()));
+            Assert.IsFalse(nullableSchema.ValidateJson(testExample, out errors, new Dictionary<string, ApiDocs.Validation.Json.JsonSchema>(), new ValidationOptions()));
             Assert.AreEqual(1, errors.Length);
 
             var error = errors.First();

@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
-namespace OneDrive.ApiDocumentation.Validation
+namespace ApiDocs.Validation
 {
     public class CodeBlockAnnotation
     {

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace OneDrive.ApiDocumentation.Validation
+namespace ApiDocs.Validation
 {
     /// <summary>
     /// Manages to convert between a tablespec MarkdownDeep.Block object and useful object model

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using System.Net;
 
-namespace OneDrive.ApiDocumentation.Validation.OData
+namespace ApiDocs.Validation.OData
 {
     /// <summary>
     /// Converts OData input into json examples which can be validated against our 

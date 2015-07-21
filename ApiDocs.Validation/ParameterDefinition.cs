@@ -1,11 +1,11 @@
-﻿using OneDrive.ApiDocumentation.Validation.Json;
+﻿using ApiDocs.Validation.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace OneDrive.ApiDocumentation.Validation
+namespace ApiDocs.Validation
 {
     public class ParameterDefinition : ItemDefinition
     {
