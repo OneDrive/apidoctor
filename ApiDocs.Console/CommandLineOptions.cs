@@ -4,6 +4,7 @@
     using System.Collections.Generic;
     using System.Linq;
     using ApiDocs.ConsoleApp.Auth;
+    using ApiDocs.Validation;
     using ApiDocs.Validation.Writers;
     using CommandLine;
     using CommandLine.Text;
@@ -310,7 +311,7 @@
 
     }
 
-    class PublishOptions : DocSetOptions
+    class PublishOptions : DocSetOptions, IPublishOptions
     {
         [Option("output", Required=true, HelpText="Output directory for sanitized documentation.")]
         public string OutputDirectory { get; set; }
@@ -319,13 +320,20 @@
         public PublishFormat Format { get; set; }
 
         [Option("template", HelpText = "Specify the folder where output template files are located.")]
-        public string TemplateFolder { get; set; }
+        public string TemplatePath { get; set; }
 
         [Option("line-ending",
             DefaultValue=LineEndings.Default,
             HelpText="Change the line endings for output files. Values: default, windows, unix, or macintosh")]
-        public LineEndings LineEndings { get; set; } 
+        public LineEndings LineEndings { get; set; }
 
+        [Option("files", HelpText = "Specify a particular source file that should be published, semi-colon separated.")]
+        public string SourceFiles { get; set; }
+        
+        public string[] FilesToPublish {
+            get { return (this.SourceFiles ?? string.Empty).Split(';'); }
+            set { this.SourceFiles = value.ComponentsJoinedByString(";"); }
+        }
 
         #region Swagger2 output controls
 
@@ -356,7 +364,7 @@
             List<string> missingArgs = new List<string>();
             if (this.Format == PublishFormat.Mustache)
             {
-                if (string.IsNullOrEmpty(this.TemplateFolder))
+                if (string.IsNullOrEmpty(this.TemplatePath))
                     missingArgs.Add("template");
             }
             if (this.Format == PublishFormat.Swagger2)

@@ -810,8 +810,11 @@ namespace ApiDocs.Validation
 
         #endregion
 
-
-        
+        public string UrlRelativePathFromRoot()
+        {
+            var relativePath = this.DisplayName.Replace('\\', '/');
+            return relativePath.StartsWith("/") ? relativePath.Substring(1) : relativePath;
+        }
     }
 
 }

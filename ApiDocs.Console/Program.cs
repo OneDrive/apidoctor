@@ -832,7 +832,6 @@
         private static async Task PublishDocumentationAsync(PublishOptions options)
         {
             var outputPath = options.OutputDirectory;
-            var inputPath = options.DocumentationSetPath;
 
             FancyConsole.WriteLine("Publishing documentation to {0}", outputPath);
 
@@ -844,10 +843,10 @@
                     publisher = new MarkdownPublisher(docs);
                     break;
                 case PublishOptions.PublishFormat.Html:
-                    publisher = new DocumentPublisherHtml(docs, options.TemplateFolder);
+                    publisher = new DocumentPublisherHtml(docs, options);
                     break;
                 case PublishOptions.PublishFormat.Mustache:
-                    publisher = new HtmlMustacheWriter(docs, options.TemplateFolder);
+                    publisher = new HtmlMustacheWriter(docs, options);
                     break;
                 case PublishOptions.PublishFormat.Swagger2:
                     publisher = new SwaggerWriter(docs, DefaultSettings.ServiceUrl)

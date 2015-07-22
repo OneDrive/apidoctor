@@ -14,16 +14,15 @@
 
     public class DocumentPublisherHtml : DocumentPublisher
     {
-        protected string TemplateFolderPath;
         protected string TemplateHtml;
 
         private const string HtmlOutputExtension = ".htm";
         private const string TemplateHtmlFilename = "template.htm";
 
-        public DocumentPublisherHtml(DocSet docs, string templateFolderPath) 
-            : base(docs)
+        public DocumentPublisherHtml(DocSet docs, IPublishOptions options) 
+            : base(docs, options)
         {
-            this.TemplateFolderPath = templateFolderPath;
+            
         }
 
         /// <summary>
@@ -31,13 +30,13 @@
         /// </summary>
         protected virtual void LoadTemplate()
         {
-            DirectoryInfo dir = new DirectoryInfo(this.TemplateFolderPath);
+            DirectoryInfo dir = new DirectoryInfo(this.Options.TemplatePath);
             if (!dir.Exists)
             {
                 return;
             }
 
-            this.TemplateFolderPath = dir.FullName;
+            this.Options.TemplatePath = dir.FullName;
 
             var templateFilePath = Path.Combine(dir.FullName, TemplateHtmlFilename);
             if (!File.Exists(templateFilePath))
@@ -57,9 +56,10 @@
         protected override void ConfigureOutputDirectory(DirectoryInfo destinationRoot)
         {
             // Copy everything in the template folder to the output folder except template.htm
-            if (null != this.TemplateFolderPath)
+            var templatePath = this.Options.TemplatePath;
+            if (null != templatePath)
             {
-                DirectoryInfo templateFolder = new DirectoryInfo(this.TemplateFolderPath);
+                DirectoryInfo templateFolder = new DirectoryInfo(templatePath);
 
                 var templateFiles = templateFolder.GetFiles();
                 foreach (var file in templateFiles)
@@ -75,7 +75,7 @@
                     DirectoryCopy(folder, Path.Combine(destinationRoot.FullName, folder.Name), true);
                 }
 
-                if (string.IsNullOrEmpty(this.TemplateHtml) && !string.IsNullOrEmpty(this.TemplateFolderPath))
+                if (string.IsNullOrEmpty(this.TemplateHtml) && !string.IsNullOrEmpty(templatePath))
                 {
                     this.LoadTemplate();
                 }

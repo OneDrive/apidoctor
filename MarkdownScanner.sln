@@ -28,7 +28,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiDocs.Publishing", "ApiDo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "mustache-sharp", "OSS\mustache-sharp\mustache-sharp\mustache-sharp.csproj", "{D71B378F-A4BA-4263-A4F0-07A49A0C528D}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Open Source", "Open Source", "{8C71C3F5-7CFD-4143-B391-4D395A376B77}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "OSS", "OSS", "{8C71C3F5-7CFD-4143-B391-4D395A376B77}"
 	ProjectSection(SolutionItems) = preProject
 		OpenSourceNotes.md = OpenSourceNotes.md
 	EndProjectSection

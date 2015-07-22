@@ -52,12 +52,15 @@
         protected List<string> ScannableExtensions;
         protected List<string> IgnoredPaths;
         protected string OutputFolder;
+        protected readonly IPublishOptions Options;
 
         #region Constructors
 
-	    protected DocumentPublisher(DocSet docset)
+	    protected DocumentPublisher(DocSet docset, IPublishOptions options = null)
 		{
 	        this.Documents = docset;
+	        this.Options = options ?? new DefaultPublishOptions();
+
 	        this.RootPath = new DirectoryInfo(docset.SourceFolderPath).FullName;
             if (!this.RootPath.EndsWith(Path.DirectorySeparatorChar.ToString()))
                 this.RootPath = string.Concat(this.RootPath, Path.DirectorySeparatorChar);
@@ -142,7 +145,17 @@
 			return null;
 		}
 
-	    /// <summary>
+        protected virtual bool ShouldPublishFile(DocFile file)
+        {
+            if (null != this.Options.FilesToPublish)
+            {
+                return this.Options.FilesToPublish.Any(filename => filename.Equals(file.DisplayName, StringComparison.OrdinalIgnoreCase));
+            }
+
+            return true;
+        }
+
+        /// <summary>
 	    /// PublishFromDirectory iterates over every file in the documentation set root folder and below
 	    /// and calls IsInternalPath, IsScannableFile, CopyToOutput, or PublishFileToDetination.
 	    /// </summary>
@@ -178,7 +191,8 @@
 				else if (this.IsMarkdownFile(file))
 				{
                     var docFile = this.Documents.Files.FirstOrDefault(x => x.FullPath.Equals(file.FullName));
-					await this.PublishFileToDestinationAsync(file, destinationRoot, docFile);
+                    if (this.ShouldPublishFile(docFile))
+					    await this.PublishFileToDestinationAsync(file, destinationRoot, docFile);
 				}
 				else
 				{
