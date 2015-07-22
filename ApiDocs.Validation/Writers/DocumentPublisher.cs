@@ -163,7 +163,13 @@
 	    /// <param name="destinationRoot"></param>
 	    protected virtual async Task PublishFromDirectoryAsync(DirectoryInfo directory, DirectoryInfo destinationRoot)
 		{
-			var pathDisplayName = this.RelativeDirectoryPath(directory, true);
+            if (directory.FullName == this.Options.TemplatePath)
+            {
+                // Don't publish the template path to the output folder
+                return;
+            }
+
+            var pathDisplayName = this.RelativeDirectoryPath(directory, true);
 
 			var filesInDirectory = directory.GetFiles();
 			if (filesInDirectory.Length > 0)
