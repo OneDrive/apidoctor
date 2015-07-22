@@ -261,7 +261,11 @@ namespace MarkdownDeep
 					}
 					else
 					{
-						b.Append("<pre><code>");
+					    if (!string.IsNullOrEmpty((this.CodeLanguage)))
+					        b.AppendFormat("<pre><code class=\"{0}\">", this.CodeLanguage);
+                        else
+						    b.Append("<pre><code>");
+
 						foreach (var line in children)
 						{
 							m.HtmlEncodeAndConvertTabsToSpaces(b, line.buf, line.contentStart, line.contentLen);
