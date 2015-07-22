@@ -331,7 +331,7 @@
         public string SourceFiles { get; set; }
         
         public string[] FilesToPublish {
-            get { return (this.SourceFiles ?? string.Empty).Split(';'); }
+            get { return (this.SourceFiles ?? string.Empty).Split(new char[] {';'}, StringSplitOptions.RemoveEmptyEntries); }
             set { this.SourceFiles = value.ComponentsJoinedByString(";"); }
         }
 

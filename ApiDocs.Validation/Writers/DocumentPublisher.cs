@@ -147,7 +147,7 @@
 
         protected virtual bool ShouldPublishFile(DocFile file)
         {
-            if (null != this.Options.FilesToPublish)
+            if (null != this.Options.FilesToPublish && this.Options.FilesToPublish.Length > 0)
             {
                 return this.Options.FilesToPublish.Any(filename => filename.Equals(file.DisplayName, StringComparison.OrdinalIgnoreCase));
             }

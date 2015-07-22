@@ -38,20 +38,20 @@
                 compiler.RegisterTag(new ExtendedElseIfTagDefinition(), false);
                 this.generator = compiler.Compile(this.TemplateHtml);
                 this.generator.KeyNotFound += this.Generator_KeyNotFound;
-                this.generator.ValueRequested += this.Generator_ValueRequested;
-                this.generator.KeyFound += this.Generator_KeyFound;
+                //this.generator.ValueRequested += this.Generator_ValueRequested;
+                //this.generator.KeyFound += this.Generator_KeyFound;
             }
         }
 
-        void Generator_KeyFound(object sender, Mustache.KeyFoundEventArgs e)
-        {
-            Console.WriteLine("KeyFound: " + e.Key);
-        }
+        //void Generator_KeyFound(object sender, Mustache.KeyFoundEventArgs e)
+        //{
+        //    Console.WriteLine("KeyFound: " + e.Key);
+        //}
 
-        void Generator_ValueRequested(object sender, Mustache.ValueRequestEventArgs e)
-        {
-            Console.WriteLine("ValueRequested: " + e.Value);
-        }
+        //void Generator_ValueRequested(object sender, Mustache.ValueRequestEventArgs e)
+        //{
+        //    Console.WriteLine("ValueRequested: " + e.Value);
+        //}
         void Generator_KeyNotFound(object sender, KeyNotFoundEventArgs e)
         {
             Console.WriteLine("KeyNotFound: " + e.Key);
