@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Data.SqlTypes;
     using System.Diagnostics;
     using System.Linq;
     using System.Threading.Tasks;
@@ -123,6 +124,9 @@
                 case CommandLineOptions.VerbDocs:
                     returnSuccess = await CheckDocsAsync((BasicCheckOptions)options);
                     break;
+                case CommandLineOptions.VerbCheckAll:
+                    returnSuccess = await CheckDocsAllAsync((BasicCheckOptions)options);
+                    break;
                 case CommandLineOptions.VerbService:
                     returnSuccess = await CheckServiceAsync((CheckServiceOptions)options);
                     break;
@@ -142,6 +146,23 @@
             }
 
             Exit(failure: !returnSuccess);
+        }
+
+        /// <summary>
+        /// Perform all of the local documentation based checks. This is the "compile"
+        /// command for the documentation that verifies that everything is clean inside the 
+        /// documentation itself.
+        /// </summary>
+        /// <param name="options"></param>
+        /// <returns></returns>
+        private static async Task<bool> CheckDocsAllAsync(BasicCheckOptions options)
+        {
+            var docset = await GetDocSetAsync(options);
+
+            var checkLinksResult = await CheckLinksAsync(options, docset);
+            var checkDocsResults = await CheckDocsAsync(options, docset);
+
+            return checkLinksResult && checkDocsResults;
         }
 
         private static void PrintAboutMessage()
@@ -308,10 +329,11 @@
         /// Validate that all links in the documentation are unbroken.
         /// </summary>
         /// <param name="options"></param>
-        private static async Task<bool> CheckLinksAsync(DocSetOptions options)
+        /// <param name="docs"></param>
+        private static async Task<bool> CheckLinksAsync(DocSetOptions options, DocSet docs = null)
         {
             const string testName = "Check-links";
-            var docset = await GetDocSetAsync(options);
+            var docset = docs ?? await GetDocSetAsync(options);
 
             TestReport.StartTest(testName);
 
@@ -408,9 +430,9 @@
             return query.FirstOrDefault();
         }
 
-        private static async Task<bool> CheckDocsAsync(BasicCheckOptions options)
+        private static async Task<bool> CheckDocsAsync(BasicCheckOptions options, DocSet docs = null)
         {
-            var docset = await GetDocSetAsync(options);
+            var docset = docs ?? await GetDocSetAsync(options);
             FancyConsole.WriteLine();
 
             var resultMethods = await CheckMethodsAsync(options, docset);
@@ -526,7 +548,8 @@
 
         private static async Task<bool> WriteOutErrorsAndFinishTestAsync(IEnumerable<ValidationError> errors, bool silenceWarnings, string indent = "", string successMessage = null, bool endLineBeforeWriting = false, string testName = null, string warningsMessage = null, string errorsMessage = null)
         {
-            foreach (var error in errors)
+            var validationErrors = errors as ValidationError[] ?? errors.ToArray();
+            foreach (var error in validationErrors)
             {
                 // Skip messages if verbose output is off
                 if (!error.IsWarning && !error.IsError && !FancyConsole.WriteVerboseOutput)
@@ -546,27 +569,34 @@
 
             TestOutcome outcome = TestOutcome.None;
             string outputMessage = null;
-            if (errors.WereErrors())
+
+            var errorMessages = validationErrors.Where(x => x.IsError);
+            var warningMessages = validationErrors.Where(x => x.IsWarning);
+                        
+            if (errorMessages.Any())
             {
                 // Write failure message
-                //if (null != failureMessage)
-                //    FancyConsole.WriteLine(FancyConsole.ConsoleErrorColor, failureMessage);
-                outputMessage = errors.First().Message.FirstLineOnly();
+                var singleError = errorMessages.First();
+                if (errorMessages.Count() == 1)
+                    outputMessage = singleError.Message.FirstLineOnly();
+                else
+                    outputMessage = "Multiple errors occured.";
+
                 outcome = TestOutcome.Failed;
             }
-            else if (!silenceWarnings && errors.WereWarnings())
+            else if (!silenceWarnings && warningMessages.Any())
             {
                 // Write warning message
-                //if (null != warningMessage)
-                //    FancyConsole.WriteLine(FancyConsole.ConsoleWarningColor, warningMessage);
-                outputMessage = errors.First().Message.FirstLineOnly();
+                var singleWarning = warningMessages.First();
+                if (warningMessages.Count() == 1)
+                    outputMessage = singleWarning.Message.FirstLineOnly();
+                else
+                    outputMessage = "Multiple warnings occured.";
                 outcome = TestOutcome.Passed;
             }
             else
             {
                 // write success message!
-                //if (null != successMessage)
-                //    FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, successMessage);
                 outputMessage = successMessage;
                 outcome = TestOutcome.Passed;
             }
@@ -574,7 +604,7 @@
             // Record this test's outcome in the build worker API
             if (null != testName)
             {
-                var errorMessage = (from e in errors select e.ErrorText).ComponentsJoinedByString("\r\n");
+                var errorMessage = (from e in validationErrors select e.ErrorText).ComponentsJoinedByString("\r\n");
                 await TestReport.FinishTestAsync(testName, outcome, outputMessage, stdOut: errorMessage);
             }
 
