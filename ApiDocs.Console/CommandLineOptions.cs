@@ -19,6 +19,7 @@
         public const string VerbPublish = "publish";
         public const string VerbMetadata = "check-metadata";
         public const string VerbAbout = "about";
+        public const string VerbCheckAll = "check-all";
         
         [VerbOption(VerbPrint, HelpText="Print files, resources, and methods discovered in the documentation.")]
         public PrintOptions PrintVerbOptions { get; set; }
@@ -28,6 +29,9 @@
 
         [VerbOption(VerbDocs, HelpText = "Check for errors in the documentation (resources + examples).")]
         public BasicCheckOptions CheckDocsVerb { get; set; }
+
+        [VerbOption(VerbCheckAll, HelpText = "Check for errors in the documentation (links + resources + examples)")]
+        public BasicCheckOptions CheckAllVerbs { get; set; }
 
         [VerbOption(VerbService, HelpText = "Check for errors between the documentation and service.")]
         public CheckServiceOptions CheckServiceVerb { get; set; }
