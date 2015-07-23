@@ -7,8 +7,8 @@
     <owners>rgregg@microsoft.com</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Toolkit that enables validation of API documentation</description>
-    <releaseNotes>Initial release</releaseNotes>
-    <copyright>Copyright 2015</copyright>
+    <releaseNotes>Check http://github.com/onedrive/markdown-scanner for details.</releaseNotes>
+    <copyright>Copyright 2015 Microsoft Corporation</copyright>
     <frameworkAssemblies>
       <frameworkAssembly assemblyName="System" targetFramework="net45" />
     </frameworkAssemblies>
