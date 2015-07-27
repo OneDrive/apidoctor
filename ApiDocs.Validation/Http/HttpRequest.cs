@@ -75,7 +75,7 @@
 
             foreach (var key in this.Headers.AllKeys)
             {
-                if (IgnoredHeaders.Contains(key))
+                if (IgnoredHeaders.Contains(key.ToLower()))
                     continue;
                 
                 if (WebHeaderCollection.IsRestricted(key))
