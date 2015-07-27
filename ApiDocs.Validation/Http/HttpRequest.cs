@@ -5,6 +5,7 @@
     using System.Net;
     using System.Text;
     using System.Threading.Tasks;
+    using System.Linq;
 
     public class HttpRequest
     {
@@ -52,6 +53,8 @@
 
         public WebHeaderCollection Headers { get; private set; }
 
+        public static readonly string[] IgnoredHeaders = { "content-length" };
+
         public HttpWebRequest PrepareHttpWebRequest(string baseUrl)
         {
             var effectiveUrl = baseUrl;
@@ -72,24 +75,57 @@
 
             foreach (var key in this.Headers.AllKeys)
             {
-                switch (key.ToLower())
+                if (IgnoredHeaders.Contains(key))
+                    continue;
+                
+                if (WebHeaderCollection.IsRestricted(key))
                 {
-                    case "accept":
-                        request.Accept = this.Headers[key];
-                        break;
-                    case "content-type":
-                        request.ContentType = this.Headers[key];
-                        break;
-                    case "content-length":
-                        // Don't set these headers
-                        break;
-                    case "if-modified-since":
-                        request.IfModifiedSince = this.Headers[key].Equals("current_time") ? DateTime.Now : Convert.ToDateTime(this.Headers[key]);
-                        break;
-                    default:
-                        request.Headers.Add(key, this.Headers[key]);
-                        break;
+                    switch (key.ToLower())
+                    {
+                        case "accept":
+                            request.Accept = this.Headers[key];
+                            break;
+                        case "content-type":
+                            request.ContentType = this.Headers[key];
+                            break;
+                        case "connection":
+                            request.Connection = this.Headers[key];
+                            break;
+                        case "date":
+                            request.Date = DateTime.Parse(this.Headers[key]);
+                            break;
+                        case "expect":
+                            request.Expect = this.Headers[key];
+                            break;
+                        case "host":
+                            request.Host = this.Headers[key];
+                            break;
+                        case "if-modified-since":
+                            request.IfModifiedSince = this.Headers[key].Equals("current_time") ? DateTime.Now : Convert.ToDateTime(this.Headers[key]);
+                            break;
+                        case "range":
+                            AddRangeHeader(request, this.Headers[key]);
+                            break;
+                        case "referer":
+                            request.Referer = this.Headers[key];
+                            break;
+                        case "transfer-encoding":
+                            request.TransferEncoding = this.Headers[key];
+                            break;
+                        case "user-agent":
+                            request.UserAgent = this.Headers[key];
+                            break;
+                        case "proxy-connection":
+                        default:
+                            throw new NotSupportedException(string.Format("Header {0} is a restricted header and is not supported.", key));
+                    }
                 }
+                else
+                {
+                    request.Headers.Add(key, this.Headers[key]);
+                }
+
+
             }
 
             if (this.Body != null)
@@ -112,6 +148,44 @@
 
 
             return request;
+        }
+
+        /// <summary>
+        /// Only handles single range requests that start with "bytes=".
+        /// </summary>
+        /// <param name="request">Request.</param>
+        /// <param name="value">Value.</param>
+        private void AddRangeHeader(HttpWebRequest request, string value)
+        {
+            string specifier = "bytes";
+
+            if (!value.StartsWith("bytes="))
+            {
+                throw new ArgumentException("value isn't a properly formated byte range header");
+            }
+
+            var range = value.Substring(specifier.Length + 1);
+            var split = range.Split('-');
+            if (split.Length != 2)
+            {
+                throw new ArgumentException("value isn't a properly formatted byte range header. Missing start or end range");
+            }
+
+            // -5000 => Last 5000 bytes of the file
+            if (split[0].Length == 0 && split[1].Length != 0)
+            {
+                request.AddRange(-1 * Convert.ToInt64(split[1]), Convert.ToInt64(split[1]));
+            }
+            // 5000- => Get from 5000 byte to end of file
+            else if (split[0].Length != 0 && split[1].Length == 0)
+            {
+                request.AddRange(Convert.ToInt64(split[0]));
+            }
+            // 5000-5006 => Get from 5000 - 5006
+            else
+            {
+                request.AddRange(Convert.ToInt64(split[0]), Convert.ToInt64(split[1]));
+            }
         }
 
         public string FullHttpText()
