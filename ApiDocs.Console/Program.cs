@@ -33,7 +33,7 @@
         {
             LogHelper.ProvideLogHelper(new LogRecorder());
 
-            FancyConsole.WriteLine(ConsoleColor.Green, "apidocs.exe Copyright (c) 2015 Microsoft Corporation.");
+            FancyConsole.WriteLine(ConsoleColor.Green, "APIDocs tool, version {0}", System.Reflection.Assembly.GetExecutingAssembly().GetName().Version);
             FancyConsole.WriteLine();
             if (args.Length > 0)
                 FancyConsole.WriteLine("Command line: " + args.ComponentsJoinedByString(" "));
