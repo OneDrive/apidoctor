@@ -277,6 +277,9 @@
                     else if (schemaPropertyDef.Type == inputProperty.Type && inputProperty.Type == JsonDataType.String)
                     {
                         // Perform extra validation to see if the string is the right format (iso date, enum value, url, or just a string)
+                        if (options.RelaxedStringValidation)
+                            return PropertyValidationOutcome.Ok;
+
                         return ValidateStringFormat(schemaPropertyDef, inputProperty, detectedErrors);
                     }
                     else

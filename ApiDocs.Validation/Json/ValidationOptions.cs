@@ -4,6 +4,11 @@
 
     public class ValidationOptions
     {
+        public ValidationOptions()
+        {
+            this.CollectionPropertyName = "value";
+        }
+
         /// <summary>
         /// Specifies that the validate routines ignore errors/warnings 
         /// about missing properties that are defined in the schema
@@ -16,13 +21,22 @@
         /// </summary>
         public string[] RequiredPropertyNames { get; set; }
 
+        /// <summary>
+        /// For collection results, what is the name of the property that 
+        /// includes the collection. Defaults to 'value'.
+        /// </summary>
         public string CollectionPropertyName { get; set; }
-
 
         public JsonSchema ExpectedJsonSchema { get; set; }
 
         public string[] NullablePropertyNames { get; set; }
 
+        /// <summary>
+        /// When set to True, string types are not validated
+        /// for the types defined in the documetnation (url, 
+        /// dateTime, enumerated values, etc)
+        /// </summary>
+        public bool RelaxedStringValidation { get; set; }
 
         internal ValidationOptions CreateForProperty(string propertyName)
         {

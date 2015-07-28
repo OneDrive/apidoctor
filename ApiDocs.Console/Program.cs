@@ -13,6 +13,7 @@
     using ApiDocs.Validation;
     using ApiDocs.Validation.Error;
     using ApiDocs.Validation.Http;
+    using ApiDocs.Validation.Json;
     using ApiDocs.Validation.OData;
     using ApiDocs.Validation.Params;
     using ApiDocs.Validation.Writers;
@@ -955,9 +956,13 @@
             return schemas;
         }
 
+        /// <summary>
+        /// Validate that the CSDL metadata defined for a service matches the documentation.
+        /// </summary>
+        /// <param name="options"></param>
+        /// <returns></returns>
         private static async Task<bool> CheckServiceMetadataAsync(CheckMetadataOptions options)
         {
-
             List<Schema> schemas = await TryGetMetadataSchemasAsync(options);
             if (null == schemas)
                 return false;
@@ -985,7 +990,7 @@
 
                 // Verify that this resource matches the documentation
                 ValidationError[] errors;
-                docSet.ResourceCollection.ValidateJsonExample(resource.Metadata, resource.JsonExample, out errors);
+                docSet.ResourceCollection.ValidateJsonExample(resource.Metadata, resource.JsonExample, out errors, new ValidationOptions { RelaxedStringValidation = true });
                 results.IncrementResultCount(errors);
 
                 collectedErrors.AddRange(errors);
