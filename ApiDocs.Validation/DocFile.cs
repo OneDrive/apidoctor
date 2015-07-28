@@ -753,6 +753,14 @@ namespace ApiDocs.Validation
             if (linkUrl == null) throw new ArgumentNullException("linkUrl");
             if (docSetBasePath == null) throw new ArgumentNullException("docSetBasePath");
 
+
+            if (linkUrl.StartsWith("mailto:", StringComparison.OrdinalIgnoreCase))
+            {
+                // TODO: Verify that this is an actual email address
+                relativeFileName = null;
+                return LinkValidationResult.Valid;
+            }
+
             relativeFileName = null;
             var rootPath = sourceFile.DirectoryName;
             string bookmarkName = null;
@@ -782,30 +790,36 @@ namespace ApiDocs.Validation
                 return LinkValidationResult.ParentAboveDocSetPath;
             }
 
-            var pathToFile = Path.Combine(rootPath, linkUrl);
-            FileInfo info = new FileInfo(pathToFile);
-            if (!info.Exists)
+            try
             {
-                return LinkValidationResult.FileNotFound;
+                var pathToFile = Path.Combine(rootPath, linkUrl);
+                FileInfo info = new FileInfo(pathToFile);
+                if (!info.Exists)
+                {
+                    return LinkValidationResult.FileNotFound;
+                }
+
+                relativeFileName = this.Parent.RelativePathToFile(info.FullName, urlStyle: true);
+
+                if (bookmarkName != null)
+                {
+                    // See if that bookmark exists in the target document, assuming we know about it
+                    var otherDocFile = this.Parent.LookupFileForPath(relativeFileName);
+                    if (otherDocFile == null)
+                    {
+                        return LinkValidationResult.BookmarkSkippedDocFileNotFound;
+                    }
+                    else if (!otherDocFile.bookmarks.Contains(bookmarkName))
+                    {
+                        return LinkValidationResult.BookmarkMissing;
+                    }
+                }
+                return LinkValidationResult.Valid;
             }
-
-            relativeFileName = this.Parent.RelativePathToFile(info.FullName, urlStyle: true);
-
-            if (bookmarkName != null)
+            catch (Exception)
             {
-                // See if that bookmark exists in the target document, assuming we know about it
-                var otherDocFile = this.Parent.LookupFileForPath(relativeFileName);
-                if (otherDocFile == null)
-                {
-                    return LinkValidationResult.BookmarkSkippedDocFileNotFound;
-                }
-                else if (!otherDocFile.bookmarks.Contains(bookmarkName))
-                {
-                    return LinkValidationResult.BookmarkMissing;
-                }
+                return LinkValidationResult.UrlFormatInvalid;
             }
-
-            return LinkValidationResult.Valid;
         }
 
         #endregion
