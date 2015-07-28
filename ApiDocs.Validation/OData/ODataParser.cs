@@ -22,8 +22,15 @@
             { "Edm.Boolean", false },
             { "Edm.Int64", 1234567890 },
             { "Edm.Int32", 1234 },
+            { "Edm.Int16", 1234 },
             { "Edm.Double", 12.345678 },
+            { "Edm.Decimal", 12.345678901234 },
+            { "Edm.Float", 12.3456 },
+            { "Edm.Byte", 12 },
+            { "Edm.SByte", -12 },
+            { "Edm.DateTime", "2014-01-01T00:00:00Z" },
             { "Edm.DateTimeOffset", "2014-01-01T00:00:00Z" },
+            { "Edm.Time", "00:00:00Z" },
         };
 
         public static List<Schema> ReadSchemaFromMetadata(string metadataContent)
