@@ -44,8 +44,15 @@
                         break;
 
                     case PlaceholderLocation.Json:
-                        object value = JsonPath.ValueFromJsonPath(actualResponse.Body, keyIndex);
-                        ExpectationSatisfied(key, value, expectedValues, detectedErrors);
+                        try
+                        {
+                            object value = JsonPath.ValueFromJsonPath(actualResponse.Body, keyIndex);
+                            ExpectationSatisfied(key, value, expectedValues, detectedErrors);
+                        }
+                        catch (Exception ex)
+                        {
+                            detectedErrors.Add(new ValidationError(ValidationErrorCode.JsonParserException, null, ex.Message));
+                        }
                         break;
 
                     case PlaceholderLocation.Invalid:
