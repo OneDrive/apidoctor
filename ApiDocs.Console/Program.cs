@@ -679,11 +679,16 @@
             var methods = FindTestMethods(options, docset);
             bool wereFailures = false;
 
-            foreach (var account in options.FoundAccounts)
-            {
-                if ( (options.AccountName != null && !options.AccountName.Equals(account.Name)) || !account.Enabled)
-                    continue;
 
+
+            var accountsToProcess =
+                options.FoundAccounts.Where(
+                    x => string.IsNullOrEmpty(options.AccountName)
+                        ? x.Enabled
+                        : options.AccountName.Equals(x.Name));
+
+            foreach (var account in accountsToProcess)
+            {
                 CheckResults results = new CheckResults();
 
                 if (account.AdditionalHeaders != null && account.AdditionalHeaders.Length > 0)
