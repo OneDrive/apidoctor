@@ -121,6 +121,7 @@
             // otherwise verify the object matches this schema
             else
             {
+                options = options ?? new ValidationOptions(annotation);
                 if (null != expectedJson)
                 {
                     var expectedJsonSchema = new JsonSchema(expectedJson.JsonData, expectedJson.Annotation);
@@ -277,7 +278,7 @@
                     else if (schemaPropertyDef.Type == inputProperty.Type && inputProperty.Type == JsonDataType.String)
                     {
                         // Perform extra validation to see if the string is the right format (iso date, enum value, url, or just a string)
-                        if (options.RelaxedStringValidation)
+                        if (null == options || options.RelaxedStringValidation)
                             return PropertyValidationOutcome.Ok;
 
                         return ValidateStringFormat(schemaPropertyDef, inputProperty, detectedErrors);

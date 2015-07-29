@@ -9,6 +9,15 @@
             this.CollectionPropertyName = "value";
         }
 
+        public ValidationOptions(CodeBlockAnnotation annotation)
+        {
+            if (null == annotation)
+                return;
+
+            this.CollectionPropertyName = annotation.CollectionPropertyName;
+            this.AllowTruncatedResponses = annotation.TruncatedResult;
+        }
+
         /// <summary>
         /// Specifies that the validate routines ignore errors/warnings 
         /// about missing properties that are defined in the schema
