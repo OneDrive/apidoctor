@@ -29,6 +29,9 @@
         [JsonProperty("serviceUrl")]
         public string ServiceUrl { get; set; }
 
+        [JsonProperty("resource")]
+        public string Resource { get; set; }
+
         [JsonProperty("additionalHeaders")]
         public string[] AdditionalHeaders { get; set; }
 

@@ -28,7 +28,7 @@
         /// <param name="actualResponseBodyJson"></param>
         /// <param name="errors"></param>
         /// <returns></returns>
-        public bool ValidateJsonExample(CodeBlockAnnotation expectedResponseAnnotation, string actualResponseBodyJson, out ValidationError[] errors)
+        public bool ValidateJsonExample(CodeBlockAnnotation expectedResponseAnnotation, string actualResponseBodyJson, out ValidationError[] errors, ValidationOptions options = null)
         {
             List<ValidationError> newErrors = new List<ValidationError>();
 
@@ -54,7 +54,7 @@
                 }
 
                 ValidationError[] validationJsonOutput;
-                this.ValidateJsonCompilesWithSchema(schema, new JsonExample(actualResponseBodyJson, expectedResponseAnnotation), out validationJsonOutput);
+                this.ValidateJsonCompilesWithSchema(schema, new JsonExample(actualResponseBodyJson, expectedResponseAnnotation), out validationJsonOutput, options: options);
 
                 newErrors.AddRange(validationJsonOutput);
                 errors = newErrors.ToArray();
@@ -139,7 +139,7 @@
         /// <param name="errors">Out parameter that provides any errors, warnings, or messages that were generated</param>
         /// <param name="expectedJson"></param>
         /// <returns></returns>
-        public bool ValidateJsonCompilesWithSchema(JsonSchema schema, JsonExample inputJson, out ValidationError[] errors, JsonExample expectedJson = null)
+        public bool ValidateJsonCompilesWithSchema(JsonSchema schema, JsonExample inputJson, out ValidationError[] errors, JsonExample expectedJson = null, ValidationOptions options = null)
         {
             if (null == schema)
                 throw new ArgumentNullException("schema");
@@ -152,10 +152,11 @@
                 collectionPropertyName = inputJson.Annotation.CollectionPropertyName;
             }
 
-            ValidationOptions options = new ValidationOptions
+            // If we didn't get an options, create a new one with some defaults provided by the annotation
+            options = options ?? new ValidationOptions()
             {
                 AllowTruncatedResponses = (inputJson.Annotation ?? new CodeBlockAnnotation()).TruncatedResult,
-                CollectionPropertyName =  collectionPropertyName
+                CollectionPropertyName = collectionPropertyName
             };
 
             return schema.ValidateJson(inputJson, out errors, this.registeredSchema, options, expectedJson);

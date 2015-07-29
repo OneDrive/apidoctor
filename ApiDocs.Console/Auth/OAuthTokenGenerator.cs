@@ -3,6 +3,7 @@
     using System;
     using System.IO;
     using System.Net;
+    using System.Text;
     using System.Threading.Tasks;
     using Newtonsoft.Json;
 
@@ -12,7 +13,7 @@
         {
             try
             {
-                return await RedeemRefreshTokenAsync(account.TokenService, account.RefreshToken, account.ClientId, account.ClientSecret, account.RedirectUri);
+                return await RedeemRefreshTokenInternalAsync(account);
             }
             catch (Exception ex)
             {
@@ -22,21 +23,25 @@
         }
 
 
-        public static async Task<TokenResponse> RedeemRefreshTokenAsync(string tokenService, string refreshToken, string clientId, string clientSecret, string redirectUri)
+        private static async Task<TokenResponse> RedeemRefreshTokenInternalAsync(Account account)
         {
-            HttpWebRequest request = WebRequest.CreateHttp(tokenService);
+            HttpWebRequest request = WebRequest.CreateHttp(account.TokenService);
             request.ContentType = "application/x-www-form-urlencoded";
             request.Method = "POST";
 
             var requestStream = await request.GetRequestStreamAsync();
             var writer = new StreamWriter(requestStream);
 
-            var content = string.Format("client_id={0}&redirect_uri={1}&client_secret={2}&refresh_token={3}&grant_type=refresh_token", 
-                Uri.EscapeDataString(clientId),
-                Uri.EscapeDataString(redirectUri),
-                Uri.EscapeDataString(clientSecret),
-                Uri.EscapeDataString(refreshToken));
+            StringBuilder sb = new StringBuilder();
+            sb.AppendFormat("client_id={0}", Uri.EscapeDataString(account.ClientId));
+            sb.AppendFormat("&redirect_uri={0}", Uri.EscapeDataString(account.RedirectUri));
+            sb.AppendFormat("&client_secret={0}", Uri.EscapeDataString(account.ClientSecret));
+            sb.AppendFormat("&refresh_token={0}", Uri.EscapeDataString(account.RefreshToken));
+            sb.Append("&grant_type=refresh_token");
+            if (null != account.Resource)
+                sb.AppendFormat("&resource={0}", Uri.EscapeDataString(account.Resource));
 
+            var content = sb.ToString();
             await writer.WriteAsync(content);
             await writer.FlushAsync();
 
