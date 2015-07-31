@@ -2,7 +2,6 @@
 {
     using System;
     using System.Collections.Generic;
-    using System.Data.SqlTypes;
     using System.Diagnostics;
     using System.Linq;
     using System.Threading.Tasks;
@@ -19,7 +18,7 @@
     using ApiDocs.Validation.Writers;
     using CommandLine;
     using Newtonsoft.Json;
-    using Nito.AsyncEx;
+    
 
     class Program
     {
@@ -74,7 +73,8 @@
 
             FancyConsole.LogFileName = verbOptions.LogFile;
 
-            AsyncContext.Run(() => RunInvokedMethodAsync(options, verbName, verbOptions));
+            var task = Task.Run(() => RunInvokedMethodAsync(options, verbName, verbOptions));
+            task.Wait();
         }
 
         public static void LoadCurrentConfiguration(DocSetOptions options)
