@@ -135,7 +135,7 @@
                     SetDefaultValues((SetCommandOptions)options);
                     break;
                 case CommandLineOptions.VerbPublish:
-                    await PublishDocumentationAsync((PublishOptions)options);
+                    returnSuccess = await PublishDocumentationAsync((PublishOptions)options);
                     break;
                 case CommandLineOptions.VerbMetadata:
                     await CheckServiceMetadataAsync((CheckMetadataOptions)options);
@@ -159,6 +159,9 @@
         private static async Task<bool> CheckDocsAllAsync(BasicCheckOptions options)
         {
             var docset = await GetDocSetAsync(options);
+
+            if (null == docset)
+                return false;
 
             var checkLinksResult = await CheckLinksAsync(options, docset);
             var checkDocsResults = await CheckDocsAsync(options, docset);
@@ -255,11 +258,13 @@
                     FancyConsole.WriteLine(e.Message);
                 }
             };
+
             FancyConsole.VerboseWriteLine("Scanning documentation files...");
             ValidationError[] loadErrors;
-            if (!set.ScanDocumentation(out loadErrors) && options.EnableVerboseOutput)
+            if (!set.ScanDocumentation(out loadErrors))
             {
                 await WriteOutErrorsAndFinishTestAsync(loadErrors, options.SilenceWarnings);
+                return null;
             }
                 
             return set;
@@ -279,9 +284,13 @@
             Task.Run(() => BuildWorker.AddMessageAsync(message, MessageCategory.Error));
         }
 
-        private static async Task PrintDocInformationAsync(PrintOptions options)
+        private static async Task PrintDocInformationAsync(PrintOptions options, DocSet docset = null)
         {
-            DocSet docset = await GetDocSetAsync(options);
+            docset = docset ?? await GetDocSetAsync(options);
+            if (null == docset)
+                return;
+
+
             if (options.PrintFiles)
             {
                 await PrintFilesAsync(options, docset);
@@ -298,10 +307,13 @@
 
         private static async Task PrintFilesAsync(DocSetOptions options, DocSet docset)
         {
+            docset = docset ?? await GetDocSetAsync(options);
             if (null == docset)
-            {
-                docset = await GetDocSetAsync(options);
-            }
+                return;
+
+
+            if (null == docset)
+                return;
 
             FancyConsole.WriteLine();
             FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, "Documentation files");
@@ -336,6 +348,10 @@
             const string testName = "Check-links";
             var docset = docs ?? await GetDocSetAsync(options);
 
+            if (null == docset)
+                return false;
+
+
             TestReport.StartTest(testName);
 
             ValidationError[] errors;
@@ -363,8 +379,9 @@
 
         private static async Task PrintResourcesAsync(DocSetOptions options, DocSet docset)
         {
+            docset = docset ?? await GetDocSetAsync(options);
             if (null == docset)
-                docset = await GetDocSetAsync(options);
+                return;
 
             FancyConsole.WriteLine();
             FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, "Defined resources:");
@@ -395,8 +412,9 @@
 
         private static async Task PrintMethodsAsync(DocSetOptions options, DocSet docset)
         {
+            docset = docset ?? await GetDocSetAsync(options);
             if (null == docset)
-                docset = await GetDocSetAsync(options);
+                return;
 
             FancyConsole.WriteLine();
             FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, "Defined methods:");
@@ -434,6 +452,9 @@
         private static async Task<bool> CheckDocsAsync(BasicCheckOptions options, DocSet docs = null)
         {
             var docset = docs ?? await GetDocSetAsync(options);
+            if (null == docset)
+                return false;
+
             FancyConsole.WriteLine();
 
             var resultMethods = await CheckMethodsAsync(options, docset);
@@ -663,6 +684,9 @@
             }
 
             var docset = await GetDocSetAsync(options);
+            if (null == docset)
+                return false;
+
             FancyConsole.WriteLine();
 
             if (!string.IsNullOrEmpty(options.ODataMetadataLevel))
@@ -868,13 +892,16 @@
             return validateResponse;
         }
 
-        private static async Task PublishDocumentationAsync(PublishOptions options)
+        private static async Task<bool> PublishDocumentationAsync(PublishOptions options)
         {
             var outputPath = options.OutputDirectory;
 
             FancyConsole.WriteLine("Publishing documentation to {0}", outputPath);
 
             DocSet docs = await GetDocSetAsync(options);
+            if (null == docs)
+                return false;
+
             DocumentPublisher publisher = null;
             switch (options.Format)
             {
@@ -899,7 +926,11 @@
                     publisher = new OutlinePublisher(docs);
                     break;
                 default:
-                    throw new NotSupportedException("Unsupported format: " + options.Format.ToString());
+                    FancyConsole.WriteLine(
+                        FancyConsole.ConsoleErrorColor,
+                        "Unsupported publishing format: {0}",
+                        options.Format);
+                    return false;
             }
 
             FancyConsole.WriteLineIndented("  ", "Format: {0}", publisher.GetType().Name);
@@ -912,7 +943,7 @@
 
             FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, "Finished publishing documentation to: {0}", outputPath);
 
-            Exit(failure: false);
+            return true;
         }
 
         static void publisher_NewMessage(object sender, ValidationMessageEventArgs e)
@@ -978,6 +1009,8 @@
             FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, "  found {0} schema definitions: {1}", schemas.Count, (from s in schemas select s.Namespace).ComponentsJoinedByString(", "));
 
             var docSet = await GetDocSetAsync(options);
+            if (null == docSet)
+                return false;
 
             const string testname = "validate-service-metadata";
             TestReport.StartTest(testname);

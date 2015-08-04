@@ -168,6 +168,16 @@
             var detectedErrors = new List<ValidationError>();
 
             this.resourceCollection.Clear();
+
+            if (!this.Files.Any())
+            {
+                detectedErrors.Add(
+                    new ValidationError(
+                        ValidationErrorCode.NoDocumentsFound,
+                        null,
+                        "No markdown documentation was found in the current path."));
+            }
+
             foreach (var file in this.Files)
             {
                 ValidationError[] parseErrors;
