@@ -58,7 +58,7 @@
     <Compile Include="Http\HttpResponse.cs" />
     <Compile Include="Json\JsonExample.cs" />
     <Compile Include="Json\ValidationOptions.cs" />
-    <Compile Include="LogHelper.cs" />
+    <Compile Include="Logging.cs" />
     <Compile Include="PageAnnotation.cs" />
     <Compile Include="ParameterDefinition.cs" />
     <Compile Include="ScenarioExtensionMethods.cs" />

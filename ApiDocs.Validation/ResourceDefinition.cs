@@ -1,6 +1,7 @@
 ﻿namespace ApiDocs.Validation
 {
     using System;
+    using ApiDocs.Validation.Error;
     using Newtonsoft.Json;
 
     /// <summary>
@@ -21,13 +22,21 @@
             }
             catch (Exception ex)
             {
-                LogHelper.LogFailure("Error parsing file {0}: {1}", source.FullPath, ex.Message);
-                throw;
+                Logging.LogMessage(
+                    new ValidationError(
+                        ValidationErrorCode.JsonParserException,
+                        source.DisplayName,
+                        "Error parsing resource definition: {0}",
+                        ex.Message));
             }
 
             if (string.IsNullOrEmpty(annotation.ResourceType))
             {
-                throw new InvalidOperationException("ResourceDefinition requires a resource type to be set (@odata.type property in the annotation)");
+                Logging.LogMessage(
+                    new ValidationError(
+                        ValidationErrorCode.MissingResourceName,
+                        source.DisplayName,
+                        "Resource definition is missing a @odata.type name"));
             }
         }
 

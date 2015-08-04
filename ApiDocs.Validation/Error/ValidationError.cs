@@ -76,7 +76,8 @@
         InvalidUrlString,
         InvalidExpectationKey,
         ExpectationConditionFailed,
-        NoDocumentsFound
+        NoDocumentsFound,
+        MissingResourceName
 
     }
 

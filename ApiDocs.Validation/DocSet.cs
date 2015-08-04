@@ -82,19 +82,6 @@
         }
         #endregion
 
-        #region Logging Support
-        public event EventHandler<DocSetEventArgs> LogMessage;
-
-        internal void RecordLogMessage(bool verbose, string title, string format, params object[] parameters)
-        {
-            var evt = this.LogMessage;
-            if (null != evt)
-            {
-                evt(this, new DocSetEventArgs(verbose, title, format, parameters));
-            }
-        }
-        #endregion
-
         private void LoadRequirements()
         {
             ApiRequirementsFile[] requirements = TryLoadConfigurationFiles<ApiRequirementsFile>(this.SourceFolderPath);

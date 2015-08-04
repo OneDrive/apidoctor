@@ -31,7 +31,7 @@
 
         static void Main(string[] args)
         {
-            LogHelper.ProvideLogHelper(new LogRecorder());
+            Logging.ProviderLogger(new ConsoleAppLogger());
 
             FancyConsole.WriteLine(ConsoleColor.Green, "APIDocs tool, version {0}", System.Reflection.Assembly.GetExecutingAssembly().GetName().Version);
             FancyConsole.WriteLine();
@@ -245,19 +245,6 @@
         {
             FancyConsole.VerboseWriteLine("Opening documentation from {0}", options.DocumentationSetPath);
             DocSet set = new DocSet(options.DocumentationSetPath);
-            set.LogMessage += (object sender, DocSetEventArgs e) => {
-                
-                if (e.Verbose)
-                {
-                    FancyConsole.VerboseWriteLine(FancyConsole.ConsoleHeaderColor, e.Title);
-                    FancyConsole.VerboseWriteLine(e.Message);
-                }
-                else
-                {
-                    FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, e.Title);
-                    FancyConsole.WriteLine(e.Message);
-                }
-            };
 
             FancyConsole.VerboseWriteLine("Scanning documentation files...");
             ValidationError[] loadErrors;
@@ -571,23 +558,7 @@
         private static async Task<bool> WriteOutErrorsAndFinishTestAsync(IEnumerable<ValidationError> errors, bool silenceWarnings, string indent = "", string successMessage = null, bool endLineBeforeWriting = false, string testName = null, string warningsMessage = null, string errorsMessage = null)
         {
             var validationErrors = errors as ValidationError[] ?? errors.ToArray();
-            foreach (var error in validationErrors)
-            {
-                // Skip messages if verbose output is off
-                if (!error.IsWarning && !error.IsError && !FancyConsole.WriteVerboseOutput)
-                    continue;
-
-                // Skip warnings if silence warnings is enabled.
-                if (silenceWarnings && error.IsWarning)
-                    continue;
-
-                if (endLineBeforeWriting)
-                {
-                    FancyConsole.WriteLine();
-                }
-
-                WriteValidationError(indent, error);
-            }
+            WriteMessages(validationErrors, silenceWarnings, indent, endLineBeforeWriting);
 
             TestOutcome outcome = TestOutcome.None;
             string outputMessage = null;
@@ -633,7 +604,32 @@
             return outcome == TestOutcome.Passed;
         }
 
-        private static void WriteValidationError(string indent, ValidationError error)
+        private static void WriteMessages(ValidationError[] validationErrors, bool errorsOnly = false, string indent = "", bool endLineBeforeWriting = false)
+        {
+            foreach (var error in validationErrors)
+            {
+                // Skip messages if verbose output is off
+                if (!error.IsWarning && !error.IsError && !FancyConsole.WriteVerboseOutput)
+                {
+                    continue;
+                }
+
+                // Skip warnings if silence warnings is enabled.
+                if (errorsOnly && !error.IsError)
+                {
+                    continue;
+                }
+
+                if (endLineBeforeWriting)
+                {
+                    FancyConsole.WriteLine();
+                }
+
+                WriteValidationError(indent, error);
+            }
+        }
+
+        internal static void WriteValidationError(string indent, ValidationError error)
         {
             ConsoleColor color;
             if (error.IsWarning)
@@ -761,7 +757,6 @@
                     if (testScenarios.Length == 0)
                     {
                         // If there are no parameters defined, we still try to call the request as-is.
-                        FancyConsole.WriteLine(FancyConsole.ConsoleCodeColor, "\r\n  Method {0} has no scenario defined. Running as-is from docs.", method.RequestMetadata.MethodName);
                         var errors = await TestMethodWithScenarioAsync(docset, method, null, account.ServiceUrl, credentials, options.SilenceWarnings, testNamePrefix);
                         results.IncrementResultCount(errors);
                         AddPause(options);
@@ -826,13 +821,20 @@
         {
             if (options.PauseBetweenRequests)
             {
-                FancyConsole.Write("Press any key to continue");
+                FancyConsole.WriteLine("Press any key to continue");
                 Console.ReadKey();
                 FancyConsole.WriteLine();
             }
         }
 
-        private static async Task<ValidationError[]> TestMethodWithScenarioAsync(DocSet docset, MethodDefinition method, ScenarioDefinition scenario, string rootUrl, AuthenicationCredentials credentials, bool silenceWarnings, string testNamePrefix)
+        private static async Task<ValidationError[]> TestMethodWithScenarioAsync(
+            DocSet docset,
+            MethodDefinition method,
+            ScenarioDefinition scenario,
+            string rootUrl,
+            AuthenicationCredentials credentials,
+            bool silenceWarnings,
+            string testNamePrefix)
         {
             string testName = testNamePrefix + method.Identifier;
             string indentLevel = "";
@@ -850,14 +852,27 @@
 
             // Generate the tested request by "previewing" the request and executing
             // all test-setup procedures
-            FancyConsole.VerboseWriteLineIndented(indentLevel, "Executing test-setup and building testable request...");
+            if (null != scenario)
+                FancyConsole.VerboseWriteLineIndented(indentLevel, "Generating testable request for scenario...");
+            else
+                FancyConsole.VerboseWriteLineIndented(indentLevel, "No scenario was defined. Running verbatim request.");
+
             var requestPreviewResult = await method.PreviewRequestAsync(scenario, rootUrl, credentials, docset);
 
             // Check to see if an error occured building the request, and abort if so.
             if (requestPreviewResult.IsWarningOrError)
             {
-                await WriteOutErrorsAndFinishTestAsync(requestPreviewResult.Messages, silenceWarnings, indentLevel + "  ", testName: testName);
+                await
+                    WriteOutErrorsAndFinishTestAsync(
+                        requestPreviewResult.Messages,
+                        silenceWarnings,
+                        indentLevel + "  ",
+                        testName: testName);
                 return requestPreviewResult.Messages;
+            }
+            else
+            {
+                WriteMessages(requestPreviewResult.Messages, false, indentLevel + "  ", false);
             }
 
             // We've done all the test-setup work, now we have the real request to make to the service
@@ -880,12 +895,10 @@
             FancyConsole.VerboseWriteLineIndented(indentLevel + "  ", actualResponse.FullHttpText());
             FancyConsole.VerboseWriteLine();
             
-            FancyConsole.VerboseWriteLineIndented(indentLevel, "Validation results:");
+            //FancyConsole.VerboseWriteLineIndented(indentLevel, "Validation results:");
             
             // Perform validation on the method's actual response
             var validateResponse = ValidateHttpResponse(method, actualResponse, silenceWarnings, expectedResponse, scenario);
-
-
 
             await WriteOutErrorsAndFinishTestAsync(validateResponse, silenceWarnings, indentLevel, "No errors.", false, testName);
             
@@ -1053,16 +1066,11 @@
         }
     }
 
-    class LogRecorder : ILogHelper
+    class ConsoleAppLogger : ILogHelper
     {
-        public void RecordFailure(string message)
+        public void RecordError(ValidationError error)
         {
-            Program.RecordError(message);
-        }
-
-        public void RecordWarning(string message)
-        {
-            Program.RecordWarning(message);
+            Program.WriteValidationError(string.Empty, error);
         }
     }
    
