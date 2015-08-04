@@ -121,25 +121,17 @@
         }
 
         #region Validation / Request Methods
-        ///// <summary>
-        ///// Converts the raw HTTP request in Request into a callable HttpWebRequest
-        ///// </summary>
-        ///// <param name="baseUrl"></param>
-        ///// <param name="accessToken"></param>
-        ///// <returns></returns>
-        //public async Task<ValidationResult<HttpWebRequest>> BuildRequestAsync(string baseUrl, AuthenicationCredentials credentials, DocSet documents, ScenarioDefinition scenario = null)
-        //{
-        //    var previewResult = await PreviewRequestAsync(scenario, baseUrl, credentials, documents);
-        //    if (previewResult.IsWarningOrError)
-        //    {
-        //        return new ValidationResult<HttpWebRequest>(null, previewResult.Messages);
-        //    }
 
-        //    var httpRequest = previewResult.Value;
-        //    HttpWebRequest request = httpRequest.PrepareHttpWebRequest(baseUrl);
-        //    return new ValidationResult<HttpWebRequest>(request);
-        //}
-
+        /// <summary>
+        /// Take a scenario definition and convert the prototype request into a fully formed request. This includes appending
+        /// the base URL to the request URL, executing any test-setup requests, and replacing the placeholders in the prototype
+        /// request with proper values.
+        /// </summary>
+        /// <param name="scenario"></param>
+        /// <param name="baseUrl"></param>
+        /// <param name="credentials"></param>
+        /// <param name="documents"></param>
+        /// <returns></returns>
         public async Task<ValidationResult<HttpRequest>> PreviewRequestAsync(ScenarioDefinition scenario, string baseUrl, AuthenicationCredentials credentials, DocSet documents)
         {
             var parser = new HttpParser();
@@ -147,20 +139,28 @@
 
             AddAccessTokenToRequest(credentials, request);
 
+            List<ValidationError> errors = new List<ValidationError>();
+
             if (null != scenario)
             {
+
                 var storedValuesForScenario = new Dictionary<string, string>();
+
                 if (null != scenario.TestSetupRequests)
                 {
                     foreach (var setupRequest in scenario.TestSetupRequests)
                     {
                         var result = await setupRequest.MakeSetupRequestAsync(baseUrl, credentials, storedValuesForScenario, documents);
+                        errors.AddRange(result.Messages);
+
                         if (result.IsWarningOrError)
                         {
-                            return new ValidationResult<HttpRequest>(null, result.Messages);
+                            // If we can an error or warning back from a setup method, we fail the whole request.
+                            return new ValidationResult<HttpRequest>(null, errors);
                         }
                     }
                 }
+
 
                 try 
                 {
@@ -170,8 +170,15 @@
                 catch (Exception ex)
                 {
                     // Error when applying parameters to the request
-                    return new ValidationResult<HttpRequest>(null, new ValidationError(ValidationErrorCode.RewriteRequestFailure, "PreviewRequestAsync", ex.Message));
+                    errors.Add(
+                        new ValidationError(
+                            ValidationErrorCode.RewriteRequestFailure,
+                            "PreviewRequestAsync",
+                            ex.Message));
+                    
+                    return new ValidationResult<HttpRequest>(null, errors);
                 }
+
             }
 
             if (string.IsNullOrEmpty(request.Accept))
@@ -186,7 +193,7 @@
                 }
             }
 
-            return new ValidationResult<HttpRequest>(request);
+            return new ValidationResult<HttpRequest>(request, errors);
         }
 
         internal static void AddAccessTokenToRequest(AuthenicationCredentials credentials, HttpRequest request)

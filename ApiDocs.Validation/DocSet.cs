@@ -82,19 +82,6 @@
         }
         #endregion
 
-        #region Logging Support
-        public event EventHandler<DocSetEventArgs> LogMessage;
-
-        internal void RecordLogMessage(bool verbose, string title, string format, params object[] parameters)
-        {
-            var evt = this.LogMessage;
-            if (null != evt)
-            {
-                evt(this, new DocSetEventArgs(verbose, title, format, parameters));
-            }
-        }
-        #endregion
-
         private void LoadRequirements()
         {
             ApiRequirementsFile[] requirements = TryLoadConfigurationFiles<ApiRequirementsFile>(this.SourceFolderPath);
@@ -134,11 +121,22 @@
             {
                 using (var reader = file.OpenText())
                 {
-                    var config = JsonConvert.DeserializeObject<T>(reader.ReadToEnd());
-                    if (null != config && config.IsValid)
+                    try {
+                        var config = JsonConvert.DeserializeObject<T>(reader.ReadToEnd());
+                        if (null != config && config.IsValid)
+                        {
+                            validConfigurationFiles.Add(config);
+                            config.SourcePath = file.FullName;
+                        }
+                    } 
+                    catch (JsonSerializationException ex)
                     {
-                        validConfigurationFiles.Add(config);
-                        config.SourcePath = file.FullName;
+                        // TODO: Make it possible to log out an error here.
+//                        RecordLogMessage(true, 
+//                            "Configuration Load Error", 
+//                            "Exception processing config file {0}: {1}", 
+//                            file.FullName, 
+//                            ex.Message);
                     }
                 }
             }
@@ -168,6 +166,16 @@
             var detectedErrors = new List<ValidationError>();
 
             this.resourceCollection.Clear();
+
+            if (!this.Files.Any())
+            {
+                detectedErrors.Add(
+                    new ValidationError(
+                        ValidationErrorCode.NoDocumentsFound,
+                        null,
+                        "No markdown documentation was found in the current path."));
+            }
+
             foreach (var file in this.Files)
             {
                 ValidationError[] parseErrors;

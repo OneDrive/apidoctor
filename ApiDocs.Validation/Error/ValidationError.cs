@@ -75,7 +75,9 @@
         InvalidEnumeratedValueString,
         InvalidUrlString,
         InvalidExpectationKey,
-        ExpectationConditionFailed
+        ExpectationConditionFailed,
+        NoDocumentsFound,
+        MissingResourceName
 
     }
 
