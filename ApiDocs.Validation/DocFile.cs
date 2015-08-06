@@ -567,7 +567,7 @@ namespace ApiDocs.Validation
             {
                 case CodeBlockType.Resource:
                     {
-                        var resource = new ResourceDefinition(annotation, code.Content, this);
+                        var resource = new ResourceDefinition(annotation, code.Content, this, code.CodeLanguage);
                         this.resources.Add(resource);
                         return resource;
                     }
@@ -603,7 +603,7 @@ namespace ApiDocs.Validation
                     }
                 case CodeBlockType.Example:
                     {
-                        var example = new ExampleDefinition(annotation, code.Content, this);
+                        var example = new ExampleDefinition(annotation, code.Content, this, code.CodeLanguage);
                         this.examples.Add(example);
                         return example;
                     }
