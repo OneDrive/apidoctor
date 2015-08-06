@@ -77,7 +77,8 @@
         InvalidExpectationKey,
         ExpectationConditionFailed,
         NoDocumentsFound,
-        MissingResourceName
+        MissingResourceName,
+        UnsupportedLanguage
 
     }
 
