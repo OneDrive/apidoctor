@@ -31,24 +31,58 @@
         [JsonProperty("isCollection", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public bool IsCollection { get; set; }
 
+        /// <summary>
+        /// Specify the name of the property that holds the array of items.
+        /// </summary>
         [JsonProperty("collectionProperty", DefaultValueHandling=DefaultValueHandling.Ignore)]
         public string CollectionPropertyName { get; set; }
 
+        /// <summary>
+        /// Indicates that the response is empty (has no value)
+        /// </summary>
         [JsonProperty("isEmpty", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public bool IsEmpty { get; set; }
 
+        /// <summary>
+        /// Specifies that the example is truncated and should not generate warnings about 
+        /// missing fields unless those fields are shown in the example.
+        /// </summary>
         [JsonProperty("truncated", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public bool TruncatedResult { get; set; }
 
+        /// <summary>
+        /// The name of the request / response method.
+        /// </summary>
         [JsonProperty("name", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public string MethodName { get; set; }
 
+        /// <summary>
+        /// Indicates that the response is expected to be an error response.
+        /// </summary>
         [JsonProperty("expectError", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public bool ExpectError { get; set; }
 
+        /// <summary>
+        /// By default all properties are expected to be non-null values. If a null value is returned
+        /// in the JSON ("foo": null) an error is generated. This can be used on a resource to allow
+        /// some properties to be returned as null.
+        /// </summary>
         [JsonProperty("nullableProperties", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public string[] NullableProperties { get; set; }
 
+        /// <summary>
+        /// When provided indicates that the response is a long running operation that will return an 
+        /// asyncJobStatus response from a Location URL. When the job is complete, a Location URL will
+        /// be returned that returns a response with the resource type indicated by this property.
+        /// </summary>
+        [JsonProperty("longRunningResponseType", DefaultValueHandling =  DefaultValueHandling.Ignore)]
+        public string LongRunningResponseType { get; set; }
+
+        /// <summary>
+        /// Convert a JSON string into an instance of this class
+        /// </summary>
+        /// <param name="json"></param>
+        /// <returns></returns>
         public static CodeBlockAnnotation FromJson(string json)
         {
             try

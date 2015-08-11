@@ -83,7 +83,7 @@
                 {
                     errors.Add(new ValidationMessage(null, "HTTP request was retried {0} times.", response.RetryCount));
                 }
-                errors.Add(new ValidationMessage(null, "HTTP Response:\n{0}\n\n", response.FullHttpText()));
+                errors.Add(new ValidationMessage(null, "HTTP Response:\n{0}\n\n", response.FullText()));
 
                 // Check to see if this request is "successful" or not
                 if ( (this.AllowedStatusCodes == null && response.WasSuccessful) ||

@@ -107,6 +107,11 @@
 
         public virtual bool IsError { get { return true; } }
 
+        public virtual bool IsWarningOrError
+        {
+            get { return IsWarning | IsError; }
+        }
+
         /// <summary>
         /// Returns a log-ready string that includes information about the specific error/warning/message.
         /// </summary>
