@@ -132,7 +132,7 @@
         /// <param name="credentials"></param>
         /// <param name="documents"></param>
         /// <returns></returns>
-        public async Task<ValidationResult<HttpRequest>> PreviewRequestAsync(ScenarioDefinition scenario, string baseUrl, AuthenicationCredentials credentials, DocSet documents)
+        public async Task<ValidationResult<HttpRequest>> GenerateMethodRequestAsync(ScenarioDefinition scenario, string baseUrl, AuthenicationCredentials credentials, DocSet documents)
         {
             var parser = new HttpParser();
             var request = parser.ParseHttpRequest(this.Request);
@@ -173,7 +173,7 @@
                     errors.Add(
                         new ValidationError(
                             ValidationErrorCode.RewriteRequestFailure,
-                            "PreviewRequestAsync",
+                            "GenerateMethodRequestAsync",
                             ex.Message));
                     
                     return new ValidationResult<HttpRequest>(null, errors);

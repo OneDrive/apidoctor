@@ -965,6 +965,18 @@
             }
         }
 
+        /// <summary>
+        /// Tests a given request/response method using an optionally provided scenario. Performs
+        /// validation on the response from the method, and prints the response to the console.
+        /// </summary>
+        /// <param name="docset"></param>
+        /// <param name="method"></param>
+        /// <param name="scenario"></param>
+        /// <param name="rootUrl"></param>
+        /// <param name="credentials"></param>
+        /// <param name="silenceWarnings"></param>
+        /// <param name="testNamePrefix"></param>
+        /// <returns></returns>
         private static async Task<ValidationError[]> TestMethodWithScenarioAsync(
             DocSet docset,
             MethodDefinition method,
@@ -991,11 +1003,15 @@
             // Generate the tested request by "previewing" the request and executing
             // all test-setup procedures
             if (null != scenario)
+            {
                 FancyConsole.VerboseWriteLineIndented(indentLevel, "Generating testable request for scenario...");
+            }
             else
+            {
                 FancyConsole.VerboseWriteLineIndented(indentLevel, "No scenario was defined. Running verbatim request.");
+            }
 
-            var requestPreviewResult = await method.PreviewRequestAsync(scenario, rootUrl, credentials, docset);
+            var requestPreviewResult = await method.GenerateMethodRequestAsync(scenario, rootUrl, credentials, docset);
 
             // Check to see if an error occured building the request, and abort if so.
             if (requestPreviewResult.IsWarningOrError)
