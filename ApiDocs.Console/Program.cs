@@ -838,6 +838,7 @@
                 ValidationResults results = await method.ValidateServiceResponseAsync(scenarios, account, credentials);
 
                 PrintResultsToConsole(method, account, results, options);
+                TestReport.LogMethodTestResults(method, account, results);
                 docSetResults.RecordResults(results, options);
                 
                 if (concurrentTasks == 1)
@@ -857,7 +858,6 @@
 
             bool hadWarnings = (docSetOutcome & ValidationOutcome.Warning) > 0;
             bool hadErrors = (docSetOutcome & ValidationOutcome.Error) > 0;
-
 
             return !(hadErrors | hadWarnings);
         }

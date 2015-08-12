@@ -127,8 +127,14 @@
 
         private async Task PostToApiAsync(string path, object body)
         {
+#if DEBUG
+            if (this.UrlEndPoint == null)
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    string.Format("WorkerApi: {0}\r\n{1}", path, JsonConvert.SerializeObject(body, CachedJsonSettings)));
+            }
+#endif
             if (this.UrlEndPoint == null) return;
-
 
             var targetUrl = new Uri(this.UrlEndPoint, path);
             var request = WebRequest.CreateHttp(targetUrl);
