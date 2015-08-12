@@ -24,6 +24,7 @@
     {
         private const int ExitCodeFailure = 1;
         private const int ExitCodeSuccess = 0;
+        private const int ParallelTaskCount = 5;
 
         public static readonly SavedSettings DefaultSettings = new SavedSettings("ApiTestTool", "settings.json");
         public static readonly BuildWorkerApi BuildWorker = new BuildWorkerApi();
@@ -827,15 +828,18 @@
             AuthenicationCredentials credentials = AuthenicationCredentials.CreateAutoCredentials(account.AccessToken);
 
             ValidationOutcome docSetOutcome = ValidationOutcome.None;
-            foreach (var method in methods)
-            {
-                ScenarioDefinition[] scenarios = docset.TestScenarios.ScenariosForMethod(method);
-                ValidationResults results = await method.ValidateServiceResponseAsync(scenarios, account, credentials);
 
-                PrintResultsToConsole(method, account, results, options);
-                docSetOutcome |= results.OverallOutcome;
-                AddPause(options);
-            }
+            int concurrentTasks = options.ParallelTests ? ParallelTaskCount : 1;
+
+            await ForEachAsync(methods, concurrentTasks, async method => {
+                    ScenarioDefinition[] scenarios = docset.TestScenarios.ScenariosForMethod(method);
+                    ValidationResults results = await method.ValidateServiceResponseAsync(scenarios, account, credentials);
+
+                    PrintResultsToConsole(method, account, results, options);
+                    docSetOutcome |= results.OverallOutcome;
+                    if (concurrentTasks == 1)
+                        AddPause(options);
+            });
 
             if (options.IgnoreWarnings || options.SilenceWarnings)
             {
@@ -853,6 +857,27 @@
         }
 
         /// <summary>
+        /// Parallel enabled for each processor that supports async lambdas. Copied from 
+        /// http://blogs.msdn.com/b/pfxteam/archive/2012/03/05/10278165.aspx
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="source">Collection of items to iterate over</param>
+        /// <param name="dop">Degree of parallelism to execute.</param>
+        /// <param name="body">Lambda expression executed for each operation</param>
+        /// <returns></returns>
+        public static Task ForEachAsync<T>(IEnumerable<T> source, int dop, Func<T, Task> body)
+        {
+            return Task.WhenAll(
+                from partition in System.Collections.Concurrent.Partitioner.Create(source).GetPartitions(dop)
+                select Task.Run(async delegate
+                {
+                    using (partition)
+                        while (partition.MoveNext())
+                            await body(partition.Current);
+                }));
+        }
+
+        /// <summary>
         /// Write the results of a test to the output console.
         /// </summary>
         /// <param name="method"></param>
@@ -861,39 +886,50 @@
         /// <param name="options"></param>
         private static void PrintResultsToConsole(MethodDefinition method, Account account, ValidationResults output, CheckServiceOptions options)
         {
-            FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, "Testing method {0} with account {1}", method.Identifier, account.Name);
-            
-            foreach(var scenario in output.Results)
+            // Only allow one thread at a time to write to the console so we don't interleave our results.
+            lock (typeof(Program))
             {
-                if (scenario.Errors.Count > 0)
+                FancyConsole.WriteLine(
+                    FancyConsole.ConsoleHeaderColor,
+                    "Testing method {0} with account {1}",
+                    method.Identifier,
+                    account.Name);
+
+                foreach (var scenario in output.Results)
                 {
-                    FancyConsole.WriteLineIndented(
-                        "  ",
-                        FancyConsole.ConsoleSubheaderColor,
-                        "Scenario: {0}",
-                        scenario.Name);
-
-                    foreach (var message in scenario.Errors)
+                    if (scenario.Errors.Count > 0)
                     {
-                        if (options.EnableVerboseOutput || message.IsWarningOrError)
-                            FancyConsole.WriteLineIndented("    ", FancyConsole.ConsoleDefaultColor, message.ErrorText);
+                        FancyConsole.WriteLineIndented(
+                            "  ",
+                            FancyConsole.ConsoleSubheaderColor,
+                            "Scenario: {0}",
+                            scenario.Name);
+
+                        foreach (var message in scenario.Errors)
+                        {
+                            if (options.EnableVerboseOutput || message.IsWarningOrError)
+                                FancyConsole.WriteLineIndented(
+                                    "    ",
+                                    FancyConsole.ConsoleDefaultColor,
+                                    message.ErrorText);
+                        }
+
+                        FancyConsole.WriteLineIndented(
+                            "    ",
+                            scenario.Outcome.ConsoleColor(),
+                            "Scenario finished with outcome: {0}. Duration: {1}",
+                            scenario.Outcome,
+                            scenario.Duration);
                     }
-
-                    FancyConsole.WriteLineIndented(
-                        "    ",
-                        scenario.Outcome.ConsoleColor(),
-                        "Scenario finished with outcome: {0}. Duration: {1}",
-                        scenario.Outcome,
-                        scenario.Duration);
                 }
-            }
 
-            FancyConsole.WriteLineIndented(
-                "  ",
-                output.OverallOutcome.ConsoleColor(),
-                "Method testing finished with overall outcome: {0}",
-                output.OverallOutcome);
-            FancyConsole.WriteLine();
+                FancyConsole.WriteLineIndented(
+                    "  ",
+                    output.OverallOutcome.ConsoleColor(),
+                    "Method testing finished with overall outcome: {0}",
+                    output.OverallOutcome);
+                FancyConsole.WriteLine();
+            }
         }
 
 

@@ -252,6 +252,9 @@
         [Option("branch-name")]
         public string BranchName { get; set; }
 
+        [Option("parallel", HelpText = "Run service tests in parallel.", DefaultValue = false)]
+        public bool ParallelTests { get; set; }
+
 
         public override bool HasRequiredProperties(out string[] missingArguments)
         {
