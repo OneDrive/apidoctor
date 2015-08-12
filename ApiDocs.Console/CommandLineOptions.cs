@@ -276,7 +276,7 @@
                 try
                 {
                     var account = Account.CreateAccountFromEnvironmentVariables();
-                    account.ServiceUrl = this.ServiceRootUrl;
+                    account.BaseUrl = this.ServiceRootUrl;
                     this.FoundAccounts.Add(account);
                 }
                 catch (InvalidOperationException) { }
@@ -305,7 +305,7 @@
 
                 if (!string.IsNullOrEmpty(this.AccessToken) && !string.IsNullOrEmpty(this.ServiceRootUrl))
                 {
-                    this.FoundAccounts.Add(new Account { Name = "CommandLineAccount", Enabled = true, AccessToken = this.AccessToken, ServiceUrl = this.ServiceRootUrl });
+                    this.FoundAccounts.Add(new Account { Name = "CommandLineAccount", Enabled = true, AccessToken = this.AccessToken, BaseUrl = this.ServiceRootUrl });
                 }
             }
 

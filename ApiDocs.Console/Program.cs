@@ -232,7 +232,7 @@
             FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, "Stored settings:");
             FancyConsole.WriteLineIndented("  ", "{0}: {1}", "AccessToken", settings.AccessToken);
             FancyConsole.WriteLineIndented("  ", "{0}: {1}", "DocumentationPath", settings.DocumentationPath);
-            FancyConsole.WriteLineIndented("  ", "{0}: {1}", "ServiceUrl", settings.ServiceUrl);
+            FancyConsole.WriteLineIndented("  ", "{0}: {1}", "BaseUrl", settings.ServiceUrl);
         }
 
 
@@ -800,7 +800,7 @@
         /// <returns>True if the methods all passed, false if there were failures.</returns>
         private static async Task<bool> CheckMethodsForAccountAsync(CheckServiceOptions options, Account account, MethodDefinition[] methods, DocSet docset)
         {
-            CheckResults results = new CheckResults();
+            //CheckResults results = new CheckResults();
 
             ConfigureAdditionalHeadersForAccount(options, account);
 
@@ -824,98 +824,78 @@
 
             AuthenicationCredentials credentials = AuthenicationCredentials.CreateAutoCredentials(account.AccessToken);
 
+            ValidationOutcome docSetOutcome = ValidationOutcome.NotChecked;
             foreach (var method in methods)
             {
-                await CheckMethodForAccountAsync(options, account, docset, method, credentials, testNamePrefix, results);
+                ScenarioDefinition[] scenarios = docset.TestScenarios.ScenariosForMethod(method);
+                ValidationResults results = await method.ValidateServiceResponseAsync(scenarios, account, credentials);
+
+                PrintResultsToConsole(method, account, results, options);
+                docSetOutcome |= results.OverallOutcome;
+                AddPause(options);
             }
 
             if (options.IgnoreWarnings || options.SilenceWarnings)
             {
-                results.ConvertWarningsToSuccess();
+                // Remove the warning flag from the outcomes
+                if ((docSetOutcome & ValidationOutcome.Warning) > 0)
+                {
+                    docSetOutcome ^= ValidationOutcome.Warning;
+                }
             }
 
-            results.PrintToConsole();
-            return (results.FailureCount + results.WarningCount) == 0;
+            bool hadWarnings = (docSetOutcome & ValidationOutcome.Warning) > 0;
+            bool hadErrors = (docSetOutcome & ValidationOutcome.Error) > 0;
+
+            return !(hadErrors | hadWarnings);
         }
 
         /// <summary>
-        /// Tests a single method + account for all scenarios available for that method.
+        /// Write the results of a test to the output console.
         /// </summary>
-        /// <param name="options"></param>
-        /// <param name="account"></param>
-        /// <param name="docset"></param>
         /// <param name="method"></param>
-        /// <param name="credentials"></param>
-        /// <param name="testNamePrefix"></param>
+        /// <param name="account"></param>
         /// <param name="results"></param>
-        /// <returns></returns>
-        private static async Task CheckMethodForAccountAsync(
-            CheckServiceOptions options,
-            Account account,
-            DocSet docset,
-            MethodDefinition method,
-            AuthenicationCredentials credentials,
-            string testNamePrefix,
-            CheckResults results)
+        /// <param name="options"></param>
+        private static void PrintResultsToConsole(MethodDefinition method, Account account, ValidationResults output, CheckServiceOptions options)
         {
-            var testScenarios = docset.TestScenarios.ScenariosForMethod(method);
-            if (testScenarios.Length == 0)
+            FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, "Testing method {0} with account {1}", method.Identifier, account.Name);
+            
+            foreach(var scenario in output.Results)
             {
-                // If there are no parameters defined, we still try to call the request as-is.
-                var errors =
-                    await
-                        TestMethodWithScenarioAsync(
-                            docset,
-                            method,
-                            null,
-                            account.ServiceUrl,
-                            credentials,
-                            options.SilenceWarnings,
-                            testNamePrefix);
-                results.IncrementResultCount(errors);
-                AddPause(options);
-            }
-            else
-            {
-                // Otherwise, if there are parameter sets, we call each of them and check the result.
-                var enabledScenarios = testScenarios.Where(s => s.Enabled || options.ForceAllScenarios);
-                if (enabledScenarios.FirstOrDefault() == null)
+                if (scenario.Errors.Count > 0)
                 {
-                    TestReport.StartTest(method.Identifier, method.SourceFile.DisplayName);
-                    await TestReport.FinishTestAsync(
-                        method.Identifier,
-                        TestOutcome.Skipped,
-                        "All scenarios for this method were disabled.");
+                    FancyConsole.WriteLineIndented(
+                        "  ",
+                        FancyConsole.ConsoleSubheaderColor,
+                        "Scenario: {0}",
+                        scenario.Name);
 
-                    FancyConsole.Write(FancyConsole.ConsoleHeaderColor, "Skipped test: {0}.", method.Identifier);
-                    FancyConsole.WriteLine(
-                        FancyConsole.ConsoleWarningColor,
-                        " All scenarios for test {0} were disabled.",
-                        method.Identifier);
-                }
-                else
-                {
-                    // We have scenarios, so repeat the test for each scenario and record the result.
-                    foreach (var requestSettings in enabledScenarios)
+                    foreach (var message in scenario.Errors)
                     {
-                        var errors =
-                            await
-                                TestMethodWithScenarioAsync(
-                                    docset,
-                                    method,
-                                    requestSettings,
-                                    account.ServiceUrl,
-                                    credentials,
-                                    options.SilenceWarnings,
-                                    testNamePrefix);
-                        results.IncrementResultCount(errors);
-                        AddPause(options);
+                        if (options.EnableVerboseOutput || message.IsWarningOrError)
+                            FancyConsole.WriteLineIndented("    ", FancyConsole.ConsoleDefaultColor, message.ErrorText);
                     }
+
+                    FancyConsole.WriteLineIndented(
+                        "    ",
+                        scenario.Outcome.ConsoleColor(),
+                        "Scenario finished with outcome: {0}. Duration: {1}",
+                        scenario.Outcome,
+                        scenario.Duration);
                 }
             }
 
+            FancyConsole.WriteLineIndented(
+                "  ",
+                output.OverallOutcome.ConsoleColor(),
+                "Method testing finished with overall outcome: {0}",
+                output.OverallOutcome);
             FancyConsole.WriteLine();
         }
+
+
+
 
         private static void ConfigureAdditionalHeadersForAccount(CheckServiceOptions options, Account account)
         {
@@ -965,100 +945,7 @@
             }
         }
 
-        /// <summary>
-        /// Tests a given request/response method using an optionally provided scenario. Performs
-        /// validation on the response from the method, and prints the response to the console.
-        /// </summary>
-        /// <param name="docset"></param>
-        /// <param name="method"></param>
-        /// <param name="scenario"></param>
-        /// <param name="rootUrl"></param>
-        /// <param name="credentials"></param>
-        /// <param name="silenceWarnings"></param>
-        /// <param name="testNamePrefix"></param>
-        /// <returns></returns>
-        private static async Task<ValidationError[]> TestMethodWithScenarioAsync(
-            DocSet docset,
-            MethodDefinition method,
-            ScenarioDefinition scenario,
-            string rootUrl,
-            AuthenicationCredentials credentials,
-            bool silenceWarnings,
-            string testNamePrefix)
-        {
-            string testName = testNamePrefix + method.Identifier;
-            string indentLevel = "";
-            if (scenario != null)
-            {
-                if (!string.IsNullOrEmpty(scenario.Description))
-                {
-                    testName = testNamePrefix + string.Format("{0} [{1}]", method.Identifier, scenario.Description);
-                }
-                indentLevel = indentLevel + "  ";
-            }
-
-            FancyConsole.VerboseWriteLine("");
-            TestReport.StartTest(testName, method.SourceFile.DisplayName);
-
-            // Generate the tested request by "previewing" the request and executing
-            // all test-setup procedures
-            if (null != scenario)
-            {
-                FancyConsole.VerboseWriteLineIndented(indentLevel, "Generating testable request for scenario...");
-            }
-            else
-            {
-                FancyConsole.VerboseWriteLineIndented(indentLevel, "No scenario was defined. Running verbatim request.");
-            }
-
-            var requestPreviewResult = await method.GenerateMethodRequestAsync(scenario, rootUrl, credentials, docset);
-
-            // Check to see if an error occured building the request, and abort if so.
-            if (requestPreviewResult.IsWarningOrError)
-            {
-                await
-                    WriteOutErrorsAndFinishTestAsync(
-                        requestPreviewResult.Messages,
-                        silenceWarnings,
-                        indentLevel + "  ",
-                        testName: testName);
-                return requestPreviewResult.Messages;
-            }
-            else
-            {
-                WriteMessages(requestPreviewResult.Messages, false, indentLevel + "  ", false);
-            }
-
-            // We've done all the test-setup work, now we have the real request to make to the service
-            var requestPreview = requestPreviewResult.Value;
-
-            FancyConsole.VerboseWriteLineIndented(indentLevel, "Method HTTP Request:");
-            FancyConsole.VerboseWriteLineIndented(indentLevel + "  ", requestPreview.FullHttpText());
-
-            var parser = new HttpParser();
-            HttpResponse expectedResponse = null;
-            if (!string.IsNullOrEmpty(method.ExpectedResponse))
-            {
-                expectedResponse = parser.ParseHttpResponse(method.ExpectedResponse);
-            }
-                
-            // Execute the actual tested method (the result of the method preview call, which made the test-setup requests)
-            var actualResponse = await requestPreview.GetResponseAsync(rootUrl);
-
-            FancyConsole.VerboseWriteLineIndented(indentLevel, "Response:");
-            FancyConsole.VerboseWriteLineIndented(indentLevel + "  ", actualResponse.FullText());
-            FancyConsole.VerboseWriteLine();
-            
-            //FancyConsole.VerboseWriteLineIndented(indentLevel, "Validation results:");
-            
-            // Perform validation on the method's actual response
-            ValidationError[] errors;
-            method.ValidateResponse(actualResponse, expectedResponse, scenario, out errors);
-
-            await WriteOutErrorsAndFinishTestAsync(errors, silenceWarnings, indentLevel, "No errors.", false, testName);
-            
-            return errors;
-        }
+      
 
         private static async Task<bool> PublishDocumentationAsync(PublishOptions options)
         {
@@ -1228,5 +1115,25 @@
             Program.WriteValidationError(string.Empty, error);
         }
     }
-   
+
+    internal static class OutcomeExtensionMethods
+    {
+
+        public static ConsoleColor ConsoleColor(this ValidationOutcome outcome)
+        {
+            if ((outcome & ValidationOutcome.Error) > 0)
+                return FancyConsole.ConsoleErrorColor;
+            if ((outcome & ValidationOutcome.Warning) > 0)
+                return FancyConsole.ConsoleWarningColor;
+            if ((outcome & ValidationOutcome.Passed) > 0)
+                return FancyConsole.ConsoleSuccessColor;
+            if ((outcome & ValidationOutcome.Skipped) > 0)
+                return FancyConsole.ConsoleWarningColor;
+
+            return FancyConsole.ConsoleDefaultColor;
+
+        }
+
+    }
+
 }

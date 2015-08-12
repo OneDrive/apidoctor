@@ -1,9 +1,10 @@
 ﻿namespace ApiDocs.ConsoleApp.Auth
 {
     using System;
+    using ApiDocs.Validation;
     using Newtonsoft.Json;
 
-    public class Account
+    public class Account : IServiceAccount
     {
         [JsonProperty("name")]
         public string Name { get; set; }
@@ -27,7 +28,7 @@
         public string RefreshToken { get; set; }
 
         [JsonProperty("serviceUrl")]
-        public string ServiceUrl { get; set; }
+        public string BaseUrl { get; set; }
 
         [JsonProperty("resource")]
         public string Resource { get; set; }
