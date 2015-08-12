@@ -831,14 +831,17 @@
 
             int concurrentTasks = options.ParallelTests ? ParallelTaskCount : 1;
 
-            await ForEachAsync(methods, concurrentTasks, async method => {
-                    ScenarioDefinition[] scenarios = docset.TestScenarios.ScenariosForMethod(method);
-                    ValidationResults results = await method.ValidateServiceResponseAsync(scenarios, account, credentials);
+            CheckResults docSetResults = new CheckResults();
 
-                    PrintResultsToConsole(method, account, results, options);
-                    docSetOutcome |= results.OverallOutcome;
-                    if (concurrentTasks == 1)
-                        AddPause(options);
+            await ForEachAsync(methods, concurrentTasks, async method => {
+                ScenarioDefinition[] scenarios = docset.TestScenarios.ScenariosForMethod(method);
+                ValidationResults results = await method.ValidateServiceResponseAsync(scenarios, account, credentials);
+
+                PrintResultsToConsole(method, account, results, options);
+                docSetResults.RecordResults(results, options);
+                
+                if (concurrentTasks == 1)
+                    AddPause(options);
             });
 
             if (options.IgnoreWarnings || options.SilenceWarnings)
@@ -850,11 +853,16 @@
                 }
             }
 
+            docSetResults.PrintToConsole();
+
             bool hadWarnings = (docSetOutcome & ValidationOutcome.Warning) > 0;
             bool hadErrors = (docSetOutcome & ValidationOutcome.Error) > 0;
 
+
             return !(hadErrors | hadWarnings);
         }
+
+        
 
         /// <summary>
         /// Parallel enabled for each processor that supports async lambdas. Copied from 
@@ -912,6 +920,11 @@
                                     "    ",
                                     FancyConsole.ConsoleDefaultColor,
                                     message.ErrorText);
+                        }
+
+                        if (options.SilenceWarnings && scenario.Outcome == ValidationOutcome.Warning)
+                        {
+                            scenario.Outcome = ValidationOutcome.Passed;
                         }
 
                         FancyConsole.WriteLineIndented(
