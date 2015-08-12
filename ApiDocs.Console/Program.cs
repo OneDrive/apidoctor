@@ -524,12 +524,14 @@
                 {
                     if (example.Metadata == null)
                         continue;
+                    if (example.Language != CodeLanguage.Json)
+                        continue;
 
                     var testName = string.Format("check-example: {0}", example.Metadata.MethodName, example.Metadata.ResourceType);
                     TestReport.StartTest(testName, doc.DisplayName);
 
                     ValidationError[] errors;
-                    docset.ResourceCollection.ValidateJsonExample(example.Metadata, example.OriginalExample, out errors);
+                    docset.ResourceCollection.ValidateJsonExample(example.Metadata, example.SourceExample, out errors);
 
                     await WriteOutErrorsAndFinishTestAsync(errors, options.SilenceWarnings, "   ", "No errors.", false, testName, "Warnings detected", "Errors detected");
                     results.IncrementResultCount(errors);

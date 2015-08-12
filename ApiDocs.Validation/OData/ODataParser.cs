@@ -107,7 +107,7 @@
         {
             var annotation = new CodeBlockAnnotation() { ResourceType = string.Concat(schema.Namespace, ".", ct.Name), BlockType = CodeBlockType.Resource };
             var json = BuildJsonExample(ct, otherSchema);
-            ResourceDefinition rd = new ResourceDefinition(annotation, json, null);
+            ResourceDefinition rd = new ResourceDefinition(annotation, json, null, "json");
             return rd;
         }
 

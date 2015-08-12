@@ -9,15 +9,20 @@
     /// </summary>
     public class ResourceDefinition : ItemDefinition
     {
-        public ResourceDefinition(CodeBlockAnnotation annotation, string jsonContent, DocFile source)
+        public ResourceDefinition(CodeBlockAnnotation annotation, string content, DocFile source, string language)
         {
+            if (null != language && !language.Equals("json", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new ArgumentException("Resources only support JSON language.", "language");
+            }
+
             this.Metadata = annotation;
-            this.OriginalExample = jsonContent;
+            this.OriginalExample = content;
             this.SourceFile = source;
 
             try
             {
-                object inputObject = JsonConvert.DeserializeObject(jsonContent);
+                object inputObject = JsonConvert.DeserializeObject(content);
                 this.JsonExample = JsonConvert.SerializeObject(inputObject, Formatting.Indented);
             }
             catch (Exception ex)
@@ -28,6 +33,7 @@
                         source.DisplayName,
                         "Error parsing resource definition: {0}",
                         ex.Message));
+                throw;
             }
 
             if (string.IsNullOrEmpty(annotation.ResourceType))

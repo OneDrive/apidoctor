@@ -78,6 +78,7 @@
         ExpectationConditionFailed,
         NoDocumentsFound,
         MissingResourceName,
+        UnsupportedLanguage,
         AllScenariosDisabled
 
     }
