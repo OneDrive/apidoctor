@@ -32,9 +32,15 @@
                 throw new ArgumentNullException("account");
             if (null == credentials)
                 throw new ArgumentNullException("credentials");
-            scenarios = scenarios ?? new ScenarioDefinition[] { new ScenarioDefinition { Description = "default-scenario", Enabled = true } };
 
             ValidationResults results = new ValidationResults();
+
+            if (scenarios.Length == 0)
+            {
+                // If no descenarios are defined for this method, add a new default scenario
+                scenarios = new ScenarioDefinition[] { new ScenarioDefinition { Description = "default-scenario", Enabled = true } };
+                results.AddResult("init", new ValidationMessage(null, "No scenarios were defined for method {0}. Will execute request as written.", method.Identifier), ValidationOutcome.None);
+            }
 
             if (scenarios.Any() && !scenarios.Any(x => x.Enabled))
             {
@@ -81,7 +87,7 @@
             TimeSpan generateMethodDuration = new TimeSpan(DateTimeOffset.UtcNow.Ticks - startTicks);
             
             // Check to see if an error occured building the request, and abort if so.
-            var generatorResults = results[actionName + " test-setup"];
+            var generatorResults = results[actionName + " [test-setup requests]"];
             generatorResults.AddResults(requestPreviewResult.Messages, requestPreviewResult.IsWarningOrError ? ValidationOutcome.Error :  ValidationOutcome.Passed);
             generatorResults.Duration = generateMethodDuration;
 
@@ -220,7 +226,7 @@
     [Flags()]
     public enum ValidationOutcome
     {
-        NotChecked = 0,
+        None = 0,
         Skipped = 1 << 0,
         Passed = 1 << 1,
         Warning = 1 << 2,

@@ -826,7 +826,7 @@
 
             AuthenicationCredentials credentials = AuthenicationCredentials.CreateAutoCredentials(account.AccessToken);
 
-            ValidationOutcome docSetOutcome = ValidationOutcome.NotChecked;
+            ValidationOutcome docSetOutcome = ValidationOutcome.None;
             foreach (var method in methods)
             {
                 ScenarioDefinition[] scenarios = docset.TestScenarios.ScenariosForMethod(method);
