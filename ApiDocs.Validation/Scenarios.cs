@@ -11,11 +11,14 @@
         [JsonProperty("scenarios")]
         public ScenarioDefinition[] Scenarios { get; set; }
 
+        [JsonProperty("canned-requests")]
+        public CannedRequestDefinition[] CannedRequests { get; set; }
+
         public override bool IsValid
         {
             get
             {
-                return this.Scenarios != null;
+                return this.Scenarios != null || this.CannedRequests != null;
             }
         }
     }

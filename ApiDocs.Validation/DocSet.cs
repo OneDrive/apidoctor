@@ -40,6 +40,7 @@
         public JsonResourceCollection ResourceCollection { get { return this.resourceCollection; } }
         
         public List<ScenarioDefinition> TestScenarios {get; internal set;}
+        public List<CannedRequestDefinition> CannedRequests { get; internal set; }
 
         public IEnumerable<AuthScopeDefinition> AuthScopes
         {
@@ -96,12 +97,17 @@
         private void LoadTestScenarios()
         {
             this.TestScenarios = new List<ScenarioDefinition>();
+            this.CannedRequests = new List<CannedRequestDefinition>();
 
             ScenarioFile[] files = TryLoadConfigurationFiles<ScenarioFile>(this.SourceFolderPath);
             foreach (var file in files)
             {
                 Console.WriteLine("Found test scenario file: {0}", file.SourcePath);
                 this.TestScenarios.AddRange(file.Scenarios);
+                if (null != file.CannedRequests)
+                {
+                    this.CannedRequests.AddRange(file.CannedRequests);
+                }
             }
         }
 

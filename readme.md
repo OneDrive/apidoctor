@@ -338,7 +338,7 @@ conforming to this schema:
       "request-parameters":
       {
         "{path-to-file}": "/test_copy.file.txt",
-        "$body": "Test file that we will copy to another location",
+        "!body": "Test file that we will copy to another location",
         "Content-Type:": "application/octet-stream"
       },
       "allowed-status-codes": [ 200 ],
@@ -388,6 +388,34 @@ Each object in the array of `test-setup` is a `PlaceholderRequest` instance.
 | `request-parameters`   | key-value pairs | Specify the key-value pairs for parameters for the request. The key is used as a placeholder name, and the value is subed into the placeholder.                                                               |
 | `allowed-status-codes` | array of int    | Normally the request is considered failed of the response is anything other than 2xx. Use this to allow error codes and other responses to be considered valid.                                               |
 | `capture`              | key-value pairs | Specify the key-value pairs of values that are read from this response and stored for another request under this scenario. Allows you to store values and use them in other requests under the same scenario. |
+| `canned-request`       | string          | The name of the canned-request defined in the scenario file that is executed. This way common requests can be stored in one place instead of repeated throughtout the test files.                             |
+
+
+### Canned Requests
+Canned requests look just like a test setup method, but instead of being a 
+scenario for a particular method are avaialble to be used from any scenario 
+definition.
+
+```json
+{
+  "canned-requests": [
+    {
+      "name": "create-photo-item",
+      "method": "upload-via-put",
+      "request-parameters": {
+        "{item-path}": "!random-filename-png",
+        "!body.base64": "iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg=="
+      },
+      "capture": {
+        "[item-id]": "$.id"
+      }
+    }
+  ]
+}
+```
+
+
+
 
 ### Placeholder Grammar
 
@@ -399,8 +427,10 @@ When specifying a placeholder name or value, the following syntax is used:
 | Square Braces | `[source-file-id]` | Look for a previous stored value that was output from a previous request within the same scenario.                                        |
 | JPath         | `$.id`             | Replace a property value in the JSON body of the request. If the content-type of the request is not application/json an error will occur. |
 | !body         | `!body`            | Replace the content stream of the request with the provided value                                                                         |
+| !body.base64  | `!body.base64`     | Replace the content stream of the request with a decoded byte stream of the base 64 value provided.                                       |
 | !url          | `!url`             | Replace the URL for the request with the provided value.                                                                                  |
 | Header:       | `Content-Type:`    | Replace the value of a header with the specified value. Note the header name must end with a colon to be valid.                           |
+| Random Filename | `!random-filename-png | Returns a randomly generated value with a particular file extension that can be used to ensure tests don't interfere with each other. 
 
 ### Capture Grammar
 

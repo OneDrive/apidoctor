@@ -20,6 +20,13 @@ namespace ApiDocs.Validation.Params
         [JsonProperty("method", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public string MethodName { get; set; }
 
+        
+        /// <summary>
+        /// Name of a cannoed response that is invoked for this call (instead of an HTTP request or method)
+        /// </summary>
+        [JsonProperty("canned-request", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public string CannedRequestName { get; set; }
+
         /// <summary>
         /// Specify a list of replacements to be made in the request using values previously captured from
         /// test-setup requests.
@@ -87,6 +94,8 @@ namespace ApiDocs.Validation.Params
                 return PlaceholderLocation.StoredValue;
             if (key == "!body")
                 return PlaceholderLocation.Body;
+            if (key == "!body.base64")
+                return PlaceholderLocation.BodyBase64Encoded;
             if (key == "!url")
                 return PlaceholderLocation.Url;
             if (key.EndsWith(":") && key.Length > 1)
