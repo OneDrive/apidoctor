@@ -37,6 +37,9 @@
     {
         [JsonProperty("name")]
         public string Name { get; set; }
+
+        [JsonProperty("implicit-variable")]
+        public string ImplicitVariable { get; set; }
     }
 
     public enum PlaceholderLocation
