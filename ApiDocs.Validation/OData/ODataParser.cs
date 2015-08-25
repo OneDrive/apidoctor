@@ -144,7 +144,16 @@
 
             // If that fails, the we need to locate the typeIdentifier in the schemas and
             // generate an example from that.
-            ComplexType matchingType = otherSchemas.FindTypeWithIdentifier(typeIdentifier);
+            ComplexType matchingType = null;
+            try
+            {
+                matchingType = otherSchemas.FindTypeWithIdentifier(typeIdentifier);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Exception loading type with identifier: {0} - {1}", typeIdentifier, ex.Message);
+            }
+
             if (null == matchingType)
             {
                 Debug.WriteLine("Failed to find an example for type: " + typeIdentifier);
