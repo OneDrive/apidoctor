@@ -58,14 +58,19 @@
 
         public HttpWebRequest PrepareHttpWebRequest(string baseUrl)
         {
-            var effectiveUrl = baseUrl;
-            if (this.Url.StartsWith(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
+
+            Uri effectiveUrl;
+            // See if this.Url is a relative URL or a fully qualified URL
+            if (!Uri.TryCreate(this.Url, UriKind.Absolute, out effectiveUrl))
             {
-                effectiveUrl = this.Url;
-            }
-            else
-            {
-                effectiveUrl += this.Url;
+                if (!Uri.TryCreate(baseUrl + this.Url, UriKind.Absolute, out effectiveUrl))
+                {
+                    throw new InvalidOperationException(
+                        string.Format(
+                            "Couldn't construct a vaild URL for the request: baseUrl={0}, requestUrl={1}",
+                            baseUrl,
+                            this.Url));
+                }
             }
 
             HttpWebRequest request = WebRequest.CreateHttp(effectiveUrl);
