@@ -38,7 +38,7 @@
             if (scenarios.Length == 0)
             {
                 // If no descenarios are defined for this method, add a new default scenario
-                scenarios = new ScenarioDefinition[] { new ScenarioDefinition { Description = "default-scenario", Enabled = true } };
+                scenarios = new ScenarioDefinition[] { new ScenarioDefinition { Description = "default-scenario", Enabled = true, MethodName = method.Identifier} };
                 results.AddResult("init", new ValidationMessage(null, "No scenarios were defined for method {0}. Will execute request as written.", method.Identifier), ValidationOutcome.None);
             }
 

@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Text;
     using System.Threading.Tasks;
     using ApiDocs.Validation.Error;
     using ApiDocs.Validation.Http;
@@ -138,19 +139,19 @@
             var request = parser.ParseHttpRequest(this.Request);
 
             AddAccessTokenToRequest(credentials, request);
+            AddTestHeaderToRequest(scenario, request);
 
             List<ValidationError> errors = new List<ValidationError>();
 
             if (null != scenario)
             {
-
                 var storedValuesForScenario = new Dictionary<string, string>();
 
                 if (null != scenario.TestSetupRequests)
                 {
                     foreach (var setupRequest in scenario.TestSetupRequests)
                     {
-                        var result = await setupRequest.MakeSetupRequestAsync(baseUrl, credentials, storedValuesForScenario, documents);
+                        var result = await setupRequest.MakeSetupRequestAsync(baseUrl, credentials, storedValuesForScenario, documents, scenario);
                         errors.AddRange(result.Messages);
 
                         if (result.IsWarningOrError)
@@ -160,7 +161,6 @@
                         }
                     }
                 }
-
 
                 try 
                 {
@@ -178,7 +178,6 @@
                     
                     return new ValidationResult<HttpRequest>(null, errors);
                 }
-
             }
 
             if (string.IsNullOrEmpty(request.Accept))
@@ -194,6 +193,20 @@
             }
 
             return new ValidationResult<HttpRequest>(request, errors);
+        }
+
+        /// <summary>
+        /// Add information about the test that generated this call to the request headers.
+        /// </summary>
+        /// <param name="scenario"></param>
+        /// <param name="request"></param>
+        internal static void AddTestHeaderToRequest(ScenarioDefinition scenario, HttpRequest request)
+        {
+            var headerValue = string.Format(
+                "method-name: {0}; scenario-name: {1}",
+                scenario.MethodName,
+                scenario.Description);
+            request.Headers.Add("ApiDocsTestInfo", headerValue);
         }
 
         internal static void AddAccessTokenToRequest(AuthenicationCredentials credentials, HttpRequest request)

@@ -52,7 +52,7 @@
         /// <param name="storedValues"></param>
         /// <param name="documents"></param>
         /// <returns></returns>
-        public async Task<ValidationResult<bool>> MakeSetupRequestAsync(string baseUrl, AuthenicationCredentials credentials, Dictionary<string, string> storedValues, DocSet documents)
+        public async Task<ValidationResult<bool>> MakeSetupRequestAsync(string baseUrl, AuthenicationCredentials credentials, Dictionary<string, string> storedValues, DocSet documents, ScenarioDefinition scenario)
         {
             var errors = new List<ValidationError>();
             if (!string.IsNullOrEmpty(this.CannedRequestName))
@@ -67,10 +67,8 @@
                     return new ValidationResult<bool>(false, errors);
                 }
 
-                return await cannedRequest.MakeSetupRequestAsync(baseUrl, credentials, storedValues, documents);
+                return await cannedRequest.MakeSetupRequestAsync(baseUrl, credentials, storedValues, documents, scenario);
             }
-
-            
             
             // Get the HttpRequest, either from MethodName or by parsing HttpRequest
             HttpRequest request;
@@ -84,7 +82,9 @@
                 return new ValidationResult<bool>(false, errors);
             }
 
-            // TODO: If this is a canned request, we need to merge the parameters / placeholders here
+            MethodDefinition.AddTestHeaderToRequest(scenario, request);
+
+            // If this is a canned request, we need to merge the parameters / placeholders here
             var placeholderValues = this.RequestParameters.ToPlaceholderValuesArray(storedValues);
 
             // Update the request with the parameters in request-parameters
