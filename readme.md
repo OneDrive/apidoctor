@@ -1,6 +1,6 @@
 # API Documentation Test Tool
 
-The API documentation test tool makes it easy to validate Markdown-based API
+The API documentation test tool makes it easy to validate that the Markdown-based API
 documentation matches a REST service implementation.
 
 The toolset includes a command line and GUI application that can be used to
@@ -9,7 +9,7 @@ perform for the following validations:
 * Check for broken links in the documentation.
 * Print resource and method definitions.
 * Verify that the documentation is internally consistent:
-  * Check that defined resources and APIs that return these resources are matched.
+  * Check that defined resources and APIs that return these resources match.
   * Check that example API responses are consistent with the resources they should return.
 * Verify that a target REST service matches the API documentation:
   * Check that requests and responses in the documentation match the service.
@@ -30,11 +30,11 @@ platform. This tool is compatible with Mono or .NET.
 Available commands are:
 
 * `print` - Print files, resources, and methods discovered in the documentation.
-* `check-links` - Verify links in the documentation aren't broken.
+* `check-links` - Verify that links in the documentation aren't broken.
 * `check-docs` - Check for errors in the documentation's resources, requests, and response examples.
 * `check-service` - Check for differences between the documentation and service responses to documented requests.
 * `publish` - Publish the documentation into one of the supported output formats.
-* `set` - Set default parameter values for the tool
+* `set` - Set default parameter values for the tool.
 
 All commands (except `set`) have the following options available:
 
@@ -67,9 +67,11 @@ Example: `apidocs.exe links --path ~/github/api-docs --method search`
 
 ### Check-docs Command
 The `check-docs` command ensures that the documentation is internally consistent.
-It verifies that JSON examples are proper JSON, that API methods that accept or
-return a specific resource type have valid request/response examples, and that
-the metadata in the documentation is formatted properly.
+It verifies that:
+
+* The JSON examples are proper JSON 
+* The API methods that accept or return a specific resource type have valid request/response examples
+* The metadata in the documentation is formatted properly
 
 | Option                   | Description                                                                                        |
 |:-------------------------|:---------------------------------------------------------------------------------------------------|
@@ -146,7 +148,7 @@ access tokens. This enables the tool to be used in automation scripts and other
 scenarios where it may not be possible to have user-interaction to generate an
 access token.
 
-| Variable Name           | Description                                                                |
+| Variable name           | Description                                                                |
 |:------------------------|:---------------------------------------------------------------------------|
 | **oauth-token-service** | URL for the OAuth 2.0 token service to be used to retrieve an access token |
 | **oauth-client-id**     | Client ID that is passed to the token service                              |
@@ -160,7 +162,7 @@ token service to retrieve an access token when necessary.
 
 ### Publish Command
 
-The publish command uses the documentation to generate a new set of outputs.
+The `publish` command uses the documentation to generate a new set of outputs.
 
 | Option               | Description                                                         |
 |:---------------------|:--------------------------------------------------------------------|
@@ -170,7 +172,7 @@ The publish command uses the documentation to generate a new set of outputs.
 
 Example: `apidocs --path ~/github/api-docs --output ~/documents/docs`
 
-#### Publish Formats
+#### Publish formats
 
 The following formats are supported:
 
@@ -181,7 +183,7 @@ The following formats are supported:
 | swagger2 | Experimental: Generates a swagger 2 compatible output file from the documentation.                                              |
 | mustache | Use a mustache template language to generate html output. Requires a --template <path> and a template.htm file inside that path |
 
-#### Swagger2 Options
+#### Swagger2 options
 
 The following additional command line options are required for swagger2 output:
 | Name                    | Description                                                         |
@@ -193,7 +195,7 @@ The following additional command line options are required for swagger2 output:
 
 
 ### Set Command
-The set command lets you preset values for some parameters so they don't need to
+The `set` command lets you preset values for some parameters so they don't need to
 be specified on each command line. These values are stored in the app.config
 file next to the application executable.
 
@@ -207,7 +209,7 @@ Example: `apidocs set --path ~/github/api-docs --url https://api.example.org/v1.
 | `--reset`                | Erase any stored values.                           |
 | `--print`                | Print any currently stored values.                 |
 
-## Documentation Format
+## Documentation format
 To work with this test tool, the source documentation has a few basic requirements:
 
 * Documentation must be in plain text or markdown format.
@@ -215,7 +217,7 @@ To work with this test tool, the source documentation has a few basic requiremen
 * Requests, responses, and resources are enclosed in fenced code blocks (three backticks ` ``` `).
 * Requests, responses, and resources have simple metadata enclosed in an HTML comment immediately before the codeblock.
 
-### Code-block Metadata
+### Code-block metadata
 To enable the tool to categorize and process the code blocks correctly a simple
 JSON metadata block is required for each code block. These are enclosed as an HTML
 comment block so as to not be visible in the rendered markdown.
@@ -279,7 +281,7 @@ Content-Type: application/json
 This file, if included in the documentation, would be read as one resource,
 `example_item` that has a JSON object schema with these properties: 
 
-| Property Name | Type | Validation type
+| Property name | Type | Validation type
 |---|---|---|
 | `name` | string | Value is only validated to be a string type. |
 | `count` | integer | Value is only validated to be an integer type. |
@@ -295,13 +297,13 @@ Using `check-docs` would verify that the return example in the documentation
 matches the proper schema. Using `check-service` would verify that the service
 responses to the request following the schema.
 
-Request / response pairs are identified by matching up the next response found
+Request/response pairs are identified by matching up the next response found
 after the request codeblock. You can have other codeblocks between a request and
 a response as long as they are missing the metadata or tagged as
 `"blockType": "ignored"`. A given file can have as many resources and
 request/response pairs as necessary.
 
-## Request Parameters
+## Request parameters
 
 The tool also supports defining parameters for requests in a separate file. This
 information is loaded and used to make one or more requests to the service by
@@ -371,7 +373,7 @@ conforming to this schema:
 | `request-parameters` | key-value pairs | Specify the key-value pairs for parameters for the request. The key is used as a placeholder name, and the value is subed into the placeholder. |
 | `expectations`       | key-value pairs | Specify the expected values in the final response. The keys are the same [Capture Grammar](#capture-grammer) defined for request-parameters.    |
 
-### Test Setup
+### Test setup
 
 The test-setup property allows you to define an array of calls that are made
 before the actual test method is executed. This allows you to pull values from
@@ -389,7 +391,7 @@ Each object in the array of `test-setup` is a `PlaceholderRequest` instance.
 | `allowed-status-codes` | array of int    | Normally the request is considered failed of the response is anything other than 2xx. Use this to allow error codes and other responses to be considered valid.                                               |
 | `capture`              | key-value pairs | Specify the key-value pairs of values that are read from this response and stored for another request under this scenario. Allows you to store values and use them in other requests under the same scenario. |
 
-### Placeholder Grammar
+### Placeholder grammar
 
 When specifying a placeholder name or value, the following syntax is used:
 
@@ -402,7 +404,7 @@ When specifying a placeholder name or value, the following syntax is used:
 | !url          | `!url`             | Replace the URL for the request with the provided value.                                                                                  |
 | Header:       | `Content-Type:`    | Replace the value of a header with the specified value. Note the header name must end with a colon to be valid.                           |
 
-### Capture Grammar
+### Capture grammar
 
 The `key` of anything in the `capture` node MUST be wrapped in square
 brackets `[foobar]`. Otherwise the parameters will not be considered value.
@@ -415,7 +417,7 @@ The output-value grammar follows the same syntax as the placeholder grammar:
 | Header: | `Content-Type:` | Read and store the value of the specified HTTP header |
 | !body   | !body           | Read and store the complete body of the response      |
 
-### Code Block Annotation Properties
+### Code block annotation properties
 
 The HTML-comment enclosed JSON object inside the documentation has the following
 properties defined:
@@ -435,9 +437,9 @@ properties defined:
 }
 ```
 
-#### Property Descriptions
+#### Property descriptions
 
-| Name                   | Value            | Allowed Blocks                       | Description                                                                                                                                                                                                     |
+| Name                   | Value            | Allowed blocks                       | Description                                                                                                                                                                                                     |
 |:-----------------------|:-----------------|:-------------------------------------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **blockType**          | string           | All                                  | Describes the type of the json block proceeding the annotation.                                                                                                                                                 |
 | **@odata.type**        | string           | All                                  | Describes the name of the resource (either being defined, in the case of a resource block, or as the body type on a request/response block)                                                                     |
@@ -447,11 +449,11 @@ properties defined:
 | **isEmpty**            | boolean          | response, example, simulatedResponse | Indicates that the collection value is expected to be empty (or not).                                                                                                                                           |
 | **truncated**          | boolean          | response, example, simulatedResponse | Indicates that the block will not include all properties of the resource and that's not an error. Properties explicitly shown in the code block are always considered required when tested against the service. |
 | **name**               | string           | request, example                     | Provides the name of the request method being defined.                                                                                                                                                          |
-| **expectError**        | boolean          | response, example, simulatedResponse | Use this to indicate that instead of returning the normal response as defined, an error response will be returned instead.                                                                                      |
+| **expectError**        | boolean          | response, example, simulatedResponse | Use this to indicate that instead of returning the normal response as defined, an error response will be returned.                                                                                      |
 | **nullableProperties** | array of strings | response, example, simulatedResponse | Provide a list of properties that are allowed to have null values. By default, null values for a property will generate a warning.                                                                              |
 
 
-#### Block Types
+#### Block types
 | Name                | Description                                                                                                                          |
 |:--------------------|:-------------------------------------------------------------------------------------------------------------------------------------|
 | `resource`          | The json block describes a system resource (complex type) in the API.                                                                |
