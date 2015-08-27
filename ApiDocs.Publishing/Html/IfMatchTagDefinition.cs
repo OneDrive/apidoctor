@@ -34,7 +34,7 @@
 
         protected override IEnumerable<string> GetChildTags()
         {
-            return new string[] { "else", "elif" };
+            return new string[] { "elsematch" };
         }
 
         public override bool ShouldCreateSecondaryGroup(TagDefinition definition)
@@ -48,23 +48,7 @@
         }
     }
 
-    public class ExtendedElseTagDefinition : ElseTagDefinition
-    {
-        protected override IEnumerable<string> GetClosingTags()
-        {
-            var tags = new List<string>(base.GetClosingTags()) { "ifmatch" };
-            return tags;
-        }
-    }
 
-    public class ExtendedElseIfTagDefinition : ElifTagDefinition
-    {
-        protected override IEnumerable<string> GetClosingTags()
-        {
-            var tags = new List<string>(base.GetClosingTags()) { "ifmatch" };
-            return tags;
-        }
-    }
 
    
 }

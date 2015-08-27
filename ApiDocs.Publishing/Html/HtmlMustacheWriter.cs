@@ -35,7 +35,7 @@
                 compiler.RegisterTag(this.fileTag, true);
                 compiler.RegisterTag(new IfMatchTagDefinition(), true);
                 compiler.RegisterTag(new ExtendedElseTagDefinition(), false);
-                compiler.RegisterTag(new ExtendedElseIfTagDefinition(), false);
+                //compiler.RegisterTag(new ExtendedElseIfTagDefinition(), false);
                 this.generator = compiler.Compile(this.TemplateHtml);
                 this.generator.KeyNotFound += this.Generator_KeyNotFound;
                 //this.generator.ValueRequested += this.Generator_ValueRequested;

@@ -32,6 +32,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="mustache-sharp, Version=0.2.8.1, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\mustache-sharp.0.2.8.1\lib\net40\mustache-sharp.dll</HintPath>
+    </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\packages\Newtonsoft.Json.6.0.8\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
@@ -44,10 +48,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Html\ExtendedConditionalTag.cs" />
+    <Compile Include="Html\ExtendedElseIfTag.cs" />
     <Compile Include="Html\DocumentPublisherHtml.cs" />
     <Compile Include="Html\FileTagDefinition.cs" />
     <Compile Include="Html\HtmlMustacheWriter.cs" />
     <Compile Include="Html\IfMatchTagDefinition.cs" />
+    <Compile Include="Html\ExtendedElseTag.cs" />
     <Compile Include="PathExtensionMethods.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Swagger\SwaggerClasses.cs" />
@@ -58,10 +65,6 @@
     <ProjectReference Include="..\OSS\MarkdownDeep\MarkdownDeep.csproj">
       <Project>{1569ed47-c7c9-4261-b6f4-7445bd0f2c95}</Project>
       <Name>MarkdownDeep</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\OSS\mustache-sharp\mustache-sharp\mustache-sharp.csproj">
-      <Project>{d71b378f-a4ba-4263-a4f0-07a49a0c528d}</Project>
-      <Name>mustache-sharp</Name>
     </ProjectReference>
     <ProjectReference Include="..\ApiDocs.Validation\ApiDocs.Validation.csproj">
       <Project>{33b10320-3802-49cf-8965-3510ae66d5ec}</Project>
