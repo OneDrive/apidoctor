@@ -13,6 +13,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiDocs.Validation.UnitTest
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Content", "Content", "{464F5D09-2636-459F-96C9-C968FF4CA7B5}"
 	ProjectSection(SolutionItems) = preProject
+		license.txt = license.txt
 		OpenSourceNotes.md = OpenSourceNotes.md
 		readme.md = readme.md
 	EndProjectSection
@@ -25,8 +26,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{8B3410
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiDocs.Publishing", "ApiDocs.Publishing\ApiDocs.Publishing.csproj", "{B675CF73-AA42-4A54-B5E7-FF5F155DA4A7}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "mustache-sharp", "OSS\mustache-sharp\mustache-sharp\mustache-sharp.csproj", "{D71B378F-A4BA-4263-A4F0-07A49A0C528D}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "OSS", "OSS", "{8C71C3F5-7CFD-4143-B391-4D395A376B77}"
 	ProjectSection(SolutionItems) = preProject
@@ -97,16 +96,6 @@ Global
 		{B675CF73-AA42-4A54-B5E7-FF5F155DA4A7}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{B675CF73-AA42-4A54-B5E7-FF5F155DA4A7}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{B675CF73-AA42-4A54-B5E7-FF5F155DA4A7}.Release|x86.ActiveCfg = Release|Any CPU
-		{D71B378F-A4BA-4263-A4F0-07A49A0C528D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D71B378F-A4BA-4263-A4F0-07A49A0C528D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D71B378F-A4BA-4263-A4F0-07A49A0C528D}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
-		{D71B378F-A4BA-4263-A4F0-07A49A0C528D}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
-		{D71B378F-A4BA-4263-A4F0-07A49A0C528D}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{D71B378F-A4BA-4263-A4F0-07A49A0C528D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D71B378F-A4BA-4263-A4F0-07A49A0C528D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D71B378F-A4BA-4263-A4F0-07A49A0C528D}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
-		{D71B378F-A4BA-4263-A4F0-07A49A0C528D}.Release|Mixed Platforms.Build.0 = Release|Any CPU
-		{D71B378F-A4BA-4263-A4F0-07A49A0C528D}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -117,7 +106,6 @@ Global
 		{A6F3993F-59C6-4985-ACF1-4D837D61E98F} = {7C7E72AE-EC3D-4EB9-B919-165F794C4902}
 		{EE3453F1-FD69-406C-9BD7-0643D6E999F3} = {7C7E72AE-EC3D-4EB9-B919-165F794C4902}
 		{B675CF73-AA42-4A54-B5E7-FF5F155DA4A7} = {7C7E72AE-EC3D-4EB9-B919-165F794C4902}
-		{D71B378F-A4BA-4263-A4F0-07A49A0C528D} = {8C71C3F5-7CFD-4143-B391-4D395A376B77}
 	EndGlobalSection
 	GlobalSection(MonoDevelopProperties) = preSolution
 		StartupItem = OneDrive.ApiDocumentation.CommandLine\OneDrive.ApiDocumentation.Console.csproj

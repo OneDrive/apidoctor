@@ -1,14 +1,18 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
+﻿/*
+ * Copied from Mustache-Sharp: https://github.com/jehugaleahsa/mustache-sharp 
+ * The version of this class inside the library is marked as internal. The implementation
+ * is copied here so it can be extended to add new conditional tags.
+ */
 
-namespace Mustache
+namespace ApiDocs.Publishing.Html
 {
-    /// <summary>
-    /// Defines a tag that conditionally prints its content.
-    /// </summary>
-    public abstract class ConditionTagDefinition : ContentTagDefinition
+    using Mustache;
+    using System;
+    using System.Collections;
+    using System.Collections.Generic;
+    using System.Linq;
+
+    internal class ApiDocsConditionalTag : ContentTagDefinition
     {
         private const string conditionParameter = "condition";
 
@@ -16,8 +20,8 @@ namespace Mustache
         /// Initializes a new instance of a ConditionTagDefinition.
         /// </summary>
         /// <param name="tagName">The name of the tag.</param>
-        protected ConditionTagDefinition(string tagName)
-            : base(tagName, true)
+        protected ApiDocsConditionalTag(string tagName)
+            : base(tagName)
         {
         }
 
