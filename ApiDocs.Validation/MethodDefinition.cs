@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Text;
     using System.Threading.Tasks;
     using ApiDocs.Validation.Error;
     using ApiDocs.Validation.Http;
@@ -132,25 +133,25 @@
         /// <param name="credentials"></param>
         /// <param name="documents"></param>
         /// <returns></returns>
-        public async Task<ValidationResult<HttpRequest>> PreviewRequestAsync(ScenarioDefinition scenario, string baseUrl, AuthenicationCredentials credentials, DocSet documents)
+        public async Task<ValidationResult<HttpRequest>> GenerateMethodRequestAsync(ScenarioDefinition scenario, string baseUrl, AuthenicationCredentials credentials, DocSet documents)
         {
             var parser = new HttpParser();
             var request = parser.ParseHttpRequest(this.Request);
 
             AddAccessTokenToRequest(credentials, request);
+            AddTestHeaderToRequest(scenario, request);
 
             List<ValidationError> errors = new List<ValidationError>();
 
             if (null != scenario)
             {
-
                 var storedValuesForScenario = new Dictionary<string, string>();
 
                 if (null != scenario.TestSetupRequests)
                 {
                     foreach (var setupRequest in scenario.TestSetupRequests)
                     {
-                        var result = await setupRequest.MakeSetupRequestAsync(baseUrl, credentials, storedValuesForScenario, documents);
+                        var result = await setupRequest.MakeSetupRequestAsync(baseUrl, credentials, storedValuesForScenario, documents, scenario);
                         errors.AddRange(result.Messages);
 
                         if (result.IsWarningOrError)
@@ -160,7 +161,6 @@
                         }
                     }
                 }
-
 
                 try 
                 {
@@ -173,12 +173,11 @@
                     errors.Add(
                         new ValidationError(
                             ValidationErrorCode.RewriteRequestFailure,
-                            "PreviewRequestAsync",
+                            "GenerateMethodRequestAsync",
                             ex.Message));
                     
                     return new ValidationResult<HttpRequest>(null, errors);
                 }
-
             }
 
             if (string.IsNullOrEmpty(request.Accept))
@@ -194,6 +193,20 @@
             }
 
             return new ValidationResult<HttpRequest>(request, errors);
+        }
+
+        /// <summary>
+        /// Add information about the test that generated this call to the request headers.
+        /// </summary>
+        /// <param name="scenario"></param>
+        /// <param name="request"></param>
+        internal static void AddTestHeaderToRequest(ScenarioDefinition scenario, HttpRequest request)
+        {
+            var headerValue = string.Format(
+                "method-name: {0}; scenario-name: {1}",
+                scenario.MethodName,
+                scenario.Description);
+            request.Headers.Add("ApiDocsTestInfo", headerValue);
         }
 
         internal static void AddAccessTokenToRequest(AuthenicationCredentials credentials, HttpRequest request)
@@ -261,19 +274,6 @@
             }
         }
 
-        //public async Task<ValidationResult<HttpResponse>> ApiResponseForMethod(string baseUrl, AuthenicationCredentials credentials, DocSet documents, ScenarioDefinition scenario = null)
-        //{
-        //    var buildResult = await BuildRequestAsync(baseUrl, credentials, documents, scenario);
-        //    if (buildResult.IsWarningOrError)
-        //    {
-        //        return new ValidationResult<HttpResponse>(null, buildResult.Messages);
-        //    }
-
-        //    var response = await HttpResponse.ResponseFromHttpWebResponseAsync(buildResult.Value);
-        //    return new ValidationResult<HttpResponse>(response);
-        //}
-
-
         /// <summary>
         /// Check to ensure the http request is valid
         /// </summary>
@@ -323,6 +323,94 @@
             var verifyApiRequirementsResponse = request.IsRequestValid(this.SourceFile.DisplayName, this.SourceFile.Parent.Requirements);
             detectedErrors.AddRange(verifyApiRequirementsResponse.Messages);
         }
+
+
+        /// <summary>
+        /// Validates that a particular HttpResponse matches the method definition and optionally the expected response.
+        /// </summary>
+        /// <param name="method">Method definition that was used to generate a request.</param>
+        /// <param name="actualResponse">Actual response from the service (this is what we validate).</param>
+        /// <param name="expectedResponse">Prototype response (expected) that shows what a valid response should look like.</param>
+        /// <param name="scenario">A test scenario used to generate the response, which may include additional parameters to verify.</param>
+        /// <param name="errors">A collection of errors, warnings, and verbose messages generated by this process.</param>
+        public void ValidateResponse(HttpResponse actualResponse, HttpResponse expectedResponse, ScenarioDefinition scenario, out ValidationError[] errors)
+        {
+            if (null == actualResponse) throw new ArgumentNullException("actualResponse");
+
+            List<ValidationError> detectedErrors = new List<ValidationError>();
+
+            // Verify the request is valid (headers, etc)
+            this.VerifyHttpRequest(detectedErrors);
+
+            // Verify that the expected response headers match the actual response headers
+            ValidationError[] httpErrors;
+            if (null != expectedResponse && !expectedResponse.ValidateResponseHeaders(actualResponse, out httpErrors))
+            {
+                detectedErrors.AddRange(httpErrors);
+            }
+
+            // Verify the actual response body is correct according to the schema defined for the response
+            ValidationError[] bodyErrors;
+            this.VerifyResponseBody(actualResponse, expectedResponse, out bodyErrors);
+            detectedErrors.AddRange(bodyErrors);
+
+            // Verify any expectations in the scenario are met
+            if (null != scenario)
+            {
+                scenario.ValidateExpectations(actualResponse, detectedErrors);
+            }
+
+            errors = detectedErrors.ToArray();
+        }
+
+        /// <summary>
+        /// Verify that the body of the actual response is consistent with the method definition and expected response parameters
+        /// </summary>
+        /// <param name="method">The MethodDefinition that generated the response.</param>
+        /// <param name="actualResponse">The actual response from the service to validate.</param>
+        /// <param name="expectedResponse">The prototype expected response from the service.</param>
+        /// <param name="detectedErrors">A collection of errors that will be appended with any detected errors</param>
+        private void VerifyResponseBody(HttpResponse actualResponse, HttpResponse expectedResponse, out ValidationError[] errors)
+        {
+            List<ValidationError> detectedErrors = new List<ValidationError>();
+
+            if (string.IsNullOrEmpty(actualResponse.Body) &&
+                (expectedResponse != null && !string.IsNullOrEmpty(expectedResponse.Body)))
+            {
+                detectedErrors.Add(new ValidationError(ValidationErrorCode.HttpBodyExpected, null, "Body missing from response (expected response includes a body or a response type was provided)."));
+            }
+            else if (!string.IsNullOrEmpty(actualResponse.Body))
+            {
+                ValidationError[] schemaErrors;
+                if (this.ExpectedResponseMetadata == null ||
+                    (string.IsNullOrEmpty(this.ExpectedResponseMetadata.ResourceType) &&
+                     (expectedResponse != null && !string.IsNullOrEmpty(expectedResponse.Body))))
+                {
+                    detectedErrors.Add(new ValidationError(ValidationErrorCode.ResponseResourceTypeMissing, null, "Expected a response, but resource type on method is missing: {0}", this.Identifier));
+                }
+                else
+                {
+                    var otherResources = this.SourceFile.Parent.ResourceCollection;
+                    if (
+                        !otherResources.ValidateResponseMatchesSchema(
+                            this,
+                            actualResponse,
+                            expectedResponse,
+                            out schemaErrors))
+                    {
+                        detectedErrors.AddRange(schemaErrors);
+                    }
+                }
+
+                var responseValidation = actualResponse.IsResponseValid(
+                    this.SourceFile.DisplayName,
+                    this.SourceFile.Parent.Requirements);
+                detectedErrors.AddRange(responseValidation.Messages);
+            }
+
+            errors = detectedErrors.ToArray();
+        }
+
         #endregion
 
         #region Parameter Parsing

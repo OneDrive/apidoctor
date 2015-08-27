@@ -17,6 +17,7 @@
         public string Method { get; set; }
         public string Url { get; set; }
         public string Body { get; set; }
+        public byte[] BodyBytes { get; set; }
 
         public string Accept
         {
@@ -57,14 +58,19 @@
 
         public HttpWebRequest PrepareHttpWebRequest(string baseUrl)
         {
-            var effectiveUrl = baseUrl;
-            if (this.Url.StartsWith(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
+
+            Uri effectiveUrl;
+            // See if this.Url is a relative URL or a fully qualified URL
+            if (!Uri.TryCreate(this.Url, UriKind.Absolute, out effectiveUrl))
             {
-                effectiveUrl = this.Url;
-            }
-            else
-            {
-                effectiveUrl += this.Url;
+                if (!Uri.TryCreate(baseUrl + this.Url, UriKind.Absolute, out effectiveUrl))
+                {
+                    throw new InvalidOperationException(
+                        string.Format(
+                            "Couldn't construct a vaild URL for the request: baseUrl={0}, requestUrl={1}",
+                            baseUrl,
+                            this.Url));
+                }
             }
 
             HttpWebRequest request = WebRequest.CreateHttp(effectiveUrl);
@@ -128,7 +134,7 @@
 
             }
 
-            if (this.Body != null)
+            if (this.Body != null && this.BodyBytes == null)
             {
                 using (var stream = request.GetRequestStream())
                 {
@@ -137,6 +143,16 @@
                     writer.Flush();
                 }
             }
+            else if (this.Body == null && this.BodyBytes != null)
+            {
+                using (var stream = request.GetRequestStream())
+                {
+                    stream.Write(this.BodyBytes, 0, this.BodyBytes.Length);
+                }
+            }
+            else if (this.Body != null && this.BodyBytes != null)
+                throw new InvalidOperationException("Body and BodyBytes cannot both be set on the same request");
+
 
             if (null != ValidationConfig.AdditionalHttpHeaders)
             {
@@ -210,8 +226,15 @@
                 sb.AppendLine();
             }
             sb.AppendLine();
-            sb.Append(this.Body);
-            
+            if (this.BodyBytes != null)
+            {
+                sb.Append("... binary content ...");
+            }
+            else
+            {
+                sb.Append(this.Body);
+            }
+
             return sb.ToString();
         }
 
@@ -240,5 +263,7 @@
         {
             return (response.StatusCode >= 500 && response.StatusCode < 600);
         }
+
+        
     }
 }

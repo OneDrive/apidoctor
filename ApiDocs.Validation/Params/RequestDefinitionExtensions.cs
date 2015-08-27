@@ -14,10 +14,9 @@
         /// parsing the RawHttpRequest or resolving MethodName into a request.
         /// </summary>
         /// <param name="definition"></param>
-        /// <param name="baseUrl"></param>
         /// <param name="documents"></param>
         /// <returns></returns>
-        public static HttpRequest GetHttpRequest(this BasicRequestDefinition definition, string baseUrl, DocSet documents)
+        public static HttpRequest GetHttpRequest(this BasicRequestDefinition definition, DocSet documents)
         {
             HttpRequest foundRequest = null;
             if (!string.IsNullOrEmpty(definition.RawHttpRequest))
@@ -27,6 +26,10 @@
             else if (!string.IsNullOrEmpty(definition.MethodName))
             {
                 foundRequest = LookupHttpRequestForMethod(definition.MethodName, documents);
+            }
+            else if (!string.IsNullOrEmpty(definition.CannedRequestName))
+            {
+                foundRequest = HttpRequestForCannedRequest(definition.CannedRequestName, documents);
             }
 
             return foundRequest;
@@ -45,6 +48,21 @@
             }
 
             return ParseHttpRequest(foundMethod.Request);
+        }
+
+        private static HttpRequest HttpRequestForCannedRequest(string requestName, DocSet docset)
+        {
+            var queryForRequest = from m in docset.CannedRequests
+                where m.Name == requestName
+                select m;
+            var foundRequest = queryForRequest.FirstOrDefault();
+            if (null == foundRequest)
+            {
+                throw new Exception(string.Format("Failed to find canned response {0} in the docset.", requestName));
+            }
+
+            return GetHttpRequest(foundRequest, docset);
+
         }
 
         private static HttpRequest ParseHttpRequest(string rawHttpRequest)
@@ -69,9 +87,23 @@
             MethodDefinition.RewriteHeadersWithParameters(request, from pv in placeholderValues where pv.Location == PlaceholderLocation.HttpHeader select pv);
 
             // Body
-            var bodyParam = (from pv in placeholderValues where pv.Location == PlaceholderLocation.Body select pv).SingleOrDefault();
+            var bodyParam = (from pv in placeholderValues
+                where pv.Location == PlaceholderLocation.Body || pv.Location == PlaceholderLocation.BodyBase64Encoded
+                select pv).SingleOrDefault();
             if (bodyParam != null)
-                request.Body = bodyParam.Value;
+            {
+                if (bodyParam.Location == PlaceholderLocation.BodyBase64Encoded)
+                {
+                    var bytes = Convert.FromBase64String(bodyParam.Value);
+                    request.BodyBytes = bytes;
+                    request.Body = null;
+                }
+                else
+                {
+                    request.Body = bodyParam.Value;
+                    request.BodyBytes = null;
+                }
+            }
 
             // Json
             var jsonParams = from pv in placeholderValues where pv.Location == PlaceholderLocation.Json select pv;
@@ -91,6 +123,7 @@
             return placeholderValues.ToArray();
         }
 
+        private const string RandomFilenameValuePrefix = "!random-filename-";
 
         /// <summary>
         /// Convert the input into a PlaceholderValue and realize any reference to a stored value into
@@ -113,6 +146,13 @@
                         : value
             };
 
+            // Allow the random-filename generator to swap the value with a randomly generated filename.
+            if (null != value && value.StartsWith(RandomFilenameValuePrefix))
+            {
+                string fileExtension = value.Substring(RandomFilenameValuePrefix.Length);
+                string randomFilename = string.Format("/testfile-{0:D}.{1}", Guid.NewGuid(), fileExtension);
+                v.Value = randomFilename;
+            }
 
             Debug.WriteLine("Converting \"{0}: {1}\" into loc={2},value={3}", key, value, v.Location, v.Value);
 

@@ -33,6 +33,7 @@
                         source.DisplayName,
                         "Error parsing resource definition: {0}",
                         ex.Message));
+                throw;
             }
 
             if (string.IsNullOrEmpty(annotation.ResourceType))

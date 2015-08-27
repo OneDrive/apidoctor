@@ -144,7 +144,7 @@
             var expectedResponse = parser.ParseHttpResponse(testMethod.ExpectedResponse);
             var actualResponse = parser.ParseHttpResponse(testMethod.ActualResponse);
 
-            docSet.ValidateApiMethod(testMethod, actualResponse, expectedResponse, out detectedErrors, false, null);
+            testMethod.ValidateResponse(actualResponse, expectedResponse, null, out detectedErrors);
 
             Assert.AreEqual(1, detectedErrors.Length);
             var error = detectedErrors.First();
@@ -170,7 +170,7 @@
             var expectedResponse = parser.ParseHttpResponse(testMethod.ExpectedResponse);
             var actualResponse = parser.ParseHttpResponse(testMethod.ActualResponse);
 
-            docSet.ValidateApiMethod(testMethod, actualResponse, expectedResponse, out detectedErrors, false, null);
+            testMethod.ValidateResponse(actualResponse, expectedResponse, null, out detectedErrors);
 
             Assert.AreEqual(0, detectedErrors.Length);
         }
@@ -194,7 +194,7 @@
             var expectedResponse = parser.ParseHttpResponse(testMethod.ExpectedResponse);
             var actualResponse = parser.ParseHttpResponse(testMethod.ActualResponse);
 
-            docSet.ValidateApiMethod(testMethod, actualResponse, expectedResponse, out detectedErrors, false, null);
+            testMethod.ValidateResponse(actualResponse, expectedResponse, null, out detectedErrors);
 
             Assert.AreEqual(4, detectedErrors.Length);
             foreach (var error in detectedErrors)

@@ -52,16 +52,29 @@
         /// <param name="storedValues"></param>
         /// <param name="documents"></param>
         /// <returns></returns>
-        public async Task<ValidationResult<bool>> MakeSetupRequestAsync(string baseUrl, AuthenicationCredentials credentials, Dictionary<string, string> storedValues, DocSet documents)
+        public async Task<ValidationResult<bool>> MakeSetupRequestAsync(string baseUrl, AuthenicationCredentials credentials, Dictionary<string, string> storedValues, DocSet documents, ScenarioDefinition scenario)
         {
             var errors = new List<ValidationError>();
+            if (!string.IsNullOrEmpty(this.CannedRequestName))
+            {
+                // We need to make a canned request setup request instead. Look up the canned request and then execute it, returning the results here.
+                var cannedRequest =
+                    (from cr in documents.CannedRequests where cr.Name == this.CannedRequestName select cr)
+                        .FirstOrDefault();
+                if (null == cannedRequest)
+                {
+                    errors.Add(new ValidationError(ValidationErrorCode.InvalidRequestFormat, null, "Couldn't locate the canned-request named: {0}", this.CannedRequestName));
+                    return new ValidationResult<bool>(false, errors);
+                }
+
+                return await cannedRequest.MakeSetupRequestAsync(baseUrl, credentials, storedValues, documents, scenario);
+            }
             
             // Get the HttpRequest, either from MethodName or by parsing HttpRequest
-
             HttpRequest request;
             try
             {
-                request = this.GetHttpRequest(baseUrl, documents);
+                request = this.GetHttpRequest(documents);
             }
             catch (Exception ex)
             {
@@ -69,6 +82,9 @@
                 return new ValidationResult<bool>(false, errors);
             }
 
+            MethodDefinition.AddTestHeaderToRequest(scenario, request);
+
+            // If this is a canned request, we need to merge the parameters / placeholders here
             var placeholderValues = this.RequestParameters.ToPlaceholderValuesArray(storedValues);
 
             // Update the request with the parameters in request-parameters
@@ -83,7 +99,7 @@
                 {
                     errors.Add(new ValidationMessage(null, "HTTP request was retried {0} times.", response.RetryCount));
                 }
-                errors.Add(new ValidationMessage(null, "HTTP Response:\n{0}\n\n", response.FullHttpText()));
+                errors.Add(new ValidationMessage(null, "HTTP Response:\n{0}\n\n", response.FullText()));
 
                 // Check to see if this request is "successful" or not
                 if ( (this.AllowedStatusCodes == null && response.WasSuccessful) ||

@@ -2,8 +2,10 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Text;
     using System.Threading.Tasks;
     using ApiDocs.ConsoleApp.AppVeyor;
+    using ApiDocs.Validation;
 
     public static class TestReport
     {
@@ -76,5 +78,67 @@
         {
             await BuildWorkerApi.AddMessageAsync(message, category, details);
         }
+
+        internal static async Task LogMethodTestResults(Validation.MethodDefinition method, Auth.Account account, Validation.ValidationResults results)
+        {
+            foreach (var scenario in results.Results)
+            {
+                if (scenario.Outcome == ValidationOutcome.None)
+                    continue;
+
+                StringBuilder stdout = new StringBuilder();
+
+                string message = null;
+                if (scenario.Errors.Count > 0)
+                {
+                    stdout.AppendFormat("Scenario: {0}", scenario.Name);
+                    foreach (var error in scenario.Errors)
+                    {
+                        stdout.AppendLine(error.ErrorText);
+
+                        if (error.IsError && message == null)
+                        {
+                            message = error.ErrorText.FirstLineOnly();
+                        }
+                    }
+
+                    stdout.AppendFormat(
+                        "Scenario finished with outcome: {0}. Duration: {1}",
+                        scenario.Outcome,
+                        scenario.Duration);
+                }
+
+                string testName = string.Format(
+                    "{0}: {1} [{2}]",
+                    method.Identifier,
+                    scenario.Name,
+                    account.Name);
+                
+                string filename = method.SourceFile.DisplayName;
+                TestOutcome outcome = ToTestOutcome(scenario.Outcome);
+
+                await BuildWorkerApi.RecordTestAsync(
+                        testName,
+                        TestFrameworkName,
+                        outcome: outcome,
+                        durationInMilliseconds: (long)scenario.Duration.TotalMilliseconds,
+                        errorMessage: message ?? scenario.Outcome.ToString(),
+                        filename: filename,
+                        stdOut: stdout.ToString());
+            }
+        }
+
+        private static TestOutcome ToTestOutcome(ValidationOutcome outcome)
+        {
+            if ((outcome & ValidationOutcome.Error) > 0)
+                return TestOutcome.Failed;
+            if ((outcome & ValidationOutcome.Skipped) > 0)
+                return TestOutcome.Skipped;
+            if ((outcome & ValidationOutcome.Passed) > 0)
+                return TestOutcome.Passed;
+
+            return TestOutcome.Inconclusive;
+        }
     }
+
 }

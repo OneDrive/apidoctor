@@ -28,20 +28,18 @@
                 return string.Concat(this.Description, " (", this.MethodName, ")");
             }
         }
+    }
 
-        public static ScenarioDefinition[] ReadFromJson(string json)
-        {
-            var results = JsonConvert.DeserializeObject<List<ScenarioDefinition>>(json);
-            return results.ToArray();
-        }
+    /// <summary>
+    /// Class represents a canned request that can be referenced across test sceanrios
+    /// </summary>
+    public class CannedRequestDefinition : TestSetupRequestDefinition
+    {
+        [JsonProperty("name")]
+        public string Name { get; set; }
 
-        public ScenarioDefinition Copy()
-        {
-            string json = JsonConvert.SerializeObject(this);
-            ScenarioDefinition copy = JsonConvert.DeserializeObject<ScenarioDefinition>(json);
-            copy.Description = "Copy of " + copy.Description;
-            return copy;
-        }
+        [JsonProperty("implicit-variable")]
+        public string ImplicitVariable { get; set; }
     }
 
     public enum PlaceholderLocation
@@ -51,6 +49,7 @@
         Json,
         HttpHeader,
         Body,
-        StoredValue
+        StoredValue,
+        BodyBase64Encoded
     }
 }

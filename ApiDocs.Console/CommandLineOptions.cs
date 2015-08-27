@@ -252,6 +252,9 @@
         [Option("branch-name")]
         public string BranchName { get; set; }
 
+        [Option("parallel", HelpText = "Run service tests in parallel.", DefaultValue = false)]
+        public bool ParallelTests { get; set; }
+
 
         public override bool HasRequiredProperties(out string[] missingArguments)
         {
@@ -276,7 +279,7 @@
                 try
                 {
                     var account = Account.CreateAccountFromEnvironmentVariables();
-                    account.ServiceUrl = this.ServiceRootUrl;
+                    account.BaseUrl = this.ServiceRootUrl;
                     this.FoundAccounts.Add(account);
                 }
                 catch (InvalidOperationException) { }
@@ -305,7 +308,7 @@
 
                 if (!string.IsNullOrEmpty(this.AccessToken) && !string.IsNullOrEmpty(this.ServiceRootUrl))
                 {
-                    this.FoundAccounts.Add(new Account { Name = "CommandLineAccount", Enabled = true, AccessToken = this.AccessToken, ServiceUrl = this.ServiceRootUrl });
+                    this.FoundAccounts.Add(new Account { Name = "CommandLineAccount", Enabled = true, AccessToken = this.AccessToken, BaseUrl = this.ServiceRootUrl });
                 }
             }
 

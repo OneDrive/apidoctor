@@ -24,6 +24,7 @@
     {
         private const int ExitCodeFailure = 1;
         private const int ExitCodeSuccess = 0;
+        private const int ParallelTaskCount = 5;
 
         public static readonly SavedSettings DefaultSettings = new SavedSettings("ApiTestTool", "settings.json");
         public static readonly BuildWorkerApi BuildWorker = new BuildWorkerApi();
@@ -232,12 +233,12 @@
             FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, "Stored settings:");
             FancyConsole.WriteLineIndented("  ", "{0}: {1}", "AccessToken", settings.AccessToken);
             FancyConsole.WriteLineIndented("  ", "{0}: {1}", "DocumentationPath", settings.DocumentationPath);
-            FancyConsole.WriteLineIndented("  ", "{0}: {1}", "ServiceUrl", settings.ServiceUrl);
+            FancyConsole.WriteLineIndented("  ", "{0}: {1}", "BaseUrl", settings.ServiceUrl);
         }
 
 
         /// <summary>
-        /// Create a document set based on input options
+        /// Create and return a document set based on input options
         /// </summary>
         /// <param name="options"></param>
         /// <returns></returns>
@@ -271,12 +272,19 @@
             Task.Run(() => BuildWorker.AddMessageAsync(message, MessageCategory.Error));
         }
 
+        /// <summary>
+        /// Output information about the document set to the console
+        /// </summary>
+        /// <param name="options"></param>
+        /// <param name="docset"></param>
+        /// <returns></returns>
         private static async Task PrintDocInformationAsync(PrintOptions options, DocSet docset = null)
         {
             docset = docset ?? await GetDocSetAsync(options);
             if (null == docset)
+            {
                 return;
-
+            }
 
             if (options.PrintFiles)
             {
@@ -292,6 +300,13 @@
             }
         }
 
+        #region Print verb commands
+        /// <summary>
+        /// Prints a list of the documentation files in a docset to the console.
+        /// </summary>
+        /// <param name="options"></param>
+        /// <param name="docset"></param>
+        /// <returns></returns>
         private static async Task PrintFilesAsync(DocSetOptions options, DocSet docset)
         {
             docset = docset ?? await GetDocSetAsync(options);
@@ -326,7 +341,86 @@
         }
 
         /// <summary>
-        /// Validate that all links in the documentation are unbroken.
+        /// Print a list of the resources detected in the documentation set to the console.
+        /// </summary>
+        /// <param name="options"></param>
+        /// <param name="docset"></param>
+        /// <returns></returns>
+        private static async Task PrintResourcesAsync(DocSetOptions options, DocSet docset)
+        {
+            docset = docset ?? await GetDocSetAsync(options);
+            if (null == docset)
+                return;
+
+            FancyConsole.WriteLine();
+            FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, "Defined resources:");
+            FancyConsole.WriteLine();
+
+            var sortedResources = docset.Resources.OrderBy(x => x.ResourceType);
+
+            foreach (var resource in sortedResources)
+            {
+
+
+                if (options.EnableVerboseOutput)
+                {
+                    string metadata = JsonConvert.SerializeObject(resource.Metadata);
+                    FancyConsole.Write("  ");
+                    FancyConsole.Write(FancyConsole.ConsoleHeaderColor, resource.ResourceType);
+                    FancyConsole.WriteLine(" flags: {1}", resource.ResourceType, metadata);
+                }
+                else
+                {
+                    FancyConsole.WriteLineIndented("  ", FancyConsole.ConsoleHeaderColor, resource.ResourceType);
+                }
+
+                FancyConsole.WriteLineIndented("    ", FancyConsole.ConsoleCodeColor, resource.JsonExample);
+                FancyConsole.WriteLine();
+            }
+        }
+
+        /// <summary>
+        /// Print a list of the methods (request/responses) discovered in the documentation to the console.
+        /// </summary>
+        /// <param name="options"></param>
+        /// <param name="docset"></param>
+        /// <returns></returns>
+        private static async Task PrintMethodsAsync(DocSetOptions options, DocSet docset)
+        {
+            docset = docset ?? await GetDocSetAsync(options);
+            if (null == docset)
+                return;
+
+            FancyConsole.WriteLine();
+            FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, "Defined methods:");
+            FancyConsole.WriteLine();
+
+            foreach (var method in docset.Methods)
+            {
+                FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, "Method '{0}' in file '{1}'", method.Identifier, method.SourceFile.DisplayName);
+
+                var requestMetadata = options.EnableVerboseOutput ? JsonConvert.SerializeObject(method.RequestMetadata) : string.Empty;
+                FancyConsole.WriteLineIndented("  ", FancyConsole.ConsoleSubheaderColor, "Request: {0}", requestMetadata);
+                FancyConsole.WriteLineIndented("    ", FancyConsole.ConsoleCodeColor, method.Request);
+
+                if (options.EnableVerboseOutput)
+                {
+                    FancyConsole.WriteLine();
+                    var responseMetadata = JsonConvert.SerializeObject(method.ExpectedResponseMetadata);
+                    FancyConsole.WriteLineIndented("  ", FancyConsole.ConsoleSubheaderColor, "Expected Response: {0}", responseMetadata);
+                    FancyConsole.WriteLineIndented("    ", FancyConsole.ConsoleCodeColor, method.ExpectedResponse);
+                    FancyConsole.WriteLine();
+                }
+                FancyConsole.WriteLine();
+            }
+        }
+
+        #endregion
+
+
+        /// <summary>
+        /// Verifies that all markdown links inside the documentation are valid. Prints warnings
+        /// to the console for any invalid links. Also checks for orphaned documents.
         /// </summary>
         /// <param name="options"></param>
         /// <param name="docs"></param>
@@ -362,71 +456,6 @@
         }
 
 
-
-
-        private static async Task PrintResourcesAsync(DocSetOptions options, DocSet docset)
-        {
-            docset = docset ?? await GetDocSetAsync(options);
-            if (null == docset)
-                return;
-
-            FancyConsole.WriteLine();
-            FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, "Defined resources:");
-            FancyConsole.WriteLine();
-
-            var sortedResources = docset.Resources.OrderBy(x => x.ResourceType);
-
-            foreach (var resource in sortedResources)
-            {
-
-
-                if (options.EnableVerboseOutput)
-                {
-                    string metadata = JsonConvert.SerializeObject(resource.Metadata);
-                    FancyConsole.Write("  ");
-                    FancyConsole.Write(FancyConsole.ConsoleHeaderColor, resource.ResourceType);
-                    FancyConsole.WriteLine(" flags: {1}", resource.ResourceType, metadata);
-                }
-                else
-                {
-                    FancyConsole.WriteLineIndented("  ", FancyConsole.ConsoleHeaderColor, resource.ResourceType);
-                }
-
-                FancyConsole.WriteLineIndented("    ", FancyConsole.ConsoleCodeColor, resource.JsonExample);
-                FancyConsole.WriteLine();
-            }
-        }
-
-        private static async Task PrintMethodsAsync(DocSetOptions options, DocSet docset)
-        {
-            docset = docset ?? await GetDocSetAsync(options);
-            if (null == docset)
-                return;
-
-            FancyConsole.WriteLine();
-            FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, "Defined methods:");
-            FancyConsole.WriteLine();
-
-            foreach (var method in docset.Methods)
-            {
-                FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, "Method '{0}' in file '{1}'", method.Identifier, method.SourceFile.DisplayName);
-
-                var requestMetadata = options.EnableVerboseOutput ? JsonConvert.SerializeObject(method.RequestMetadata) : string.Empty;
-                FancyConsole.WriteLineIndented("  ", FancyConsole.ConsoleSubheaderColor, "Request: {0}", requestMetadata);
-                FancyConsole.WriteLineIndented("    ", FancyConsole.ConsoleCodeColor, method.Request);
-
-                if (options.EnableVerboseOutput)
-                {
-                    FancyConsole.WriteLine();
-                    var responseMetadata = JsonConvert.SerializeObject(method.ExpectedResponseMetadata);
-                    FancyConsole.WriteLineIndented("  ", FancyConsole.ConsoleSubheaderColor, "Expected Response: {0}", responseMetadata);
-                    FancyConsole.WriteLineIndented("    ", FancyConsole.ConsoleCodeColor, method.ExpectedResponse);
-                    FancyConsole.WriteLine();
-                }
-                FancyConsole.WriteLine();
-            }
-        }
-
         private static MethodDefinition LookUpMethod(DocSet docset, string methodName)
         {
             var query = from m in docset.Methods
@@ -436,6 +465,15 @@
             return query.FirstOrDefault();
         }
 
+
+        /// <summary>
+        /// Perform internal consistency checks on the documentation, including verify that 
+        /// code blocks have proper formatting, that resources are used properly, and that expected
+        /// responses and examples conform to the resource definitions.
+        /// </summary>
+        /// <param name="options"></param>
+        /// <param name="docs"></param>
+        /// <returns></returns>
         private static async Task<bool> CheckDocsAsync(BasicCheckOptions options, DocSet docs = null)
         {
             var docset = docs ?? await GetDocSetAsync(options);
@@ -463,6 +501,13 @@
             return combinedResults.FailureCount == 0;
         }
 
+        /// <summary>
+        /// Perform an internal consistency check on the examples defined in the documentation. Prints
+        /// the results of the tests to the console.
+        /// </summary>
+        /// <param name="options"></param>
+        /// <param name="docset"></param>
+        /// <returns></returns>
         private static async Task<CheckResults> CheckExamplesAsync(BasicCheckOptions options, DocSet docset)
         {
             var results = new CheckResults();
@@ -497,6 +542,13 @@
             return results;
         }
 
+        /// <summary>
+        /// Performs an internal consistency check on the methods (requests/responses) in the documentation.
+        /// Prints the results of the tests to the console.
+        /// </summary>
+        /// <param name="options"></param>
+        /// <param name="docset"></param>
+        /// <returns></returns>
         private static async Task<CheckResults> CheckMethodsAsync(BasicCheckOptions options, DocSet docset)
         {
             MethodDefinition[] methods = FindTestMethods(options, docset);
@@ -516,7 +568,9 @@
 
                 var parser = new HttpParser();
                 var expectedResponse = parser.ParseHttpResponse(method.ExpectedResponse);
-                ValidationError[] errors = ValidateHttpResponse(method, expectedResponse, options.SilenceWarnings);
+
+                ValidationError[] errors;
+                method.ValidateResponse(expectedResponse, null, null, out errors);
 
                 await WriteOutErrorsAndFinishTestAsync(errors, options.SilenceWarnings, "   ", "No errors.", false, testName, "Warnings detected", "Errors detected");
                 results.IncrementResultCount(errors);
@@ -525,6 +579,12 @@
             return results;
         }
 
+        /// <summary>
+        /// Parse the command line parameters into a set of methods that match the command line parameters.
+        /// </summary>
+        /// <param name="options"></param>
+        /// <param name="docset"></param>
+        /// <returns></returns>
         private static MethodDefinition[] FindTestMethods(BasicCheckOptions options, DocSet docset)
         {
             MethodDefinition[] methods = null;
@@ -557,6 +617,19 @@
         }
 
 
+        /// <summary>
+        /// Print a collection of ValidationError objects to the console. Also shuts down the test runner
+        /// for the current test.
+        /// </summary>
+        /// <param name="errors"></param>
+        /// <param name="silenceWarnings"></param>
+        /// <param name="indent"></param>
+        /// <param name="successMessage"></param>
+        /// <param name="endLineBeforeWriting"></param>
+        /// <param name="testName"></param>
+        /// <param name="warningsMessage"></param>
+        /// <param name="errorsMessage"></param>
+        /// <returns></returns>
         private static async Task<bool> WriteOutErrorsAndFinishTestAsync(IEnumerable<ValidationError> errors, bool silenceWarnings, string indent = "", string successMessage = null, bool endLineBeforeWriting = false, string testName = null, string warningsMessage = null, string errorsMessage = null)
         {
             var validationErrors = errors as ValidationError[] ?? errors.ToArray();
@@ -606,6 +679,13 @@
             return outcome == TestOutcome.Passed;
         }
 
+        /// <summary>
+        /// Prints ValidationError messages to the console, optionally excluding warnings and messages.
+        /// </summary>
+        /// <param name="validationErrors"></param>
+        /// <param name="errorsOnly"></param>
+        /// <param name="indent"></param>
+        /// <param name="endLineBeforeWriting"></param>
         private static void WriteMessages(ValidationError[] validationErrors, bool errorsOnly = false, string indent = "", bool endLineBeforeWriting = false)
         {
             foreach (var error in validationErrors)
@@ -631,6 +711,11 @@
             }
         }
 
+        /// <summary>
+        /// Prints a formatted ValidationError object to the console.
+        /// </summary>
+        /// <param name="indent"></param>
+        /// <param name="error"></param>
         internal static void WriteValidationError(string indent, ValidationError error)
         {
             ConsoleColor color;
@@ -650,18 +735,10 @@
             FancyConsole.WriteLineIndented(indent, color, error.ErrorText);
         }
 
-        private static ValidationError[] ValidateHttpResponse(MethodDefinition method, HttpResponse response, bool silenceWarnings, HttpResponse expectedResponse = null, ScenarioDefinition scenario = null)
-        {
-
-            var docset = method.SourceFile.Parent;
-
-            ValidationError[] errors;
-            docset.ValidateApiMethod(method, response, expectedResponse, out errors, silenceWarnings, scenario);
-            return errors;
-        }
-
         /// <summary>
-        /// Make requests against the service. Uses DocSet.RunParameter information to alter requests.
+        /// Executes the remote service tests defined in the documentation. This is similar to CheckDocs, expect
+        /// that the actual requests come from the service instead of the documentation. Prints the errors to 
+        /// the console.
         /// </summary>
         /// <param name="options"></param>
         /// <returns></returns>
@@ -683,7 +760,9 @@
 
             var docset = await GetDocSetAsync(options);
             if (null == docset)
+            {
                 return false;
+            }
 
             FancyConsole.WriteLine();
 
@@ -698,106 +777,194 @@
                 return false;
             }
 
-            var methods = FindTestMethods(options, docset);
-            bool wereFailures = false;
-
-
-
             var accountsToProcess =
                 options.FoundAccounts.Where(
                     x => string.IsNullOrEmpty(options.AccountName)
                         ? x.Enabled
                         : options.AccountName.Equals(x.Name));
+            
+            var methods = FindTestMethods(options, docset);
 
+            bool allSuccessful = true;
             foreach (var account in accountsToProcess)
             {
-                CheckResults results = new CheckResults();
+                allSuccessful &= await CheckMethodsForAccountAsync(options, account, methods, docset);
+            }
+            return allSuccessful;
+        }
 
-                if (account.AdditionalHeaders != null && account.AdditionalHeaders.Length > 0)
-                {
-                    // If the account needs additional headers, merge them in.
-                    List<string> headers = new List<string>(account.AdditionalHeaders);
-                    if (options.AdditionalHeaders != null)
-                    {
-                        headers.AddRange(options.AdditionalHeaders.Split('|'));
-                    }
-                    ValidationConfig.AdditionalHttpHeaders = headers.ToArray();
-                }
-                else if (options.AdditionalHeaders != null) 
-                {
-                    var headers = options.AdditionalHeaders.Split('|');
-                    ValidationConfig.AdditionalHttpHeaders = headers.ToArray();
-                }
+        /// <summary>
+        /// Execute the provided methods on the given account.
+        /// </summary>
+        /// <param name="options"></param>
+        /// <param name="account"></param>
+        /// <param name="methods"></param>
+        /// <param name="docset"></param>
+        /// <returns>True if the methods all passed, false if there were failures.</returns>
+        private static async Task<bool> CheckMethodsForAccountAsync(CheckServiceOptions options, Account account, MethodDefinition[] methods, DocSet docset)
+        {
+            //CheckResults results = new CheckResults();
 
-                string testNamePrefix = "";
-                if (options.FoundAccounts.Any())
-                {
-                    FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, "Testing with account: {0}", account.Name);
-                    testNamePrefix = account.Name.ToLower() + ": ";
-                }
-                // Make sure we have an access token
-                if (string.IsNullOrEmpty(account.AccessToken))
-                {
-                    var tokens = await OAuthTokenGenerator.RedeemRefreshTokenAsync(account);
-                    if (null != tokens)
-                    {
-                        account.AccessToken = tokens.AccessToken;
-                    }
-                    else
-                    {
-                        RecordError("Failed to retrieve access token for account: {0}", account.Name);
-                        continue;
-                    }
-                }
-                
-                AuthenicationCredentials credentials = AuthenicationCredentials.CreateAutoCredentials(account.AccessToken);
-                
-                foreach (var method in methods)
-                {
-                    var testScenarios = docset.TestScenarios.ScenariosForMethod(method);
+            ConfigureAdditionalHeadersForAccount(options, account);
 
-                    if (testScenarios.Length == 0)
-                    {
-                        // If there are no parameters defined, we still try to call the request as-is.
-                        var errors = await TestMethodWithScenarioAsync(docset, method, null, account.ServiceUrl, credentials, options.SilenceWarnings, testNamePrefix);
-                        results.IncrementResultCount(errors);
-                        AddPause(options);
-                    }
-                    else
-                    {
-                        // Otherwise, if there are parameter sets, we call each of them and check the result.
-                        var enabledScenarios = testScenarios.Where(s => s.Enabled || options.ForceAllScenarios);
-                        if (enabledScenarios.FirstOrDefault() == null)
-                        {
-                            TestReport.StartTest(method.Identifier, method.SourceFile.DisplayName);
-                            await TestReport.FinishTestAsync(method.Identifier, TestOutcome.Skipped, "All scenarios for this method were disabled.");
-                            FancyConsole.Write(FancyConsole.ConsoleHeaderColor, "Skipped test: {0}.", method.Identifier);
-                            FancyConsole.WriteLine(FancyConsole.ConsoleWarningColor, " All scenarios for test were disabled.", method.Identifier);
-                        }
-                        else
-                        {
-                            foreach (var requestSettings in enabledScenarios)
-                            {
-                                var errors = await TestMethodWithScenarioAsync(docset, method, requestSettings, account.ServiceUrl, credentials, options.SilenceWarnings, testNamePrefix);
-                                results.IncrementResultCount(errors);
-                                AddPause(options);
-                            }
-                        }
-                    }
+            string testNamePrefix = account.Name.ToLower() + ": ";
+            FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, "Testing with account: {0}", account.Name);
 
-                    FancyConsole.WriteLine();
-                }
-
-                if (options.IgnoreWarnings || options.SilenceWarnings)
+            // Make sure we have an access token for this API
+            if (string.IsNullOrEmpty(account.AccessToken))
+            {
+                var tokens = await OAuthTokenGenerator.RedeemRefreshTokenAsync(account);
+                if (null != tokens)
                 {
-                    results.ConvertWarningsToSuccess();
+                    account.AccessToken = tokens.AccessToken;
                 }
-
-                results.PrintToConsole();
-                wereFailures |= (results.FailureCount + results.WarningCount) > 0;
+                else
+                {
+                    RecordError("Failed to retrieve access token for account: {0}", account.Name);
+                    return false;
+                }
             }
 
-            return !wereFailures;
+            AuthenicationCredentials credentials = AuthenicationCredentials.CreateAutoCredentials(account.AccessToken);
+
+            ValidationOutcome docSetOutcome = ValidationOutcome.None;
+
+            int concurrentTasks = options.ParallelTests ? ParallelTaskCount : 1;
+
+            CheckResults docSetResults = new CheckResults();
+
+            await ForEachAsync(methods, concurrentTasks, async method => {
+                ScenarioDefinition[] scenarios = docset.TestScenarios.ScenariosForMethod(method);
+                ValidationResults results = await method.ValidateServiceResponseAsync(scenarios, account, credentials);
+
+                PrintResultsToConsole(method, account, results, options);
+                TestReport.LogMethodTestResults(method, account, results);
+                docSetResults.RecordResults(results, options);
+                
+                if (concurrentTasks == 1)
+                    AddPause(options);
+            });
+
+            if (options.IgnoreWarnings || options.SilenceWarnings)
+            {
+                // Remove the warning flag from the outcomes
+                if ((docSetOutcome & ValidationOutcome.Warning) > 0)
+                {
+                    docSetOutcome ^= ValidationOutcome.Warning;
+                }
+            }
+
+            docSetResults.PrintToConsole();
+
+            bool hadWarnings = (docSetOutcome & ValidationOutcome.Warning) > 0;
+            bool hadErrors = (docSetOutcome & ValidationOutcome.Error) > 0;
+
+            return !(hadErrors | hadWarnings);
+        }
+
+        
+
+        /// <summary>
+        /// Parallel enabled for each processor that supports async lambdas. Copied from 
+        /// http://blogs.msdn.com/b/pfxteam/archive/2012/03/05/10278165.aspx
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="source">Collection of items to iterate over</param>
+        /// <param name="dop">Degree of parallelism to execute.</param>
+        /// <param name="body">Lambda expression executed for each operation</param>
+        /// <returns></returns>
+        public static Task ForEachAsync<T>(IEnumerable<T> source, int dop, Func<T, Task> body)
+        {
+            return Task.WhenAll(
+                from partition in System.Collections.Concurrent.Partitioner.Create(source).GetPartitions(dop)
+                select Task.Run(async delegate
+                {
+                    using (partition)
+                        while (partition.MoveNext())
+                            await body(partition.Current);
+                }));
+        }
+
+        /// <summary>
+        /// Write the results of a test to the output console.
+        /// </summary>
+        /// <param name="method"></param>
+        /// <param name="account"></param>
+        /// <param name="results"></param>
+        /// <param name="options"></param>
+        private static void PrintResultsToConsole(MethodDefinition method, Account account, ValidationResults output, CheckServiceOptions options)
+        {
+            // Only allow one thread at a time to write to the console so we don't interleave our results.
+            lock (typeof(Program))
+            {
+                FancyConsole.WriteLine(
+                    FancyConsole.ConsoleHeaderColor,
+                    "Testing method {0} with account {1}",
+                    method.Identifier,
+                    account.Name);
+
+                foreach (var scenario in output.Results)
+                {
+                    if (scenario.Errors.Count > 0)
+                    {
+                        FancyConsole.WriteLineIndented(
+                            "  ",
+                            FancyConsole.ConsoleSubheaderColor,
+                            "Scenario: {0}",
+                            scenario.Name);
+
+                        foreach (var message in scenario.Errors)
+                        {
+                            if (options.EnableVerboseOutput || message.IsWarningOrError)
+                                FancyConsole.WriteLineIndented(
+                                    "    ",
+                                    FancyConsole.ConsoleDefaultColor,
+                                    message.ErrorText);
+                        }
+
+                        if (options.SilenceWarnings && scenario.Outcome == ValidationOutcome.Warning)
+                        {
+                            scenario.Outcome = ValidationOutcome.Passed;
+                        }
+
+                        FancyConsole.WriteLineIndented(
+                            "    ",
+                            scenario.Outcome.ConsoleColor(),
+                            "Scenario finished with outcome: {0}. Duration: {1}",
+                            scenario.Outcome,
+                            scenario.Duration);
+                    }
+                }
+
+                FancyConsole.WriteLineIndented(
+                    "  ",
+                    output.OverallOutcome.ConsoleColor(),
+                    "Method testing finished with overall outcome: {0}",
+                    output.OverallOutcome);
+                FancyConsole.WriteLine();
+            }
+        }
+
+
+
+
+        private static void ConfigureAdditionalHeadersForAccount(CheckServiceOptions options, Account account)
+        {
+            if (account.AdditionalHeaders != null && account.AdditionalHeaders.Length > 0)
+            {
+                // If the account needs additional headers, merge them in.
+                List<string> headers = new List<string>(account.AdditionalHeaders);
+                if (options.AdditionalHeaders != null)
+                {
+                    headers.AddRange(options.AdditionalHeaders.Split('|'));
+                }
+                ValidationConfig.AdditionalHttpHeaders = headers.ToArray();
+            }
+            else if (options.AdditionalHeaders != null)
+            {
+                var headers = options.AdditionalHeaders.Split('|');
+                ValidationConfig.AdditionalHttpHeaders = headers.ToArray();
+            }
         }
 
         private static void Exit(bool failure)
@@ -829,83 +996,7 @@
             }
         }
 
-        private static async Task<ValidationError[]> TestMethodWithScenarioAsync(
-            DocSet docset,
-            MethodDefinition method,
-            ScenarioDefinition scenario,
-            string rootUrl,
-            AuthenicationCredentials credentials,
-            bool silenceWarnings,
-            string testNamePrefix)
-        {
-            string testName = testNamePrefix + method.Identifier;
-            string indentLevel = "";
-            if (scenario != null)
-            {
-                if (!string.IsNullOrEmpty(scenario.Description))
-                {
-                    testName = testNamePrefix + string.Format("{0} [{1}]", method.Identifier, scenario.Description);
-                }
-                indentLevel = indentLevel + "  ";
-            }
-
-            FancyConsole.VerboseWriteLine("");
-            TestReport.StartTest(testName, method.SourceFile.DisplayName);
-
-            // Generate the tested request by "previewing" the request and executing
-            // all test-setup procedures
-            if (null != scenario)
-                FancyConsole.VerboseWriteLineIndented(indentLevel, "Generating testable request for scenario...");
-            else
-                FancyConsole.VerboseWriteLineIndented(indentLevel, "No scenario was defined. Running verbatim request.");
-
-            var requestPreviewResult = await method.PreviewRequestAsync(scenario, rootUrl, credentials, docset);
-
-            // Check to see if an error occured building the request, and abort if so.
-            if (requestPreviewResult.IsWarningOrError)
-            {
-                await
-                    WriteOutErrorsAndFinishTestAsync(
-                        requestPreviewResult.Messages,
-                        silenceWarnings,
-                        indentLevel + "  ",
-                        testName: testName);
-                return requestPreviewResult.Messages;
-            }
-            else
-            {
-                WriteMessages(requestPreviewResult.Messages, false, indentLevel + "  ", false);
-            }
-
-            // We've done all the test-setup work, now we have the real request to make to the service
-            var requestPreview = requestPreviewResult.Value;
-
-            FancyConsole.VerboseWriteLineIndented(indentLevel, "Method HTTP Request:");
-            FancyConsole.VerboseWriteLineIndented(indentLevel + "  ", requestPreview.FullHttpText());
-
-            var parser = new HttpParser();
-            HttpResponse expectedResponse = null;
-            if (!string.IsNullOrEmpty(method.ExpectedResponse))
-            {
-                expectedResponse = parser.ParseHttpResponse(method.ExpectedResponse);
-            }
-                
-            // Execute the actual tested method (the result of the method preview call, which made the test-setup requests)
-            var actualResponse = await requestPreview.GetResponseAsync(rootUrl);
-
-            FancyConsole.VerboseWriteLineIndented(indentLevel, "Response:");
-            FancyConsole.VerboseWriteLineIndented(indentLevel + "  ", actualResponse.FullHttpText());
-            FancyConsole.VerboseWriteLine();
-            
-            //FancyConsole.VerboseWriteLineIndented(indentLevel, "Validation results:");
-            
-            // Perform validation on the method's actual response
-            var validateResponse = ValidateHttpResponse(method, actualResponse, silenceWarnings, expectedResponse, scenario);
-
-            await WriteOutErrorsAndFinishTestAsync(validateResponse, silenceWarnings, indentLevel, "No errors.", false, testName);
-            
-            return validateResponse;
-        }
+      
 
         private static async Task<bool> PublishDocumentationAsync(PublishOptions options)
         {
@@ -1075,5 +1166,25 @@
             Program.WriteValidationError(string.Empty, error);
         }
     }
-   
+
+    internal static class OutcomeExtensionMethods
+    {
+
+        public static ConsoleColor ConsoleColor(this ValidationOutcome outcome)
+        {
+            if ((outcome & ValidationOutcome.Error) > 0)
+                return FancyConsole.ConsoleErrorColor;
+            if ((outcome & ValidationOutcome.Warning) > 0)
+                return FancyConsole.ConsoleWarningColor;
+            if ((outcome & ValidationOutcome.Passed) > 0)
+                return FancyConsole.ConsoleSuccessColor;
+            if ((outcome & ValidationOutcome.Skipped) > 0)
+                return FancyConsole.ConsoleWarningColor;
+
+            return FancyConsole.ConsoleDefaultColor;
+
+        }
+
+    }
+
 }

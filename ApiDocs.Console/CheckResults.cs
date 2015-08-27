@@ -95,5 +95,31 @@
             }
             FancyConsole.WriteLine();
         }
+
+        /// <summary>
+        /// Record the results from a validation test run into this object
+        /// </summary>
+        /// <param name="results"></param>
+        internal void RecordResults(ValidationResults results, CheckServiceOptions options)
+        {
+            foreach (var result in results.Results)
+            {
+                if ((result.Outcome & ValidationOutcome.Error) > 0)
+                {
+                    FailureCount++;
+                }
+                else if ((result.Outcome & ValidationOutcome.Warning) > 0)
+                {
+                    if (options.IgnoreWarnings || options.SilenceWarnings)
+                        SuccessCount++;
+                    else 
+                        WarningCount++;
+                }
+                else if ((result.Outcome & ValidationOutcome.Passed) > 0)
+                {
+                    SuccessCount++;
+                }
+            }
+        }
     }
 }
