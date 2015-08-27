@@ -13,6 +13,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiDocs.Validation.UnitTest
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Content", "Content", "{464F5D09-2636-459F-96C9-C968FF4CA7B5}"
 	ProjectSection(SolutionItems) = preProject
+		license.txt = license.txt
 		OpenSourceNotes.md = OpenSourceNotes.md
 		readme.md = readme.md
 	EndProjectSection

@@ -1,4 +1,10 @@
-﻿namespace ApiDocs.Publishing.Html
+﻿/*
+ * Copied from Mustache-Sharp: https://github.com/jehugaleahsa/mustache-sharp 
+ * The version of this class inside the library is marked as internal. The implementation
+ * is copied here so it can be extended to add new conditional tags.
+ */
+
+namespace ApiDocs.Publishing.Html
 {
     using Mustache;
     using System;
@@ -6,7 +12,7 @@
     using System.Collections.Generic;
     using System.Linq;
 
-    internal class ExtendedConditionalTag : ContentTagDefinition
+    internal class ApiDocsConditionalTag : ContentTagDefinition
     {
         private const string conditionParameter = "condition";
 
@@ -14,7 +20,7 @@
         /// Initializes a new instance of a ConditionTagDefinition.
         /// </summary>
         /// <param name="tagName">The name of the tag.</param>
-        protected ExtendedConditionalTag(string tagName)
+        protected ApiDocsConditionalTag(string tagName)
             : base(tagName)
         {
         }
