@@ -81,22 +81,29 @@ namespace ApiDocs.Validation.Http
 
         public static readonly string[] IgnoredHeaders = { "content-length" };
 
+        private Uri GenerateAbsoluteUrl(string baseUrl, bool forceBaseUrl = false)
+        {
+            Uri effectiveUrl;
+            // See if this.Url is a relative URL or a fully qualified URL
+            if (!Uri.TryCreate( forceBaseUrl ? baseUrl + this.Url : this.Url, UriKind.Absolute, out effectiveUrl))
+            {
+                // This correctly fails on Windows for relative urls, but fails
+                // on platforms that allow a "/" in their file URIs (like Mac)
+                return GenerateAbsoluteUrl(baseUrl, forceBaseUrl);
+            }
+
+            if (effectiveUrl.Scheme != "https" && effectiveUrl.Scheme != "http")
+            {
+                return GenerateAbsoluteUrl(baseUrl, true);
+            }
+
+            return effectiveUrl;
+        }
+
         public HttpWebRequest PrepareHttpWebRequest(string baseUrl)
         {
 
-            Uri effectiveUrl;
-            // See if this.Url is a relative URL or a fully qualified URL
-            if (!Uri.TryCreate(this.Url, UriKind.Absolute, out effectiveUrl))
-            {
-                if (!Uri.TryCreate(baseUrl + this.Url, UriKind.Absolute, out effectiveUrl))
-                {
-                    throw new InvalidOperationException(
-                        string.Format(
-                            "Couldn't construct a vaild URL for the request: baseUrl={0}, requestUrl={1}",
-                            baseUrl,
-                            this.Url));
-                }
-            }
+            var effectiveUrl = GenerateAbsoluteUrl(baseUrl);
 
             HttpWebRequest request = WebRequest.CreateHttp(effectiveUrl);
             request.AllowAutoRedirect = false;
