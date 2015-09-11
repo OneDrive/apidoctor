@@ -89,14 +89,20 @@ namespace ApiDocs.Validation.Http
             {
                 // This correctly fails on Windows for relative urls, but fails
                 // on platforms that allow a "/" in their file URIs (like Mac)
-                return GenerateAbsoluteUrl(baseUrl, forceBaseUrl);
+                return GenerateAbsoluteUrl(baseUrl, true);
             }
 
             if (effectiveUrl.Scheme != "https" && effectiveUrl.Scheme != "http")
             {
-                return GenerateAbsoluteUrl(baseUrl, true);
+                if (!forceBaseUrl)
+                {
+                    return GenerateAbsoluteUrl(baseUrl, true);
+                }
+                else
+                {
+                    throw new InvalidOperationException("Couldn't generate a valid absolute web URL using the baseUrl.");
+                }
             }
-
             return effectiveUrl;
         }
 
