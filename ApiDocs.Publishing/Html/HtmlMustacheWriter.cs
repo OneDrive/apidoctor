@@ -79,9 +79,9 @@ namespace ApiDocs.Publishing.Html
         //}
         void Generator_KeyNotFound(object sender, KeyNotFoundEventArgs e)
         {
-            Console.WriteLine("KeyNotFound: " + e.Key);
+            Console.WriteLine("Mustache template key not found. Empty string was returned: " + e.Key);
 
-            e.Substitute = e.Key;
+            e.Substitute = "";
             e.Handled = true;
         }
 
@@ -100,10 +100,10 @@ namespace ApiDocs.Publishing.Html
 
             List<ValueObject<string>> htmlHeaders = new List<ValueObject<string>>();
             List<ValueObject<string>> htmlFooters = new List<ValueObject<string>>();
-            if (page.Annotation.HeaderAdditions != null)
-                htmlHeaders.AddRange(from h in page.Annotation.HeaderAdditions select new ValueObject<string> { Value = h });
-            if (page.Annotation.FooterAdditions != null)
-                htmlFooters.AddRange(from h in page.Annotation.FooterAdditions select new ValueObject<string> { Value = h });
+            if (page.Annotation.HeadHtmlTags != null)
+                htmlHeaders.AddRange(from h in page.Annotation.HeadHtmlTags select new ValueObject<string> { Value = h });
+            if (page.Annotation.BodyFooterHtmlTags != null)
+                htmlFooters.AddRange(from h in page.Annotation.BodyFooterHtmlTags select new ValueObject<string> { Value = h });
 
             dynamic templateObject = new System.Dynamic.ExpandoObject();
             templateObject.Page = page.Annotation;

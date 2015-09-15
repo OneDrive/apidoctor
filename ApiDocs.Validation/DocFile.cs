@@ -374,7 +374,7 @@ namespace ApiDocs.Validation
             }
             catch (Exception ex)
             {
-                Debug.WriteLine("Ignored page annotation [{0}]: {1}", ex.Message, block.Content);
+                Debug.WriteLine("Ignored potential page annotation [{0}]: {1}", ex.Message, block.Content);
             }
             return null;
         }
