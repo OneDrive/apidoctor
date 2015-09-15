@@ -863,7 +863,7 @@ namespace ApiDocs.ConsoleApp
                 ValidationResults results = await method.ValidateServiceResponseAsync(scenarios, account, credentials);
 
                 PrintResultsToConsole(method, account, results, options);
-                TestReport.LogMethodTestResults(method, account, results);
+                await TestReport.LogMethodTestResults(method, account, results);
                 docSetResults.RecordResults(results, options);
                 
                 if (concurrentTasks == 1)
