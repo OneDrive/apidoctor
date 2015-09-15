@@ -69,7 +69,7 @@ Example: `apidocs.exe links --path ~/github/api-docs --method search`
 The `check-docs` command ensures that the documentation is internally consistent.
 It verifies that:
 
-* The JSON examples are proper JSON 
+* The JSON examples are proper JSON
 * The API methods that accept or return a specific resource type have valid request/response examples
 * The metadata in the documentation is formatted properly
 
@@ -161,42 +161,10 @@ token using the `--access-token` command line parameter. The tool will call the
 token service to retrieve an access token when necessary.
 
 ### Publish Command
-
 The `publish` command uses the documentation to generate a new set of outputs.
 
-| Option               | Description                                                         |
-|:---------------------|:--------------------------------------------------------------------|
-| `--output <path>`    | Required. Output directory for documentation.                       |
-| `--format <format>`  | Specify the format for the output documentation.                    |
-| `--template <value>` | Specify the path to a folder that contains output template content. |
-| `--template-filename <value>` | Specify the name of the file in the template folder that should be used for the output template. |
-| `--file-ext <.htm>` | Specify the extension used for files generated from markdown input. |
-
-Example: `apidocs publish --format mustache --path ~/github/api-docs --output ~/documents/docs`
-
-#### Publish formats
-
-The following formats are supported:
-
-| Value    | Description                                                                                                                     |
-|:---------|:--------------------------------------------------------------------------------------------------------------------------------|
-| markdown | Creates a copy of the documentation in markdown format.                                                                         |
-| html     | Generates a simple HTML output with a default style/format.                                                                     |
-| swagger2 | Experimental: Generates a swagger 2 compatible output file from the documentation.                                              |
-| mustache | Use a mustache template language to generate html output. Requires a --template <path> and a template.htm file inside that path |
-
-#### Swagger2 options
-
-_Swagger2 support is not very robust right now. More work is necessary here._
-
-The following additional command line options are required for swagger2 output:
-| Name                    | Description                                                         |
-|:------------------------|:--------------------------------------------------------------------|
-| **swagger-title**       | Title of the API in the Swagger header .                            |
-| **swagger-description** | Description of the API in the Swagger header.                       |
-| **swagger-version**     | Version number (1.0) in the Swagger header.                         |
-| **swagger-auth-scope**  | Set the required auth scope for every method in the Swagger output. |
-
+See the documentation on [publishing using APIDocs](publishing.md) for
+more details.
 
 ### Set Command
 The `set` command lets you preset values for some parameters so they don't need to
@@ -283,7 +251,7 @@ Content-Type: application/json
 ```
 
 This file, if included in the documentation, would be read as one resource,
-`example_item` that has a JSON object schema with these properties: 
+`example_item` that has a JSON object schema with these properties:
 
 | Property name | Type | Validation type
 |---|---|---|
@@ -359,7 +327,7 @@ conforming to this schema:
   {
     "{item-id}": "[source-file-id]"
   },
-  "expectations": 
+  "expectations":
   {
 	"$.size": 123,
 	"content-type:" "application/json",
@@ -398,8 +366,8 @@ Each object in the array of `test-setup` is a `PlaceholderRequest` instance.
 
 
 ### Canned Requests
-Canned requests look just like a test setup method, but instead of being a 
-scenario for a particular method are avaialble to be used from any scenario 
+Canned requests look just like a test setup method, but instead of being a
+scenario for a particular method are avaialble to be used from any scenario
 definition.
 
 ```json
@@ -436,7 +404,7 @@ When specifying a placeholder name or value, the following syntax is used:
 | !body.base64  | `!body.base64`     | Replace the content stream of the request with a decoded byte stream of the base 64 value provided.                                       |
 | !url          | `!url`             | Replace the URL for the request with the provided value.                                                                                  |
 | Header:       | `Content-Type:`    | Replace the value of a header with the specified value. Note the header name must end with a colon to be valid.                           |
-| Random Filename | `!random-filename-png | Returns a randomly generated value with a particular file extension that can be used to ensure tests don't interfere with each other. 
+| Random Filename | `!random-filename-png | Returns a randomly generated value with a particular file extension that can be used to ensure tests don't interfere with each other.
 
 ### Capture grammar
 
