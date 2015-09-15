@@ -44,6 +44,18 @@ namespace ApiDocs.Validation.Writers
         /// files for the publishing engine.
         /// </summary>
         string TemplatePath { get; set; }
+
+        /// <summary>
+        /// Specify the filename for the template used to generate the output. 
+        /// Defaults to "template.htm" if nothing is provided.
+        /// </summary>
+        string TemplateFilename { get; set; }
+
+        /// <summary>
+        /// Specify the output extension that should be appended to files converted
+        /// from markdown. This defaults to ".htm" if not set.
+        /// </summary>
+        string OutputExtension { get; set; }
     }
 
     public class DefaultPublishOptions : IPublishOptions
@@ -51,5 +63,9 @@ namespace ApiDocs.Validation.Writers
         public string[] FilesToPublish { get; set; }
 
         public string TemplatePath { get; set; }
+
+        public string TemplateFilename { get; set; }
+
+        public string OutputExtension { get; set; }
     }
 }

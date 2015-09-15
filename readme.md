@@ -169,8 +169,10 @@ The `publish` command uses the documentation to generate a new set of outputs.
 | `--output <path>`    | Required. Output directory for documentation.                       |
 | `--format <format>`  | Specify the format for the output documentation.                    |
 | `--template <value>` | Specify the path to a folder that contains output template content. |
+| `--template-filename <value>` | Specify the name of the file in the template folder that should be used for the output template. |
+| `--file-ext <.htm>` | Specify the extension used for files generated from markdown input. |
 
-Example: `apidocs --path ~/github/api-docs --output ~/documents/docs`
+Example: `apidocs publish --format mustache --path ~/github/api-docs --output ~/documents/docs`
 
 #### Publish formats
 
@@ -184,6 +186,8 @@ The following formats are supported:
 | mustache | Use a mustache template language to generate html output. Requires a --template <path> and a template.htm file inside that path |
 
 #### Swagger2 options
+
+_Swagger2 support is not very robust right now. More work is necessary here._
 
 The following additional command line options are required for swagger2 output:
 | Name                    | Description                                                         |

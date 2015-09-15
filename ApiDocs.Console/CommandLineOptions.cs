@@ -354,6 +354,12 @@ namespace ApiDocs.ConsoleApp
         [Option("template", HelpText = "Specify the folder where output template files are located.")]
         public string TemplatePath { get; set; }
 
+        [Option("template-filename", HelpText="Override the default template filename.", DefaultValue = "template.htm")]
+        public string TemplateFilename { get; set; }
+
+        [Option("file-ext", HelpText="Override the default output file extension.", DefaultValue = ".htm")]
+        public string OutputExtension { get; set; }
+
         [Option("line-ending",
             DefaultValue=LineEndings.Default,
             HelpText="Change the line endings for output files. Values: default, windows, unix, or macintosh")]

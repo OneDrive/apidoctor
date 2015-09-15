@@ -41,13 +41,14 @@ namespace ApiDocs.Publishing.Html
     {
         protected string TemplateHtml;
 
-        private const string HtmlOutputExtension = ".htm";
-        private const string TemplateHtmlFilename = "template.htm";
+        public string HtmlOutputExtension { get; set; }
+        public string TemplateHtmlFilename { get; set; }
 
         public DocumentPublisherHtml(DocSet docs, IPublishOptions options) 
             : base(docs, options)
         {
-            
+            TemplateHtmlFilename =  options.TemplateFilename ?? "template.htm";
+            HtmlOutputExtension = options.OutputExtension ?? ".htm";
         }
 
         /// <summary>
