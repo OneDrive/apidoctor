@@ -34,13 +34,12 @@ Available commands are:
 * `check-docs` - Check for errors in the documentation's resources, requests, and response examples.
 * `check-service` - Check for differences between the documentation and service responses to documented requests.
 * `publish` - Publish the documentation into one of the supported output formats.
-* `set` - Set default parameter values for the tool.
 
-All commands (except `set`) have the following options available:
+All commands have the following options available:
 
 | Option             | Description                                                                                            |
 |:-------------------|:-------------------------------------------------------------------------------------------------------|
-| `--path <path>`    | Required. Path to the root of the documentation set to scan. Can be defaulted using the `set` command. |
+| `--path <path>`    | Path to the root of the documentation set to scan. If missing, the current path is assumed.   |
 | `--short`          | Print concise output to the console.                                                                   |
 | `--verbose`        | Print verbose output to the console, including full HTTP requests/responses.                           |
 | `--log <log_file>` | Log console output to a file.                                                                          |
@@ -100,8 +99,7 @@ automatically be loaded and used by the check-service method.
 
 Example:
 ```
-apidocs set --access-token "asdkljasdkj..." -url https://api.example.org/v1.0
-apidocs check-service --method "search"
+apidocs check-service --method "search" --access-token "foo" --url https://example.org/v1.0
 apidocs check-service --headers "If-Match: *|Application: apidocs-test-app" --odata-metadata "odata.metadata=none"
 ```
 
@@ -196,22 +194,6 @@ The following additional command line options are required for swagger2 output:
 | **swagger-description** | Description of the API in the Swagger header.                       |
 | **swagger-version**     | Version number (1.0) in the Swagger header.                         |
 | **swagger-auth-scope**  | Set the required auth scope for every method in the Swagger output. |
-
-
-### Set Command
-The `set` command lets you preset values for some parameters so they don't need to
-be specified on each command line. These values are stored in the app.config
-file next to the application executable.
-
-Example: `apidocs set --path ~/github/api-docs --url https://api.example.org/v1.0`
-
-| Option                   | Description                                        |
-|:-------------------------|:---------------------------------------------------|
-| `--path <path>`          | Set the path to the documentation folder.          |
-| `--access-token "token"` | Set the access token used for calling the service. |
-| `--url <url>`            | Set the base URL for API calls.                    |
-| `--reset`                | Erase any stored values.                           |
-| `--print`                | Print any currently stored values.                 |
 
 ## Documentation format
 To work with this test tool, the source documentation has a few basic requirements:

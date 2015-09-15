@@ -61,9 +61,6 @@ namespace ApiDocs.ConsoleApp
         [VerbOption(VerbService, HelpText = "Check for errors between the documentation and service.")]
         public CheckServiceOptions CheckServiceVerb { get; set; }
 
-        [VerbOption(VerbSet, HelpText = "Save or reset default parameter values.")]
-        public SetCommandOptions SetVerb { get; set; }
-
         [VerbOption(VerbPublish, HelpText="Publish a version of the documentation, optionally converting it into other formats.")]
         public PublishOptions PublishVerb { get; set; }
 
@@ -97,28 +94,14 @@ namespace ApiDocs.ConsoleApp
 
 #if DEBUG
         [Option("debug", HelpText="Launch the debugger before doing anything interesting")]
-#endif
         public bool AttachDebugger { get; set; }
-
+#endif
 
         public virtual bool HasRequiredProperties(out string[] missingArguments)
         {
             missingArguments = new string[0];
             return true;
         }
-
-        protected static bool MakePropertyValid(ref string value, string storedValue)
-        {
-            if (string.IsNullOrEmpty(value))
-            {
-                if (!string.IsNullOrEmpty(storedValue))
-                    value = storedValue;
-                else
-                    return false;
-            }
-            return true;
-        }
-
     }
 
     /// <summary>
@@ -141,14 +124,9 @@ namespace ApiDocs.ConsoleApp
         /// <returns></returns>
         public override bool HasRequiredProperties(out string[] missingArguments)
         {
-            string value = this.DocumentationSetPath;
-            if (!MakePropertyValid(ref value, Program.DefaultSettings.DocumentationPath))
+            if (string.IsNullOrEmpty(this.DocumentationSetPath))
             {
                 this.DocumentationSetPath = Environment.CurrentDirectory;
-            }
-            else
-            {
-                this.DocumentationSetPath = value;
             }
 
             FancyConsole.WriteLine("Documentation path: " + this.DocumentationSetPath);
@@ -158,44 +136,9 @@ namespace ApiDocs.ConsoleApp
         }
     }
 
-    /// <summary>
-    /// Command line options for the set verb, which allows storing default values for configuration settings.
-    /// </summary>
-    class SetCommandOptions : BaseOptions
-    {
-        [Option(DocSetOptions.PathArgument, HelpText="Set the default path for the documentation set location.")]
-        public string DocumentationPath { get; set; }
-
-        [Option("access-token", HelpText="Set the default access token.")]
-        public string AccessToken { get; set; }
-
-        [Option("url", HelpText="Set the default service URL.")]
-        public string ServiceUrl { get; set; }
-
-        [Option("reset", HelpText="Clear any stored values.")]
-        public bool ResetStoredValues {get;set;}
-
-        [Option("print", HelpText="Print out the currently stored values.")]
-        public bool PrintValues { get; set; }
-
-        public override bool HasRequiredProperties(out string[] missingArguments)
-        {
-            if (string.IsNullOrEmpty(this.DocumentationPath) && string.IsNullOrEmpty(this.AccessToken) &&
-                string.IsNullOrEmpty(this.ServiceUrl) && !this.ResetStoredValues && !this.PrintValues)
-            {
-                missingArguments = new string[] { "One or more arguments are required. Check the usage of this command for more information." };
-            }
-            else
-            {
-                missingArguments = new string[0];
-            }
-            return missingArguments.Length == 0;
-        }
-    }
-
     class CheckMetadataOptions : DocSetOptions
     {
-        [Option("metadata", HelpText="Path or URL for the service metadata CSDL")]
+        [Option("metadata", HelpText = "Path or URL for the service metadata CSDL")]
         public string ServiceMetadataLocation { get; set; }
     }
 
@@ -301,17 +244,6 @@ namespace ApiDocs.ConsoleApp
         }
 
 
-        private void LoadStoredPropertyValues()
-        {
-            if (this.AccessToken == null && !string.IsNullOrEmpty(Program.DefaultSettings.AccessToken))
-                this.AccessToken = Program.DefaultSettings.AccessToken;
-            if (this.ServiceRootUrl == null && !string.IsNullOrEmpty(Program.DefaultSettings.ServiceUrl))
-                this.ServiceRootUrl = Program.DefaultSettings.ServiceUrl;
-
-
-        }
-
-
         public override bool HasRequiredProperties(out string[] missingArguments)
         {
             var result = base.HasRequiredProperties(out missingArguments);
@@ -321,8 +253,6 @@ namespace ApiDocs.ConsoleApp
 
             List<string> props = new List<string>(missingArguments);
             Program.LoadCurrentConfiguration(this);
-
-            this.LoadStoredPropertyValues();
 
             if (!string.IsNullOrEmpty(this.AccessToken))
             {
