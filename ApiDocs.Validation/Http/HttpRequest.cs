@@ -37,6 +37,7 @@ namespace ApiDocs.Validation.Http
         public HttpRequest()
         {
             this.Headers = new WebHeaderCollection();
+
         }
 
         public string Method { get; set; }
@@ -67,6 +68,8 @@ namespace ApiDocs.Validation.Http
             get { return this.Headers["content-type"]; }
             set { this.Headers["content-type"] = value; }
         }
+
+        public ICredentials Credentials { get; set; }
 
         public bool IsMatchingContentType(string expectedContentType)
         {
@@ -116,6 +119,7 @@ namespace ApiDocs.Validation.Http
             request.Method = this.Method;
             request.KeepAlive = true;
             request.ServicePoint.Expect100Continue = false;
+            request.Credentials = this.Credentials;
 
             foreach (var key in this.Headers.AllKeys)
             {

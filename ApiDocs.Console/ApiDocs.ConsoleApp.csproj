@@ -67,7 +67,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AppVeyor\BuildWorkerApi.cs" />
-    <Compile Include="Auth\Account.cs" />
+    <Compile Include="Auth\BasicAccount.cs" />
+    <Compile Include="Auth\OAuthAccount.cs" />
     <Compile Include="Auth\OAuthTokenGenerator.cs" />
     <Compile Include="CheckResults.cs" />
     <Compile Include="CommandLineOptions.cs" />

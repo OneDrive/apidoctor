@@ -244,10 +244,12 @@ namespace ApiDocs.ConsoleApp
     {
         private const string AccessTokenArgument = "access-token";
         private const string ServiceUrlArgument = "url";
+        private const string UsernameArgument = "username";
+        private const string PasswordArgument = "password";
 
         public CheckServiceOptions()
         {
-            this.FoundAccounts = new List<Account>();
+            this.FoundAccounts = new List<IServiceAccount>();
         }
 
         // Three ways to "connect" to an account
@@ -272,7 +274,7 @@ namespace ApiDocs.ConsoleApp
         [Option("odata-metadata", HelpText="Set the odata.metadata level in the accept header.", DefaultValue=null)]
         public string ODataMetadataLevel { get; set; }
 
-        public List<Account> FoundAccounts { get; set; }
+        public List<IServiceAccount> FoundAccounts { get; set; }
 
         [Option("branch-name")]
         public string BranchName { get; set; }
@@ -280,60 +282,97 @@ namespace ApiDocs.ConsoleApp
         [Option("parallel", HelpText = "Run service tests in parallel.", DefaultValue = false)]
         public bool ParallelTests { get; set; }
 
+        [Option("username", HelpText = "Provide a username for basic authentication.")]
+        public string Username { get; set; }
+        [Option("password", HelpText="Provide a password for basic authentication.")]
+        public string Password { get; set; }
+
+        private IServiceAccount GetEnvironmentVariablesAccount()
+        {
+            // Try to add an account from environment variables
+            try
+            {
+                var account = OAuthAccount.CreateAccountFromEnvironmentVariables();
+                account.BaseUrl = this.ServiceRootUrl;
+                return account;
+            }
+            catch (InvalidOperationException) { return null; }
+
+        }
+
+
+        private void LoadStoredPropertyValues()
+        {
+            if (this.AccessToken == null && !string.IsNullOrEmpty(Program.DefaultSettings.AccessToken))
+                this.AccessToken = Program.DefaultSettings.AccessToken;
+            if (this.ServiceRootUrl == null && !string.IsNullOrEmpty(Program.DefaultSettings.ServiceUrl))
+                this.ServiceRootUrl = Program.DefaultSettings.ServiceUrl;
+
+
+        }
+
 
         public override bool HasRequiredProperties(out string[] missingArguments)
         {
             var result = base.HasRequiredProperties(out missingArguments);
             if (!result) return result;
 
+            this.FoundAccounts = new List<IServiceAccount>();
+
             List<string> props = new List<string>(missingArguments);
             Program.LoadCurrentConfiguration(this);
 
-            if (string.IsNullOrEmpty(this.AccessToken))
+            this.LoadStoredPropertyValues();
+
+            if (!string.IsNullOrEmpty(this.AccessToken))
             {
-                // Try to add accounts from configuration file in the documentation
-                Account[] accounts = null;
-                if (Program.CurrentConfiguration != null)
-                    accounts = Program.CurrentConfiguration.Accounts;
-                if (null != accounts)
-                {
-                    this.FoundAccounts.AddRange(accounts);
-                }
-
-                // Try to add an account from environment variables
-                try
-                {
-                    var account = Account.CreateAccountFromEnvironmentVariables();
-                    account.BaseUrl = this.ServiceRootUrl;
-                    this.FoundAccounts.Add(account);
-                }
-                catch (InvalidOperationException) { }
-            }
-
-            var hasAccount = (this.FoundAccounts.Select(x => x.Enabled).Any());
-
-            if (!hasAccount)
-            {
-                string checkValue = this.AccessToken;
-                if (!MakePropertyValid(ref checkValue, Program.DefaultSettings.AccessToken))
-                {
-                    props.Add(AccessTokenArgument);
-                }
-                else
-                {
-                    this.AccessToken = checkValue;
-                }
-
-                checkValue = this.ServiceRootUrl;
-                if (!MakePropertyValid(ref checkValue, Program.DefaultSettings.ServiceUrl))
-                {
+                // Run the tests with a single account based on this access token
+                if (string.IsNullOrEmpty(this.ServiceRootUrl))
                     props.Add(ServiceUrlArgument);
-                }
-                this.ServiceRootUrl = checkValue;
+                else
+                    this.FoundAccounts.Add(
+                        new OAuthAccount
+                        {
+                            Name = "command-line-oauth",
+                            Enabled = true,
+                            AccessToken = this.AccessToken,
+                            BaseUrl = this.ServiceRootUrl
+                        });
+            }
+            else if (!string.IsNullOrEmpty(this.Username))
+            {
+                // Run the tests with a single account based on this username + password
+                if (string.IsNullOrEmpty(this.Password))
+                    props.Add(PasswordArgument);
+                if (string.IsNullOrEmpty(this.ServiceRootUrl))
+                    props.Add(ServiceUrlArgument);
 
-                if (!string.IsNullOrEmpty(this.AccessToken) && !string.IsNullOrEmpty(this.ServiceRootUrl))
+                if (this.Username != null && this.Password != null && this.ServiceRootUrl != null)
                 {
-                    this.FoundAccounts.Add(new Account { Name = "CommandLineAccount", Enabled = true, AccessToken = this.AccessToken, BaseUrl = this.ServiceRootUrl });
+                    this.FoundAccounts.Add(
+                        new BasicAccount
+                        {
+                            Name = "command-line-basic",
+                            Enabled = true,
+                            Username = this.Username,
+                            Password = this.Password,
+                            BaseUrl = this.ServiceRootUrl
+                        });
+                }
+            }
+            else // see where else we can find an account
+            {
+                // Look at the environment variables for an account
+                var enviroAccount = GetEnvironmentVariablesAccount();
+                if (null != enviroAccount)
+                {
+                    this.FoundAccounts.Add(enviroAccount);
+                }
+
+                // Look at the accounts.json to see if there are other accounts we should use
+                if (Program.CurrentConfiguration != null)
+                {
+                    this.FoundAccounts.AddRange(Program.CurrentConfiguration.Accounts);
                 }
             }
 

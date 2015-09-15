@@ -236,16 +236,7 @@ namespace ApiDocs.Validation
 
         internal static void AddAccessTokenToRequest(AuthenicationCredentials credentials, HttpRequest request)
         {
-            if (!(credentials is NoCredentials) && string.IsNullOrEmpty(request.Authorization))
-            {
-                request.Authorization = credentials.AuthenicationToken;
-            }
-
-            if (!string.IsNullOrEmpty(credentials.FirstPartyApplicationHeaderValue) &&
-                request.Headers["Application"] == null)
-            {
-                request.Headers.Add("Application", credentials.FirstPartyApplicationHeaderValue);
-            }
+            credentials.AuthenticateRequest(request);
         }
 
         internal static string RewriteUrlWithParameters(string url, IEnumerable<PlaceholderValue> parameters)

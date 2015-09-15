@@ -826,7 +826,7 @@ namespace ApiDocs.ConsoleApp
         /// <param name="methods"></param>
         /// <param name="docset"></param>
         /// <returns>True if the methods all passed, false if there were failures.</returns>
-        private static async Task<bool> CheckMethodsForAccountAsync(CheckServiceOptions options, Account account, MethodDefinition[] methods, DocSet docset)
+        private static async Task<bool> CheckMethodsForAccountAsync(CheckServiceOptions options, IServiceAccount account, MethodDefinition[] methods, DocSet docset)
         {
             //CheckResults results = new CheckResults();
 
@@ -835,22 +835,17 @@ namespace ApiDocs.ConsoleApp
             string testNamePrefix = account.Name.ToLower() + ": ";
             FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, "Testing with account: {0}", account.Name);
 
-            // Make sure we have an access token for this API
-            if (string.IsNullOrEmpty(account.AccessToken))
+            try
             {
-                var tokens = await OAuthTokenGenerator.RedeemRefreshTokenAsync(account);
-                if (null != tokens)
-                {
-                    account.AccessToken = tokens.AccessToken;
-                }
-                else
-                {
-                    RecordError("Failed to retrieve access token for account: {0}", account.Name);
-                    return false;
-                }
+                await account.PrepareForRequestAsync();
+            }
+            catch (Exception ex)
+            {
+                RecordError(ex.Message);
+                return false;
             }
 
-            AuthenicationCredentials credentials = AuthenicationCredentials.CreateAutoCredentials(account.AccessToken);
+            AuthenicationCredentials credentials = account.CreateCredentials();
 
             ValidationOutcome docSetOutcome = ValidationOutcome.None;
 
@@ -917,7 +912,7 @@ namespace ApiDocs.ConsoleApp
         /// <param name="account"></param>
         /// <param name="results"></param>
         /// <param name="options"></param>
-        private static void PrintResultsToConsole(MethodDefinition method, Account account, ValidationResults output, CheckServiceOptions options)
+        private static void PrintResultsToConsole(MethodDefinition method, IServiceAccount account, ValidationResults output, CheckServiceOptions options)
         {
             // Only allow one thread at a time to write to the console so we don't interleave our results.
             lock (typeof(Program))
@@ -973,7 +968,7 @@ namespace ApiDocs.ConsoleApp
 
 
 
-        private static void ConfigureAdditionalHeadersForAccount(CheckServiceOptions options, Account account)
+        private static void ConfigureAdditionalHeadersForAccount(CheckServiceOptions options, IServiceAccount account)
         {
             if (account.AdditionalHeaders != null && account.AdditionalHeaders.Length > 0)
             {
