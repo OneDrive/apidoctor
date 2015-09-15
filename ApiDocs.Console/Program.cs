@@ -1070,9 +1070,21 @@ namespace ApiDocs.ConsoleApp
             
             FancyConsole.WriteLine("Publishing content...");
             publisher.NewMessage += publisher_NewMessage;
-            await publisher.PublishToFolderAsync(outputPath);
 
-            FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, "Finished publishing documentation to: {0}", outputPath);
+            try
+            {
+                await publisher.PublishToFolderAsync(outputPath);
+                FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, "Finished publishing documentation to: {0}", outputPath);
+            }
+            catch (Exception ex)
+            {
+                FancyConsole.WriteLine(
+                    FancyConsole.ConsoleErrorColor,
+                    "An error occured while publishing: {0}",
+                    ex.Message);
+                FancyConsole.VerboseWriteLine(ex.ToString());
+                return false;
+            }
 
             return true;
         }
