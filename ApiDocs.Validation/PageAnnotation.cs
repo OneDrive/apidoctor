@@ -82,6 +82,14 @@ namespace ApiDocs.Validation
         [JsonProperty("tocPath")]
         public string TocPath { get; set; }
 
+
+        /// <summary>
+        /// A dictionary of Table of Contents items for this page. The key of the dictionary
+        /// is the TOC Path for the entry, and the value is the URL bookmark (#foo) for the entry.
+        /// </summary>
+        [JsonProperty("tocItems")]
+        public Dictionary<string, string> TocItems { get; set; }
+
         /// <summary>
         /// A collection of HTML tags that should be added to the head element during HTML serialization.
         /// </summary>
@@ -94,19 +102,22 @@ namespace ApiDocs.Validation
         [JsonProperty("footerAdditions")]
         public string[] BodyFooterHtmlTags { get; set; }
 
+
+
+
+
         /// <summary>
         /// Container for any unrecognized properties when deserializing the #page.annotation class.
         /// </summary>
         [JsonExtensionData(ReadData = true)]
-        protected Dictionary<string, object> AdditionalData { get; set; }
+        public Dictionary<string, object> AdditionalData { get; set; }
 
         public object Properties
         {
             get {
-                var dict = new Dictionary<string, object> { { "Property", "foo" } };
                 var eo = new ExpandoObject();
                 var eoColl = (ICollection<KeyValuePair<string, object>>)eo;
-                foreach (var kvp in dict)
+                foreach (var kvp in AdditionalData)
                 {
                     eoColl.Add(kvp);
                 }
