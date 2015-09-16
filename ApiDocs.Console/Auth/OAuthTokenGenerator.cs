@@ -34,7 +34,7 @@ namespace ApiDocs.ConsoleApp.Auth
 
     public class OAuthTokenGenerator
     {
-        public static async Task<TokenResponse> RedeemRefreshTokenAsync(Account account)
+        public static async Task<TokenResponse> RedeemRefreshTokenAsync(OAuthAccount account)
         {
             try
             {
@@ -48,7 +48,7 @@ namespace ApiDocs.ConsoleApp.Auth
         }
 
 
-        private static async Task<TokenResponse> RedeemRefreshTokenInternalAsync(Account account)
+        private static async Task<TokenResponse> RedeemRefreshTokenInternalAsync(OAuthAccount account)
         {
             HttpWebRequest request = WebRequest.CreateHttp(account.TokenService);
             request.ContentType = "application/x-www-form-urlencoded";

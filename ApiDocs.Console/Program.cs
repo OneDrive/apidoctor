@@ -51,7 +51,6 @@ namespace ApiDocs.ConsoleApp
         private const int ExitCodeSuccess = 0;
         private const int ParallelTaskCount = 5;
 
-        public static readonly SavedSettings DefaultSettings = new SavedSettings("ApiTestTool", "settings.json");
         public static readonly BuildWorkerApi BuildWorker = new BuildWorkerApi();
         public static AppConfigFile CurrentConfiguration { get; private set; }
 
@@ -81,10 +80,12 @@ namespace ApiDocs.ConsoleApp
                 Exit(failure: true);
             }
 
+#if DEBUG
             if (verbOptions.AttachDebugger)
             {
                 Debugger.Launch();
             }
+#endif
 
             if (!string.IsNullOrEmpty(verbOptions.AppVeyorServiceUrl))
             {
@@ -122,14 +123,6 @@ namespace ApiDocs.ConsoleApp
             string[] missingProps;
             if (!options.HasRequiredProperties(out missingProps))
             {
-                if (options is SetCommandOptions)
-                {
-                    // Just print out the current values of the set parameters
-                    FancyConsole.WriteLine(origCommandLineOpts.GetUsage(invokedVerb));
-                    FancyConsole.WriteLine();
-                    WriteSavedValues(DefaultSettings);
-                    Exit(failure: true);
-                }
                 var error = new ValidationError(ValidationErrorCode.MissingRequiredArguments, null, "Command line is missing required arguments: {0}", missingProps.ComponentsJoinedByString(", "));
                 FancyConsole.WriteLine(origCommandLineOpts.GetUsage(invokedVerb));
                 await WriteOutErrorsAndFinishTestAsync(new ValidationError[] { error }, options.SilenceWarnings);
@@ -156,9 +149,6 @@ namespace ApiDocs.ConsoleApp
                     break;
                 case CommandLineOptions.VerbService:
                     returnSuccess = await CheckServiceAsync((CheckServiceOptions)options);
-                    break;
-                case CommandLineOptions.VerbSet:
-                    SetDefaultValues((SetCommandOptions)options);
                     break;
                 case CommandLineOptions.VerbPublish:
                     returnSuccess = await PublishDocumentationAsync((PublishOptions)options);
@@ -203,62 +193,6 @@ namespace ApiDocs.ConsoleApp
             FancyConsole.WriteLine();
             FancyConsole.WriteLine(ConsoleColor.Cyan, "For more information see http://github.com/onedrive/markdown-scanner/");
             FancyConsole.WriteLine();
-            FancyConsole.WriteLine(ConsoleColor.Cyan, "Includes or links with OSS code from:");
-            FancyConsole.WriteLine();
-            FancyConsole.WriteLine(ConsoleColor.Cyan, "MarkdownDeep - http://www.toptensoftware.com/markdowndeep");
-            FancyConsole.WriteLine(ConsoleColor.Cyan, "Copyright (C) 2010-2011 Topten Software");
-            FancyConsole.WriteLine();
-            FancyConsole.WriteLine(ConsoleColor.Cyan, "Nito.AsyncEx - https://github.com/StephenCleary/AsyncEx");
-            FancyConsole.WriteLine(ConsoleColor.Cyan, "Copyright (c) 2014 StephenCleary");
-            FancyConsole.WriteLine();
-        }
-
-
-        private static void SetDefaultValues(SetCommandOptions setCommandOptions)
-        {
-            var settings = DefaultSettings;
-            if (setCommandOptions.ResetStoredValues)
-            {
-                settings.AccessToken = null;
-                settings.DocumentationPath = null;
-                settings.ServiceUrl = null;
-            }
-
-            bool setValues = false;
-
-            if (!string.IsNullOrEmpty(setCommandOptions.AccessToken))
-            {
-                settings.AccessToken = setCommandOptions.AccessToken;
-                setValues = true;
-            }
-
-            if (!string.IsNullOrEmpty(setCommandOptions.DocumentationPath))
-            {
-                settings.DocumentationPath = setCommandOptions.DocumentationPath;
-                setValues = true;
-            }
-
-            if (!string.IsNullOrEmpty(setCommandOptions.ServiceUrl))
-            {
-                settings.ServiceUrl = setCommandOptions.ServiceUrl;
-                setValues = true;
-            }
-
-            settings.Save();
-
-            if (setCommandOptions.PrintValues || setValues)
-            {
-                WriteSavedValues(settings);
-            }
-            
-        }
-
-        private static void WriteSavedValues(SavedSettings settings)
-        {
-            FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, "Stored settings:");
-            FancyConsole.WriteLineIndented("  ", "{0}: {1}", "AccessToken", settings.AccessToken);
-            FancyConsole.WriteLineIndented("  ", "{0}: {1}", "DocumentationPath", settings.DocumentationPath);
-            FancyConsole.WriteLineIndented("  ", "{0}: {1}", "BaseUrl", settings.ServiceUrl);
         }
 
 
@@ -325,7 +259,7 @@ namespace ApiDocs.ConsoleApp
             }
         }
 
-        #region Print verb commands
+#region Print verb commands
         /// <summary>
         /// Prints a list of the documentation files in a docset to the console.
         /// </summary>
@@ -440,7 +374,7 @@ namespace ApiDocs.ConsoleApp
             }
         }
 
-        #endregion
+#endregion
 
 
         /// <summary>
@@ -826,7 +760,7 @@ namespace ApiDocs.ConsoleApp
         /// <param name="methods"></param>
         /// <param name="docset"></param>
         /// <returns>True if the methods all passed, false if there were failures.</returns>
-        private static async Task<bool> CheckMethodsForAccountAsync(CheckServiceOptions options, Account account, MethodDefinition[] methods, DocSet docset)
+        private static async Task<bool> CheckMethodsForAccountAsync(CheckServiceOptions options, IServiceAccount account, MethodDefinition[] methods, DocSet docset)
         {
             //CheckResults results = new CheckResults();
 
@@ -835,22 +769,17 @@ namespace ApiDocs.ConsoleApp
             string testNamePrefix = account.Name.ToLower() + ": ";
             FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, "Testing with account: {0}", account.Name);
 
-            // Make sure we have an access token for this API
-            if (string.IsNullOrEmpty(account.AccessToken))
+            try
             {
-                var tokens = await OAuthTokenGenerator.RedeemRefreshTokenAsync(account);
-                if (null != tokens)
-                {
-                    account.AccessToken = tokens.AccessToken;
-                }
-                else
-                {
-                    RecordError("Failed to retrieve access token for account: {0}", account.Name);
-                    return false;
-                }
+                await account.PrepareForRequestAsync();
+            }
+            catch (Exception ex)
+            {
+                RecordError(ex.Message);
+                return false;
             }
 
-            AuthenicationCredentials credentials = AuthenicationCredentials.CreateAutoCredentials(account.AccessToken);
+            AuthenicationCredentials credentials = account.CreateCredentials();
 
             ValidationOutcome docSetOutcome = ValidationOutcome.None;
 
@@ -863,7 +792,7 @@ namespace ApiDocs.ConsoleApp
                 ValidationResults results = await method.ValidateServiceResponseAsync(scenarios, account, credentials);
 
                 PrintResultsToConsole(method, account, results, options);
-                TestReport.LogMethodTestResults(method, account, results);
+                await TestReport.LogMethodTestResults(method, account, results);
                 docSetResults.RecordResults(results, options);
                 
                 if (concurrentTasks == 1)
@@ -917,7 +846,7 @@ namespace ApiDocs.ConsoleApp
         /// <param name="account"></param>
         /// <param name="results"></param>
         /// <param name="options"></param>
-        private static void PrintResultsToConsole(MethodDefinition method, Account account, ValidationResults output, CheckServiceOptions options)
+        private static void PrintResultsToConsole(MethodDefinition method, IServiceAccount account, ValidationResults output, CheckServiceOptions options)
         {
             // Only allow one thread at a time to write to the console so we don't interleave our results.
             lock (typeof(Program))
@@ -973,7 +902,7 @@ namespace ApiDocs.ConsoleApp
 
 
 
-        private static void ConfigureAdditionalHeadersForAccount(CheckServiceOptions options, Account account)
+        private static void ConfigureAdditionalHeadersForAccount(CheckServiceOptions options, IServiceAccount account)
         {
             if (account.AdditionalHeaders != null && account.AdditionalHeaders.Length > 0)
             {
@@ -1046,7 +975,7 @@ namespace ApiDocs.ConsoleApp
                     publisher = new HtmlMustacheWriter(docs, options);
                     break;
                 case PublishOptions.PublishFormat.Swagger2:
-                    publisher = new SwaggerWriter(docs, DefaultSettings.ServiceUrl)
+                    publisher = new SwaggerWriter(docs, "https://service.org")  // TODO: Plumb in the base URL.
                     {
                         Title = options.Title,
                         Description = options.Description,
@@ -1070,9 +999,21 @@ namespace ApiDocs.ConsoleApp
             
             FancyConsole.WriteLine("Publishing content...");
             publisher.NewMessage += publisher_NewMessage;
-            await publisher.PublishToFolderAsync(outputPath);
 
-            FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, "Finished publishing documentation to: {0}", outputPath);
+            try
+            {
+                await publisher.PublishToFolderAsync(outputPath);
+                FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, "Finished publishing documentation to: {0}", outputPath);
+            }
+            catch (Exception ex)
+            {
+                FancyConsole.WriteLine(
+                    FancyConsole.ConsoleErrorColor,
+                    "An error occured while publishing: {0}",
+                    ex.Message);
+                FancyConsole.VerboseWriteLine(ex.ToString());
+                return false;
+            }
 
             return true;
         }
@@ -1091,15 +1032,8 @@ namespace ApiDocs.ConsoleApp
         {
             if (string.IsNullOrEmpty(options.ServiceMetadataLocation))
             {
-                if (!string.IsNullOrEmpty(DefaultSettings.ServiceUrl))
-                {
-                    options.ServiceMetadataLocation = DefaultSettings.ServiceUrl + "/$metadata";
-                }
-                else
-                {
-                    RecordError("No service metadata file location specified.");
-                    return null;
-                }
+                RecordError("No service metadata file location specified.");
+                return null;
             }
 
             FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, "Loading service metadata from '{0}'...", options.ServiceMetadataLocation);

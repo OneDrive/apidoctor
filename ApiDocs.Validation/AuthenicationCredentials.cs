@@ -26,37 +26,18 @@
 namespace ApiDocs.Validation
 {
     using System;
+    using Http;
 
     /// <summary>
     /// Authenication Credentials for interacting with the service
     /// </summary>
     public abstract class AuthenicationCredentials
     {
-        public abstract string AuthenicationToken { get; internal set; }
-        public string FirstPartyApplicationHeaderValue { get; protected set; }
-
-        public static AuthenicationCredentials CreateAutoCredentials(string authenicationToken)
-        {
-            if (String.IsNullOrEmpty(authenicationToken)) { return CreateNoCredentials(); }
-            if (authenicationToken.StartsWith("t="))
-            {
-                return CreateFirstPartyCredentials(authenicationToken);
-            }
-
-            return CreateBearerCredentials(authenicationToken);
-        }
-
-        public static AuthenicationCredentials CreateBearerCredentials(string authenicationToken)
-        {
-            if (String.IsNullOrEmpty(authenicationToken)) { return CreateNoCredentials(); }
-            return new BearerCredentials { AuthenicationToken = "Bearer " + authenicationToken };
-        }
-
-        public static AuthenicationCredentials CreateFirstPartyCredentials(string authenicationToken)
-        {
-            if (String.IsNullOrEmpty(authenicationToken)) { return CreateNoCredentials(); }
-            return new FirstPartyCredentials { AuthenicationToken = "WLID1.1 " + authenicationToken };
-        }
+        /// <summary>
+        /// Add the approriate authentication information to the request.
+        /// </summary>
+        /// <param name="request"></param>
+        public abstract void AuthenticateRequest(Http.HttpRequest request);
 
         public static AuthenicationCredentials CreateNoCredentials()
         {
@@ -64,27 +45,111 @@ namespace ApiDocs.Validation
         }
     }
 
-    public class BearerCredentials : AuthenicationCredentials
+    /// <summary>
+    /// Basic class that implements OAuth Bearer token support.
+    /// </summary>
+    public class OAuthCredentials : AuthenicationCredentials
     {
-        internal BearerCredentials() { }
+        public string AuthorizationHeaderValue { get; protected set; }
 
-        public override string AuthenicationToken { get; internal set; }
-    }
-
-    public class FirstPartyCredentials : AuthenicationCredentials
-    {
-        internal FirstPartyCredentials()
+        public override void AuthenticateRequest(HttpRequest request)
         {
-            this.FirstPartyApplicationHeaderValue = "SaveToOneDriveWidget";
+            if (string.IsNullOrEmpty(request.Authorization))
+            {
+                request.Authorization = this.AuthorizationHeaderValue;
+            }
         }
 
-        public override string AuthenicationToken { get; internal set; }
+        /// <summary>
+        /// Auto-detect if the accessToken is a first party token or third party token and 
+        /// return the approriate instance of AuthenticationCredentials.
+        /// </summary>
+        /// <param name="accessToken"></param>
+        /// <returns></returns>
+        public static AuthenicationCredentials CreateAutoCredentials(string accessToken)
+        {
+            if (String.IsNullOrEmpty(accessToken)) { return CreateNoCredentials(); }
+            if (accessToken.StartsWith("t="))
+            {
+                return CreateFirstPartyCredentials(accessToken);
+            }
+
+            return CreateBearerCredentials(accessToken);
+        }
+
+        /// <summary>
+        /// Create a Bearer token AuthenticationCredentails instance.
+        /// </summary>
+        /// <param name="accessToken"></param>
+        /// <returns></returns>
+        public static AuthenicationCredentials CreateBearerCredentials(string accessToken)
+        {
+            if (String.IsNullOrEmpty(accessToken)) { return CreateNoCredentials(); }
+            return new OAuthCredentials { AuthorizationHeaderValue = "Bearer " + accessToken };
+        }
+
+        /// <summary>
+        /// Create a first party WLID instance.
+        /// </summary>
+        /// <param name="accessToken"></param>
+        /// <returns></returns>
+        public static AuthenicationCredentials CreateFirstPartyCredentials(string accessToken)
+        {
+            if (String.IsNullOrEmpty(accessToken)) { return CreateNoCredentials(); }
+            return new FirstPartyCredentials { AuthorizationHeaderValue = "WLID1.1 " + accessToken };
+        }
     }
 
+    /// <summary>
+    /// Wrapper for first-party authentication which sets an application header and provides
+    /// the authorization header with the approriate type.
+    /// </summary>
+    public class FirstPartyCredentials : OAuthCredentials
+    {
+        public string FirstPartyApplicationHeaderValue { get; protected set; }
+
+        internal FirstPartyCredentials()
+        {
+            this.FirstPartyApplicationHeaderValue = "MarkdownScannerTool";
+        }
+
+        public override void AuthenticateRequest(HttpRequest request)
+        {
+            base.AuthenticateRequest(request);
+
+            if (!string.IsNullOrEmpty(this.FirstPartyApplicationHeaderValue) &&
+                request.Headers["Application"] == null)
+            {
+                request.Headers.Add("Application", this.FirstPartyApplicationHeaderValue);
+            }
+        }
+    }
+
+    /// <summary>
+    /// No authentication is performed.
+    /// </summary>
     public class NoCredentials : AuthenicationCredentials
     {
         internal NoCredentials() { }
 
-        public override string AuthenicationToken { get { return null; } internal set { } }
+        public override void AuthenticateRequest(HttpRequest request)
+        {
+            
+        }
+    }
+
+    /// <summary>
+    /// Enable username and password credentials.
+    /// </summary>
+    public class BasicCredentials : AuthenicationCredentials
+    {
+        public string Username { get; set; }
+
+        public string Password { get; set; }
+
+        public override void AuthenticateRequest(HttpRequest request)
+        {
+            request.Credentials = new System.Net.NetworkCredential(this.Username, this.Password);
+        }
     }
 }

@@ -28,8 +28,9 @@ namespace ApiDocs.ConsoleApp.Auth
     using System;
     using ApiDocs.Validation;
     using Newtonsoft.Json;
+    using System.Threading.Tasks;
 
-    public class Account : IServiceAccount
+    public class OAuthAccount : IServiceAccount
     {
         [JsonProperty("name")]
         public string Name { get; set; }
@@ -68,7 +69,7 @@ namespace ApiDocs.ConsoleApp.Auth
         /// Read command environmental variables to build an account
         /// </summary>
         /// <returns></returns>
-        public static Account CreateAccountFromEnvironmentVariables()
+        public static OAuthAccount CreateAccountFromEnvironmentVariables()
         {
             string clientId = GetEnvVariable("oauth-client-id");
             string clientSecret = GetEnvVariable("oauth-client-secret");
@@ -82,7 +83,7 @@ namespace ApiDocs.ConsoleApp.Auth
                 throw new InvalidOperationException("Missing value for one or more required environmental variables.");
             }
 
-            return new Account
+            return new OAuthAccount
             {
                 Name = "DefaultAccount",
                 Enabled = true,
@@ -96,17 +97,35 @@ namespace ApiDocs.ConsoleApp.Auth
 
         private static string GetEnvVariable(string name)
         {
-            var value = Environment.GetEnvironmentVariable(name);
-            //if (string.IsNullOrEmpty(value))
-            //{
-            //    Console.WriteLine("No value for variable {0}", name);
-            //}
-            return value;
+            return Environment.GetEnvironmentVariable(name);
         }
 
+        public async Task PrepareForRequestAsync()
+        {
+            // Make sure we have an access token for this API
+            if (string.IsNullOrEmpty(this.AccessToken))
+            {
+                var tokens = await OAuthTokenGenerator.RedeemRefreshTokenAsync(this);
+                if (null != tokens)
+                {
+                    this.AccessToken = tokens.AccessToken;
+                }
+                else
+                {
+                    throw new InvalidOperationException(
+                        string.Format("Failed to retrieve access token for account: {0}", this.Name));
+                }
+            }
+        }
 
+        public AuthenicationCredentials CreateCredentials()
+        {
+            return OAuthCredentials.CreateAutoCredentials(this.AccessToken);
+        }
     }
 
 
     
+
+
 }

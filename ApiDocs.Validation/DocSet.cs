@@ -160,7 +160,7 @@ namespace ApiDocs.Validation
                             config.SourcePath = file.FullName;
                         }
                     } 
-                    catch (JsonSerializationException ex)
+                    catch (JsonSerializationException)
                     {
                         // TODO: Make it possible to log out an error here.
 //                        RecordLogMessage(true, 

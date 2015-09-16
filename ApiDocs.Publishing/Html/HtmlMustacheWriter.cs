@@ -79,9 +79,9 @@ namespace ApiDocs.Publishing.Html
         //}
         void Generator_KeyNotFound(object sender, KeyNotFoundEventArgs e)
         {
-            Console.WriteLine("KeyNotFound: " + e.Key);
+            Console.WriteLine("Mustache template key not found. Empty string was returned: " + e.Key);
 
-            e.Substitute = e.Key;
+            e.Substitute = "";
             e.Handled = true;
         }
 
@@ -100,10 +100,10 @@ namespace ApiDocs.Publishing.Html
 
             List<ValueObject<string>> htmlHeaders = new List<ValueObject<string>>();
             List<ValueObject<string>> htmlFooters = new List<ValueObject<string>>();
-            if (page.Annotation.HeaderAdditions != null)
-                htmlHeaders.AddRange(from h in page.Annotation.HeaderAdditions select new ValueObject<string> { Value = h });
-            if (page.Annotation.FooterAdditions != null)
-                htmlFooters.AddRange(from h in page.Annotation.FooterAdditions select new ValueObject<string> { Value = h });
+            if (page.Annotation.HeadHtmlTags != null)
+                htmlHeaders.AddRange(from h in page.Annotation.HeadHtmlTags select new ValueObject<string> { Value = h });
+            if (page.Annotation.BodyFooterHtmlTags != null)
+                htmlFooters.AddRange(from h in page.Annotation.BodyFooterHtmlTags select new ValueObject<string> { Value = h });
 
             dynamic templateObject = new System.Dynamic.ExpandoObject();
             templateObject.Page = page.Annotation;
@@ -128,28 +128,67 @@ namespace ApiDocs.Publishing.Html
             }
         }
 
-        protected string RelativeUrlFromCurrentPage(DocFile docFile, string destinationFile, string rootDestinationFolder)
+        protected string RelativeUrlFromCurrentPage(DocFile docFile, string destinationFile, string rootDestinationFolder, string optionalBookmark = null)
         {
             string linkDestinationRelative = docFile.DisplayName.TrimStart(new char[] { '\\', '/' });
             var relativeLinkToDocFile =  DocSet.RelativePathToRootFromFile(destinationFile, Path.Combine(rootDestinationFolder, linkDestinationRelative), true);
             var result = this.QualifyUrl(relativeLinkToDocFile);
+
+            if (optionalBookmark != null)
+                result += optionalBookmark;
+
             return result;
         }
+
+        private Dictionary<string, IEnumerable<TocItem>> SectionHeaders = new Dictionary<string, IEnumerable<TocItem>>();
 
         protected IEnumerable<TocItem> GetHeadersForSection(string section, string destinationFile, string rootDestinationFolder, DocFile currentPage)
         {
             if (null == section)
                 return new TocItem[0];
 
-            var headers = from d in this.Documents.Files
+            if (SectionHeaders.ContainsKey(section))
+                return SectionHeaders[section];
+
+            // Generate headers for all tocPath entries
+            var headersQuery = from d in this.Documents.Files
                           where d.Annotation != null 
                           && string.Equals(d.Annotation.Section, section, StringComparison.OrdinalIgnoreCase) 
                           && !string.IsNullOrEmpty(d.Annotation.TocPath)
                           orderby d.Annotation.TocPath
-                          select new TocItem { DocFile = d, 
-                Title = d.Annotation.TocPath.LastPathComponent(), 
-                Url = this.RelativeUrlFromCurrentPage(d, destinationFile, rootDestinationFolder) };
+                          select new TocItem {
+                              DocFile = d, 
+                              Title = d.Annotation.TocPath.LastPathComponent(), 
+                              TocPath = d.Annotation.TocPath,
+                              Url = this.RelativeUrlFromCurrentPage(d, destinationFile, rootDestinationFolder)
+                          };
+
+            List<TocItem> headers = headersQuery.ToList();
+
+            // Generate headers for all tocEntry items
+            var multipleTocItemPages = from d in this.Documents.Files
+                where d.Annotation != null 
+                && d.Annotation.TocItems != null
+                && string.Equals(d.Annotation.Section, section, StringComparison.OrdinalIgnoreCase)
+                && d.Annotation.TocItems.Count > 0
+                select new { DocFile = d, TocItems = d.Annotation.TocItems };
+
+            foreach (var item in multipleTocItemPages)
+            {
+                headers.AddRange(
+                    from entry in item.TocItems
+                    where entry.Value != null && entry.Value.StartsWith("#")
+                    select new TocItem
+                    {
+                        DocFile = item.DocFile,
+                        Title = entry.Key.LastPathComponent(),
+                        TocPath = entry.Key,
+                        Url = this.RelativeUrlFromCurrentPage(item.DocFile, destinationFile, rootDestinationFolder, entry.Value)
+                    });
+            }
+            headers = headers.OrderBy(x => x.TocPath).ToList();
             headers = this.CollapseHeadersByPath(headers, currentPage);
+            SectionHeaders[section] = headers;
             return headers;
         }
 
@@ -159,40 +198,46 @@ namespace ApiDocs.Publishing.Html
         /// <param name="headers"></param>
         /// <param name="currentPage"></param>
         /// <returns></returns>
-        private IEnumerable<TocItem> CollapseHeadersByPath(IEnumerable<TocItem> headers, DocFile currentPage)
+        private List<TocItem> CollapseHeadersByPath(List<TocItem> headers, DocFile currentPage)
         {
-            Dictionary<string, TocItem> topLevelHeaders = new Dictionary<string, TocItem>();
+            List<TocItem> topLevelHeaders = new List<TocItem>();
             
             foreach (var header in headers)
             {
-                var pathCompoents = header.DocFile.Annotation.TocPath.Split(new char[] { '\\', '/' }, StringSplitOptions.RemoveEmptyEntries);
-                if (pathCompoents.Length >= 2)
+                var pathComponents =
+                    header.TocPath.Split(new char[] { '\\', '/' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+
+                List<TocItem> headersForTargetLevel = topLevelHeaders;
+
+                while (pathComponents.Count > 1)
                 {
-                    TocItem topLevelHeader;
-                    if (!topLevelHeaders.TryGetValue(pathCompoents[0], out topLevelHeader))
+                    // Point headersForTargetLevel to the proper level
+                    var headerForNextLevel =
+                        (from h in headersForTargetLevel where h.Title == pathComponents[0] select h).FirstOrDefault();
+                    if (headerForNextLevel == null)
                     {
-                        topLevelHeader = new TocItem() { Title = pathCompoents[0] };
-                        topLevelHeaders.Add(pathCompoents[0], topLevelHeader);
+                        // We encountered a header that doesn't exist yet. Bummer. We should do something about that.
+                        headerForNextLevel = new TocItem() { Title = pathComponents[0] };
+                        headersForTargetLevel.Add(headerForNextLevel);
                     }
-                    topLevelHeader.NextLevel.Add(header);
+                    headersForTargetLevel = headerForNextLevel.NextLevel;
+                    pathComponents.RemoveAt(0);
                 }
-                else
-                {
-                    topLevelHeaders.Add(header.Title, header);
-                }
+
+                headersForTargetLevel.Add(header);
             }
 
             if (this.CollapseTocToActiveGroup)
             {
                 var pageTocComponents = currentPage.Annotation.TocPath.FirstPathComponent();
-                foreach (var header in topLevelHeaders.Values)
+                foreach (var header in topLevelHeaders)
                 {
                     if (header.Title != pageTocComponents)
                         header.NextLevel.Clear();
                 }
             }
 
-            return topLevelHeaders.Values.OrderBy(v => v.Title);
+            return topLevelHeaders.OrderBy(v => v.Title).ToList();
         }
         
 
@@ -202,6 +247,7 @@ namespace ApiDocs.Publishing.Html
     {
         public string Title { get; set; }
         public DocFile DocFile { get; set; }
+        public string TocPath { get; set; }
         public string Url { get; set; }
         public List<TocItem> NextLevel { get; set; }
 

@@ -1500,7 +1500,7 @@ namespace MarkdownDeep
             {
                 // Look for a language specifier
                 Mark();
-                while (char.IsLetterOrDigit(current))
+                while (char.IsLetterOrDigit(current) || current == '-')
                 {
                     SkipForward(1);
                 }

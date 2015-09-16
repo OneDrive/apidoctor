@@ -175,7 +175,7 @@ namespace ApiDocs.Validation.Http
             // Check the HTTP status code
             if (this.StatusCode != actual.StatusCode)
             {
-                errorList.Add(new ValidationError(ValidationErrorCode.HttpStatusCodeDifferent, null, "Expected status code :{0}, received: {1}.", this.StatusCode, actual.StatusCode));
+                errorList.Add(new ValidationError(ValidationErrorCode.HttpStatusCodeDifferent, null, "Expected status code: {0}, received: {1}.", this.StatusCode, actual.StatusCode));
             }
 
             // Check the HTTP status message

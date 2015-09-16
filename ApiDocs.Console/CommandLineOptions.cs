@@ -61,9 +61,6 @@ namespace ApiDocs.ConsoleApp
         [VerbOption(VerbService, HelpText = "Check for errors between the documentation and service.")]
         public CheckServiceOptions CheckServiceVerb { get; set; }
 
-        [VerbOption(VerbSet, HelpText = "Save or reset default parameter values.")]
-        public SetCommandOptions SetVerb { get; set; }
-
         [VerbOption(VerbPublish, HelpText="Publish a version of the documentation, optionally converting it into other formats.")]
         public PublishOptions PublishVerb { get; set; }
 
@@ -97,28 +94,14 @@ namespace ApiDocs.ConsoleApp
 
 #if DEBUG
         [Option("debug", HelpText="Launch the debugger before doing anything interesting")]
-#endif
         public bool AttachDebugger { get; set; }
-
+#endif
 
         public virtual bool HasRequiredProperties(out string[] missingArguments)
         {
             missingArguments = new string[0];
             return true;
         }
-
-        protected static bool MakePropertyValid(ref string value, string storedValue)
-        {
-            if (string.IsNullOrEmpty(value))
-            {
-                if (!string.IsNullOrEmpty(storedValue))
-                    value = storedValue;
-                else
-                    return false;
-            }
-            return true;
-        }
-
     }
 
     /// <summary>
@@ -141,14 +124,9 @@ namespace ApiDocs.ConsoleApp
         /// <returns></returns>
         public override bool HasRequiredProperties(out string[] missingArguments)
         {
-            string value = this.DocumentationSetPath;
-            if (!MakePropertyValid(ref value, Program.DefaultSettings.DocumentationPath))
+            if (string.IsNullOrEmpty(this.DocumentationSetPath))
             {
                 this.DocumentationSetPath = Environment.CurrentDirectory;
-            }
-            else
-            {
-                this.DocumentationSetPath = value;
             }
 
             FancyConsole.WriteLine("Documentation path: " + this.DocumentationSetPath);
@@ -158,44 +136,9 @@ namespace ApiDocs.ConsoleApp
         }
     }
 
-    /// <summary>
-    /// Command line options for the set verb, which allows storing default values for configuration settings.
-    /// </summary>
-    class SetCommandOptions : BaseOptions
-    {
-        [Option(DocSetOptions.PathArgument, HelpText="Set the default path for the documentation set location.")]
-        public string DocumentationPath { get; set; }
-
-        [Option("access-token", HelpText="Set the default access token.")]
-        public string AccessToken { get; set; }
-
-        [Option("url", HelpText="Set the default service URL.")]
-        public string ServiceUrl { get; set; }
-
-        [Option("reset", HelpText="Clear any stored values.")]
-        public bool ResetStoredValues {get;set;}
-
-        [Option("print", HelpText="Print out the currently stored values.")]
-        public bool PrintValues { get; set; }
-
-        public override bool HasRequiredProperties(out string[] missingArguments)
-        {
-            if (string.IsNullOrEmpty(this.DocumentationPath) && string.IsNullOrEmpty(this.AccessToken) &&
-                string.IsNullOrEmpty(this.ServiceUrl) && !this.ResetStoredValues && !this.PrintValues)
-            {
-                missingArguments = new string[] { "One or more arguments are required. Check the usage of this command for more information." };
-            }
-            else
-            {
-                missingArguments = new string[0];
-            }
-            return missingArguments.Length == 0;
-        }
-    }
-
     class CheckMetadataOptions : DocSetOptions
     {
-        [Option("metadata", HelpText="Path or URL for the service metadata CSDL")]
+        [Option("metadata", HelpText = "Path or URL for the service metadata CSDL")]
         public string ServiceMetadataLocation { get; set; }
     }
 
@@ -244,10 +187,12 @@ namespace ApiDocs.ConsoleApp
     {
         private const string AccessTokenArgument = "access-token";
         private const string ServiceUrlArgument = "url";
+        private const string UsernameArgument = "username";
+        private const string PasswordArgument = "password";
 
         public CheckServiceOptions()
         {
-            this.FoundAccounts = new List<Account>();
+            this.FoundAccounts = new List<IServiceAccount>();
         }
 
         // Three ways to "connect" to an account
@@ -272,7 +217,7 @@ namespace ApiDocs.ConsoleApp
         [Option("odata-metadata", HelpText="Set the odata.metadata level in the accept header.", DefaultValue=null)]
         public string ODataMetadataLevel { get; set; }
 
-        public List<Account> FoundAccounts { get; set; }
+        public List<IServiceAccount> FoundAccounts { get; set; }
 
         [Option("branch-name")]
         public string BranchName { get; set; }
@@ -280,60 +225,84 @@ namespace ApiDocs.ConsoleApp
         [Option("parallel", HelpText = "Run service tests in parallel.", DefaultValue = false)]
         public bool ParallelTests { get; set; }
 
+        [Option("username", HelpText = "Provide a username for basic authentication.")]
+        public string Username { get; set; }
+        [Option("password", HelpText="Provide a password for basic authentication.")]
+        public string Password { get; set; }
+
+        private IServiceAccount GetEnvironmentVariablesAccount()
+        {
+            // Try to add an account from environment variables
+            try
+            {
+                var account = OAuthAccount.CreateAccountFromEnvironmentVariables();
+                account.BaseUrl = this.ServiceRootUrl;
+                return account;
+            }
+            catch (InvalidOperationException) { return null; }
+
+        }
+
 
         public override bool HasRequiredProperties(out string[] missingArguments)
         {
             var result = base.HasRequiredProperties(out missingArguments);
             if (!result) return result;
 
+            this.FoundAccounts = new List<IServiceAccount>();
+
             List<string> props = new List<string>(missingArguments);
             Program.LoadCurrentConfiguration(this);
 
-            if (string.IsNullOrEmpty(this.AccessToken))
+            if (!string.IsNullOrEmpty(this.AccessToken))
             {
-                // Try to add accounts from configuration file in the documentation
-                Account[] accounts = null;
-                if (Program.CurrentConfiguration != null)
-                    accounts = Program.CurrentConfiguration.Accounts;
-                if (null != accounts)
-                {
-                    this.FoundAccounts.AddRange(accounts);
-                }
-
-                // Try to add an account from environment variables
-                try
-                {
-                    var account = Account.CreateAccountFromEnvironmentVariables();
-                    account.BaseUrl = this.ServiceRootUrl;
-                    this.FoundAccounts.Add(account);
-                }
-                catch (InvalidOperationException) { }
-            }
-
-            var hasAccount = (this.FoundAccounts.Select(x => x.Enabled).Any());
-
-            if (!hasAccount)
-            {
-                string checkValue = this.AccessToken;
-                if (!MakePropertyValid(ref checkValue, Program.DefaultSettings.AccessToken))
-                {
-                    props.Add(AccessTokenArgument);
-                }
-                else
-                {
-                    this.AccessToken = checkValue;
-                }
-
-                checkValue = this.ServiceRootUrl;
-                if (!MakePropertyValid(ref checkValue, Program.DefaultSettings.ServiceUrl))
-                {
+                // Run the tests with a single account based on this access token
+                if (string.IsNullOrEmpty(this.ServiceRootUrl))
                     props.Add(ServiceUrlArgument);
-                }
-                this.ServiceRootUrl = checkValue;
+                else
+                    this.FoundAccounts.Add(
+                        new OAuthAccount
+                        {
+                            Name = "command-line-oauth",
+                            Enabled = true,
+                            AccessToken = this.AccessToken,
+                            BaseUrl = this.ServiceRootUrl
+                        });
+            }
+            else if (!string.IsNullOrEmpty(this.Username))
+            {
+                // Run the tests with a single account based on this username + password
+                if (string.IsNullOrEmpty(this.Password))
+                    props.Add(PasswordArgument);
+                if (string.IsNullOrEmpty(this.ServiceRootUrl))
+                    props.Add(ServiceUrlArgument);
 
-                if (!string.IsNullOrEmpty(this.AccessToken) && !string.IsNullOrEmpty(this.ServiceRootUrl))
+                if (this.Username != null && this.Password != null && this.ServiceRootUrl != null)
                 {
-                    this.FoundAccounts.Add(new Account { Name = "CommandLineAccount", Enabled = true, AccessToken = this.AccessToken, BaseUrl = this.ServiceRootUrl });
+                    this.FoundAccounts.Add(
+                        new BasicAccount
+                        {
+                            Name = "command-line-basic",
+                            Enabled = true,
+                            Username = this.Username,
+                            Password = this.Password,
+                            BaseUrl = this.ServiceRootUrl
+                        });
+                }
+            }
+            else // see where else we can find an account
+            {
+                // Look at the environment variables for an account
+                var enviroAccount = GetEnvironmentVariablesAccount();
+                if (null != enviroAccount)
+                {
+                    this.FoundAccounts.Add(enviroAccount);
+                }
+
+                // Look at the accounts.json to see if there are other accounts we should use
+                if (Program.CurrentConfiguration != null)
+                {
+                    this.FoundAccounts.AddRange(Program.CurrentConfiguration.Accounts);
                 }
             }
 
@@ -353,6 +322,12 @@ namespace ApiDocs.ConsoleApp
 
         [Option("template", HelpText = "Specify the folder where output template files are located.")]
         public string TemplatePath { get; set; }
+
+        [Option("template-filename", HelpText="Override the default template filename.", DefaultValue = "template.htm")]
+        public string TemplateFilename { get; set; }
+
+        [Option("file-ext", HelpText="Override the default output file extension.", DefaultValue = ".htm")]
+        public string OutputExtension { get; set; }
 
         [Option("line-ending",
             DefaultValue=LineEndings.Default,

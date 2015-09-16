@@ -23,24 +23,29 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-namespace ApiDocs.ConsoleApp
+namespace ApiDocs.ConsoleApp.Auth
 {
-    using ApiDocs.ConsoleApp.Auth;
-    using ApiDocs.Validation.Config;
-    using Newtonsoft.Json;
+    using System;
+    using System.Threading.Tasks;
+    using ApiDocs.Validation;
 
-    public class AppConfigFile : ConfigFile
+    public class BasicAccount : IServiceAccount
     {
-        [JsonProperty("accounts")]
-        public OAuthAccount[] Accounts { get; set; }
+        public string BaseUrl { get; set; }
+        public bool Enabled { get; set; }
+        public string Name { get; set; }
+        public string[] AdditionalHeaders { get; set; }
+        public string Username { get; set; }
+        public string Password { get; set; }
 
-        [JsonProperty("checkServiceEnabledBranches")]
-        public string[] CheckServiceEnabledBranches { get; set; }
-
-
-        public override bool IsValid
+        public Task PrepareForRequestAsync()
         {
-            get { return null != this.Accounts || null != this.CheckServiceEnabledBranches; }
+            return Task.FromResult(true);
+        }
+
+        public AuthenicationCredentials CreateCredentials()
+        {
+            return new BasicCredentials { Username = this.Username, Password = this.Password };
         }
     }
 }

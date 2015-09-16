@@ -104,7 +104,7 @@ namespace ApiDocs.ConsoleApp
             await BuildWorkerApi.AddMessageAsync(message, category, details);
         }
 
-        internal static async Task LogMethodTestResults(Validation.MethodDefinition method, Auth.Account account, Validation.ValidationResults results)
+        internal static async Task LogMethodTestResults(Validation.MethodDefinition method, IServiceAccount account, Validation.ValidationResults results)
         {
             foreach (var scenario in results.Results)
             {

@@ -203,6 +203,12 @@ namespace ApiDocs.Validation
                     
                     return new ValidationResult<HttpRequest>(null, errors);
                 }
+
+                if (scenario.StatusCodesToRetry != null)
+                {
+                    request.RetryOnStatusCode =
+                        (from status in scenario.StatusCodesToRetry select (System.Net.HttpStatusCode)status).ToList();
+                }
             }
 
             if (string.IsNullOrEmpty(request.Accept))
@@ -236,16 +242,7 @@ namespace ApiDocs.Validation
 
         internal static void AddAccessTokenToRequest(AuthenicationCredentials credentials, HttpRequest request)
         {
-            if (!(credentials is NoCredentials) && string.IsNullOrEmpty(request.Authorization))
-            {
-                request.Authorization = credentials.AuthenicationToken;
-            }
-
-            if (!string.IsNullOrEmpty(credentials.FirstPartyApplicationHeaderValue) &&
-                request.Headers["Application"] == null)
-            {
-                request.Headers.Add("Application", credentials.FirstPartyApplicationHeaderValue);
-            }
+            credentials.AuthenticateRequest(request);
         }
 
         internal static string RewriteUrlWithParameters(string url, IEnumerable<PlaceholderValue> parameters)

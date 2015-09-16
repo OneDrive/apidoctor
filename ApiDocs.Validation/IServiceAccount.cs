@@ -35,7 +35,21 @@ namespace ApiDocs.Validation
     {
         string Name { get; }
         bool Enabled { get; }
-
         string BaseUrl { get; }
+
+        string[] AdditionalHeaders { get; }
+
+        /// <summary>
+        /// Called the first time an account is created, allowing the account to 
+        /// refresh any information required to make a service request.
+        /// </summary>
+        Task PrepareForRequestAsync();
+
+        /// <summary>
+        /// Ask the account to generate a credentials instance which is passed on.
+        /// </summary>
+        /// <returns></returns>
+        AuthenicationCredentials CreateCredentials();
+
     }
 }

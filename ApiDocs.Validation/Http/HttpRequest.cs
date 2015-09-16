@@ -31,12 +31,14 @@ namespace ApiDocs.Validation.Http
     using System.Text;
     using System.Threading.Tasks;
     using System.Linq;
+    using System.Collections.Generic;
 
     public class HttpRequest
     {
         public HttpRequest()
         {
             this.Headers = new WebHeaderCollection();
+
         }
 
         public string Method { get; set; }
@@ -68,6 +70,8 @@ namespace ApiDocs.Validation.Http
             set { this.Headers["content-type"] = value; }
         }
 
+        public ICredentials Credentials { get; set; }
+
         public bool IsMatchingContentType(string expectedContentType)
         {
             if (string.IsNullOrEmpty(this.ContentType))
@@ -81,28 +85,42 @@ namespace ApiDocs.Validation.Http
 
         public static readonly string[] IgnoredHeaders = { "content-length" };
 
+        private Uri GenerateAbsoluteUrl(string baseUrl, bool forceBaseUrl = false)
+        {
+            Uri effectiveUrl;
+            // See if this.Url is a relative URL or a fully qualified URL
+            if (!Uri.TryCreate( forceBaseUrl ? baseUrl + this.Url : this.Url, UriKind.Absolute, out effectiveUrl))
+            {
+                // This correctly fails on Windows for relative urls, but fails
+                // on platforms that allow a "/" in their file URIs (like Mac)
+                return GenerateAbsoluteUrl(baseUrl, true);
+            }
+
+            if (effectiveUrl.Scheme != "https" && effectiveUrl.Scheme != "http")
+            {
+                if (!forceBaseUrl)
+                {
+                    return GenerateAbsoluteUrl(baseUrl, true);
+                }
+                else
+                {
+                    throw new InvalidOperationException("Couldn't generate a valid absolute web URL using the baseUrl.");
+                }
+            }
+            return effectiveUrl;
+        }
+
         public HttpWebRequest PrepareHttpWebRequest(string baseUrl)
         {
 
-            Uri effectiveUrl;
-            // See if this.Url is a relative URL or a fully qualified URL
-            if (!Uri.TryCreate(this.Url, UriKind.Absolute, out effectiveUrl))
-            {
-                if (!Uri.TryCreate(baseUrl + this.Url, UriKind.Absolute, out effectiveUrl))
-                {
-                    throw new InvalidOperationException(
-                        string.Format(
-                            "Couldn't construct a vaild URL for the request: baseUrl={0}, requestUrl={1}",
-                            baseUrl,
-                            this.Url));
-                }
-            }
+            var effectiveUrl = GenerateAbsoluteUrl(baseUrl);
 
             HttpWebRequest request = WebRequest.CreateHttp(effectiveUrl);
             request.AllowAutoRedirect = false;
             request.Method = this.Method;
             request.KeepAlive = true;
             request.ServicePoint.Expect100Continue = false;
+            request.Credentials = this.Credentials;
 
             foreach (var key in this.Headers.AllKeys)
             {
@@ -269,7 +287,7 @@ namespace ApiDocs.Validation.Http
             var webRequest = this.PrepareHttpWebRequest(baseUrl);
             var response = await HttpResponse.ResponseFromHttpWebResponseAsync(webRequest);
 
-            if (IsRetryableError(response))
+            if (ShouldRetryRequest(response))
             {
                 if (retryCount < ValidationConfig.RetryAttemptsOnServiceUnavailableResponse)
                 {
@@ -284,9 +302,11 @@ namespace ApiDocs.Validation.Http
             return response;
         }
 
-        public static bool IsRetryableError(HttpResponse response)
+        public List<HttpStatusCode> RetryOnStatusCode { get; set; }
+
+        public bool ShouldRetryRequest(HttpResponse response)
         {
-            return (response.StatusCode >= 500 && response.StatusCode < 600);
+            return (response.StatusCode >= 500 && response.StatusCode < 600) || (null != RetryOnStatusCode && RetryOnStatusCode.Contains((HttpStatusCode)response.StatusCode));
         }
 
         

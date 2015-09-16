@@ -113,7 +113,15 @@ namespace ApiDocs.Validation.Params
             var placeholderValues = this.RequestParameters.ToPlaceholderValuesArray(storedValues);
 
             // Update the request with the parameters in request-parameters
-            request.RewriteRequestWithParameters(placeholderValues);
+            try
+            {
+                request.RewriteRequestWithParameters(placeholderValues);
+            }
+            catch (Exception ex)
+            {
+                errors.Add(new ValidationError(ValidationErrorCode.ParameterParserError, SourceName, "Error rewriting the request with parameters from the scenario: {0}", ex.Message));
+                return new ValidationResult<bool>(false, errors);
+            }
             MethodDefinition.AddAccessTokenToRequest(credentials, request);
             errors.Add(new ValidationMessage(null, "Test-setup request:\n{0}", request.FullHttpText()));
 
