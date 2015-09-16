@@ -31,6 +31,7 @@ namespace ApiDocs.Validation.Http
     using System.Text;
     using System.Threading.Tasks;
     using System.Linq;
+    using System.Collections.Generic;
 
     public class HttpRequest
     {
@@ -286,7 +287,7 @@ namespace ApiDocs.Validation.Http
             var webRequest = this.PrepareHttpWebRequest(baseUrl);
             var response = await HttpResponse.ResponseFromHttpWebResponseAsync(webRequest);
 
-            if (IsRetryableError(response))
+            if (ShouldRetryRequest(response))
             {
                 if (retryCount < ValidationConfig.RetryAttemptsOnServiceUnavailableResponse)
                 {
@@ -301,9 +302,11 @@ namespace ApiDocs.Validation.Http
             return response;
         }
 
-        public static bool IsRetryableError(HttpResponse response)
+        public List<HttpStatusCode> RetryOnStatusCode { get; set; }
+
+        public bool ShouldRetryRequest(HttpResponse response)
         {
-            return (response.StatusCode >= 500 && response.StatusCode < 600);
+            return (response.StatusCode >= 500 && response.StatusCode < 600) || (null != RetryOnStatusCode && RetryOnStatusCode.Contains((HttpStatusCode)response.StatusCode));
         }
 
         

@@ -203,6 +203,12 @@ namespace ApiDocs.Validation
                     
                     return new ValidationResult<HttpRequest>(null, errors);
                 }
+
+                if (scenario.StatusCodesToRetry != null)
+                {
+                    request.RetryOnStatusCode =
+                        (from status in scenario.StatusCodesToRetry select (System.Net.HttpStatusCode)status).ToList();
+                }
             }
 
             if (string.IsNullOrEmpty(request.Accept))

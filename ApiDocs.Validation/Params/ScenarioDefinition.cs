@@ -43,6 +43,10 @@ namespace ApiDocs.Validation.Params
 
         [JsonProperty("test-setup", DefaultValueHandling=DefaultValueHandling.Ignore)]
         public List<TestSetupRequestDefinition> TestSetupRequests { get; set; }
+
+        [JsonProperty("status-codes-to-retry", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public int[] StatusCodesToRetry { get; set; }
+
         #endregion
 
         [JsonIgnore]
