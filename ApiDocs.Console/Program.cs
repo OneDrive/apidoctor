@@ -780,9 +780,6 @@ namespace ApiDocs.ConsoleApp
             }
 
             AuthenicationCredentials credentials = account.CreateCredentials();
-
-            ValidationOutcome docSetOutcome = ValidationOutcome.None;
-
             int concurrentTasks = options.ParallelTests ? ParallelTaskCount : 1;
 
             CheckResults docSetResults = new CheckResults();
@@ -802,16 +799,13 @@ namespace ApiDocs.ConsoleApp
             if (options.IgnoreWarnings || options.SilenceWarnings)
             {
                 // Remove the warning flag from the outcomes
-                if ((docSetOutcome & ValidationOutcome.Warning) > 0)
-                {
-                    docSetOutcome ^= ValidationOutcome.Warning;
-                }
+                docSetResults.ConvertWarningsToSuccess();
             }
 
             docSetResults.PrintToConsole();
 
-            bool hadWarnings = (docSetOutcome & ValidationOutcome.Warning) > 0;
-            bool hadErrors = (docSetOutcome & ValidationOutcome.Error) > 0;
+            bool hadWarnings = docSetResults.WarningCount > 0;
+            bool hadErrors = docSetResults.FailureCount > 0;
 
             return !(hadErrors | hadWarnings);
         }
