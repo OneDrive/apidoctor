@@ -37,12 +37,12 @@ Available commands are:
 
 All commands have the following options available:
 
-| Option             | Description                                                                                            |
-|:-------------------|:-------------------------------------------------------------------------------------------------------|
-| `--path <path>`    | Path to the root of the documentation set to scan. If missing, the current path is assumed.   |
-| `--short`          | Print concise output to the console.                                                                   |
-| `--verbose`        | Print verbose output to the console, including full HTTP requests/responses.                           |
-| `--log <log_file>` | Log console output to a file.                                                                          |
+| Option             | Description                                                                                 |
+|:-------------------|:--------------------------------------------------------------------------------------------|
+| `--path <path>`    | Path to the root of the documentation set to scan. If missing, the current path is assumed. |
+| `--short`          | Print concise output to the console.                                                        |
+| `--verbose`        | Print verbose output to the console, including full HTTP requests/responses.                |
+| `--log <log_file>` | Log console output to a file.                                                               |
 
 ### Print Command
 Print information about the source files, resources, methods, and requests
@@ -68,7 +68,7 @@ Example: `apidocs.exe links --path ~/github/api-docs --method search`
 The `check-docs` command ensures that the documentation is internally consistent.
 It verifies that:
 
-* The JSON examples are proper JSON 
+* The JSON examples are proper JSON
 * The API methods that accept or return a specific resource type have valid request/response examples
 * The metadata in the documentation is formatted properly
 
@@ -89,7 +89,7 @@ automatically be loaded and used by the check-service method.
 
 | Option                     | Description                                                                                                                                                                             |
 |:---------------------------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `--access-token "token"`   | OAuth access token to use when calling the service. You may need to escape the token value by enclosing it in double quotes.                |
+| `--access-token "token"`   | OAuth access token to use when calling the service. You may need to escape the token value by enclosing it in double quotes.                                                            |
 | `--url <url>`              | Set the base URL for the service calls.                                                                                                                                                 |
 | `--pause`                  | Pause for a key press between API calls to the service to enable reading the responses.                                                                                                 |
 | `--method <method_name>`   | Optional. Check a single request/response method instead of everything in the documentation.                                                                                            |
@@ -165,98 +165,8 @@ See the documentation on [publishing using APIDocs](publishing.md) for
 more details.
 
 ## Documentation format
-To work with this test tool, the source documentation has a few basic requirements:
-
-* Documentation must be in plain text or markdown format.
-* Requests and responses in the documentation are full HTTP style examples.
-* Requests, responses, and resources are enclosed in fenced code blocks (three backticks ` ``` `).
-* Requests, responses, and resources have simple metadata enclosed in an HTML comment immediately before the codeblock.
-
-### Code-block metadata
-To enable the tool to categorize and process the code blocks correctly a simple
-JSON metadata block is required for each code block. These are enclosed as an HTML
-comment block so as to not be visible in the rendered markdown.
-
-This metadata block is deserialized into a `CodeBlockAnnotation` in the tool,
-which includes the following definition:
-
-```
-{
-  "blockType": "resource | request | response | ignored",
-  "@odata.type": "resource_identifier",
-  "optionalProperties": ["array", "of", "properties", "considered", "optional"],
-  "isCollection": "bool value to treat the response as a collection of a resource type",
-  "truncated": "bool value that the response may be missing properties required by the resource",
-  "name": "name of the block method"
-}
-```
-
-An example usage would look like this in the markdown:
-
-```
-### Resource Definition
-
-<!-- {"blockType": "resource", "@odata.type": "example_item"} -->
-\```
-{
-  "name": "string",
-  "count": 123,
-  "season": "summer | fall | winter | spring",
-  "webUrl": "url",
-  "createdDateTime": "datetime"
-}
-\```
-
-### Example Request
-
-<!-- {"blockType": "request", "name": "example"} -->
-\```
-GET /drive/items/root
-Accept: application/json
-\```
-
-### Response
-
-<!-- {"blockType": "response", "@odata.type": "example_item", "truncated": true} -->
-\```
-HTTP/1.1 200 OK
-Content-Type: application/json
-
-{
-  "name": "root_folder",
-  "count": 4,
-  "height": "6.12",
-  "season": "summer",
-  "webUrl": "http://example.org",
-  "createdDateTime": "2015-07-15T14:44:00Z"
-}
-\```
-```
-
-This file, if included in the documentation, would be read as one resource,
-`example_item` that has a JSON object schema with these properties: 
-
-| Property name | Type | Validation type
-|---|---|---|
-| `name` | string | Value is only validated to be a string type. |
-| `count` | integer | Value is only validated to be an integer type. |
-| `height` | float | Value is only validated to be a float type. |
-| `season` | enum-string | Value is validated to be one of the enumerated values (separated by a pipe character). |
-| `webUrl` | url | Value is validated to be an absolute URL. |
-| `createdDateTime` | datetime | Value is validated to be a string value in the format of an ISO8601 date time stamp. |
-
-It then has one request method which calls
-`GET <url_root>/drive/items/root` and returns an `example_item` resource.
-
-Using `check-docs` would verify that the return example in the documentation
-matches the proper schema. Using `check-service` would verify that the service
-responses to the request following the schema.
-
-Request/response pairs are identified by matching up the next response found
-after the request codeblock. You can have other codeblocks between a request and
-a response as long as they are missing the metadata or tagged as
-`"blockType": "ignored"`. A given file can have as many resources and
-request/response pairs as necessary.
+See [Markdown requirements](markdown-requirements.md) for more details about
+requirements on the markdown source for documentation.
 
 ## Request parameters
 
@@ -310,7 +220,7 @@ conforming to this schema:
   {
     "{item-id}": "[source-file-id]"
   },
-  "expectations": 
+  "expectations":
   {
 	"$.size": 123,
 	"content-type:" "application/json",
@@ -349,8 +259,8 @@ Each object in the array of `test-setup` is a `PlaceholderRequest` instance.
 
 
 ### Canned Requests
-Canned requests look just like a test setup method, but instead of being a 
-scenario for a particular method are avaialble to be used from any scenario 
+Canned requests look just like a test setup method, but instead of being a
+scenario for a particular method are avaialble to be used from any scenario
 definition.
 
 ```json
@@ -378,16 +288,16 @@ definition.
 
 When specifying a placeholder name or value, the following syntax is used:
 
-| Syntax        | Example            | Description                                                                                                                               |
-|:--------------|:-------------------|:------------------------------------------------------------------------------------------------------------------------------------------|
-| Curly Braces  | `{path-to-file}`   | Find and update a value in the URL matching the full string.                                                                              |
-| Square Braces | `[source-file-id]` | Look for a previous stored value that was output from a previous request within the same scenario.                                        |
-| JPath         | `$.id`             | Replace a property value in the JSON body of the request. If the content-type of the request is not application/json an error will occur. |
-| !body         | `!body`            | Replace the content stream of the request with the provided value                                                                         |
-| !body.base64  | `!body.base64`     | Replace the content stream of the request with a decoded byte stream of the base 64 value provided.                                       |
-| !url          | `!url`             | Replace the URL for the request with the provided value.                                                                                  |
-| Header:       | `Content-Type:`    | Replace the value of a header with the specified value. Note the header name must end with a colon to be valid.                           |
-| Random Filename | `!random-filename-png | Returns a randomly generated value with a particular file extension that can be used to ensure tests don't interfere with each other. 
+| Syntax          | Example               | Description                                                                                                                               |
+|:----------------|:----------------------|:------------------------------------------------------------------------------------------------------------------------------------------|
+| Curly Braces    | `{path-to-file}`      | Find and update a value in the URL matching the full string.                                                                              |
+| Square Braces   | `[source-file-id]`    | Look for a previous stored value that was output from a previous request within the same scenario.                                        |
+| JPath           | `$.id`                | Replace a property value in the JSON body of the request. If the content-type of the request is not application/json an error will occur. |
+| !body           | `!body`               | Replace the content stream of the request with the provided value                                                                         |
+| !body.base64    | `!body.base64`        | Replace the content stream of the request with a decoded byte stream of the base 64 value provided.                                       |
+| !url            | `!url`                | Replace the URL for the request with the provided value.                                                                                  |
+| Header:         | `Content-Type:`       | Replace the value of a header with the specified value. Note the header name must end with a colon to be valid.                           |
+| Random Filename | `!random-filename-png | Returns a randomly generated value with a particular file extension that can be used to ensure tests don't interfere with each other.     |
 
 ### Capture grammar
 
@@ -434,7 +344,7 @@ properties defined:
 | **isEmpty**            | boolean          | response, example, simulatedResponse | Indicates that the collection value is expected to be empty (or not).                                                                                                                                           |
 | **truncated**          | boolean          | response, example, simulatedResponse | Indicates that the block will not include all properties of the resource and that's not an error. Properties explicitly shown in the code block are always considered required when tested against the service. |
 | **name**               | string           | request, example                     | Provides the name of the request method being defined.                                                                                                                                                          |
-| **expectError**        | boolean          | response, example, simulatedResponse | Use this to indicate that instead of returning the normal response as defined, an error response will be returned.                                                                                      |
+| **expectError**        | boolean          | response, example, simulatedResponse | Use this to indicate that instead of returning the normal response as defined, an error response will be returned.                                                                                              |
 | **nullableProperties** | array of strings | response, example, simulatedResponse | Provide a list of properties that are allowed to have null values. By default, null values for a property will generate a warning.                                                                              |
 
 
