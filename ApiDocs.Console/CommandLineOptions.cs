@@ -239,7 +239,11 @@ namespace ApiDocs.ConsoleApp
                 account.BaseUrl = this.ServiceRootUrl;
                 return account;
             }
-            catch (InvalidOperationException) { return null; }
+            catch (InvalidOperationException ex)
+            {
+                Console.WriteLine("Exception while getting account: {0}", ex.Message);
+                return null;
+            }
 
         }
 
