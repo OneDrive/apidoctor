@@ -78,7 +78,19 @@ namespace ApiDocs.Validation
 
             foreach (var scenario in scenarios.Where(x => x.Enabled))
             {
-                await ValidateMethodWithScenarioAsync(method, scenario, account, credentials, results);
+                try
+                {
+                    await ValidateMethodWithScenarioAsync(method, scenario, account, credentials, results);
+                }
+                catch (Exception ex)
+                {
+                    results.AddResult(
+                        "validation",
+                        new ValidationError(
+                            ValidationErrorCode.ExceptionWhileValidatingMethod,
+                            method.SourceFile.DisplayName,
+                            ex.Message));
+                }
             }
 
             return results;

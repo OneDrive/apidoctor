@@ -87,6 +87,13 @@ namespace ApiDocs.Validation.Http
 
         private Uri GenerateAbsoluteUrl(string baseUrl, bool forceBaseUrl = false)
         {
+            if (forceBaseUrl && string.IsNullOrEmpty(baseUrl))
+            {
+                throw new ArgumentNullException(
+                    "baseUrl",
+                    "Cannot specify forceBaseUrl = true and not provide a baseUrl.");
+            }
+
             Uri effectiveUrl;
             // See if this.Url is a relative URL or a fully qualified URL
             if (!Uri.TryCreate( forceBaseUrl ? baseUrl + this.Url : this.Url, UriKind.Absolute, out effectiveUrl))
