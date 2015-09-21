@@ -51,7 +51,7 @@ namespace ApiDocs.Validation
         public string[] OptionalProperties { get; set; }
 
         /// <summary>
-        /// Speicfy that the result is a collection of the resource type instead of a single instance.
+        /// Specify that the result is a collection of the resource type instead of a single instance.
         /// </summary>
         [JsonProperty("isCollection", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public bool IsCollection { get; set; }

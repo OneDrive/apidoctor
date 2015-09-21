@@ -71,33 +71,27 @@ namespace ApiDocs.ConsoleApp.Auth
         /// <returns></returns>
         public static OAuthAccount CreateAccountFromEnvironmentVariables()
         {
-            string clientId = GetEnvVariable("oauth-client-id");
-            string clientSecret = GetEnvVariable("oauth-client-secret");
-            string tokenService = GetEnvVariable("oauth-token-service");
-            string redirectUri = GetEnvVariable("oauth-redirect-uri");
-            string refreshToken = GetEnvVariable("oauth-refresh-token");
-
-            if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(clientSecret) ||
-                string.IsNullOrEmpty(tokenService) || string.IsNullOrEmpty(refreshToken))
-            {
-                throw new InvalidOperationException("Missing value for one or more required environmental variables.");
-            }
-
             return new OAuthAccount
             {
                 Name = "DefaultAccount",
                 Enabled = true,
-                ClientId = clientId,
-                ClientSecret = clientSecret,
-                TokenService = tokenService,
-                RedirectUri = redirectUri,
-                RefreshToken = refreshToken
+                RefreshToken = ReadVariable("oauth-refresh-token"),
+                ClientId = ReadVariable("oauth-client-id"),
+                ClientSecret = ReadVariable("oauth-client-secret"),
+                TokenService = ReadVariable("oauth-token-service"),
+                RedirectUri = ReadVariable("oauth-redirect-uri")
             };
         }
 
-        private static string GetEnvVariable(string name)
+        private static string ReadVariable(string name)
         {
-            return Environment.GetEnvironmentVariable(name);
+            var value = Environment.GetEnvironmentVariable(name);
+            if (string.IsNullOrEmpty(value))
+            {
+                throw new InvalidOperationException(
+                    string.Format("No value was found for environment variable: {0}", name));
+            }
+            return value;
         }
 
         public async Task PrepareForRequestAsync()
