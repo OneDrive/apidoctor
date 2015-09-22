@@ -244,9 +244,7 @@ namespace ApiDocs.ConsoleApp
                 Console.WriteLine("Exception while getting account: {0}", ex.Message);
                 return null;
             }
-
         }
-
 
         public override bool HasRequiredProperties(out string[] missingArguments)
         {
