@@ -153,6 +153,14 @@ namespace ApiDocs.Validation
             TimeSpan actualMethodDuration = new TimeSpan(DateTimeOffset.UtcNow.Ticks - startTicks);
 
             var requestResults = results[actionName];
+            if (actualResponse.RetryCount > 0)
+            {
+                requestResults.AddResults(
+                    new ValidationError[]
+                    { new ValidationWarning(ValidationErrorCode.RequestWasRetried, null, "HTTP request was retried {0} times.", actualResponse.RetryCount) });
+            }
+
+
             requestResults.AddResults(
                 new ValidationError[]
                 { new ValidationMessage(null, "HTTP Response:\r\n{0}", actualResponse.FullText(false)) });
