@@ -39,8 +39,8 @@ namespace ApiDocs.Validation
 
         public BackoffHelper()
         {
-            this.MaximumTimeMilliseconds = 5000;
-            this.BaseTimeMilliseconds = 100;
+            this.MaximumTimeMilliseconds = 30000;
+            this.BaseTimeMilliseconds = 1000;
         }
 
         /// <summary>
