@@ -769,6 +769,7 @@ namespace ApiDocs.ConsoleApp
             string testNamePrefix = account.Name.ToLower() + ": ";
             FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, "Testing with account: {0}", account.Name);
 
+            FancyConsole.WriteLine(FancyConsole.ConsoleCodeColor, "Preparing authentication for requests...", account.Name);
             try
             {
                 await account.PrepareForRequestAsync();
@@ -784,7 +785,13 @@ namespace ApiDocs.ConsoleApp
 
             CheckResults docSetResults = new CheckResults();
 
-            await ForEachAsync(methods, concurrentTasks, async method => {
+            await ForEachAsync(methods, concurrentTasks, async method =>
+            {
+
+                FancyConsole.WriteLine(
+                    FancyConsole.ConsoleCodeColor,
+                    "Running validation for method: {0}",
+                    method.Identifier);
                 ScenarioDefinition[] scenarios = docset.TestScenarios.ScenariosForMethod(method);
                 ValidationResults results = await method.ValidateServiceResponseAsync(scenarios, account, credentials);
 

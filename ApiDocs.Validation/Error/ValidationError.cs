@@ -105,7 +105,8 @@ namespace ApiDocs.Validation.Error
         MissingResourceName,
         UnsupportedLanguage,
         AllScenariosDisabled,
-        ExceptionWhileValidatingMethod
+        ExceptionWhileValidatingMethod,
+        RequestWasRetried
     }
 
     public class ValidationError

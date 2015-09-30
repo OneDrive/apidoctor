@@ -130,7 +130,7 @@ namespace ApiDocs.Validation.Params
                 var response = await request.GetResponseAsync(baseUrl);
                 if (response.RetryCount > 0)
                 {
-                    errors.Add(new ValidationMessage(null, "HTTP request was retried {0} times.", response.RetryCount));
+                    errors.Add(new ValidationWarning(ValidationErrorCode.RequestWasRetried, null, "HTTP request was retried {0} times.", response.RetryCount));
                 }
                 errors.Add(new ValidationMessage(null, "HTTP Response:\n{0}\n\n", response.FullText()));
 
