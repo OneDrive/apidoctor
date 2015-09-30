@@ -140,15 +140,19 @@ namespace ApiDocs.Publishing.Html
             return result;
         }
 
-        private Dictionary<string, IEnumerable<TocItem>> SectionHeaders = new Dictionary<string, IEnumerable<TocItem>>();
-
+        /// <summary>
+        /// Generates the headers for a given section and destination file. This generates a unique set of headers with relative
+        /// pathes to the header pages based on the current page.
+        /// </summary>
+        /// <param name="section"></param>
+        /// <param name="destinationFile"></param>
+        /// <param name="rootDestinationFolder"></param>
+        /// <param name="currentPage"></param>
+        /// <returns></returns>
         protected IEnumerable<TocItem> GetHeadersForSection(string section, string destinationFile, string rootDestinationFolder, DocFile currentPage)
         {
             if (null == section)
                 return new TocItem[0];
-
-            if (SectionHeaders.ContainsKey(section))
-                return SectionHeaders[section];
 
             // Generate headers for all tocPath entries
             var headersQuery = from d in this.Documents.Files
@@ -188,7 +192,6 @@ namespace ApiDocs.Publishing.Html
             }
             headers = headers.OrderBy(x => x.TocPath).ToList();
             headers = this.CollapseHeadersByPath(headers, currentPage);
-            SectionHeaders[section] = headers;
             return headers;
         }
 
