@@ -102,11 +102,18 @@ namespace ApiDocs.Validation.Json
             List<ValidationError> newErrors = new List<ValidationError>();
 
             var expectedResourceType = method.ExpectedResponseMetadata.ResourceType;
-            if (expectedResourceType == "stream")
+
+            switch (expectedResourceType)
             {
-                // No validation since we're streaming data
-                schemaErrors = new ValidationError[0];
-                return true;
+                case "stream":
+                case "Stream":
+                    // No validation since we're streaming data
+                    schemaErrors = new ValidationError[0];
+                    return true;
+                case "string":
+                case "String":
+                    schemaErrors = new ValidationError[0];
+                    return true;
             }
 
             // Get a reference of our JsonSchema that we're checking the response with

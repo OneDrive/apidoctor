@@ -40,6 +40,11 @@ namespace ApiDocs.Validation.Http
         /// <returns></returns>
         public HttpRequest ParseHttpRequest(string requestString)
         {
+            if (string.IsNullOrWhiteSpace(requestString))
+            {
+                throw new ArgumentException("requestString was empty or whitespace only. Not a valid HTTP request.");
+            }
+
             StringReader reader = new StringReader(requestString);
             string line;
             ParserMode mode = ParserMode.FirstLine;
