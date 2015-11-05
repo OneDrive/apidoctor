@@ -112,6 +112,8 @@ namespace ApiDocs.Validation.Json
                     return true;
                 case "string":
                 case "String":
+                case "Edm.String":
+                case" Edm.string":
                     schemaErrors = new ValidationError[0];
                     return true;
             }
