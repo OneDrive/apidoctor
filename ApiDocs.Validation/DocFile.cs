@@ -126,6 +126,7 @@ namespace ApiDocs.Validation
             this.FullPath = Path.Combine(basePath, relativePath.Substring(1));
             this.DisplayName = relativePath;
             this.Parent = parent;
+            this.DocumentHeaders = new List<Config.DocumentHeader>();
         }
 
         #endregion
@@ -219,6 +220,35 @@ namespace ApiDocs.Validation
             return contentPreview;
         }
 
+        protected Config.DocumentHeader CreateHeaderFromBlock(Block block)
+        {
+            var header = new Config.DocumentHeader();
+            switch (block.BlockType)
+            {
+                case BlockType.h1:
+                    header.Level = 1; break;
+                case BlockType.h2:
+                    header.Level = 2; break;
+                case BlockType.h3:
+                    header.Level = 3; break;
+                case BlockType.h4:
+                    header.Level = 4; break;
+                case BlockType.h5:
+                    header.Level = 5; break;
+                case BlockType.h6:
+                    header.Level = 6; break;
+                default:
+                    throw new InvalidOperationException("block wasn't a header!");
+            }
+            header.Title = block.Content;
+            return header;
+        }
+
+        public List<Config.DocumentHeader> DocumentHeaders
+        {
+            get; set;
+        }
+
         /// <summary>
         /// Convert blocks of text found inside the markdown file into things we know how to work
         /// with (methods, resources, examples, etc).
@@ -236,6 +266,7 @@ namespace ApiDocs.Validation
 
             List<object> foundElements = new List<object>();
 
+            Stack<Config.DocumentHeader> headerStack = new Stack<Config.DocumentHeader>();
             for (int i = 0; i < this.OriginalMarkdownBlocks.Length; i++)
             {
                 var block = this.OriginalMarkdownBlocks[i];
@@ -246,6 +277,7 @@ namespace ApiDocs.Validation
                 if (IsHeaderBlock(block, 6))
                 {
                     this.AddBookmarkForHeader(block.Content);
+                    this.AddHeaderToHierarchy(headerStack, block);
                 }
 
                 // Capture h1 and/or p element to be used as the title and description for items on this page
@@ -341,6 +373,42 @@ namespace ApiDocs.Validation
             
             errors = detectedErrors.ToArray();
             return !detectedErrors.Any(x => x.IsError);
+        }
+
+        private void AddHeaderToHierarchy(Stack<Config.DocumentHeader> headerStack, Block block)
+        {
+            var header = CreateHeaderFromBlock(block);
+            if (header.Level == 1 || headerStack.Count == 0)
+            {
+                DocumentHeaders.Add(header);
+                headerStack.Clear();
+                headerStack.Push(header);
+            }
+            else
+            {
+                var parentHeader = headerStack.Peek();
+                if (null != parentHeader && parentHeader.Level < header.Level)
+                {
+                    // This is a child of that previous level, so we add it and push
+                    parentHeader.ChildHeaders.Add(header);
+                    headerStack.Push(header);
+                }
+                else if (null != parentHeader && parentHeader.Level >= header.Level)
+                {
+                    // We need to pop back and find the right parent for this higher level
+                    while (headerStack.Count > 0 && headerStack.Peek().Level >= header.Level)
+                    {
+                        headerStack.Pop();
+                    }
+                    parentHeader = headerStack.Peek();
+                    parentHeader.ChildHeaders.Add(header);
+                    headerStack.Push(header);
+                }
+                else
+                {
+                    throw new InvalidOperationException("Something went wrong in the outline creation");
+                }
+            }
         }
 
 
