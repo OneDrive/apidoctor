@@ -117,6 +117,7 @@ namespace ApiDocs.Validation
         protected DocFile()
         {
             this.ContentOutline = new List<string>();
+            this.DocumentHeaders = new List<Config.DocumentHeader>();
         }
 
         public DocFile(string basePath, string relativePath, DocSet parent) 
@@ -495,8 +496,11 @@ namespace ApiDocs.Validation
                     {
                         headerStack.Pop();
                     }
-                    parentHeader = headerStack.Peek();
-                    parentHeader.ChildHeaders.Add(header);
+                    if (headerStack.Count > 0)
+                    {
+                        parentHeader = headerStack.Peek();
+                        parentHeader.ChildHeaders.Add(header);
+                    }
                     headerStack.Push(header);
                 }
                 else
