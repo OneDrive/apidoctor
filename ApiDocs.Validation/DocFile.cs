@@ -370,10 +370,105 @@ namespace ApiDocs.Validation
             ValidationError[] postProcessingErrors;
             this.PostProcessFoundElements(foundElements, out postProcessingErrors);
             detectedErrors.AddRange(postProcessingErrors);
-            
+          
             errors = detectedErrors.ToArray();
             return !detectedErrors.Any(x => x.IsError);
         }
+
+        /// <summary>
+        /// Checks the document for outline errors compared to any required document structure.
+        /// </summary>
+        /// <returns></returns>
+        public ValidationError[] CheckDocumentStructure()
+        {
+            List<ValidationError> errors = new List<ValidationError>();
+            if (this.Parent.DocumentStructure != null)
+            {
+                errors.AddRange(ValidateDocumentStructure(this.Parent.DocumentStructure.AllowedHeaders, this.DocumentHeaders));
+            }
+            return errors.ToArray();
+        }
+
+        private static bool ContainsMatchingDocumentHeader(Config.DocumentHeader expectedHeader, IReadOnlyList<Config.DocumentHeader> collection)
+        {
+            return collection.Any(h => h.Matches(expectedHeader));
+        }
+
+        private ValidationError[] ValidateDocumentStructure(IReadOnlyList<Config.DocumentHeader> expectedHeaders, IReadOnlyList<Config.DocumentHeader> foundHeaders)
+        {
+            List<ValidationError> errors = new List<ValidationError>();
+
+            int expectedIndex = 0;
+            int foundIndex = 0;
+
+            while (expectedIndex < expectedHeaders.Count && foundIndex < foundHeaders.Count)
+            {
+                var expected = expectedHeaders[expectedIndex];
+                var found = foundHeaders[foundIndex];
+
+                if (expected.Matches(found))
+                {
+                    errors.AddRange(ValidateDocumentStructure(expected.ChildHeaders, found.ChildHeaders));
+
+                    // Found an expected header, keep going!
+                    expectedIndex++;
+                    foundIndex++;
+                    continue;
+                }
+
+                if (!ContainsMatchingDocumentHeader(found, expectedHeaders))
+                {
+                    // This is an additional header that isn't in the expected header collection
+                    errors.Add(new ValidationWarning(ValidationErrorCode.ExtraDocumentHeaderFound, this.DisplayName, "A extra document header was found: {0}", found.Title));
+                    errors.AddRange(ValidateDocumentStructure(new Config.DocumentHeader[0], found.ChildHeaders));
+                    foundIndex++;
+                    continue;
+                }
+                else
+                {
+                    // If the current expected header is optional, we can move past it 
+                    if (!expected.Required)
+                    {
+                        expectedIndex++;
+                        continue;
+                    }
+
+                    bool expectedMatchesInFoundHeaders = ContainsMatchingDocumentHeader(expected, foundHeaders);
+                    if (expectedMatchesInFoundHeaders)
+                    {
+                        // This header exists, but is in the wrong position
+                        errors.Add(new ValidationWarning(ValidationErrorCode.DocumentHeaderInWrongPosition, this.DisplayName, "An expected document header was found in the wrong position: {0}", found.Title));
+                        foundIndex++;
+                        continue;
+                    }
+                    else if (!expectedMatchesInFoundHeaders && expected.Required)
+                    {
+                        // Missing a required header!
+                        errors.Add(new ValidationError(ValidationErrorCode.RequiredDocumentHeaderMissing, this.DisplayName, "A required document header is missing from the document: {0}", expected.Title));
+                        expectedIndex++;
+                    }
+                    else
+                    {
+                        // Expected wasn't found and is optional, that's fine.
+                        expectedIndex++;
+                        continue;
+                    }
+                }
+            }
+
+            for (int i = foundIndex; i < foundHeaders.Count; i++)
+            {
+                errors.Add(new ValidationWarning(ValidationErrorCode.ExtraDocumentHeaderFound, this.DisplayName, "A extra document header was found: {0}", foundHeaders[i].Title));
+            }
+            for (int i = expectedIndex; i < expectedHeaders.Count; i++)
+            {
+                if (expectedHeaders[i].Required)
+                    errors.Add(new ValidationError(ValidationErrorCode.RequiredDocumentHeaderMissing, this.DisplayName, "A required document header is missing from the document: {0}", expectedHeaders[i].Title));
+            }
+
+            return errors.ToArray();
+        }
+
 
         private void AddHeaderToHierarchy(Stack<Config.DocumentHeader> headerStack, Block block)
         {
@@ -437,7 +532,7 @@ namespace ApiDocs.Validation
             try
             {
                 var response = JsonConvert.DeserializeObject<PageAnnotation>(StripHtmlCommentTags(block.Content));
-                if (null != response && response.Type.Equals(PageAnnotationType, StringComparison.OrdinalIgnoreCase))
+                if (null != response && null != response.Type && response.Type.Equals(PageAnnotationType, StringComparison.OrdinalIgnoreCase))
                     return response;
             }
             catch (Exception ex)

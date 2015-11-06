@@ -25,6 +25,7 @@
 
 namespace ApiDocs.Validation.Config
 {
+    using System;
     using System.Collections.Generic;
     using Newtonsoft.Json;
 
@@ -53,27 +54,40 @@ namespace ApiDocs.Validation.Config
         /// <summary>
         /// Represents the header level using markdown formatting (1=#, 2=##, 3=###, 4=####, 5=#####, 6=######)
         /// </summary>
+        [JsonProperty("level")]
         public int Level { get; set; }
 
         /// <summary>
         /// Indicates that a header at this level is required.
         /// </summary>
+        [JsonProperty("required")]
         public bool Required { get; set; }
-
-        /// <summary>
-        /// Indicates that a header at this level is prohibited (cannot be present in the doc)
-        /// </summary>
-        public bool Prohibited { get; set; }
 
         /// <summary>
         /// The expected value of a title or empty to indicate any value
         /// </summary>
+        [JsonProperty("title")]
         public string Title { get; set; }
 
         /// <summary>
         /// Specifies the headers that are allowed under this header.
         /// </summary>
+        [JsonProperty("headers")]
         public List<DocumentHeader> ChildHeaders { get; set; }
+
+        internal bool Matches(DocumentHeader found)
+        {
+            return this.Level == found.Level && DoTitlesMatch(this.Title, found.Title);
+        }
+
+        private static bool DoTitlesMatch(string expectedTitle, string foundTitle)
+        {
+            if (expectedTitle == foundTitle) return true;
+            if (string.IsNullOrEmpty(expectedTitle) || expectedTitle == "*") return true;
+            if (expectedTitle.StartsWith("* ") && foundTitle.EndsWith(expectedTitle.Substring(2))) return true;
+            if (expectedTitle.EndsWith(" *") && foundTitle.StartsWith(expectedTitle.Substring(0, expectedTitle.Length - 2))) return true;
+            return false;
+        }
     }
 
 }

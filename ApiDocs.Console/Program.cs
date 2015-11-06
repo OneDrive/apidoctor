@@ -441,6 +441,8 @@ namespace ApiDocs.ConsoleApp
 
             FancyConsole.WriteLine();
 
+            var resultStructure = await CheckDocStructure(options, docset);
+
             var resultMethods = await CheckMethodsAsync(options, docset);
             CheckResults resultExamples = new CheckResults();
             if (string.IsNullOrEmpty(options.MethodName))
@@ -448,7 +450,7 @@ namespace ApiDocs.ConsoleApp
                 resultExamples = await CheckExamplesAsync(options, docset);
             }
 
-            var combinedResults = resultMethods + resultExamples;
+            var combinedResults = resultMethods + resultExamples + resultStructure;
 
             if (options.IgnoreWarnings)
             {
@@ -458,6 +460,22 @@ namespace ApiDocs.ConsoleApp
             combinedResults.PrintToConsole();
 
             return combinedResults.FailureCount == 0;
+        }
+
+        private static async Task<CheckResults> CheckDocStructure(BasicCheckOptions options, DocSet docset)
+        {
+            var results = new CheckResults();
+
+            TestReport.StartTest("Verify document structure");
+            List<ValidationError> detectedErrors = new List<ValidationError>();
+            foreach (var doc in docset.Files)
+            {
+                detectedErrors.AddRange(doc.CheckDocumentStructure());
+            }
+            await WriteOutErrorsAndFinishTestAsync(detectedErrors, options.SilenceWarnings, "    ", "No errors.", false, "Verify document structure", "Warnings detected", "Errors detected");
+            results.IncrementResultCount(detectedErrors);
+
+            return results;
         }
 
         /// <summary>
@@ -526,10 +544,19 @@ namespace ApiDocs.ConsoleApp
                 }
 
                 var parser = new HttpParser();
-                var expectedResponse = parser.ParseHttpResponse(method.ExpectedResponse);
+
 
                 ValidationError[] errors;
-                method.ValidateResponse(expectedResponse, null, null, out errors);
+                try
+                {
+                    var expectedResponse = parser.ParseHttpResponse(method.ExpectedResponse);
+                    
+                    method.ValidateResponse(expectedResponse, null, null, out errors);
+                }
+                catch (Exception ex)
+                {
+                    errors = new ValidationError[] { new ValidationError(ValidationErrorCode.ExceptionWhileValidatingMethod, method.SourceFile.DisplayName, ex.Message) };
+                }
 
                 await WriteOutErrorsAndFinishTestAsync(errors, options.SilenceWarnings, "   ", "No errors.", false, testName, "Warnings detected", "Errors detected");
                 results.IncrementResultCount(errors);
