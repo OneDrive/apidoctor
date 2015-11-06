@@ -63,8 +63,8 @@ namespace ApiDocs.Validation
         public MethodDefinition[] Methods { get; private set; }
 
         public JsonResourceCollection ResourceCollection { get { return this.resourceCollection; } }
-        
-        public List<ScenarioDefinition> TestScenarios {get; internal set;}
+
+        public List<ScenarioDefinition> TestScenarios { get; internal set; }
         public List<CannedRequestDefinition> CannedRequests { get; internal set; }
 
         public IEnumerable<AuthScopeDefinition> AuthScopes
@@ -84,6 +84,8 @@ namespace ApiDocs.Validation
         }
 
         public ApiRequirements Requirements { get; internal set; }
+
+        public DocumentOutlineFile DocumentStructure { get; internal set;}
         #endregion
 
         #region Constructors
@@ -116,6 +118,14 @@ namespace ApiDocs.Validation
             {
                 Console.WriteLine("Using API requirements file: {0}", foundRequirements.SourcePath);
                 this.Requirements = foundRequirements.ApiRequirements;
+            }
+
+            DocumentOutlineFile[] outlines = TryLoadConfigurationFiles<DocumentOutlineFile>(this.SourceFolderPath);
+            var foundOutlines = outlines.FirstOrDefault();
+            if (null != foundOutlines)
+            {
+                Console.WriteLine("Using document structure file: {0}", foundOutlines.SourcePath);
+                this.DocumentStructure = foundOutlines;
             }
         }
 

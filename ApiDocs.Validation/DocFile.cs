@@ -117,6 +117,7 @@ namespace ApiDocs.Validation
         protected DocFile()
         {
             this.ContentOutline = new List<string>();
+            this.DocumentHeaders = new List<Config.DocumentHeader>();
         }
 
         public DocFile(string basePath, string relativePath, DocSet parent) 
@@ -126,6 +127,7 @@ namespace ApiDocs.Validation
             this.FullPath = Path.Combine(basePath, relativePath.Substring(1));
             this.DisplayName = relativePath;
             this.Parent = parent;
+            this.DocumentHeaders = new List<Config.DocumentHeader>();
         }
 
         #endregion
@@ -219,6 +221,35 @@ namespace ApiDocs.Validation
             return contentPreview;
         }
 
+        protected Config.DocumentHeader CreateHeaderFromBlock(Block block)
+        {
+            var header = new Config.DocumentHeader();
+            switch (block.BlockType)
+            {
+                case BlockType.h1:
+                    header.Level = 1; break;
+                case BlockType.h2:
+                    header.Level = 2; break;
+                case BlockType.h3:
+                    header.Level = 3; break;
+                case BlockType.h4:
+                    header.Level = 4; break;
+                case BlockType.h5:
+                    header.Level = 5; break;
+                case BlockType.h6:
+                    header.Level = 6; break;
+                default:
+                    throw new InvalidOperationException("block wasn't a header!");
+            }
+            header.Title = block.Content;
+            return header;
+        }
+
+        public List<Config.DocumentHeader> DocumentHeaders
+        {
+            get; set;
+        }
+
         /// <summary>
         /// Convert blocks of text found inside the markdown file into things we know how to work
         /// with (methods, resources, examples, etc).
@@ -236,6 +267,7 @@ namespace ApiDocs.Validation
 
             List<object> foundElements = new List<object>();
 
+            Stack<Config.DocumentHeader> headerStack = new Stack<Config.DocumentHeader>();
             for (int i = 0; i < this.OriginalMarkdownBlocks.Length; i++)
             {
                 var block = this.OriginalMarkdownBlocks[i];
@@ -246,6 +278,7 @@ namespace ApiDocs.Validation
                 if (IsHeaderBlock(block, 6))
                 {
                     this.AddBookmarkForHeader(block.Content);
+                    this.AddHeaderToHierarchy(headerStack, block);
                 }
 
                 // Capture h1 and/or p element to be used as the title and description for items on this page
@@ -338,9 +371,143 @@ namespace ApiDocs.Validation
             ValidationError[] postProcessingErrors;
             this.PostProcessFoundElements(foundElements, out postProcessingErrors);
             detectedErrors.AddRange(postProcessingErrors);
-            
+          
             errors = detectedErrors.ToArray();
             return !detectedErrors.Any(x => x.IsError);
+        }
+
+        /// <summary>
+        /// Checks the document for outline errors compared to any required document structure.
+        /// </summary>
+        /// <returns></returns>
+        public ValidationError[] CheckDocumentStructure()
+        {
+            List<ValidationError> errors = new List<ValidationError>();
+            if (this.Parent.DocumentStructure != null)
+            {
+                errors.AddRange(ValidateDocumentStructure(this.Parent.DocumentStructure.AllowedHeaders, this.DocumentHeaders));
+            }
+            return errors.ToArray();
+        }
+
+        private static bool ContainsMatchingDocumentHeader(Config.DocumentHeader expectedHeader, IReadOnlyList<Config.DocumentHeader> collection)
+        {
+            return collection.Any(h => h.Matches(expectedHeader));
+        }
+
+        private ValidationError[] ValidateDocumentStructure(IReadOnlyList<Config.DocumentHeader> expectedHeaders, IReadOnlyList<Config.DocumentHeader> foundHeaders)
+        {
+            List<ValidationError> errors = new List<ValidationError>();
+
+            int expectedIndex = 0;
+            int foundIndex = 0;
+
+            while (expectedIndex < expectedHeaders.Count && foundIndex < foundHeaders.Count)
+            {
+                var expected = expectedHeaders[expectedIndex];
+                var found = foundHeaders[foundIndex];
+
+                if (expected.Matches(found))
+                {
+                    errors.AddRange(ValidateDocumentStructure(expected.ChildHeaders, found.ChildHeaders));
+
+                    // Found an expected header, keep going!
+                    expectedIndex++;
+                    foundIndex++;
+                    continue;
+                }
+
+                if (!ContainsMatchingDocumentHeader(found, expectedHeaders))
+                {
+                    // This is an additional header that isn't in the expected header collection
+                    errors.Add(new ValidationWarning(ValidationErrorCode.ExtraDocumentHeaderFound, this.DisplayName, "A extra document header was found: {0}", found.Title));
+                    errors.AddRange(ValidateDocumentStructure(new Config.DocumentHeader[0], found.ChildHeaders));
+                    foundIndex++;
+                    continue;
+                }
+                else
+                {
+                    // If the current expected header is optional, we can move past it 
+                    if (!expected.Required)
+                    {
+                        expectedIndex++;
+                        continue;
+                    }
+
+                    bool expectedMatchesInFoundHeaders = ContainsMatchingDocumentHeader(expected, foundHeaders);
+                    if (expectedMatchesInFoundHeaders)
+                    {
+                        // This header exists, but is in the wrong position
+                        errors.Add(new ValidationWarning(ValidationErrorCode.DocumentHeaderInWrongPosition, this.DisplayName, "An expected document header was found in the wrong position: {0}", found.Title));
+                        foundIndex++;
+                        continue;
+                    }
+                    else if (!expectedMatchesInFoundHeaders && expected.Required)
+                    {
+                        // Missing a required header!
+                        errors.Add(new ValidationError(ValidationErrorCode.RequiredDocumentHeaderMissing, this.DisplayName, "A required document header is missing from the document: {0}", expected.Title));
+                        expectedIndex++;
+                    }
+                    else
+                    {
+                        // Expected wasn't found and is optional, that's fine.
+                        expectedIndex++;
+                        continue;
+                    }
+                }
+            }
+
+            for (int i = foundIndex; i < foundHeaders.Count; i++)
+            {
+                errors.Add(new ValidationWarning(ValidationErrorCode.ExtraDocumentHeaderFound, this.DisplayName, "A extra document header was found: {0}", foundHeaders[i].Title));
+            }
+            for (int i = expectedIndex; i < expectedHeaders.Count; i++)
+            {
+                if (expectedHeaders[i].Required)
+                    errors.Add(new ValidationError(ValidationErrorCode.RequiredDocumentHeaderMissing, this.DisplayName, "A required document header is missing from the document: {0}", expectedHeaders[i].Title));
+            }
+
+            return errors.ToArray();
+        }
+
+
+        private void AddHeaderToHierarchy(Stack<Config.DocumentHeader> headerStack, Block block)
+        {
+            var header = CreateHeaderFromBlock(block);
+            if (header.Level == 1 || headerStack.Count == 0)
+            {
+                DocumentHeaders.Add(header);
+                headerStack.Clear();
+                headerStack.Push(header);
+            }
+            else
+            {
+                var parentHeader = headerStack.Peek();
+                if (null != parentHeader && parentHeader.Level < header.Level)
+                {
+                    // This is a child of that previous level, so we add it and push
+                    parentHeader.ChildHeaders.Add(header);
+                    headerStack.Push(header);
+                }
+                else if (null != parentHeader && parentHeader.Level >= header.Level)
+                {
+                    // We need to pop back and find the right parent for this higher level
+                    while (headerStack.Count > 0 && headerStack.Peek().Level >= header.Level)
+                    {
+                        headerStack.Pop();
+                    }
+                    if (headerStack.Count > 0)
+                    {
+                        parentHeader = headerStack.Peek();
+                        parentHeader.ChildHeaders.Add(header);
+                    }
+                    headerStack.Push(header);
+                }
+                else
+                {
+                    throw new InvalidOperationException("Something went wrong in the outline creation");
+                }
+            }
         }
 
 
@@ -369,7 +536,7 @@ namespace ApiDocs.Validation
             try
             {
                 var response = JsonConvert.DeserializeObject<PageAnnotation>(StripHtmlCommentTags(block.Content));
-                if (null != response && response.Type.Equals(PageAnnotationType, StringComparison.OrdinalIgnoreCase))
+                if (null != response && null != response.Type && response.Type.Equals(PageAnnotationType, StringComparison.OrdinalIgnoreCase))
                     return response;
             }
             catch (Exception ex)
