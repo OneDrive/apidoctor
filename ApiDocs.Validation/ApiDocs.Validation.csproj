@@ -47,6 +47,7 @@
     <Compile Include="AuthenicationCredentials.cs" />
     <Compile Include="AuthScopeDefinition.cs" />
     <Compile Include="CodeBlockAnnotation.cs" />
+    <Compile Include="Config\DocumentOutlineFile.cs" />
     <Compile Include="DocFile.cs" />
     <Compile Include="DocSet.cs" />
     <Compile Include="EnumerationDefinition.cs" />

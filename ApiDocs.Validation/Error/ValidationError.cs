@@ -106,7 +106,11 @@ namespace ApiDocs.Validation.Error
         UnsupportedLanguage,
         AllScenariosDisabled,
         ExceptionWhileValidatingMethod,
-        RequestWasRetried
+        RequestWasRetried,
+        ProhibitedDocumentHeaderFound,
+        ExtraDocumentHeaderFound,
+        RequiredDocumentHeaderMissing,
+        DocumentHeaderInWrongPosition
     }
 
     public class ValidationError
