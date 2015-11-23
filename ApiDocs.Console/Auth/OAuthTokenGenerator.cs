@@ -60,7 +60,8 @@ namespace ApiDocs.ConsoleApp.Auth
             StringBuilder sb = new StringBuilder();
             sb.AppendFormat("client_id={0}", Uri.EscapeDataString(account.ClientId));
             sb.AppendFormat("&redirect_uri={0}", Uri.EscapeDataString(account.RedirectUri));
-            sb.AppendFormat("&client_secret={0}", Uri.EscapeDataString(account.ClientSecret));
+            if (account.ClientSecret != null)
+                sb.AppendFormat("&client_secret={0}", Uri.EscapeDataString(account.ClientSecret));
             sb.AppendFormat("&refresh_token={0}", Uri.EscapeDataString(account.RefreshToken));
             sb.Append("&grant_type=refresh_token");
             if (null != account.Resource)
