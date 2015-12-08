@@ -866,12 +866,18 @@ namespace MarkdownDeep
 			return m_AbbreviationList;
 		}
 
-		// HtmlEncode a range in a string to a specified string builder
-		internal void HtmlEncode(StringBuilder dest, string str, int start, int len)
+        // HtmlEncode a range in a string to a specified string builder
+        internal void HtmlEncode(StringBuilder dest, string str, int start, int len, bool allowBreakLines = false, bool allowHtmlTags = false)
 		{
-			m_StringScanner.Reset(str, start, len);
+            if (allowBreakLines)
+            {
+                str = str.Replace("<br>", "\u0085");
+            }
+
+            m_StringScanner.Reset(str, start, len);
 			var p = m_StringScanner;
-			while (!p.eof)
+
+		    while (!p.eof)
 			{
 				char ch = p.current;
 				switch (ch)
@@ -881,16 +887,27 @@ namespace MarkdownDeep
 						break;
 
 					case '<':
-						dest.Append("&lt;");
-						break;
+				        if (allowHtmlTags)
+				            dest.Append(ch);
+                        else
+				            dest.Append("&lt;");
+                        
+				        break;
 
 					case '>':
-						dest.Append("&gt;");
+                        if (allowHtmlTags)
+                            dest.Append(ch);
+                        else
+                            dest.Append("&gt;");
 						break;
 
 					case '\"':
 						dest.Append("&quot;");
 						break;
+
+                    case '\u0085':  // Placeholder whitespace character
+				        dest.Append("<br />");
+				        break;
 
 					default:
 						dest.Append(ch);

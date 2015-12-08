@@ -71,19 +71,19 @@ namespace MarkdownDeep
 			}
 		}
 
-		internal void Format(StringBuilder dest, string str)
+		internal void Format(StringBuilder dest, string str, bool allowLineBreaks = false)
 		{
-			Format(dest, str, 0, str.Length);
+			Format(dest, str, 0, str.Length, allowLineBreaks);
 		}
 
 		// Format a range in an input string and write it to the destination string builder.
-		internal void Format(StringBuilder dest, string str, int start, int len)
+		internal void Format(StringBuilder dest, string str, int start, int len, bool allowLineBreaks = false)
 		{
 			// Parse the string into a list of tokens
 			Tokenize(str, start, len);
 
 			// Render all tokens
-			Render(dest, str);
+			Render(dest, str, allowLineBreaks: allowLineBreaks);
 		}
 
 		internal void FormatPlain(StringBuilder dest, string str, int start, int len)
@@ -170,7 +170,7 @@ namespace MarkdownDeep
 		}
 
 		// Render a list of tokens to a destinatino string builder.
-		private void Render(StringBuilder sb, string str)
+		private void Render(StringBuilder sb, string str, bool allowLineBreaks = false)
 		{
 			foreach (Token t in m_Tokens)
 			{
@@ -178,7 +178,7 @@ namespace MarkdownDeep
 				{
 					case TokenType.Text:
 						// Append encoded text
-						m_Markdown.HtmlEncode(sb, str, t.startOffset, t.length);
+						m_Markdown.HtmlEncode(sb, str, t.startOffset, t.length, allowLineBreaks);
 						break;
 
 					case TokenType.HtmlTag:
