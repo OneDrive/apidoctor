@@ -70,7 +70,7 @@ namespace ApiDocs.Validation.OData
             return schemas;
         }
 
-        public static async Task<List<Schema>> ReadSchemaFromMetadataUrlAsync(Uri remoteUrl)
+        public static async Task<EntityFramework> ParseEntityFrameworkFromUrlAsync(Uri remoteUrl)
         {
             var request = WebRequest.CreateHttp(remoteUrl);
             var response = await request.GetResponseAsync();
@@ -88,15 +88,18 @@ namespace ApiDocs.Validation.OData
                 }
             }
 
-            return ReadSchemaFromMetadata(remoteMetadataContents);
+            var schemas = ReadSchemaFromMetadata(remoteMetadataContents);
+            return new EntityFramework(schemas);
         }
 
-        public static async Task<List<Schema>> ReadSchemaFromFileAsync(string path)
+        public static async Task<EntityFramework> ParseEntityFrameworkFromFileAsync(string path)
         {
             StreamReader reader = new StreamReader(path);
             string localMetadataContents = await reader.ReadToEndAsync();
 
-            return ReadSchemaFromMetadata(localMetadataContents);
+            var schemas = ReadSchemaFromMetadata(localMetadataContents);
+
+            return new EntityFramework(schemas);
         }
 
         /// <summary>

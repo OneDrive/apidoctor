@@ -1066,17 +1066,17 @@ namespace ApiDocs.ConsoleApp
 
             FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, "Loading service metadata from '{0}'...", options.ServiceMetadataLocation);
 
-            List<Schema> schemas;
+            EntityFramework edmx = null;
             try
             {
                 Uri metadataUrl;
                 if (Uri.TryCreate(options.ServiceMetadataLocation, UriKind.Absolute, out metadataUrl))
                 {
-                    schemas = await ODataParser.ReadSchemaFromMetadataUrlAsync(metadataUrl);
+                    edmx = await ODataParser.ParseEntityFrameworkFromUrlAsync(metadataUrl);
                 }
                 else
                 {
-                    schemas = await ODataParser.ReadSchemaFromFileAsync(options.ServiceMetadataLocation);
+                    edmx = await ODataParser.ParseEntityFrameworkFromFileAsync(options.ServiceMetadataLocation);
                 }
             }
             catch (Exception ex)
@@ -1085,7 +1085,7 @@ namespace ApiDocs.ConsoleApp
                 return null;
             }
 
-            return schemas;
+            return edmx.Schema;
         }
 
         /// <summary>

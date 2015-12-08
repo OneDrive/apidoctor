@@ -48,6 +48,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CSDL\CsdlWriter.cs" />
     <Compile Include="Html\ApiDocsConditionalTag.cs" />
     <Compile Include="Html\DocumentPublisherHtml.cs" />
     <Compile Include="Html\FileTagDefinition.cs" />
