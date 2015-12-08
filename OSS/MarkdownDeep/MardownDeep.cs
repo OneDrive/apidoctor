@@ -872,6 +872,7 @@ namespace MarkdownDeep
             if (allowBreakLines)
             {
                 str = str.Replace("<br>", "\u0085");
+                str = str.Replace("<br />", "\u0085");
             }
 
             m_StringScanner.Reset(str, start, len);
