@@ -30,6 +30,7 @@ namespace ApiDocs.Validation.OData
     using System.Linq;
     using System.Xml.Linq;
 
+    [XmlTagName("ComplexType")]
     public class ComplexType
     {
         public ComplexType()
@@ -40,10 +41,10 @@ namespace ApiDocs.Validation.OData
         public string Name { get; set; }
         public List<Property> Properties { get; set; }
 
-        public static string ElementName { get { return "ComplexType"; } }
         public static ComplexType FromXml(XElement xml)
         {
-            if (xml.Name.LocalName != ElementName) throw new ArgumentException("xml was not a ComplexType element");
+            typeof(ComplexType).ThrowIfWrongElement(xml);
+
             var obj = new ComplexType { Name = xml.AttributeValue("Name") };
             obj.Properties.AddRange(from e in xml.Elements()
                                     where e.Name.LocalName == "Property"

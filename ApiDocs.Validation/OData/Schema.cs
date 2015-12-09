@@ -30,6 +30,7 @@ namespace ApiDocs.Validation.OData
     using System.Linq;
     using System.Xml.Linq;
 
+    [XmlTagName("Schemas")]
     public class Schema
     {
         public string Namespace { get; set; }
@@ -50,37 +51,34 @@ namespace ApiDocs.Validation.OData
             this.Terms = new List<Term>();
         }
 
-
-        public static string ElementName { get { return "Schema"; } }
-
         internal static Schema FromXml(XElement xml)
         {
-            if (xml.Name.LocalName != ElementName) throw new ArgumentException("xml was not a Schema element");
+            typeof(Schema).ThrowIfWrongElement(xml);
 
             var obj = new Schema { Namespace = xml.AttributeValue("Namespace") };
 
             obj.Entities.AddRange(from e in xml.Elements()
-                                  where e.Name.LocalName == EntityType.ElementName
+                                  where e.Name.LocalName == typeof(EntityType).XmlElementName()
                                   select EntityType.FromXml(e));
 
             obj.ComplexTypes.AddRange(from e in xml.Elements()
-                                      where e.Name.LocalName == ComplexType.ElementName
+                                      where e.Name.LocalName == typeof(ComplexType).XmlElementName()
                                       select ComplexType.FromXml(e));
 
             obj.EntityContainers.AddRange(from e in xml.Elements()
-                                          where e.Name.LocalName == EntityContainer.ElementName
+                                          where e.Name.LocalName == typeof(EntityContainer).XmlElementName()
                                           select EntityContainer.FromXml(e));
 
             obj.Functions.AddRange(from e in xml.Elements()
-                                   where e.Name.LocalName == Function.ElementName
+                                   where e.Name.LocalName == typeof(Function).XmlElementName()
                                    select Function.FromXml(e));
 
             obj.Actions.AddRange(from e in xml.Elements()
-                                 where e.Name.LocalName == Action.ElementName
+                                 where e.Name.LocalName == typeof(Action).XmlElementName()
                                  select Action.FromXml(e));
 
             obj.Terms.AddRange(from e in xml.Elements()
-                               where e.Name.LocalName == Term.ElementName
+                               where e.Name.LocalName == typeof(Term).XmlElementName()
                                select Term.FromXml(e));
 
             return obj;

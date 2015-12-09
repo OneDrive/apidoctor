@@ -396,7 +396,8 @@ namespace ApiDocs.ConsoleApp
             Html,
             Swagger2,
             Outline,
-            Mustache
+            Mustache,
+            Edmx
         }
     }
 }

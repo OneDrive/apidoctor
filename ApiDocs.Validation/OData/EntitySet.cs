@@ -28,6 +28,7 @@ namespace ApiDocs.Validation.OData
     using System;
     using System.Xml.Linq;
 
+    [XmlTagName("EntitySet")]
     public class EntitySet
     {
         public string Name { get; set; }
@@ -35,7 +36,8 @@ namespace ApiDocs.Validation.OData
 
         internal static EntitySet FromXml(XElement xml)
         {
-            if (xml.Name.LocalName != ElementName) throw new ArgumentException("xml was not an EntitySet element");
+            typeof(EntitySet).ThrowIfWrongElement(xml);
+
             var obj = new EntitySet
             {
                 Name = xml.AttributeValue("Name"),
@@ -43,7 +45,5 @@ namespace ApiDocs.Validation.OData
             };
             return obj;
         }
-
-        public static string ElementName { get { return "EntitySet"; } }
     }
 }

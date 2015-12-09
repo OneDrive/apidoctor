@@ -30,6 +30,7 @@ namespace ApiDocs.Validation.OData
     using System.Linq;
     using System.Xml.Linq;
 
+    [XmlTagName("EntityType")]
     public class EntityType : ComplexType
     {
         public EntityType()
@@ -40,18 +41,17 @@ namespace ApiDocs.Validation.OData
 
         public List<NavigationProperty> NavigationProperties { get; set; }
 
-        public static new string ElementName { get { return "EntityType"; } }
         public static new EntityType FromXml(XElement xml)
         {
-            if (xml.Name.LocalName != ElementName) throw new ArgumentException("xml is not an EntityType element");
+            typeof(EntityType).ThrowIfWrongElement(xml);
 
             var obj = new EntityType { Name = xml.AttributeValue("Name") };
 
             obj.Properties.AddRange(from e in xml.Elements()
-                                    where e.Name.LocalName == Property.ElementName
+                                    where e.Name.LocalName == typeof(Property).XmlElementName()
                                     select Property.FromXml(e));
             obj.NavigationProperties.AddRange(from e in xml.Elements()
-                                              where e.Name.LocalName == NavigationProperty.ElementName
+                                              where e.Name.LocalName == typeof(NavigationProperty).XmlElementName()
                                               select NavigationProperty.FromXml(e));
 
             return obj;

@@ -30,6 +30,7 @@ namespace ApiDocs.Validation.OData
     using System.Linq;
     using System.Xml.Linq;
 
+    [XmlTagName("Action")]
     public class Action
     {
         public string Name { get; set; }
@@ -42,21 +43,20 @@ namespace ApiDocs.Validation.OData
             this.Parameters = new List<Parameter>();
         }
 
-
-        public static string ElementName { get { return "Action"; } }
+        
         public static Action FromXml(XElement xml)
         {
-            if (xml.Name.LocalName != ElementName) throw new ArgumentException("xml was not a Action element");
+            typeof(Action).ThrowIfWrongElement(xml);
             var obj = new Action
             {
                 Name = xml.AttributeValue("Name"),
                 IsBound = xml.AttributeValue("IsBound").ToBoolean()
             };
             obj.Parameters.AddRange(from e in xml.Elements()
-                                    where e.Name == Parameter.ElementName
+                                    where e.Name == typeof(Parameter).XmlElementName()
                                     select Parameter.FromXml(e));
             obj.ReturnType = (from e in xml.Elements()
-                              where e.Name.LocalName == ReturnType.ElementName
+                              where e.Name.LocalName == typeof(ReturnType).XmlElementName()
                               select ReturnType.FromXml(e)).FirstOrDefault();
             return obj;
         }

@@ -30,6 +30,7 @@ namespace ApiDocs.Validation.OData
     using System.Linq;
     using System.Xml.Linq;
 
+    [XmlTagName("Function")]
     public class Function
     {
         public Function()
@@ -42,10 +43,10 @@ namespace ApiDocs.Validation.OData
         public List<Parameter> Parameters { get; set; }
         public ReturnType ReturnType { get; set; }
 
-        public static string ElementName { get { return "Function"; } }
+        
         public static Function FromXml(XElement xml)
         {
-            if (xml.Name.LocalName != ElementName) throw new ArgumentException("xml is not an Function element");
+            typeof(Function).ThrowIfWrongElement(xml);
 
             var obj = new Function
             {
@@ -54,11 +55,11 @@ namespace ApiDocs.Validation.OData
             };
 
             obj.Parameters.AddRange(from e in xml.Elements()
-                                    where e.Name.LocalName == Parameter.ElementName
+                                    where e.Name.LocalName == typeof(Parameter).XmlElementName()
                                     select Parameter.FromXml(e));
 
             obj.ReturnType = (from e in xml.Elements()
-                              where e.Name.LocalName == ReturnType.ElementName
+                              where e.Name.LocalName == typeof(ReturnType).XmlElementName()
                               select ReturnType.FromXml(e)).FirstOrDefault();
 
             return obj;

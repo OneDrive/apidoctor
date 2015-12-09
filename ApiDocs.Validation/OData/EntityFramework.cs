@@ -30,23 +30,56 @@ namespace ApiDocs.Validation.OData
     using System.Linq;
     using System.Text;
     using System.Threading.Tasks;
-
+    using System.Xml.Linq;
     /// <summary>
     /// Holds a representation of an entity framework model (EDMX)
     /// </summary>
+    [XmlTagName("Edmx")]
     public class EntityFramework
     {
-        public List<Schema> Schema { get; internal set; }
+        public string Version { get; set; }
+
+        public DataServices DataServices { get; set; } 
 
         public EntityFramework()
         {
-            this.Schema = new List<OData.Schema>();
+            this.DataServices = new DataServices();
+            this.DataServices.Schemas = new List<OData.Schema>();
+            this.Version = "4.0";
         }
 
         public EntityFramework(IEnumerable<Schema> schemas)
         {
-            this.Schema = new List<OData.Schema>(schemas);
+            this.DataServices = new DataServices();
+            this.DataServices.Schemas = new List<OData.Schema>(schemas);
+            this.Version = "4.0";
         }
 
+        internal static EntityFramework FromXml(XElement xml)
+        {
+            typeof(EntityFramework).ThrowIfWrongElement(xml);
+
+            var ef = new EntityFramework();
+            ef.Version = xml.Attribute("Version").Value;
+            ef.DataServices = DataServices.FromXml(xml.Element("DataServices"));
+
+            return ef;
+        }
+
+    }
+
+    [XmlTagName("DataServices")]
+    public class DataServices
+    {
+        public List<Schema> Schemas { get; set; }
+
+        internal static DataServices FromXml(XElement xml)
+        {
+            typeof(DataServices).ThrowIfWrongElement(xml);
+
+            var ds = new DataServices();
+            ds.Schemas = (from schema in xml.Elements("Schema") select Schema.FromXml(schema)).ToList();
+            return ds;
+        }
     }
 }

@@ -1013,6 +1013,9 @@ namespace ApiDocs.ConsoleApp
                 case PublishOptions.PublishFormat.Outline:
                     publisher = new OutlinePublisher(docs);
                     break;
+                case PublishOptions.PublishFormat.Edmx:
+                    publisher = new Publishing.CSDL.CsdlWriter(docs);
+                    break;
                 default:
                     FancyConsole.WriteLine(
                         FancyConsole.ConsoleErrorColor,
@@ -1085,7 +1088,7 @@ namespace ApiDocs.ConsoleApp
                 return null;
             }
 
-            return edmx.Schema;
+            return edmx.DataServices.Schemas;
         }
 
         /// <summary>

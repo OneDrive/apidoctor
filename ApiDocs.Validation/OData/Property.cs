@@ -28,6 +28,7 @@ namespace ApiDocs.Validation.OData
     using System;
     using System.Xml.Linq;
 
+    [XmlTagName("Property")]
     public class Property
     {
         public string Name { get; set; }
@@ -35,11 +36,9 @@ namespace ApiDocs.Validation.OData
         public bool Nullable { get; set; }
 
 
-        public static string ElementName { get { return "Property"; } }
-
         public static Property FromXml(XElement xml)
         {
-            if (xml.Name.LocalName != ElementName) throw new ArgumentException("xml wasn't a Property element");
+            typeof(Property).ThrowIfWrongElement(xml);
 
             var obj = new Property
             {

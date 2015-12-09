@@ -28,17 +28,16 @@ namespace ApiDocs.Validation.OData
     using System;
     using System.Xml.Linq;
 
+    [XmlTagName("ReturnType")]
     public class ReturnType
     {
         public string Type { get; set; }
         public bool Nullable { get; set; }
         
         
-        public static string ElementName { get { return "ReturnType"; } }
-
         internal static ReturnType FromXml(XElement xml)
         {
-            if (xml.Name.LocalName != ElementName) throw new ArgumentException("xml wasn't a ReturnType element");
+            typeof(ReturnType).ThrowIfWrongElement(xml);
 
             var obj = new ReturnType
             {

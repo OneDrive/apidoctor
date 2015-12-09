@@ -71,7 +71,7 @@ namespace ApiDocs.Validation.Json
         }
         #endregion
 
-        #region Json Validation Against Schema
+        #region Json Validation Against Schemas
 
         /// <summary>
         /// Checks that the expected response of a method definition is valid with this resource.
@@ -354,7 +354,7 @@ namespace ApiDocs.Validation.Json
                         ValidationError[] odataErrors;
                         if (null != inputProperty.CustomMembers && !odataSchema.ValidateCustomObject(inputProperty.CustomMembers.Values.ToArray(), out odataErrors, schemas, options))
                         {
-                            var propertyError = ValidationError.NewConsolidatedError(ValidationErrorCode.ConsolidatedError, odataErrors, "Schema validation failed on property '{0}' ['{1}']", inputProperty.Name, odataSchema.ResourceName);
+                            var propertyError = ValidationError.NewConsolidatedError(ValidationErrorCode.ConsolidatedError, odataErrors, "Schemas validation failed on property '{0}' ['{1}']", inputProperty.Name, odataSchema.ResourceName);
                             detectedErrors.Add(propertyError);
 
                             return PropertyValidationOutcome.InvalidType;
@@ -382,7 +382,7 @@ namespace ApiDocs.Validation.Json
                 }
                 else if (schemaPropertyDef.Type == JsonDataType.Object)
                 {
-                    detectedErrors.Add(new ValidationWarning(ValidationErrorCode.CustomValidationNotSupported, null, "Schema type was 'Custom' which is not supported. Add a resource type to the definition of property: {0}", inputProperty.Name));
+                    detectedErrors.Add(new ValidationWarning(ValidationErrorCode.CustomValidationNotSupported, null, "Schemas type was 'Custom' which is not supported. Add a resource type to the definition of property: {0}", inputProperty.Name));
                     return PropertyValidationOutcome.MissingResourceType;
                 }
                 else
@@ -551,7 +551,7 @@ namespace ApiDocs.Validation.Json
 
         #endregion
 
-        #region Schema Building
+        #region Schemas Building
         private Dictionary<string, JsonProperty> BuildSchemaFromJson(string json, IEnumerable<ParameterDefinition> parameters = null)
         {
             Dictionary<string, JsonProperty> schema = new Dictionary<string, JsonProperty>();

@@ -168,7 +168,7 @@ namespace ApiDocs.Validation.Json
         /// Examines input json string to ensure that it compiles with the JsonSchema definition. Any errors in the
         /// validation of the schema are returned via the errors out parameter.
         /// </summary>
-        /// <param name="schema">Schema definition used as a reference.</param>
+        /// <param name="schema">Schemas definition used as a reference.</param>
         /// <param name="inputJson">Input json example to be validated</param>
         /// <param name="errors">Out parameter that provides any errors, warnings, or messages that were generated</param>
         /// <param name="expectedJson"></param>

@@ -28,17 +28,16 @@ namespace ApiDocs.Validation.OData
     using System;
     using System.Xml.Linq;
 
+    [XmlTagName("Annotation")]
     public class Annotation
     {
         public string Term { get; set; }
         public string String { get; set; }
-
-
-        public static string ElementName { get { return "Annotation"; } }
+        
 
         public static Annotation FromXml(XElement xml)
         {
-            if (xml.Name.LocalName != ElementName) throw new ArgumentException("xml was not an Annotation element");
+            typeof(Annotation).ThrowIfWrongElement(xml);
 
             var obj = new Annotation
             {

@@ -190,7 +190,7 @@ namespace ApiDocs.Publishing.Swagger
             //output.Responses.Add("200", new SwaggerResponse()
             //    {
             //        Description = "real response tbd",
-            //        Schema = method.ExpectedResponseAsSwaggerProperty()
+            //        Schemas = method.ExpectedResponseAsSwaggerProperty()
             //    });
 //            output.Responses = null;
 

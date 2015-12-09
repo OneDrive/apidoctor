@@ -60,7 +60,7 @@ namespace ApiDocs.Validation.OData
                 AppliesTo = xml.AttributeValue("AppliesTo")
             };
             obj.Annotations.AddRange(from e in xml.Elements()
-                                     where e.Name.LocalName == Annotation.ElementName
+                                     where e.Name.LocalName == typeof(Annotation).XmlElementName()
                                      select Annotation.FromXml(e));
             return obj;
         }
