@@ -117,7 +117,7 @@ namespace MarkdownDeep
 				}
 
 				b.Append(">");
-				m.SpanFormatter.Format(b, row[i]);
+				m.SpanFormatter.Format(b, row[i], allowLineBreaks: true);
 				b.Append("</");
 				b.Append(type);
 				b.Append(">\n");
