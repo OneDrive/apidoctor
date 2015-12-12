@@ -148,7 +148,7 @@ namespace ApiDocs.Validation.Params
             return placeholderValues.ToArray();
         }
 
-        private const string RandomFilenameValuePrefix = "!random-filename-";
+        private const string RandomFilenameValuePrefix = "!random-filename";
 
         /// <summary>
         /// Convert the input into a PlaceholderValue and realize any reference to a stored value into
@@ -172,16 +172,47 @@ namespace ApiDocs.Validation.Params
             };
 
             // Allow the random-filename generator to swap the value with a randomly generated filename.
-            if (null != value && value.StartsWith(RandomFilenameValuePrefix))
+            int index = value == null ? -1 : value.IndexOf(RandomFilenameValuePrefix);
+            if (index >= 0)
             {
-                string fileExtension = value.Substring(RandomFilenameValuePrefix.Length);
-                string randomFilename = string.Format("/testfile-{0:D}.{1}", Guid.NewGuid(), fileExtension);
-                v.Value = randomFilename;
+                int endIndex = value.IndexOf("!", index + 1);
+                string placeholder = null;
+                if (endIndex > -1)
+                {
+                    placeholder = value.Substring(index, endIndex - index + 1);
+                }
+                else
+                {
+                    // Be backwards comaptible with previous behavior.
+                    placeholder = value.Substring(index);
+                    if (!placeholder.EndsWith("!"))
+                    {
+                        if (placeholder != RandomFilenameValuePrefix)
+                            value = "/" + value.Replace(placeholder, placeholder + "!");
+                        else
+                            value = value.Replace(placeholder, placeholder + "!");
+                        placeholder = placeholder + "!";
+                    }
+                }
+                string randomFilename = GenerateRandomFilename(placeholder);
+
+                v.Value = value.Replace(placeholder, randomFilename);
             }
 
             Debug.WriteLine("Converting \"{0}: {1}\" into loc={2},value={3}", key, value, v.Location, v.Value);
 
             return v;
+        }
+
+        private static string GenerateRandomFilename(string placeholder)
+        {
+            if (placeholder == (RandomFilenameValuePrefix + "!"))
+                return string.Format("apidocs-{0:D}", Guid.NewGuid());
+
+            string extension = placeholder.Substring(
+                RandomFilenameValuePrefix.Length+1,
+                placeholder.Length - RandomFilenameValuePrefix.Length - 2);
+            return string.Format("apidocs-{0:D}.{1}", Guid.NewGuid(), extension);
         }
 
         public static bool MatchesContentTypeIdentifier(this string contentType, string expectedContentType)
