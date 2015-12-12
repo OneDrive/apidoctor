@@ -290,16 +290,16 @@ definition.
 
 When specifying a placeholder name or value, the following syntax is used:
 
-| Syntax          | Example               | Description                                                                                                                               |
-|:----------------|:----------------------|:------------------------------------------------------------------------------------------------------------------------------------------|
-| Curly Braces    | `{path-to-file}`      | Find and update a value in the URL matching the full string.                                                                              |
-| Square Braces   | `[source-file-id]`    | Look for a previous stored value that was output from a previous request within the same scenario.                                        |
-| JPath           | `$.id`                | Replace a property value in the JSON body of the request. If the content-type of the request is not application/json an error will occur. |
-| !body           | `!body`               | Replace the content stream of the request with the provided value                                                                         |
-| !body.base64    | `!body.base64`        | Replace the content stream of the request with a decoded byte stream of the base 64 value provided.                                       |
-| !url            | `!url`                | Replace the URL for the request with the provided value.                                                                                  |
-| Header:         | `Content-Type:`       | Replace the value of a header with the specified value. Note the header name must end with a colon to be valid.                           |
-| Random Filename | `!random-filename-png | Returns a randomly generated value with a particular file extension that can be used to ensure tests don't interfere with each other.     |
+| Syntax          | Example                | Description                                                                                                                               |
+|:----------------|:-----------------------|:------------------------------------------------------------------------------------------------------------------------------------------|
+| Curly Braces    | `{path-to-file}`       | Find and update a value in the URL matching the full string.                                                                              |
+| Square Braces   | `[source-file-id]`     | Look for a previous stored value that was output from a previous request within the same scenario.                                        |
+| JPath           | `$.id`                 | Replace a property value in the JSON body of the request. If the content-type of the request is not application/json an error will occur. |
+| !body           | `!body`                | Replace the content stream of the request with the provided value                                                                         |
+| !body.base64    | `!body.base64`         | Replace the content stream of the request with a decoded byte stream of the base 64 value provided.                                       |
+| !url            | `!url`                 | Replace the URL for the request with the provided value.                                                                                  |
+| Header:         | `Content-Type:`        | Replace the value of a header with the specified value. Note the header name must end with a colon to be valid.                           |
+| Random Filename | `!random-filename-png! | Returns a randomly generated value with a particular file extension that can be used to ensure tests don't interfere with each other.     |
 
 ### Capture grammar
 
