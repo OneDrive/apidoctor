@@ -29,8 +29,9 @@ namespace ApiDocs.Validation.OData
     using System.Collections.Generic;
     using System.Linq;
     using System.Xml.Linq;
+    using System.Xml.Serialization;
 
-    [XmlTagName("EntityType")]
+    [XmlRoot("EntityType")]
     public class EntityType : ComplexType
     {
         public EntityType()
@@ -40,6 +41,9 @@ namespace ApiDocs.Validation.OData
         }
 
         public List<NavigationProperty> NavigationProperties { get; set; }
+
+        public Key Key { get; set; }
+
 
         public static new EntityType FromXml(XElement xml)
         {

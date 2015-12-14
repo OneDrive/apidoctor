@@ -65,23 +65,23 @@ namespace ApiDocs.Validation.UnitTests
                 switch (property.Name)
                 {
                     case "stringProp":
-                        Assert.AreEqual(property.Type, JsonDataType.String);
+                        Assert.AreEqual(property.Type, ParameterDataType.String);
                         Assert.AreEqual("string", property.OriginalValue);
                         break;
                     case "urlProp":
-                        Assert.AreEqual(property.Type, JsonDataType.String);
+                        Assert.AreEqual(property.Type, ParameterDataType.String);
                         Assert.AreEqual("url", property.OriginalValue);
                         break;
                     case "numberProp":
-                        Assert.AreEqual(property.Type, JsonDataType.Number);
+                        Assert.AreEqual(property.Type, ParameterDataType.Int64);
                         Assert.AreEqual(123, Int32.Parse(property.OriginalValue));
                         break;
                     case "floatProp":
-                        Assert.AreEqual(property.Type, JsonDataType.Number);
+                        Assert.AreEqual(property.Type, ParameterDataType.Double);
                         Assert.AreEqual(123.121, Double.Parse(property.OriginalValue));
                         break;
                     case "dateProp":
-                        Assert.AreEqual(property.Type, JsonDataType.String);
+                        Assert.AreEqual(property.Type, ParameterDataType.String);
                         Assert.AreEqual("datetime", property.OriginalValue);
                         break;
                     default:
@@ -99,7 +99,7 @@ namespace ApiDocs.Validation.UnitTests
             Assert.AreEqual(2, schema.Properties.Length);
             foreach (var prop in schema.Properties)
             {
-                Assert.AreEqual(JsonDataType.ODataType, prop.Type);
+                Assert.AreEqual(ParameterDataType.Resource, prop.Type);
                 Assert.IsNull(prop.CustomMembers);
                 switch (prop.Name)
                 {
@@ -126,13 +126,13 @@ namespace ApiDocs.Validation.UnitTests
                 switch (prop.Name)
                 {
                     case "arrayTypeA":
-                        this.CheckJsonProperty(prop, expectedType: JsonDataType.ODataType, odataTypeName: "resource.a", isArray: true, customMembersIsNull: true);
+                        this.CheckJsonProperty(prop, expectedType: ParameterDataType.Resource, odataTypeName: "resource.a", isArray: true, customMembersIsNull: true);
                         break;
                     case "complexTypeB":
-                        this.CheckJsonProperty(prop, expectedType: JsonDataType.ODataType, odataTypeName: "resource.b", isArray: false, customMembersIsNull: true);
+                        this.CheckJsonProperty(prop, expectedType: ParameterDataType.Resource, odataTypeName: "resource.b", isArray: false, customMembersIsNull: true);
                         break;
                     case "simpleType":
-                        this.CheckJsonProperty(prop, expectedType: JsonDataType.String, isArray: false, customMembersIsNull: true);
+                        this.CheckJsonProperty(prop, expectedType: ParameterDataType.String, isArray: false, customMembersIsNull: true);
                         break;
                     default:
                         Assert.Fail("Unexpected property name: " + prop.Name);
@@ -158,7 +158,7 @@ namespace ApiDocs.Validation.UnitTests
         }
 
 
-        public void CheckJsonProperty(JsonProperty prop, JsonDataType? expectedType = null, string odataTypeName = null, bool? isArray = null, bool? customMembersIsNull = null)
+        public void CheckJsonProperty(JsonProperty prop, ParameterDataType? expectedType = null, string odataTypeName = null, bool? isArray = null, bool? customMembersIsNull = null)
         {
             if (expectedType != null)
                 Assert.AreEqual(expectedType.Value, prop.Type);

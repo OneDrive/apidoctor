@@ -29,8 +29,9 @@ namespace ApiDocs.Validation.OData
     using System.Collections.Generic;
     using System.Linq;
     using System.Xml.Linq;
+    using System.Xml.Serialization;
 
-    [XmlTagName("Action")]
+    [XmlRoot("Action")]
     public class Action
     {
         public string Name { get; set; }

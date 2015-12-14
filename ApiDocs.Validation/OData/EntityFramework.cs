@@ -31,10 +31,12 @@ namespace ApiDocs.Validation.OData
     using System.Text;
     using System.Threading.Tasks;
     using System.Xml.Linq;
+    using System.Xml.Serialization;
+
     /// <summary>
     /// Holds a representation of an entity framework model (EDMX)
     /// </summary>
-    [XmlTagName("Edmx")]
+    [XmlRoot("Edmx")]
     public class EntityFramework
     {
         public string Version { get; set; }
@@ -68,7 +70,7 @@ namespace ApiDocs.Validation.OData
 
     }
 
-    [XmlTagName("DataServices")]
+    [XmlRoot("DataServices")]
     public class DataServices
     {
         public List<Schema> Schemas { get; set; }

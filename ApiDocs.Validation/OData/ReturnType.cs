@@ -27,8 +27,9 @@ namespace ApiDocs.Validation.OData
 {
     using System;
     using System.Xml.Linq;
+    using System.Xml.Serialization;
 
-    [XmlTagName("ReturnType")]
+    [XmlRoot("ReturnType")]
     public class ReturnType
     {
         public string Type { get; set; }

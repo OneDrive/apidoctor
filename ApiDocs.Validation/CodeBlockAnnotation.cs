@@ -104,6 +104,14 @@ namespace ApiDocs.Validation
         public string LongRunningResponseType { get; set; }
 
         /// <summary>
+        /// For blockType=resource, defines the property in the resource that is considered to be 
+        /// the "key" / "index" property. This also converts the resource into an EntityType for OData
+        /// purposes.
+        /// </summary>
+        [JsonProperty("keyProperty", DefaultValueHandling=DefaultValueHandling.Ignore)]
+        public string KeyPropertyName { get; set; }
+
+        /// <summary>
         /// Convert a JSON string into an instance of this class
         /// </summary>
         /// <param name="json"></param>

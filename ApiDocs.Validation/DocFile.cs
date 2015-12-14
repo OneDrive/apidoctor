@@ -40,7 +40,6 @@ namespace ApiDocs.Validation
     /// </summary>
     public class DocFile
     {
-
         private const string PageAnnotationType = "#page.annotation";
 
         #region Instance Variables
@@ -134,6 +133,10 @@ namespace ApiDocs.Validation
 
         #region Markdown Parsing
 
+        /// <summary>
+        /// Populate this object based on input markdown data
+        /// </summary>
+        /// <param name="inputMarkdown"></param>
         protected void TransformMarkdownIntoBlocksAndLinks(string inputMarkdown)
         {
             Markdown md = new Markdown
@@ -245,6 +248,9 @@ namespace ApiDocs.Validation
             return header;
         }
 
+        /// <summary>
+        /// Headers found in the markdown input (#, h1, etc)
+        /// </summary>
         public List<Config.DocumentHeader> DocumentHeaders
         {
             get; set;
@@ -295,10 +301,10 @@ namespace ApiDocs.Validation
                         detectedErrors.Add(new ValidationWarning(ValidationErrorCode.MissingHeaderBlock, null, "Paragraph text found before a valid header: {0}", this.DisplayName));
                     }
                     else if (IsHeaderBlock(previousHeaderBlock))
-                {
-                    methodDescription = block.Content;
-                    detectedErrors.Add(new ValidationMessage(null, "Found description: {0}", methodDescription));
-                }
+                    {
+                        methodDescription = block.Content;
+                        detectedErrors.Add(new ValidationMessage(null, "Found description: {0}", methodDescription));
+                    }
                 }
                 else if (block.BlockType == BlockType.html)
                 {
@@ -676,7 +682,7 @@ namespace ApiDocs.Validation
                         break;
                     case TableBlockType.EnumerationValues:
                         // TODO: Support enumeration values
-                        Console.WriteLine("Enumeration that wasn't handled: {0} on method {1} ", table.Title, onlyMethod.RequestMetadata.MethodName);
+                        Console.WriteLine("EnumeratedValues that wasn't handled: {0} on method {1} ", table.Title, onlyMethod.RequestMetadata.MethodName);
                         break;
                     case TableBlockType.ErrorCodes:
                         onlyMethod.Errors = table.Rows.Cast<ErrorDefinition>().ToList();

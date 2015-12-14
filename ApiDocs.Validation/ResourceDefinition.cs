@@ -26,77 +26,147 @@
 namespace ApiDocs.Validation
 {
     using System;
+    using System.Linq;
     using ApiDocs.Validation.Error;
     using Newtonsoft.Json;
+    using System.Collections.Generic;
 
     /// <summary>
-    /// Represents an entity resource in the API.
+    /// Represents a class, resource, complex type, or entity type from an API.
     /// </summary>
     public class ResourceDefinition : ItemDefinition
     {
-        public ResourceDefinition(CodeBlockAnnotation annotation, string content, DocFile source, string language)
-        {
-            if (null != language && !language.Equals("json", StringComparison.OrdinalIgnoreCase))
-            {
-                throw new ArgumentException("Resources only support JSON language.", "language");
-            }
+        private readonly CodeBlockAnnotation sourceAnnotation;
 
-            this.Metadata = annotation;
-            this.OriginalExample = content;
+
+        public ResourceDefinition(CodeBlockAnnotation sourceAnnotation, string content, DocFile source, string language)
+        {
+            this.sourceAnnotation = sourceAnnotation;
+            this.OriginalExampleText = content;
             this.SourceFile = source;
 
+            this.Name = sourceAnnotation.ResourceType;
+            this.KeyPropertyName = sourceAnnotation.KeyPropertyName;
+
+            switch (language.ToLowerInvariant())
+            {
+                case "json":
+                    this.ParseJsonInput();
+                    break;
+                default:
+                    throw new NotSupportedException("Unsupported resource language specified: " + language);
+            }
+
+            if (string.IsNullOrEmpty(sourceAnnotation.ResourceType))
+            {
+                Logging.LogMessage(
+                    new ValidationError(
+                        ValidationErrorCode.MissingResourceName,
+                        source.DisplayName,
+                        "Resource definition is missing Name value"));
+            }
+        }
+
+        #region Helper Methods
+        /// <summary>
+        /// Parse the example resource conetent and populate the resource definition
+        /// </summary>
+        /// <param name="jsonContent">JSON string representation of an object</param>
+        /// <param name="sourceFile"></param>
+        private void ParseJsonInput()
+        {
             try
             {
-                object inputObject = JsonConvert.DeserializeObject(content);
-                this.JsonExample = JsonConvert.SerializeObject(inputObject, Formatting.Indented);
+                object inputObject = JsonConvert.DeserializeObject(this.OriginalExampleText);
+                this.ExtractProperties(inputObject);
+                this.ExampleText = JsonConvert.SerializeObject(inputObject, Formatting.Indented);
             }
             catch (Exception ex)
             {
                 Logging.LogMessage(
                     new ValidationError(
                         ValidationErrorCode.JsonParserException,
-                        source.DisplayName,
+                        this.SourceFile.DisplayName,
                         "Error parsing resource definition: {0}",
                         ex.Message));
                 throw;
             }
-
-            if (string.IsNullOrEmpty(annotation.ResourceType))
-            {
-                Logging.LogMessage(
-                    new ValidationError(
-                        ValidationErrorCode.MissingResourceName,
-                        source.DisplayName,
-                        "Resource definition is missing a @odata.type name"));
-            }
         }
 
         /// <summary>
-        /// Metadata read from the code block annotation
         /// </summary>
-        public CodeBlockAnnotation Metadata { get; private set; }
+        /// <param name="inputObject"></param>
+        private void ExtractProperties(object input)
+        {
+            //var knownProperties = input.GetType().GetProperties();
+
+            //this.Properties = (from p in knownProperties
+            //    select new ParameterDefinition
+            //    {
+            //        Name = p.Name,
+            //        Type = GetParameterType(p.PropertyType, p.GetValue(input))
+            //    }).ToList();
+        }
+
+        //private static Json.JsonDataType GetParameterType(Type type, object value)
+        //{
+        //    if (type == typeof(string))
+        //    {
+        //        switch (value as string)
+        //        {
+        //            case "string":
+        //                return Json.JsonDataType.String;
+        //        }
+        //    }
+        //    return Json.JsonDataType.Object;
+        //}
+
+        #endregion
+
+
+
+        #region Public Properties
 
         /// <summary>
-        /// The type identifier for the resource defined in this class
+        /// For indexed resources, this specifies the property which is used as the index.
         /// </summary>
-        public string ResourceType { get { return this.Metadata.ResourceType; } }
+        public string KeyPropertyName { get; set; }
 
         /// <summary>
-        /// Parsed and reformatted json resource read from the documentation
+        /// Metadata read from the code block sourceAnnotation
         /// </summary>
-        public string JsonExample { get; private set; }
+        public CodeBlockAnnotation OriginalMetadata
+        {
+            get { return sourceAnnotation; }
+        }
+
+        /// <summary>
+        /// The type identifier for the resource defined in this class (@odata.type)
+        /// </summary>
+        public string Name { get; set; }
+
+        /// <summary>
+        /// Parsed and reformatted resource read from the documentation
+        /// </summary>
+        public string ExampleText { get; private set; }
 
         /// <summary>
         /// Original json example as written in the documentation.
         /// </summary>
-        public string OriginalExample { get; private set; }
+        public string OriginalExampleText { get; private set; }
 
         /// <summary>
-        /// The documentation file that was the source of this resource
+        /// The documentation file that was the sourceFile of this resource
         /// </summary>
-        /// <value>The source file.</value>
+        /// <value>The sourceFile file.</value>
         public DocFile SourceFile {get; private set;}
 
+        /// <summary>
+        /// A collection of the properties defined for this resource
+        /// </summary>
+        public List<ParameterDefinition> Properties { get; private set; }
+
+        #endregion
     }
 }
 

@@ -29,8 +29,9 @@ namespace ApiDocs.Validation.OData
     using System.Linq;
     using System.Xml.Linq;
     using System.Collections.Generic;
+    using System.Xml.Serialization;
 
-    [XmlTagName("EntityContainer")]
+    [XmlRoot("EntityContainer")]
     public class EntityContainer
     {
         

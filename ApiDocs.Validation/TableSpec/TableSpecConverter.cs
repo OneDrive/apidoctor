@@ -149,7 +149,7 @@ namespace ApiDocs.Validation.TableSpec
                           select new ParameterDefinition
                           {
                               Name = r.ValueForColumn(table, "Name", "Header Name"),
-                              Type = JsonDataType.String,
+                              Type = ParameterDataType.String,
                               Description = r.ValueForColumn(table, "Description"),
                               Location = ParameterLocation.Header
                           };
@@ -189,7 +189,7 @@ namespace ApiDocs.Validation.TableSpec
             { "Query String Parameters", TableBlockType.QueryStringParameters },
             { "Request Headers", TableBlockType.HttpHeaders },
             { "Authentication Scopes", TableBlockType.AuthScopes },
-            { "Enumeration", TableBlockType.EnumerationValues }
+            { "EnumeratedValues", TableBlockType.EnumerationValues }
         };
             
         private static TableBlockType CommonHeaderMatch(string lastHeader)
@@ -205,7 +205,7 @@ namespace ApiDocs.Validation.TableSpec
         }
 
 
-        // Enumeration are usual Value | Description
+        // EnumeratedValues are usual Value | Description
 
     }
 

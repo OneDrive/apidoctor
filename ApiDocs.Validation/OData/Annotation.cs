@@ -27,8 +27,9 @@ namespace ApiDocs.Validation.OData
 {
     using System;
     using System.Xml.Linq;
+    using System.Xml.Serialization;
 
-    [XmlTagName("Annotation")]
+    [XmlRoot("Annotation")]
     public class Annotation
     {
         public string Term { get; set; }

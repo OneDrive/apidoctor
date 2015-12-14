@@ -28,6 +28,9 @@ namespace ApiDocs.Validation
     using System.Collections.Generic;
     using ApiDocs.Validation.Json;
 
+    /// <summary>
+    /// Represents a parameter for a request
+    /// </summary>
     public class ParameterDefinition : ItemDefinition
     {
         /// <summary>
@@ -38,7 +41,12 @@ namespace ApiDocs.Validation
         /// <summary>
         /// The type of object the parameter expects
         /// </summary>
-        public JsonDataType Type { get; set; }
+        public ParameterDataType Type { get; set; }
+
+        /// <summary>
+        /// For Type values of Collection or Object, specify the resource name for the value.
+        /// </summary>
+        public string TypeResourceName { get; set; }
 
         /// <summary>
         /// The location of the parameter in the request/response
@@ -50,7 +58,10 @@ namespace ApiDocs.Validation
         /// </summary>
         public bool Required { get; set; }
 
-        public List<EnumerationDefinition> Enumeration { get; set; }
+        /// <summary>
+        /// List of enumerated values for a parameter that uses enumeration
+        /// </summary>
+        public List<EnumerationDefinition> EnumeratedValues { get; set; }
     }
     
     public enum ParameterLocation
@@ -59,5 +70,27 @@ namespace ApiDocs.Validation
         QueryString,
         Header,
         JsonObject
+    }
+
+    public enum ParameterDataType
+    {
+        String,
+        Boolean,
+        Int32,
+        Int64,
+        DateTimeOffset,
+        /// <summary>
+        /// Specifies that the value is an array of another data type
+        /// </summary>
+        Collection,
+        /// <summary>
+        /// Specifies that the value is a resource defined elsewhere in the data set
+        /// </summary>
+        Resource,
+        /// <summary>
+        /// Specifies that the value is an undefined resource (generic object)
+        /// </summary>
+        Object,
+        Double
     }
 }

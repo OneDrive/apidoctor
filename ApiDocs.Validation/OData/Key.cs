@@ -25,29 +25,26 @@
 
 namespace ApiDocs.Validation.OData
 {
-    using System;
     using System.Xml.Linq;
     using System.Xml.Serialization;
 
-    [XmlRoot("NavigationProperty")]
-    public class NavigationProperty : Property
+    [XmlRoot("Key")]
+    public class Key
     {
-        public bool ContainsTarget { get; set; }
+        public PropertyRef PropertyRef { get; set; }
 
-        
-        public static new NavigationProperty FromXml(XElement xml)
+        public static Key FromXml(XElement xml)
         {
-            typeof(NavigationProperty).ThrowIfWrongElement(xml);
+            typeof(Key).ThrowIfWrongElement(xml);
 
-            var obj = new NavigationProperty
-            {
-                Name = xml.AttributeValue("Name"),
-                Type = xml.AttributeValue("Type"),
-                Nullable = xml.AttributeValue("Nullable").ToBoolean(),
-                ContainsTarget = xml.AttributeValue("ContainsTarget").ToBoolean()
-            };
-            return obj;
+            var key = new Key();
+
+            var propRefElement = xml.Element("PropertyRef");
+            key.PropertyRef = PropertyRef.FromXml(propRefElement);
+
+            return key;
         }
-
     }
+
+    
 }

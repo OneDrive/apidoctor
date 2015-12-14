@@ -25,12 +25,12 @@
 
 namespace ApiDocs.Validation.OData
 {
-    using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Xml.Linq;
+    using System.Xml.Serialization;
 
-    [XmlTagName("Schemas")]
+    [XmlRoot("Schemas")]
     public class Schema
     {
         public string Namespace { get; set; }

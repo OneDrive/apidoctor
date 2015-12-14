@@ -315,25 +315,23 @@ namespace ApiDocs.ConsoleApp
             FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, "Defined resources:");
             FancyConsole.WriteLine();
 
-            var sortedResources = docset.Resources.OrderBy(x => x.ResourceType);
+            var sortedResources = docset.Resources.OrderBy(x => x.Name);
 
             foreach (var resource in sortedResources)
             {
-
-
                 if (options.EnableVerboseOutput)
                 {
-                    string metadata = JsonConvert.SerializeObject(resource.Metadata);
+                    string metadata = JsonConvert.SerializeObject(resource.OriginalMetadata);
                     FancyConsole.Write("  ");
-                    FancyConsole.Write(FancyConsole.ConsoleHeaderColor, resource.ResourceType);
-                    FancyConsole.WriteLine(" flags: {1}", resource.ResourceType, metadata);
+                    FancyConsole.Write(FancyConsole.ConsoleHeaderColor, resource.Name);
+                    FancyConsole.WriteLine(" flags: {1}", resource.Name, metadata);
                 }
                 else
                 {
-                    FancyConsole.WriteLineIndented("  ", FancyConsole.ConsoleHeaderColor, resource.ResourceType);
+                    FancyConsole.WriteLineIndented("  ", FancyConsole.ConsoleHeaderColor, resource.Name);
                 }
 
-                FancyConsole.WriteLineIndented("    ", FancyConsole.ConsoleCodeColor, resource.JsonExample);
+                FancyConsole.WriteLineIndented("    ", FancyConsole.ConsoleCodeColor, resource.ExampleText);
                 FancyConsole.WriteLine();
             }
         }
@@ -1119,15 +1117,15 @@ namespace ApiDocs.ConsoleApp
             foreach (var resource in foundResources)
             {
                 FancyConsole.WriteLine();
-                FancyConsole.Write(FancyConsole.ConsoleHeaderColor, "Checking resource: {0}...", resource.Metadata.ResourceType);
+                FancyConsole.Write(FancyConsole.ConsoleHeaderColor, "Checking resource: {0}...", resource.Name);
 
                 FancyConsole.VerboseWriteLine();
-                FancyConsole.VerboseWriteLine(resource.JsonExample);
+                FancyConsole.VerboseWriteLine(resource.ExampleText);
                 FancyConsole.VerboseWriteLine();
 
                 // Verify that this resource matches the documentation
                 ValidationError[] errors;
-                docSet.ResourceCollection.ValidateJsonExample(resource.Metadata, resource.JsonExample, out errors, new ValidationOptions { RelaxedStringValidation = true });
+                docSet.ResourceCollection.ValidateJsonExample(resource.OriginalMetadata, resource.ExampleText, out errors, new ValidationOptions { RelaxedStringValidation = true });
                 results.IncrementResultCount(errors);
 
                 collectedErrors.AddRange(errors);

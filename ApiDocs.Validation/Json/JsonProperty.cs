@@ -33,7 +33,7 @@ namespace ApiDocs.Validation.Json
     {
         public string Name { get; set; }
 
-        public JsonDataType Type { get; set; }
+        public ParameterDataType Type { get; set; }
 
         public string ODataTypeName { get; set; }
 
@@ -52,9 +52,9 @@ namespace ApiDocs.Validation.Json
             {
                 switch (this.Type)
                 {
-                    case JsonDataType.ODataType:
+                    case ParameterDataType.Resource:
                         return this.ODataTypeName;
-                    case JsonDataType.Object:
+                    case ParameterDataType.Object:
                         return "Object";
                     default:
                         return this.Type.ToString();
@@ -66,7 +66,7 @@ namespace ApiDocs.Validation.Json
         {
             get
             {
-                if (this.Type != JsonDataType.String)
+                if (this.Type != ParameterDataType.String)
                     return ExpectedStringFormat.Generic;
 
                 if (this.OriginalValue == "timestamp" || this.OriginalValue == "datetime")
@@ -82,7 +82,7 @@ namespace ApiDocs.Validation.Json
 
         public string[] PossibleEnumValues()
         {
-            if (this.Type != JsonDataType.String) 
+            if (this.Type != ParameterDataType.String) 
                 throw new InvalidOperationException("Cannot provide possible enum values on non-string data types");
 
             string[] possibleValues = this.OriginalValue.Split(new char[] { '|' }, StringSplitOptions.RemoveEmptyEntries);
@@ -101,17 +101,17 @@ namespace ApiDocs.Validation.Json
         }
     }
 
-    public enum JsonDataType
-    {
-        Boolean,
-        Number,
-        Integer = Number,
-        String,
-        Array,
+    //public enum JsonDataType
+    //{
+    //    Boolean,
+    //    Number,
+    //    Integer = Number,
+    //    String,
+    //    Array,
 
-        ODataType,
-        Object
-    }
+    //    ODataType,
+    //    Object
+    //}
 
     public enum ExpectedStringFormat
     {

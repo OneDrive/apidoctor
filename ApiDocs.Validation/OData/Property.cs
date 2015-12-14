@@ -27,8 +27,9 @@ namespace ApiDocs.Validation.OData
 {
     using System;
     using System.Xml.Linq;
+    using System.Xml.Serialization;
 
-    [XmlTagName("Property")]
+    [XmlRoot("Property")]
     public class Property
     {
         public string Name { get; set; }

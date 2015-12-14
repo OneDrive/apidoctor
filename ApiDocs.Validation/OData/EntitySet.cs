@@ -27,8 +27,9 @@ namespace ApiDocs.Validation.OData
 {
     using System;
     using System.Xml.Linq;
+    using System.Xml.Serialization;
 
-    [XmlTagName("EntitySet")]
+    [XmlRoot("EntitySet")]
     public class EntitySet
     {
         public string Name { get; set; }

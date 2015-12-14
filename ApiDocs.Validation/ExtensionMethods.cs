@@ -196,27 +196,27 @@ namespace ApiDocs.Validation
             return -1;
         }
 
-        public static JsonDataType ToDataType(this string value, Action<ValidationError> addErrorAction = null)
+        public static ParameterDataType ToDataType(this string value, Action<ValidationError> addErrorAction = null)
         {
-            JsonDataType output;
+            ParameterDataType output;
             if (Enum.TryParse(value, true, out output))
                 return output;
             if (null == value)
-                return JsonDataType.Object;
+                return ParameterDataType.Object;
             if (value.ToLower().Contains("string"))
-                return JsonDataType.String;
+                return ParameterDataType.String;
             if (value.Equals("etag", StringComparison.OrdinalIgnoreCase))
-                return JsonDataType.String;
+                return ParameterDataType.String;
             if (value.Equals("range", StringComparison.OrdinalIgnoreCase))
-                return JsonDataType.String;
+                return ParameterDataType.String;
             if (value.ToLower().Contains("timestamp"))
-                return JsonDataType.String;
+                return ParameterDataType.String;
 
             if (null != addErrorAction)
             {
                 addErrorAction(new ValidationWarning(ValidationErrorCode.TypeConversionFailure, "Couldn't convert '{0}' into Json.JsonDataType enumeration. Assuming Object type.", value));
             }
-            return JsonDataType.Object;
+            return ParameterDataType.Object;
         }
 
         public static bool IsRequired(this string description)

@@ -27,8 +27,9 @@ namespace ApiDocs.Validation.OData
 {
     using System;
     using System.Xml.Linq;
+    using System.Xml.Serialization;
 
-    [XmlTagName("Parameter")]
+    [XmlRoot("Parameter")]
     public class Parameter
     {
         public string Name { get; set; }

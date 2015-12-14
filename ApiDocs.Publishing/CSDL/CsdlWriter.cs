@@ -67,7 +67,7 @@ namespace ApiDocs.Publishing.CSDL
             // Add resources
             foreach (var resource in Documents.Resources)
             {
-                Schema parentSchema = FindOrCreateSchemaForNamespace(resource.ResourceType.NamespaceOnly(), edmx);
+                Schema parentSchema = FindOrCreateSchemaForNamespace(resource.Name.NamespaceOnly(), edmx);
                 AddResourceToSchema(parentSchema, resource);
             }
 
@@ -91,14 +91,23 @@ namespace ApiDocs.Publishing.CSDL
 
         private static void AddResourceToSchema(Schema schema, ResourceDefinition resource)
         {
-            // TODO: Need to know if a resource is an EntityType or ComplexType....
-            ComplexType ct = new ComplexType()
+            ComplexType type;
+            if (!string.IsNullOrEmpty(resource.KeyPropertyName))
             {
-                Name = resource.ResourceType.TypeOnly(),
-                Properties = (from p in resource.Parameters select ConvertParameterToProperty(p)).ToList()
-            };
-
-            schema.ComplexTypes.Add(ct);
+                var entity = new EntityType();
+                entity.Key = new Key { PropertyRef = new PropertyRef { Name = resource.KeyPropertyName } };
+                // TODO: Also need to add navigation properties
+                schema.Entities.Add(entity);
+                type = entity;
+            }
+            else
+            {
+                type = new ComplexType();
+                schema.ComplexTypes.Add(type);
+            }
+            type.Name = resource.Name.TypeOnly();
+            type.Properties = (from p in resource.Parameters
+                               select ConvertParameterToProperty(p) ).ToList();
         }
 
         private static Property ConvertParameterToProperty(ParameterDefinition param)
@@ -111,18 +120,26 @@ namespace ApiDocs.Publishing.CSDL
             };
         }
 
-        private static string ODataTypeName(Validation.Json.JsonDataType type, string custom = null)
+        private static string ODataTypeName(ParameterDataType type, string custom = null)
         {
             switch (type)
             {
-                case Validation.Json.JsonDataType.String:
+                case ParameterDataType.String:
                     return "Edm.String";
-                case Validation.Json.JsonDataType.Integer:
+                case ParameterDataType.Int64:
                     return "Edm.Int64";
-                case Validation.Json.JsonDataType.Boolean:
+                case ParameterDataType.Int32:
+                    return "Edm.Int32";
+                case ParameterDataType.Boolean:
                     return "Edm.Boolean";
-                case Validation.Json.JsonDataType.ODataType:
+                case ParameterDataType.Resource:
                     return custom;
+                case ParameterDataType.Object:
+                    return "Edm.Object";
+                case ParameterDataType.Collection:
+                    return "Collection(" + custom + ")";
+                case ParameterDataType.DateTimeOffset:
+                    return "Edm.DateTimeOffset";
                 default:
                     return "Unknown";
             }

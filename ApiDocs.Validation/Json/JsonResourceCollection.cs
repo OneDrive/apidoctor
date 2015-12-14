@@ -43,7 +43,7 @@ namespace ApiDocs.Validation.Json
         public void RegisterJsonResource(ResourceDefinition resource)
         {
             var schema = new JsonSchema(resource);
-            this.registeredSchema[resource.Metadata.ResourceType] = schema;
+            this.registeredSchema[resource.Name] = schema;
         }
 
         /// <summary>

@@ -49,13 +49,13 @@ namespace ApiDocs.Publishing.Swagger
             return originalResourceName.Replace('.', '_');
         }
 
-        internal static string SwaggerType(this JsonDataType datatype)
+        internal static string SwaggerType(this ParameterDataType datatype)
         {
             switch (datatype)
             {
-                case JsonDataType.ODataType:
+                case ParameterDataType.Resource:
                     throw new ArgumentException();
-                case JsonDataType.Object:
+                case ParameterDataType.Object:
                     return "object";
                 default:
                     return datatype.ToString().ToLower();
@@ -66,7 +66,7 @@ namespace ApiDocs.Publishing.Swagger
         private static object SwaggerProperty(JsonProperty property)
         {
 
-            JsonDataType type = property.Type;
+            ParameterDataType type = property.Type;
             string customDataType = property.ODataTypeName;
             string description = property.Description;
 
@@ -75,16 +75,16 @@ namespace ApiDocs.Publishing.Swagger
 
         private static object SwaggerPropertyForResponse(MethodDefinition definition)
         {
-            JsonDataType type = JsonDataType.ODataType;
+            ParameterDataType type = ParameterDataType.Resource;
             string customDataType = definition.ExpectedResponseMetadata.ResourceType;
             string description = null;
             return MakeSwaggerProperty(type, customDataType, description);
         }
 
-        private static object MakeSwaggerProperty(JsonDataType type, string customDataType, string description)
+        private static object MakeSwaggerProperty(ParameterDataType type, string customDataType, string description)
         {
             Dictionary<string, object> definition = null;
-            if (type == JsonDataType.ODataType)
+            if (type == ParameterDataType.Resource)
             {
                 definition = new Dictionary<string, object> {
                     { "$ref", "#/definitions/" + customDataType.SwaggerResourceName() }
@@ -225,13 +225,13 @@ namespace ApiDocs.Publishing.Swagger
             {
                 missingParameters.AddRange(from id in FindVariablesInString(path)
                                            where !method.Parameters.HasMatchingParameter(id, ParameterLocation.Path)
-                                           select new ParameterDefinition { Name = id, Location = ParameterLocation.Path, Required = true, Type = JsonDataType.String });
+                                           select new ParameterDefinition { Name = id, Location = ParameterLocation.Path, Required = true, Type = ParameterDataType.String });
             }
             if (!string.IsNullOrEmpty(queryString))
             {
                 missingParameters.AddRange(from id in FindVariablesInQueryString(queryString)
                                            where !method.Parameters.HasMatchingParameter(id, ParameterLocation.QueryString)
-                                           select new ParameterDefinition { Name = id, Location = ParameterLocation.QueryString, Required = false, Type = JsonDataType.String });
+                                           select new ParameterDefinition { Name = id, Location = ParameterLocation.QueryString, Required = false, Type = ParameterDataType.String });
             }
             return missingParameters;
         }

@@ -3,20 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Serialization;
 
 namespace ApiDocs.Validation.OData
 {
-
-    public class XmlTagNameAttribute : Attribute
-    {
-        public XmlTagNameAttribute(string elementName)
-        {
-            this.ElementName = elementName;
-        }
-
-        public string ElementName { get; set; }
-    }
-
     internal static class XmlParseHelper
     {
         public static void ThrowIfWrongElement(this Type t, System.Xml.Linq.XElement xml)
@@ -31,8 +21,8 @@ namespace ApiDocs.Validation.OData
 
         public static string XmlElementName(this Type t)
         {
-            var attributes = t.GetCustomAttributes(typeof(XmlTagNameAttribute), true);
-            var value = attributes.FirstOrDefault() as XmlTagNameAttribute;
+            var attributes = t.GetCustomAttributes(typeof(XmlRootAttribute), true);
+            var value = attributes.FirstOrDefault() as XmlRootAttribute;
             if (null == value)
                 throw new InvalidOperationException("Missing XmlTagName attribute on type");
 

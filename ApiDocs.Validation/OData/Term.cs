@@ -29,12 +29,14 @@ namespace ApiDocs.Validation.OData
     using System.Collections.Generic;
     using System.Linq;
     using System.Xml.Linq;
+    using System.Xml.Serialization;
 
     /*
        <Term Name="sourceUrl" Type="Edm.String" AppliesTo="oneDrive.item">
             <Annotation Term="Org.OData.Core.V1.LongDescription" String="When used on a PUT or POST call to an Item, causes the item's content to be copied from the URL specified in the attribute."/>
        </Term>
      */
+    [XmlRoot("Term")]
     public class Term
     {
         public string Name { get; set; }
