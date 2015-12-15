@@ -141,60 +141,14 @@ namespace ApiDocs.Validation
             List<ParameterDefinition> parameters = new List<ParameterDefinition>();
             foreach (var p in properties)
             {
-                ParameterDefinition param = new ParameterDefinition();
-                param.Name = p.Name;
+                var param = Json.JsonSchema.ParseProperty(p.Name, p.Value, null);
                 param.Location = ParameterLocation.JsonObject;
                 param.Required = (this.OriginalMetadata != null && this.OriginalMetadata.OptionalProperties != null) ? !this.OriginalMetadata.OptionalProperties.Contains(param.Name) : true;
-                SetParameterTypeFromExample(param, p);
-
                 parameters.Add(param);
             }
 
             this.Parameters = parameters;
         }
-
-        private static void SetParameterTypeFromExample(ParameterDefinition param, JProperty prop)
-        {
-            switch (prop.Value.Type)
-            {
-                case JTokenType.Array:
-                    param.Type = ParameterDataType.GenericCollection;
-                    break;
-                case JTokenType.Boolean:
-                    param.Type = ParameterDataType.Boolean;
-                    break;
-                case JTokenType.Date:
-                    param.Type = ParameterDataType.DateTimeOffset;
-                    break;
-                case JTokenType.Float:
-                    param.Type = ParameterDataType.Double;
-                    break;
-                case JTokenType.Guid:
-                    param.Type = ParameterDataType.String;
-                    break;
-                case JTokenType.Integer:
-                    param.Type = ParameterDataType.Int64;
-                    break;
-                case JTokenType.Object:
-
-                    JObject jsonObject = prop.Value as JObject;
-                    if (jsonObject != null && jsonObject["@odata.type"] != null)
-                    {
-                        param.Type = new ParameterDataType(jsonObject["@odata.type"].Value<String>());
-                    }
-                    else
-                    {
-                        param.Type = ParameterDataType.GenericObject;
-                    }
-                    break;
-                case JTokenType.String:
-                    param.Type = ParameterDataType.String;
-                    break;
-                default:
-                    throw new NotSupportedException("Unsupported JTokenType: " + prop.Type);
-            }
-        }
-
         #endregion
     }
 }
