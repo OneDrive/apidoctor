@@ -36,6 +36,7 @@ namespace ApiDocs.Validation
     using ApiDocs.Validation.Json;
     using MarkdownDeep;
     using Newtonsoft.Json.Linq;
+    using System.Globalization;
 
     public static class ExtensionMethods
     {
@@ -202,60 +203,110 @@ namespace ApiDocs.Validation
         /// <param name="value"></param>
         /// <param name="addErrorAction"></param>
         /// <returns></returns>
-        public static ParameterDataType ParseParameterDataType(
-            this string value,
-            Action<ValidationError> addErrorAction = null)
+        public static ParameterDataType ParseParameterDataType(this string value, Action<ValidationError> addErrorAction = null)
         {
+            if (value == null)
+            {
+                return null;
+            }
+
+            // Value could have markdown formatting in it, so we do some basic work to try and remove that if it exists
+            if (value.IndexOf('[') != -1)
+            {
+                value = value.TextBetweenCharacters('[', ']');   
+            }
+
             var lowerValue = value.ToLowerInvariant();
-            switch (lowerValue)
+            SimpleDataType simpleType = ParseSimpleTypeString(lowerValue);
+            if (simpleType != SimpleDataType.None)
+            {
+                return new ParameterDataType(simpleType);
+            }
+
+            const string collectionPrefix = "collection(";
+            if (lowerValue.StartsWith(collectionPrefix))
+            {
+                string innerType = value.Substring(collectionPrefix.Length).TrimEnd(')');
+                simpleType = ParseSimpleTypeString(innerType.ToLowerInvariant());
+
+                if (simpleType != SimpleDataType.None)
+                {
+                    return new ParameterDataType(simpleType, true);
+                }
+                else
+                {
+                    return new ParameterDataType(innerType, true);
+                }
+            }
+
+            if (lowerValue.Contains("string"))
+                return ParameterDataType.String;
+
+            if (null != addErrorAction)
+            {
+                addErrorAction(new ValidationWarning(ValidationErrorCode.TypeConversionFailure, "Couldn't convert '{0}' into understood data type. Assuming Object type.", value));
+            }
+            return new ParameterDataType(value, false);
+        }
+
+        public static SimpleDataType ParseSimpleTypeString(string lowercaseString)
+        {
+            SimpleDataType simpleType = SimpleDataType.None;
+            switch (lowercaseString)
             {
                 case "string":
-                    return ParameterDataType.String;
+                    simpleType = SimpleDataType.String;
+                    break;
                 case "int64":
                 case "number":
-                    return ParameterDataType.Int64;
+                case "integer":
+                    simpleType = SimpleDataType.Int64;
+                    break;
                 case "int32":
-                    return ParameterDataType.Int32;
+                    simpleType = SimpleDataType.Int32;
+                    break;
                 case "double":
-                    return ParameterDataType.Double;
+                    simpleType = SimpleDataType.Double;
+                    break;
                 case "float":
-                    return ParameterDataType.Float;
+                    simpleType = SimpleDataType.Float;
+                    break;
                 case "guid":
-                    return ParameterDataType.Guid;
+                    simpleType = SimpleDataType.Guid;
+                    break;
                 case "boolean":
-                    return ParameterDataType.Boolean;
+                    simpleType = SimpleDataType.Boolean;
+                    break;
                 case "datetime":
                 case "datetimeoffset":
-                    return ParameterDataType.DateTimeOffset;
+                case "timestamp":
+                    simpleType = SimpleDataType.DateTimeOffset;
+                    break;
                 case "etag":
                 case "range":
                 case "url":
-                    return ParameterDataType.String;
-                case "timestamp":
-                    return ParameterDataType.DateTimeOffset;
-                default:
-
-                    if (lowerValue.Contains("string"))
-                        return ParameterDataType.String;
-                    if (lowerValue.Contains("timestamp"))
-                        return ParameterDataType.DateTimeOffset;
-                    if (lowerValue.Contains("url") || lowerValue.Contains("uri"))
-                        return ParameterDataType.String;
-
-                    if (null != addErrorAction)
-                    {
-                        addErrorAction(new ValidationWarning(ValidationErrorCode.TypeConversionFailure, "Couldn't convert '{0}' into understood data type. Assuming Object type.", value));
-                    }
-                    return ParameterDataType.GenericObject;
+                    simpleType = SimpleDataType.String;
+                    break;
             }
+
+            // Check to see if this looks like an ISO 8601 date and call it DateTimeOffset if it does
+            var parsedDate = lowercaseString.ToUpperInvariant().TryParseIso8601Date();
+            if (parsedDate.HasValue)
+            {
+                simpleType = SimpleDataType.DateTimeOffset;
+            }
+
+            return simpleType;
         }
 
-
-        public static bool IsRequired(this string description)
+        public static bool? IsRequired(this string description)
         {
-            if (null == description) 
-                return false;
-            return description.StartsWith("required.", StringComparison.OrdinalIgnoreCase);
+            if (null == description)
+                return null;
+            if (description.StartsWith("required.", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            return null;
         }
 
         public static bool IsHeaderBlock(this Block block)
@@ -314,7 +365,94 @@ namespace ApiDocs.Validation
             return PathVariableRegex.Replace(input, "{}");
         }
 
+        /// <summary>
+        /// Returns the string between the first and second characters from the source.
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="first"></param>
+        /// <param name="second"></param>
+        /// <returns></returns>
+        internal static string TextBetweenCharacters(this string source, char first, char second)
+        {
+            int startIndex = source.IndexOf(first);
+            if (startIndex == -1)
+                return source;
+
+            int endIndex = source.IndexOf(second, startIndex);
+            if (endIndex == -1)
+                return source.Substring(startIndex+1);
+            else
+                return source.Substring(startIndex+1, endIndex - startIndex - 1);
+        }
 
 
+        internal static ExpectedStringFormat StringFormat(this ParameterDefinition param)
+        {
+            if (param.Type != ParameterDataType.String)
+                return ExpectedStringFormat.Generic;
+
+            if (param.OriginalValue == "timestamp" || param.OriginalValue == "datetime")
+                return ExpectedStringFormat.Iso8601Date;
+            if (param.OriginalValue == "url" || param.OriginalValue == "absolute url")
+                return ExpectedStringFormat.AbsoluteUrl;
+            if (param.OriginalValue.IndexOf('|') > 0)
+                return ExpectedStringFormat.EnumeratedValue;
+
+            return ExpectedStringFormat.Generic;
+        }
+
+        public static string[] PossibleEnumValues(this ParameterDefinition param)
+        {
+            if (param.Type != ParameterDataType.String)
+                throw new InvalidOperationException("Cannot provide possible enum values on non-string data types");
+
+            string[] possibleValues = param.OriginalValue.Split(new char[] { '|' }, StringSplitOptions.RemoveEmptyEntries);
+
+            return (from v in possibleValues select v.Trim()).ToArray();
+        }
+
+        public static bool IsValidEnumValue(this ParameterDefinition param, string input)
+        {
+            string[] values = param.PossibleEnumValues();
+            if (null != values && values.Length > 0)
+            {
+                return values.Contains(input);
+            }
+            return false;
+        }
+
+        private static readonly string[] Iso8601Formats =
+        {
+            "yyyy-MM-dd",
+            @"HH\:mm\:ss.fff",
+            @"HH\:mm\:ss",
+            @"yyyy-MM-ddTHH\:mm\:ssZ",
+            @"yyyy-MM-ddTHH\:mm\:ss.fZ",
+            @"yyyy-MM-ddTHH\:mm\:ss.ffZ",
+            @"yyyy-MM-ddTHH\:mm\:ss.fffZ",
+            @"yyyy-MM-ddTHH\:mm\:ss.ffffZ",
+            @"yyyy-MM-ddTHH\:mm\:ss.fffffZ",
+            @"yyyy-MM-ddTHH\:mm\:ss.ffffffZ",
+            @"yyyy-MM-ddTHH\:mm\:ss.fffffffZ"
+        };
+
+        public static DateTimeOffset? TryParseIso8601Date(this string input)
+        {
+            DateTimeOffset value;
+            if (DateTimeOffset.TryParseExact(input, Iso8601Formats, DateTimeFormatInfo.InvariantInfo, System.Globalization.DateTimeStyles.None, out value))
+            {
+                return value;
+            }
+
+            return null;
+        }
+    }
+
+    public enum ExpectedStringFormat
+    {
+        Generic,
+        Iso8601Date,
+        AbsoluteUrl,
+        EnumeratedValue
     }
 }

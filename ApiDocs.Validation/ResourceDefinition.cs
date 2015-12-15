@@ -38,24 +38,13 @@ namespace ApiDocs.Validation
     {
         private readonly CodeBlockAnnotation sourceAnnotation;
 
-
-        public ResourceDefinition(CodeBlockAnnotation sourceAnnotation, string content, DocFile source, string language)
+        protected ResourceDefinition(CodeBlockAnnotation sourceAnnotation, string content, DocFile source, string language)
         {
             this.sourceAnnotation = sourceAnnotation;
             this.OriginalExampleText = content;
             this.SourceFile = source;
-
             this.Name = sourceAnnotation.ResourceType;
             this.KeyPropertyName = sourceAnnotation.KeyPropertyName;
-
-            switch (language.ToLowerInvariant())
-            {
-                case "json":
-                    this.ParseJsonInput();
-                    break;
-                default:
-                    throw new NotSupportedException("Unsupported resource language specified: " + language);
-            }
 
             if (string.IsNullOrEmpty(sourceAnnotation.ResourceType))
             {
@@ -65,6 +54,55 @@ namespace ApiDocs.Validation
                         source.DisplayName,
                         "Resource definition is missing Name value"));
             }
+        }
+
+
+        #region Public Properties
+
+        /// <summary>
+        /// For indexed resources, this specifies the property which is used as the index.
+        /// </summary>
+        public string KeyPropertyName { get; set; }
+
+        /// <summary>
+        /// Metadata read from the code block sourceAnnotation
+        /// </summary>
+        public CodeBlockAnnotation OriginalMetadata
+        {
+            get { return sourceAnnotation; }
+        }
+
+        /// <summary>
+        /// The type identifier for the resource defined in this class (@odata.type)
+        /// </summary>
+        public string Name { get; protected set; }
+
+        /// <summary>
+        /// Parsed and reformatted resource read from the documentation
+        /// </summary>
+        public string ExampleText { get; protected set; }
+
+        /// <summary>
+        /// Original json example as written in the documentation.
+        /// </summary>
+        public string OriginalExampleText { get; protected set; }
+
+        /// <summary>
+        /// The documentation file that was the sourceFile of this resource
+        /// </summary>
+        /// <value>The sourceFile file.</value>
+        public DocFile SourceFile {get; protected set;}
+
+        #endregion
+    }
+
+
+    public class JsonResourceDefinition : ResourceDefinition
+    {
+        public JsonResourceDefinition(CodeBlockAnnotation sourceAnnotation, string json, DocFile source)
+            : base(sourceAnnotation, json, source, "json")
+        {
+            ParseJsonInput();
         }
 
         #region Helper Methods
@@ -138,7 +176,16 @@ namespace ApiDocs.Validation
                     param.Type = ParameterDataType.Int64;
                     break;
                 case JTokenType.Object:
-                    param.Type = ParameterDataType.GenericObject;
+
+                    JObject jsonObject = prop.Value as JObject;
+                    if (jsonObject != null && jsonObject["@odata.type"] != null)
+                    {
+                        param.Type = new ParameterDataType(jsonObject["@odata.type"].Value<String>());
+                    }
+                    else
+                    {
+                        param.Type = ParameterDataType.GenericObject;
+                    }
                     break;
                 case JTokenType.String:
                     param.Type = ParameterDataType.String;
@@ -147,46 +194,6 @@ namespace ApiDocs.Validation
                     throw new NotSupportedException("Unsupported JTokenType: " + prop.Type);
             }
         }
-
-        #endregion
-
-
-
-        #region Public Properties
-
-        /// <summary>
-        /// For indexed resources, this specifies the property which is used as the index.
-        /// </summary>
-        public string KeyPropertyName { get; set; }
-
-        /// <summary>
-        /// Metadata read from the code block sourceAnnotation
-        /// </summary>
-        public CodeBlockAnnotation OriginalMetadata
-        {
-            get { return sourceAnnotation; }
-        }
-
-        /// <summary>
-        /// The type identifier for the resource defined in this class (@odata.type)
-        /// </summary>
-        public string Name { get; set; }
-
-        /// <summary>
-        /// Parsed and reformatted resource read from the documentation
-        /// </summary>
-        public string ExampleText { get; private set; }
-
-        /// <summary>
-        /// Original json example as written in the documentation.
-        /// </summary>
-        public string OriginalExampleText { get; private set; }
-
-        /// <summary>
-        /// The documentation file that was the sourceFile of this resource
-        /// </summary>
-        /// <value>The sourceFile file.</value>
-        public DocFile SourceFile {get; private set;}
 
         #endregion
     }

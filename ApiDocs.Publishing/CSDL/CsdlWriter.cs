@@ -51,6 +51,9 @@ namespace ApiDocs.Publishing.CSDL
             var xmlData = ODataParser.GenerateEdmx(framework);
 
             // Step 3: Write the XML to disk
+            var outputDir = new System.IO.DirectoryInfo(outputFolder);
+            outputDir.Create();
+
             var outputFilename = System.IO.Path.Combine(outputFolder, "metadata.edmx");
             using (var writer = System.IO.File.CreateText(outputFilename))
             {
@@ -115,7 +118,7 @@ namespace ApiDocs.Publishing.CSDL
             return new Property()
             {
                 Name = param.Name,
-                Nullable = !param.Required,
+                Nullable = (param.Required.HasValue ? !param.Required.Value : false),
                 Type = param.Type.ODataResourceName()
             };
         }

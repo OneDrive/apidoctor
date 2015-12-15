@@ -135,7 +135,7 @@ namespace ApiDocs.Validation.OData
         {
             var annotation = new CodeBlockAnnotation() { ResourceType = string.Concat(schema.Namespace, ".", ct.Name), BlockType = CodeBlockType.Resource };
             var json = BuildJsonExample(ct, otherSchema);
-            ResourceDefinition rd = new ResourceDefinition(annotation, json, null, "json");
+            ResourceDefinition rd = new JsonResourceDefinition(annotation, json, null);
             return rd;
         }
 

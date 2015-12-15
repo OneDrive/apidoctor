@@ -87,7 +87,7 @@ namespace ApiDocs.Validation.UnitTests
             Assert.IsFalse(result);
             Assert.IsTrue(detectedErrors.WereErrors());
 
-            Assert.IsNotNull(detectedErrors.SingleOrDefault(x => x.Code == ValidationErrorCode.InvalidDateTimeString));
+            Assert.IsNotNull(detectedErrors.SingleOrDefault(x => x.Code == ValidationErrorCode.ExpectedTypeDifferent));
         }
 
         /// <summary>

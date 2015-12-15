@@ -67,6 +67,7 @@
     <Compile Include="OData\PropertyRef.cs" />
     <Compile Include="OData\XmlParseHelper.cs" />
     <Compile Include="PageAnnotation.cs" />
+    <Compile Include="ParameterDataType.cs" />
     <Compile Include="ParameterDefinition.cs" />
     <Compile Include="ScenarioExtensionMethods.cs" />
     <Compile Include="TableSpec\TableDefinition.cs" />
@@ -97,7 +98,6 @@
     <Compile Include="SchemaBuildException.cs" />
     <Compile Include="TableSpec\TableSpecConverter.cs" />
     <Compile Include="Error\ValidationError.cs" />
-    <Compile Include="Json\JsonProperty.cs" />
     <Compile Include="Json\JsonSchema.cs" />
     <Compile Include="Json\JsonResourceCollection.cs" />
     <Compile Include="MethodDefinition.cs" />

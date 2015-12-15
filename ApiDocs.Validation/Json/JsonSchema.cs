@@ -39,7 +39,7 @@ namespace ApiDocs.Validation.Json
         #region Properties
         public string ResourceName { get { return this.Metadata.ResourceType; } }
 
-        protected Dictionary<string, JsonProperty> ExpectedProperties { get; private set; }
+        protected Dictionary<string, ParameterDefinition> ExpectedProperties { get; private set; }
 
         internal CodeBlockAnnotation Metadata { get; private set; }
 
@@ -49,7 +49,7 @@ namespace ApiDocs.Validation.Json
 
         public ResourceDefinition OriginalResource { get; set; }
 
-        public JsonProperty[] Properties
+        public ParameterDefinition[] Properties
         {
             get { return this.ExpectedProperties.Values.ToArray(); }
         }
@@ -223,7 +223,7 @@ namespace ApiDocs.Validation.Json
             this.ValidateObjectProperties(containerProperties.Where(x => null != x), options, otherSchemas, detectedErrors);
         }
 
-        private void ValidateObjectProperties(IEnumerable<JsonProperty> propertiesOnObject, ValidationOptions options, Dictionary<string, JsonSchema> otherSchemas, List<ValidationError> detectedErrors)
+        private void ValidateObjectProperties(IEnumerable<ParameterDefinition> propertiesOnObject, ValidationOptions options, Dictionary<string, JsonSchema> otherSchemas, List<ValidationError> detectedErrors)
         {
             List<string> missingProperties = new List<string>();
             missingProperties.AddRange(from m in this.ExpectedProperties select m.Key);
@@ -286,7 +286,7 @@ namespace ApiDocs.Validation.Json
         /// <param name="detectedErrors"></param>
         /// <param name="options"></param>
         /// <returns></returns>
-        private PropertyValidationOutcome ValidateProperty(JsonProperty inputProperty, Dictionary<string, JsonSchema> schemas, List<ValidationError> detectedErrors, ValidationOptions options)
+        private PropertyValidationOutcome ValidateProperty(ParameterDefinition inputProperty, Dictionary<string, JsonSchema> schemas, List<ValidationError> detectedErrors, ValidationOptions options)
         {
             if (this.ExpectedProperties.ContainsKey(inputProperty.Name))
             {
@@ -352,14 +352,14 @@ namespace ApiDocs.Validation.Json
                     {
                         var odataSchema = schemas[schemaPropertyDef.Type.CustomTypeName];
                         ValidationError[] odataErrors;
-                        if (null != inputProperty.CustomMembers && !odataSchema.ValidateCustomObject(inputProperty.CustomMembers.Values.ToArray(), out odataErrors, schemas, options))
+                        if (null != inputProperty.Type.CustomMembers && !odataSchema.ValidateCustomObject(inputProperty.Type.CustomMembers.ToArray(), out odataErrors, schemas, options))
                         {
                             var propertyError = ValidationError.NewConsolidatedError(ValidationErrorCode.ConsolidatedError, odataErrors, "Schemas validation failed on property '{0}' ['{1}']", inputProperty.Name, odataSchema.ResourceName);
                             detectedErrors.Add(propertyError);
 
                             return PropertyValidationOutcome.InvalidType;
                         }
-                        else if (null == inputProperty.CustomMembers)
+                        else if (null == inputProperty.Type.CustomMembers)
                         {
                             detectedErrors.Add(new ValidationError(ValidationErrorCode.NoCustomMembersFound, null, "Property '{0}' is of type Custom but has no custom members.", inputProperty.Name));
                         }
@@ -368,14 +368,14 @@ namespace ApiDocs.Validation.Json
                     else
                     {
                         var odataSchema = schemas[schemaPropertyDef.Type.CustomTypeName];
-                        if (inputProperty.CustomMembers == null)
+                        if (inputProperty.Type.CustomMembers == null)
                         {
                             detectedErrors.Add(new ValidationError(ValidationErrorCode.MissingCustomMembers, null, "Property {0} is missing custom members and cannot be validated.", inputProperty.Name));
                             return PropertyValidationOutcome.InvalidType;
                         }
                         else
                         {
-                            odataSchema.ValidateObjectProperties(inputProperty.CustomMembers.Values, options, schemas, detectedErrors);
+                            odataSchema.ValidateObjectProperties(inputProperty.Type.CustomMembers, options, schemas, detectedErrors);
                             return PropertyValidationOutcome.Ok;
                         }
                     }
@@ -399,30 +399,16 @@ namespace ApiDocs.Validation.Json
             }
         }
 
-        private static readonly string[] Iso8601Formats =
-        {
-            "yyyy-MM-dd", 
-            @"HH\:mm\:ss.fff", 
-            @"HH\:mm\:ss",
-            @"yyyy-MM-ddTHH\:mm\:ssZ", 
-            @"yyyy-MM-ddTHH\:mm\:ss.fZ", 
-            @"yyyy-MM-ddTHH\:mm\:ss.ffZ", 
-            @"yyyy-MM-ddTHH\:mm\:ss.fffZ", 
-            @"yyyy-MM-ddTHH\:mm\:ss.ffffZ", 
-            @"yyyy-MM-ddTHH\:mm\:ss.fffffZ", 
-            @"yyyy-MM-ddTHH\:mm\:ss.ffffffZ", 
-            @"yyyy-MM-ddTHH\:mm\:ss.fffffffZ"
-        };
+        
 
-        private static PropertyValidationOutcome ValidateStringFormat(JsonProperty schemaProperty, JsonProperty inputProperty, List<ValidationError> detectedErrorsCollection)
+        private static PropertyValidationOutcome ValidateStringFormat(ParameterDefinition schemaProperty, ParameterDefinition inputProperty, List<ValidationError> detectedErrorsCollection)
         {
-            switch (schemaProperty.StringFormat)
+            switch (schemaProperty.StringFormat())
             {
                 case ExpectedStringFormat.Iso8601Date:
                     {
-                        DateTime output;
-                        bool result = (DateTime.TryParseExact(inputProperty.OriginalValue, Iso8601Formats, DateTimeFormatInfo.InvariantInfo, DateTimeStyles.None, out output));
-                        if (!result)
+                        DateTimeOffset? output = inputProperty.OriginalValue.TryParseIso8601Date();
+                        if (!output.HasValue)
                         {
                             detectedErrorsCollection.Add(new ValidationError(ValidationErrorCode.InvalidDateTimeString, null, "Invalid ISO 8601 date-time string in property: {1}: {0}", inputProperty.OriginalValue, schemaProperty.Name));
                             return PropertyValidationOutcome.BadStringValue;
@@ -473,7 +459,7 @@ namespace ApiDocs.Validation.Json
             return input.All(value => !value);
         }
 
-        private PropertyValidationOutcome ValidateSimpleArrayProperty(JsonProperty actualProperty, JsonProperty expectedProperty, List<ValidationError> detectedErrors)
+        private PropertyValidationOutcome ValidateSimpleArrayProperty(ParameterDefinition actualProperty, ParameterDefinition expectedProperty, List<ValidationError> detectedErrors)
         {
             if (!actualProperty.Type.IsCollection || !expectedProperty.Type.IsCollection)
             {
@@ -504,7 +490,7 @@ namespace ApiDocs.Validation.Json
         /// <param name="schemas"></param>
         /// <param name="detectedErrors"></param>
         /// <param name="options"></param>
-        private PropertyValidationOutcome ValidateArrayProperty(JsonProperty actualProperty, Dictionary<string, JsonSchema> schemas, List<ValidationError> detectedErrors, ValidationOptions options)
+        private PropertyValidationOutcome ValidateArrayProperty(ParameterDefinition actualProperty, Dictionary<string, JsonSchema> schemas, List<ValidationError> detectedErrors, ValidationOptions options)
         {
             JArray actualArray = (JArray)JsonConvert.DeserializeObject(actualProperty.OriginalValue);
 
@@ -540,7 +526,7 @@ namespace ApiDocs.Validation.Json
             return hadErrors ? PropertyValidationOutcome.GenericError : PropertyValidationOutcome.Ok;
         }
 
-        private bool ValidateCustomObject(JsonProperty[] properties, out ValidationError[] errors, Dictionary<string, JsonSchema> otherSchemas, ValidationOptions options)
+        private bool ValidateCustomObject(ParameterDefinition[] properties, out ValidationError[] errors, Dictionary<string, JsonSchema> otherSchemas, ValidationOptions options)
         {
             List<string> missingProperties = new List<string>(this.ExpectedProperties.Keys);
             List<ValidationError> detectedErrors = new List<ValidationError>();
@@ -559,9 +545,9 @@ namespace ApiDocs.Validation.Json
         #endregion
 
         #region Schemas Building
-        private Dictionary<string, JsonProperty> BuildSchemaFromJson(string json, IEnumerable<ParameterDefinition> parameters = null)
+        private Dictionary<string, ParameterDefinition> BuildSchemaFromJson(string json, IEnumerable<ParameterDefinition> parameters = null)
         {
-            Dictionary<string, JsonProperty> schema = new Dictionary<string, JsonProperty>();
+            Dictionary<string, ParameterDefinition> schema = new Dictionary<string, ParameterDefinition>();
             try
             {
                 JContainer obj = (JContainer)JsonConvert.DeserializeObject(json);
@@ -573,7 +559,7 @@ namespace ApiDocs.Validation.Json
                 {
                     foreach (JToken token in obj)
                     {
-                        JsonProperty propertyInfo = ParseProperty(token, null);
+                        ParameterDefinition propertyInfo = ParseProperty(token, null);
                         AddParameterDataToProperty(parameters, propertyInfo);
                         schema[propertyInfo.Name] = propertyInfo;
                     }
@@ -586,69 +572,84 @@ namespace ApiDocs.Validation.Json
             return schema;
         }
 
-        private static void AddParameterDataToProperty(IEnumerable<ParameterDefinition> parameters, JsonProperty propertyInfo)
+        private static void AddParameterDataToProperty(IEnumerable<ParameterDefinition> parameters, ParameterDefinition schemaPropertyDef)
         {
-            if (null != propertyInfo && null != parameters)
+            if (null != schemaPropertyDef && null != parameters)
             {
                 // See if we can look up more data for this new property
                 var findParameterQuery = from p in parameters
-                                         where p.Name == propertyInfo.Name
+                                         where p.Name == schemaPropertyDef.Name
                                          select p;
                 var parameterData = findParameterQuery.FirstOrDefault();
                 if (null != parameterData)
                 {
-                    propertyInfo.Description = parameterData.Description;
+                    schemaPropertyDef.Description = parameterData.Description;
                 }
             }
         }
 
-        private static JsonProperty ParseProperty(string name, JToken value, JsonSchema containerSchema)
+        /// <summary>
+        /// Build a ParameterDefinition instance based on a property name and provide value and schema.
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="value"></param>
+        /// <param name="containerSchema"></param>
+        /// <returns></returns>
+        internal static ParameterDefinition ParseProperty(string name, JToken value, JsonSchema containerSchema)
         {
+            ParameterDefinition param = new ParameterDefinition();
+            param.Name = name;
+            param.OriginalValue = value.ToString();
+
             switch (value.Type)
             {
                 case JTokenType.Boolean:
-                    return new JsonProperty { Name = name, Type = ParameterDataType.Boolean, OriginalValue = value.ToString() };
-
+                    param.Type = ParameterDataType.Boolean;
+                    break;
                 case JTokenType.Float:
-                    return new JsonProperty { Name = name, Type = ParameterDataType.Double, OriginalValue = value.ToString() };
+                    param.Type = ParameterDataType.Float;
+                    break;
                 case JTokenType.Integer:
-                    return new JsonProperty { Name = name, Type = ParameterDataType.Int64, OriginalValue = value.ToString() };
-
+                    param.Type = ParameterDataType.Int64;
+                    break;
                 case JTokenType.String:
-                    return new JsonProperty { Name = name, Type = ParameterDataType.String, OriginalValue = value.ToString() };
-
+                    var propValue = value.Value<string>();
+                    SimpleDataType customType = ExtensionMethods.ParseSimpleTypeString(propValue.ToLowerInvariant());
+                    ParameterDataType paramType = (customType != SimpleDataType.None) ? new ParameterDataType(customType) : ParameterDataType.String;
+                    param.Type = paramType;
+                    break;
                 case JTokenType.Date:
-                    return new JsonProperty { Name = name, Type = ParameterDataType.String, OriginalValue = value.ToString() };
-
+                    param.Type = ParameterDataType.DateTimeOffset;
+                    break;
                 case JTokenType.Object:
                     {
-                        var objectSchema = ObjectToSchema((JObject)value);
+                        var objectSchema = GeneratePropertyCollection((JObject)value);
                         if (objectSchema.ContainsKey("@odata.type"))
                         {
-                            return new JsonProperty { Name = name, Type = new ParameterDataType(objectSchema["@odata.type"].OriginalValue) };
+                            param.Type = new ParameterDataType(objectSchema["@odata.type"].OriginalValue);
                         }
                         else
                         {
                             // See if we can infer type from the parent scehma
-                            JsonProperty schemaProperty;
+                            var propertyCollection = GeneratePropertyCollection((JObject)value);
+                            ParameterDefinition[] customMembers = null;
+                            if (propertyCollection != null)
+                            {
+                                customMembers = propertyCollection.Values.ToArray();
+                            }
+
+                            ParameterDefinition schemaProperty;
                             if (null != containerSchema && containerSchema.ExpectedProperties.TryGetValue(name, out schemaProperty))
                             {
-                                return new JsonProperty
-                                {
-                                    Name = name,
-                                    Type = schemaProperty.Type,
-                                    CustomMembers = ObjectToSchema((JObject)value)
-                                };
+                                param.Type = new ParameterDataType(schemaProperty.Type, customMembers);
                             }
-                            return new JsonProperty
+                            else
                             {
-                                Name = name,
-                                Type = ParameterDataType.GenericObject,
-                                CustomMembers = ObjectToSchema((JObject)value)
-                            };
+                                param.Type = new ParameterDataType(customMembers);
+                            }
                         }
+                        break;
                     }
-
                 case JTokenType.Array:
                 {
                     ParameterDataType propertyType = ParameterDataType.GenericCollection;
@@ -667,7 +668,7 @@ namespace ApiDocs.Validation.Json
                     // See if we can do better than GenericCollection if that's the situation we're in.
                     if (propertyType == ParameterDataType.GenericCollection)
                     {
-                        JsonProperty schemaProperty;
+                        ParameterDefinition schemaProperty;
                         if (null != containerSchema && containerSchema.ExpectedProperties.TryGetValue(name, out schemaProperty))
                         {
                             // Use the parent schema's type indication
@@ -675,28 +676,34 @@ namespace ApiDocs.Validation.Json
                         }
                     }
 
-                    Dictionary<string, JsonProperty> members = null;
+                    Dictionary<string, ParameterDefinition> members = null;
                     if ((propertyType.IsObject || (propertyType.IsCollection && propertyType.CollectionResourceType == SimpleDataType.Object)) &&
                         string.IsNullOrEmpty(propertyType.CustomTypeName))
                     {
                         // If we don't know what kind of object is here, let's record what we see as custom members
                         var firstValue = (JObject)value.First;
-                        members = firstValue != null ? ObjectToSchema(firstValue) : new Dictionary<string, JsonProperty>();
+                        members = firstValue != null ? GeneratePropertyCollection(firstValue) : new Dictionary<string, ParameterDefinition>();
                     }
-
-                    return new JsonProperty { Name = name, Type = propertyType, OriginalValue = value.ToString(), CustomMembers = members };
+                    ParameterDefinition[] customMembers = null;
+                    if (members != null) customMembers = members.Values.ToArray();
+                    param.Type = new ParameterDataType(propertyType, customMembers);
+                    break;
                 }
                 case JTokenType.Null:
-                    return new JsonProperty { Name = name, Type = ParameterDataType.GenericObject, OriginalValue = null };
+                    param.Type = ParameterDataType.GenericObject;
+                    param.OriginalValue = null;
+                    break;
                 default:
                     Console.WriteLine("Unsupported: Property {0} is of type {1} which is not currently supported.", name, value.Type);
                     throw new NotSupportedException(string.Format("Unsupported: Property {0} is of type {1} which is not currently supported.", name, value.Type));
             }
+
+            return param;
         }
 
-        private static JsonProperty ParseProperty(JToken token, JsonSchema containerSchema, List<ValidationError> detectedErrors = null)
+        private static ParameterDefinition ParseProperty(JToken token, JsonSchema containerSchema, List<ValidationError> detectedErrors = null)
         {
-            JsonProperty propertyInfo = null;
+            ParameterDefinition propertyInfo = null;
             if (token.Type == JTokenType.Property)
             {
                 JProperty tokenProperty = (JProperty)token;
@@ -720,18 +727,18 @@ namespace ApiDocs.Validation.Json
             return propertyInfo;
         }
 
-        private static Dictionary<string, JsonProperty> ObjectToSchema(JObject obj)
+        private static Dictionary<string, ParameterDefinition> GeneratePropertyCollection(JObject obj)
         {
-            Dictionary<string, JsonProperty> schema = new Dictionary<string, JsonProperty>();
+            var propertyCollection = new Dictionary<string, ParameterDefinition>();
             foreach (var prop in obj)
             {
                 string name = prop.Key;
                 JToken value = prop.Value;
-                JsonProperty propertyInfo = ParseProperty(name, value, null);
+                var propertyInfo = ParseProperty(name, value, null);
                 if (null != propertyInfo && null != propertyInfo.Name)
-                    schema[propertyInfo.Name] = propertyInfo;
+                    propertyCollection[propertyInfo.Name] = propertyInfo;
             }
-            return schema;
+            return propertyCollection;
         }
 
         enum PropertyValidationOutcome

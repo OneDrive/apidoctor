@@ -29,6 +29,7 @@ namespace ApiDocs.Validation.UnitTests
     using ApiDocs.Validation.Json;
     using Newtonsoft.Json;
     using NUnit.Framework;
+    using System.Linq;
 
     [TestFixture]
     public class SchemaBuilderTests
@@ -77,11 +78,11 @@ namespace ApiDocs.Validation.UnitTests
                         Assert.AreEqual(123, Int32.Parse(property.OriginalValue));
                         break;
                     case "floatProp":
-                        Assert.AreEqual(property.Type, ParameterDataType.Double);
+                        Assert.AreEqual(property.Type, ParameterDataType.Float);
                         Assert.AreEqual(123.121, Double.Parse(property.OriginalValue));
                         break;
                     case "dateProp":
-                        Assert.AreEqual(property.Type, ParameterDataType.String);
+                        Assert.AreEqual(property.Type, ParameterDataType.DateTimeOffset);
                         Assert.AreEqual("datetime", property.OriginalValue);
                         break;
                     default:
@@ -100,7 +101,7 @@ namespace ApiDocs.Validation.UnitTests
             foreach (var prop in schema.Properties)
             {
                 Assert.IsTrue(prop.Type.IsObject);
-                Assert.IsNull(prop.CustomMembers);
+                Assert.IsNull(prop.Type.CustomMembers);
                 switch (prop.Name)
                 {
                     case "complexTypeA":
@@ -160,14 +161,37 @@ namespace ApiDocs.Validation.UnitTests
         }
 
 
-        public void CheckJsonProperty(JsonProperty prop, ParameterDataType expectedType = null, bool? customMembersIsNull = null)
+        [Test]
+        public void TestStringEnumCollection()
+        {
+            string json = "{ \"roles\": [\"read|write\"] }";
+
+            JsonSchema schema = new JsonSchema(json, null);
+            var property = schema.Properties.Single();
+
+            Assert.IsTrue(property.Type.IsCollection);
+            Assert.IsTrue(property.Type.CollectionResourceType == SimpleDataType.String);
+        }
+
+        [Test]
+        public void TestStringSpecificFormatDateTime()
+        {
+            string json = "{ \"createdDateTime\": \"datetime\", \"takenDateTime\": \"timestamp\" }";
+            JsonSchema schema = new JsonSchema(json, null);
+            foreach (var prop in schema.Properties)
+            {
+                Assert.IsTrue(prop.Type.Type == SimpleDataType.DateTimeOffset);
+            }
+        }
+
+        public void CheckJsonProperty(ParameterDefinition prop, ParameterDataType expectedType = null, bool? customMembersIsNull = null)
         {
             if (expectedType != null)
                 Assert.AreEqual(expectedType, prop.Type);
             if (customMembersIsNull != null && customMembersIsNull.Value)
-                Assert.IsNull(prop.CustomMembers);
+                Assert.IsNull(prop.Type.CustomMembers);
             else if (customMembersIsNull != null && !customMembersIsNull.Value)
-                Assert.IsNotNull(prop.CustomMembers);
+                Assert.IsNotNull(prop.Type.CustomMembers);
                 
         }
     }

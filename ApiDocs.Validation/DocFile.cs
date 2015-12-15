@@ -647,7 +647,8 @@ namespace ApiDocs.Validation
         /// <param name="additionalData"></param>
         private static void MergeParametersIntoCollection(
             List<ParameterDefinition> collection,
-            IEnumerable<ParameterDefinition> additionalData)
+            IEnumerable<ParameterDefinition> additionalData,
+            bool addMissingParameters = false)
         {
             foreach (var param in additionalData)
             {
@@ -658,8 +659,10 @@ namespace ApiDocs.Validation
                     // The parameter was always known, let's merge in additional data.
                     match.AddMissingDetails(param);
                 }
-                else
+                else if (addMissingParameters)
                 {
+                    // TODO: This should be a warning reported by the tool.
+
                     // The parameter didn't exist in the collection, so let's add it.
                     collection.Add(param);
                 }
@@ -796,7 +799,20 @@ namespace ApiDocs.Validation
             {
                 case CodeBlockType.Resource:
                     {
-                        var resource = new ResourceDefinition(annotation, code.Content, this, code.CodeLanguage);
+                        ResourceDefinition resource;
+                        if (code.CodeLanguage.Equals("json", StringComparison.OrdinalIgnoreCase))
+                        {
+                            resource = new JsonResourceDefinition(annotation, code.Content, this);
+                        }
+                        //else if (code.CodeLanguage.Equals("xml", StringComparison.OrdinalIgnoreCase))
+                        //{
+
+                        //}
+                        else
+                        {
+                            throw new NotSupportedException("Unsupported resource definition language: " + code.CodeLanguage);
+                        }
+
                         this.resources.Add(resource);
                         return resource;
                     }

@@ -65,12 +65,11 @@ namespace ApiDocs.Publishing.Swagger
                 default:
                     return type.ToString().ToLower();
             }
-            return null;
         }
 
 
         //private static object SwaggerProperty(JsonDataType type, string odataTypeName)
-        private static object SwaggerProperty(JsonProperty property)
+        private static object SwaggerProperty(ParameterDefinition property)
         {
             ParameterDataType type = property.Type;
             string description = property.Description;
@@ -109,7 +108,7 @@ namespace ApiDocs.Publishing.Swagger
             return definition;
         }
             
-        internal static object AsSwaggerProperty(this JsonProperty property)
+        internal static object AsSwaggerProperty(this ParameterDefinition property)
         {
             return SwaggerProperty(property);
         }
@@ -138,7 +137,7 @@ namespace ApiDocs.Publishing.Swagger
             SwaggerParameter p = new SwaggerParameter()
             {
                     Name = parameter.Name,
-                    Required = parameter.Required,
+                    Required = parameter.Required.Value,
                     Type = parameter.Type.ToSwaggerTypeString(),
                     Description = parameter.Description
             };
