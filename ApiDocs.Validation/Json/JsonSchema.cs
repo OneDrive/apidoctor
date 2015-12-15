@@ -676,8 +676,10 @@ namespace ApiDocs.Validation.Json
                     }
 
                     Dictionary<string, JsonProperty> members = null;
-                    if (propertyType.IsObject || propertyType.IsCollection)
+                    if ((propertyType.IsObject || (propertyType.IsCollection && propertyType.CollectionResourceType == SimpleDataType.Object)) &&
+                        string.IsNullOrEmpty(propertyType.CustomTypeName))
                     {
+                        // If we don't know what kind of object is here, let's record what we see as custom members
                         var firstValue = (JObject)value.First;
                         members = firstValue != null ? ObjectToSchema(firstValue) : new Dictionary<string, JsonProperty>();
                     }
