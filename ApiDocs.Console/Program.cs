@@ -1012,7 +1012,13 @@ namespace ApiDocs.ConsoleApp
                     publisher = new OutlinePublisher(docs);
                     break;
                 case PublishOptions.PublishFormat.Edmx:
-                    publisher = new Publishing.CSDL.CsdlWriter(docs);
+
+                    string[] namespaces = null;
+                    if (!string.IsNullOrEmpty(options.Namespaces))
+                    {
+                        namespaces = options.Namespaces.Split(';');
+                    }
+                    publisher = new Publishing.CSDL.CsdlWriter(docs, namespaces);
                     break;
                 default:
                     FancyConsole.WriteLine(

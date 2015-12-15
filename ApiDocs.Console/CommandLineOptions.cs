@@ -339,6 +339,10 @@ namespace ApiDocs.ConsoleApp
         [Option("files", HelpText = "Specify a particular source file that should be published, semi-colon separated.")]
         public string SourceFiles { get; set; }
         
+
+        [Option("namespaces", HelpText="Specify the namespaces that are included when publishing. Semi-colon separated values.")]
+        public string Namespaces { get; set; }
+
         public string[] FilesToPublish {
             get { return (this.SourceFiles ?? string.Empty).Split(new char[] {';'}, StringSplitOptions.RemoveEmptyEntries); }
             set { this.SourceFiles = value.ComponentsJoinedByString(";"); }

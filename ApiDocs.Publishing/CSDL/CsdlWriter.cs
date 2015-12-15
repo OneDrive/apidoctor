@@ -36,10 +36,12 @@ namespace ApiDocs.Publishing.CSDL
 
     public class CsdlWriter : DocumentPublisher
     {
-        public CsdlWriter(DocSet docs)
+        private string[] validNamespaces;
+
+        public CsdlWriter(DocSet docs, string[] namespacesToExport)
             : base(docs)
         {
-
+            validNamespaces = namespacesToExport;
         }
 
         public override async Task PublishToFolderAsync(string outputFolder)
@@ -71,14 +73,23 @@ namespace ApiDocs.Publishing.CSDL
             foreach (var resource in Documents.Resources)
             {
                 Schema parentSchema = FindOrCreateSchemaForNamespace(resource.Name.NamespaceOnly(), edmx);
-                AddResourceToSchema(parentSchema, resource);
+                if (parentSchema != null)
+                {
+                    AddResourceToSchema(parentSchema, resource);
+                }
             }
 
             return edmx;
         }
 
-        private static Schema FindOrCreateSchemaForNamespace(string ns, EntityFramework edmx)
+        private Schema FindOrCreateSchemaForNamespace(string ns, EntityFramework edmx)
         {
+            // Check to see if this is a namespace that should be exported.
+            if (validNamespaces != null && !validNamespaces.Contains(ns))
+            {
+                return null;
+            }
+
             var matchingSchema = (from s in edmx.DataServices.Schemas
                                  where s.Namespace == ns
                                  select s).FirstOrDefault();
