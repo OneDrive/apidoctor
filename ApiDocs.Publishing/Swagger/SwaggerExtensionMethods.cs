@@ -49,52 +49,57 @@ namespace ApiDocs.Publishing.Swagger
             return originalResourceName.Replace('.', '_');
         }
 
-        internal static string SwaggerType(this ParameterDataType datatype)
+        internal static string ToSwaggerTypeString(this ParameterDataType datatype)
         {
-            switch (datatype)
-            {
-                case ParameterDataType.Resource:
-                    throw new ArgumentException();
-                case ParameterDataType.Object:
-                    return "object";
-                default:
-                    return datatype.ToString().ToLower();
-            }
+            return datatype.Type.ToSwaggerTypeString();
         }
+
+        internal static string ToSwaggerTypeString(this SimpleDataType type, string customTypeName = null)
+        {
+            switch (type)
+            {
+                case SimpleDataType.Object:
+                    return "object";
+                case SimpleDataType.Collection:
+                    throw new ArgumentException();
+                default:
+                    return type.ToString().ToLower();
+            }
+            return null;
+        }
+
 
         //private static object SwaggerProperty(JsonDataType type, string odataTypeName)
         private static object SwaggerProperty(JsonProperty property)
         {
-
             ParameterDataType type = property.Type;
-            string customDataType = property.ODataTypeName;
             string description = property.Description;
 
-            return MakeSwaggerProperty(type, customDataType, description);
+            return MakeSwaggerProperty(type, description);
         }
 
         private static object SwaggerPropertyForResponse(MethodDefinition definition)
         {
-            ParameterDataType type = ParameterDataType.Resource;
             string customDataType = definition.ExpectedResponseMetadata.ResourceType;
+            var type = new ParameterDataType(customDataType, true);
             string description = null;
-            return MakeSwaggerProperty(type, customDataType, description);
+            return MakeSwaggerProperty(type, description);
         }
 
-        private static object MakeSwaggerProperty(ParameterDataType type, string customDataType, string description)
+        private static object MakeSwaggerProperty(ParameterDataType type, string description)
         {
             Dictionary<string, object> definition = null;
-            if (type == ParameterDataType.Resource)
+            if (type.IsObject)
             {
                 definition = new Dictionary<string, object> {
-                    { "$ref", "#/definitions/" + customDataType.SwaggerResourceName() }
+                    { "$ref", "#/definitions/" + type.CustomTypeName.SwaggerResourceName() }
                 };
             }
             else
             {
                 definition = new Dictionary<string, object>
                 {
-                    { "type", type.SwaggerType() }
+                    { "type", type.ToSwaggerTypeString() }
                 };
             }
             if (!string.IsNullOrEmpty(description))
@@ -134,7 +139,7 @@ namespace ApiDocs.Publishing.Swagger
             {
                     Name = parameter.Name,
                     Required = parameter.Required,
-                    Type = parameter.Type.SwaggerType(),
+                    Type = parameter.Type.ToSwaggerTypeString(),
                     Description = parameter.Description
             };
 

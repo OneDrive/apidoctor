@@ -629,12 +629,43 @@ namespace ApiDocs.Validation
                     switch (table.Type)
                     {
                         case TableBlockType.ResourcePropertyDescriptions:
-                            onlyResource.Parameters.AddRange(table.Rows.Cast<ParameterDefinition>());
+                            // Merge information found in the resource property description table with the existing resources
+                            MergeParametersIntoCollection(
+                                onlyResource.Parameters,
+                                table.Rows.Cast<ParameterDefinition>());
                             break;
                     }
                 }
             }
         }
+
+        /// <summary>
+        /// Merges parameter definitions from additionalData into the collection list. Pulls in missing data for existing
+        /// parameters and adds any additional parameters found in the additionalData.
+        /// </summary>
+        /// <param name="collection"></param>
+        /// <param name="additionalData"></param>
+        private static void MergeParametersIntoCollection(
+            List<ParameterDefinition> collection,
+            IEnumerable<ParameterDefinition> additionalData)
+        {
+            foreach (var param in additionalData)
+            {
+                // See if this parameter already is known
+                var match = collection.SingleOrDefault(x => x.Name == param.Name);
+                if (match != null)
+                {
+                    // The parameter was always known, let's merge in additional data.
+                    match.AddMissingDetails(param);
+                }
+                else
+                {
+                    // The parameter didn't exist in the collection, so let's add it.
+                    collection.Add(param);
+                }
+            }
+        }
+
 
         private void PostProcessMethods(IEnumerable<MethodDefinition> foundMethods, IEnumerable<TableDefinition> foundTables, List<ValidationError> errors)
         {

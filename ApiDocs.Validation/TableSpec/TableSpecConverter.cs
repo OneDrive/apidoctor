@@ -135,7 +135,7 @@ namespace ApiDocs.Validation.TableSpec
                           select new ParameterDefinition
                           {
                               Name = r.ValueForColumn(table, "Parameter Name", "Property Name", "Name"),
-                              Type = r.ValueForColumn(table, "Type", "Value").ToDataType(),
+                              Type = r.ValueForColumn(table, "Type", "Value").ParseParameterDataType(),
                               Description = r.ValueForColumn(table, "Description"),
                               Location = location,
                               Required = r.ValueForColumn(table, "Description").IsRequired()

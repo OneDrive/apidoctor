@@ -35,33 +35,16 @@ namespace ApiDocs.Validation.Json
 
         public ParameterDataType Type { get; set; }
 
-        public string ODataTypeName { get; set; }
+        //public string ODataTypeName { get; set; }
 
         public Dictionary<string, JsonProperty> CustomMembers { get; set; }
 
         public string OriginalValue { get; set; }
 
-        public bool IsArray { get; set; }
+        //public bool IsArray { get; set; }
 
         public string Description { get; set; }
-
-
-        public string TypeDescription
-        {
-            get
-            {
-                switch (this.Type)
-                {
-                    case ParameterDataType.Resource:
-                        return this.ODataTypeName;
-                    case ParameterDataType.Object:
-                        return "Object";
-                    default:
-                        return this.Type.ToString();
-                }
-            }
-        }
-
+      
         public ExpectedStringFormat StringFormat
         {
             get

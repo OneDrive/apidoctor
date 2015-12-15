@@ -116,37 +116,14 @@ namespace ApiDocs.Publishing.CSDL
             {
                 Name = param.Name,
                 Nullable = !param.Required,
-                Type = ODataTypeName(param.Type)
+                Type = param.Type.ODataResourceName()
             };
         }
 
-        private static string ODataTypeName(ParameterDataType type, string custom = null)
-        {
-            switch (type)
-            {
-                case ParameterDataType.String:
-                    return "Edm.String";
-                case ParameterDataType.Int64:
-                    return "Edm.Int64";
-                case ParameterDataType.Int32:
-                    return "Edm.Int32";
-                case ParameterDataType.Boolean:
-                    return "Edm.Boolean";
-                case ParameterDataType.Resource:
-                    return custom;
-                case ParameterDataType.Object:
-                    return "Edm.Object";
-                case ParameterDataType.Collection:
-                    return "Collection(" + custom + ")";
-                case ParameterDataType.DateTimeOffset:
-                    return "Edm.DateTimeOffset";
-                default:
-                    return "Unknown";
-            }
-        }
+
     }
 
-    internal static class NamespaceExtensionMethods
+    internal static class ODataExtensionMethods
     {
         /// <summary>
         /// Returns "oneDrive" for "oneDrive.item" input.
@@ -169,6 +146,65 @@ namespace ApiDocs.Publishing.CSDL
         {
             var trimPoint = type.LastIndexOf('.');
             return type.Substring(trimPoint + 1);
+        }
+
+        /// <summary>
+        /// Convert a ParameterDataType instance into the OData equivelent.
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public static string ODataResourceName(this ParameterDataType type)
+        {
+
+            if (type.Type == SimpleDataType.Object && !string.IsNullOrEmpty(type.CustomTypeName))
+            {
+                return type.CustomTypeName;
+            }
+
+            if (type.Type == SimpleDataType.Collection)
+            {
+                return string.Format("Collection({0})", type.CollectionResourceType.ODataResourceName(type.CustomTypeName));
+            }
+
+            return type.Type.ODataResourceName();
+        }
+
+        /// <summary>
+        /// Convert a simple type into OData equivelent. If Object is specified, a customDataType can be returned instead.
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="customDataType"></param>
+        /// <returns></returns>
+        public static string ODataResourceName(this SimpleDataType type, string customDataType = null)
+        {
+            switch (type)
+            {
+                case SimpleDataType.String:
+                    return "Edm.String";
+                case SimpleDataType.Int64:
+                    return "Edm.Int64";
+                case SimpleDataType.Int32:
+                    return "Edm.Int32";
+                case SimpleDataType.Boolean:
+                    return "Edm.Boolean";
+                case SimpleDataType.DateTimeOffset:
+                    return "Edm.DateTimeOffset";
+                case SimpleDataType.Double:
+                    return "Edm.Double";
+                case SimpleDataType.Float:
+                    return "Edm.Float";
+                case SimpleDataType.Guid:
+                    return "Edm.Guid";
+                case SimpleDataType.TimeSpan:
+                    return "Edm.TimeSpan";
+                case SimpleDataType.Object:
+                    if (string.IsNullOrEmpty(customDataType))
+                        return "Edm.Object";
+                    else
+                        return customDataType;
+                default:
+                    throw new NotSupportedException(string.Format("Attempted to convert an unsupported SimpleDataType into OData: {0}", type));
+            }
         }
     }
 

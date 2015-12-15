@@ -99,16 +99,18 @@ namespace ApiDocs.Validation.UnitTests
             Assert.AreEqual(2, schema.Properties.Length);
             foreach (var prop in schema.Properties)
             {
-                Assert.AreEqual(ParameterDataType.Resource, prop.Type);
+                Assert.IsTrue(prop.Type.IsObject);
                 Assert.IsNull(prop.CustomMembers);
                 switch (prop.Name)
                 {
                     case "complexTypeA":
-                        Assert.AreEqual("resource.a", prop.ODataTypeName);
+                        Assert.IsTrue(prop.Type.IsObject);
+                        Assert.AreEqual("resource.a", prop.Type.CustomTypeName);
                         
                         break;
                     case "complexTypeB":
-                        Assert.AreEqual("resource.b", prop.ODataTypeName);
+                        Assert.IsTrue(prop.Type.IsObject);
+                        Assert.AreEqual("resource.b", prop.Type.CustomTypeName);
                         break;
                 }
             }
@@ -126,13 +128,13 @@ namespace ApiDocs.Validation.UnitTests
                 switch (prop.Name)
                 {
                     case "arrayTypeA":
-                        this.CheckJsonProperty(prop, expectedType: ParameterDataType.Resource, odataTypeName: "resource.a", isArray: true, customMembersIsNull: true);
+                        this.CheckJsonProperty(prop, expectedType: new ParameterDataType("resource.a", true), customMembersIsNull: true);
                         break;
                     case "complexTypeB":
-                        this.CheckJsonProperty(prop, expectedType: ParameterDataType.Resource, odataTypeName: "resource.b", isArray: false, customMembersIsNull: true);
+                        this.CheckJsonProperty(prop, expectedType: new ParameterDataType("resource.b"), customMembersIsNull: true);
                         break;
                     case "simpleType":
-                        this.CheckJsonProperty(prop, expectedType: ParameterDataType.String, isArray: false, customMembersIsNull: true);
+                        this.CheckJsonProperty(prop, expectedType: ParameterDataType.String, customMembersIsNull: true);
                         break;
                     default:
                         Assert.Fail("Unexpected property name: " + prop.Name);
@@ -158,14 +160,10 @@ namespace ApiDocs.Validation.UnitTests
         }
 
 
-        public void CheckJsonProperty(JsonProperty prop, ParameterDataType? expectedType = null, string odataTypeName = null, bool? isArray = null, bool? customMembersIsNull = null)
+        public void CheckJsonProperty(JsonProperty prop, ParameterDataType expectedType = null, bool? customMembersIsNull = null)
         {
             if (expectedType != null)
-                Assert.AreEqual(expectedType.Value, prop.Type);
-            if (odataTypeName != null)
-                Assert.AreEqual(odataTypeName, prop.ODataTypeName);
-            if (isArray != null)
-                Assert.AreEqual(isArray.Value, prop.IsArray);
+                Assert.AreEqual(expectedType, prop.Type);
             if (customMembersIsNull != null && customMembersIsNull.Value)
                 Assert.IsNull(prop.CustomMembers);
             else if (customMembersIsNull != null && !customMembersIsNull.Value)

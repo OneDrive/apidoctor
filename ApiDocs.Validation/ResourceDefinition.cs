@@ -30,7 +30,7 @@ namespace ApiDocs.Validation
     using ApiDocs.Validation.Error;
     using Newtonsoft.Json;
     using System.Collections.Generic;
-
+    using Newtonsoft.Json.Linq;
     /// <summary>
     /// Represents a class, resource, complex type, or entity type from an API.
     /// </summary>
@@ -77,7 +77,7 @@ namespace ApiDocs.Validation
         {
             try
             {
-                object inputObject = JsonConvert.DeserializeObject(this.OriginalExampleText);
+                JObject inputObject = (JObject)JsonConvert.DeserializeObject(this.OriginalExampleText);
                 this.ExtractProperties(inputObject);
                 this.ExampleText = JsonConvert.SerializeObject(inputObject, Formatting.Indented);
             }
@@ -96,30 +96,57 @@ namespace ApiDocs.Validation
         /// <summary>
         /// </summary>
         /// <param name="inputObject"></param>
-        private void ExtractProperties(object input)
+        private void ExtractProperties(JObject input)
         {
-            //var knownProperties = input.GetType().GetProperties();
+            var properties = input.Properties();
 
-            //this.Properties = (from p in knownProperties
-            //    select new ParameterDefinition
-            //    {
-            //        Name = p.Name,
-            //        Type = GetParameterType(p.PropertyType, p.GetValue(input))
-            //    }).ToList();
+            List<ParameterDefinition> parameters = new List<ParameterDefinition>();
+            foreach (var p in properties)
+            {
+                ParameterDefinition param = new ParameterDefinition();
+                param.Name = p.Name;
+                param.Location = ParameterLocation.JsonObject;
+                param.Required = (this.OriginalMetadata != null && this.OriginalMetadata.OptionalProperties != null) ? !this.OriginalMetadata.OptionalProperties.Contains(param.Name) : true;
+                SetParameterTypeFromExample(param, p);
+
+                parameters.Add(param);
+            }
+
+            this.Parameters = parameters;
         }
 
-        //private static Json.JsonDataType GetParameterType(Type type, object value)
-        //{
-        //    if (type == typeof(string))
-        //    {
-        //        switch (value as string)
-        //        {
-        //            case "string":
-        //                return Json.JsonDataType.String;
-        //        }
-        //    }
-        //    return Json.JsonDataType.Object;
-        //}
+        private static void SetParameterTypeFromExample(ParameterDefinition param, JProperty prop)
+        {
+            switch (prop.Value.Type)
+            {
+                case JTokenType.Array:
+                    param.Type = ParameterDataType.GenericCollection;
+                    break;
+                case JTokenType.Boolean:
+                    param.Type = ParameterDataType.Boolean;
+                    break;
+                case JTokenType.Date:
+                    param.Type = ParameterDataType.DateTimeOffset;
+                    break;
+                case JTokenType.Float:
+                    param.Type = ParameterDataType.Double;
+                    break;
+                case JTokenType.Guid:
+                    param.Type = ParameterDataType.String;
+                    break;
+                case JTokenType.Integer:
+                    param.Type = ParameterDataType.Int64;
+                    break;
+                case JTokenType.Object:
+                    param.Type = ParameterDataType.GenericObject;
+                    break;
+                case JTokenType.String:
+                    param.Type = ParameterDataType.String;
+                    break;
+                default:
+                    throw new NotSupportedException("Unsupported JTokenType: " + prop.Type);
+            }
+        }
 
         #endregion
 
@@ -160,11 +187,6 @@ namespace ApiDocs.Validation
         /// </summary>
         /// <value>The sourceFile file.</value>
         public DocFile SourceFile {get; private set;}
-
-        /// <summary>
-        /// A collection of the properties defined for this resource
-        /// </summary>
-        public List<ParameterDefinition> Properties { get; private set; }
 
         #endregion
     }

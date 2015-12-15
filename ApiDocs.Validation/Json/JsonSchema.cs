@@ -233,7 +233,7 @@ namespace ApiDocs.Validation.Json
                 missingProperties.Remove(property.Name);
 
                 // This detects bad types, extra properties, etc.
-                if (null != options && (property.IsArray || property.Type == ParameterDataType.Resource || property.Type == ParameterDataType.Object))
+                if (null != options && (property.Type.IsCollection || property.Type.IsObject))
                 {
                     var propertyOptions = options.CreateForProperty(property.Name);
                     this.ValidateProperty(property, otherSchemas, detectedErrors, propertyOptions);
@@ -294,7 +294,7 @@ namespace ApiDocs.Validation.Json
                 var schemaPropertyDef = this.ExpectedProperties[inputProperty.Name];
                 
                 // Check for simple value types first
-                if (this.SimpleValueTypes(schemaPropertyDef.Type, inputProperty.Type) && this.AllFalse(schemaPropertyDef.IsArray, inputProperty.IsArray))
+                if (this.SimpleValueTypes(schemaPropertyDef.Type, inputProperty.Type) && this.AllFalse(schemaPropertyDef.Type.IsCollection, inputProperty.Type.IsCollection))
                 {
                     if (schemaPropertyDef.Type == inputProperty.Type && inputProperty.Type != ParameterDataType.String)
                     {
@@ -323,16 +323,16 @@ namespace ApiDocs.Validation.Json
                     }
                     return PropertyValidationOutcome.Ok;
                 }
-                else if (schemaPropertyDef.IsArray || inputProperty.IsArray)
+                else if (schemaPropertyDef.Type.IsCollection || inputProperty.Type.IsCollection)
                 {
                     // Check for an array
-                    if (schemaPropertyDef.IsArray && !inputProperty.IsArray)
+                    if (schemaPropertyDef.Type.IsCollection && !inputProperty.Type.IsCollection)
                     {
                         // Expected an array, but didn't get one
                         detectedErrors.Add(new ValidationError(ValidationErrorCode.ExpectedArrayValue, null, "Expected an array but property was not an array: {0}", inputProperty.Name));
                         return PropertyValidationOutcome.InvalidType;
                     }
-                    else if (!schemaPropertyDef.IsArray && inputProperty.IsArray)
+                    else if (!schemaPropertyDef.Type.IsCollection && inputProperty.Type.IsCollection)
                     {
                         detectedErrors.Add(new ValidationError(ValidationErrorCode.ExpectedNonArrayValue, null, "Expected a value of type {0} but property was an array: {1}", schemaPropertyDef.Type, inputProperty.Name));
                         return PropertyValidationOutcome.InvalidType;
@@ -340,17 +340,17 @@ namespace ApiDocs.Validation.Json
 
                     return this.ValidateArrayProperty(inputProperty, schemas, detectedErrors, options);
                 }
-                else if (schemaPropertyDef.Type == ParameterDataType.Resource && (inputProperty.Type == ParameterDataType.Object || inputProperty.Type == ParameterDataType.Resource))
+                else if (schemaPropertyDef.Type.IsObject && inputProperty.Type.IsObject)
                 {
                     // Compare the ODataType schema to the custom schema
-                    if (!schemas.ContainsKey(schemaPropertyDef.ODataTypeName))
+                    if (!schemas.ContainsKey(schemaPropertyDef.Type.CustomTypeName))
                     {
-                        detectedErrors.Add(new ValidationError(ValidationErrorCode.ResourceTypeNotFound, null, "Missing resource: resource {0} was not found (property name '{1}').", schemaPropertyDef.ODataTypeName, inputProperty.Name));
+                        detectedErrors.Add(new ValidationError(ValidationErrorCode.ResourceTypeNotFound, null, "Missing resource: resource {0} was not found (property name '{1}').", schemaPropertyDef.Type.CustomTypeName, inputProperty.Name));
                         return PropertyValidationOutcome.MissingResourceType;
                     }
-                    else if (inputProperty.Type == ParameterDataType.Object)
+                    else if (inputProperty.Type.IsObject)
                     {
-                        var odataSchema = schemas[schemaPropertyDef.ODataTypeName];
+                        var odataSchema = schemas[schemaPropertyDef.Type.CustomTypeName];
                         ValidationError[] odataErrors;
                         if (null != inputProperty.CustomMembers && !odataSchema.ValidateCustomObject(inputProperty.CustomMembers.Values.ToArray(), out odataErrors, schemas, options))
                         {
@@ -367,7 +367,7 @@ namespace ApiDocs.Validation.Json
                     }
                     else
                     {
-                        var odataSchema = schemas[schemaPropertyDef.ODataTypeName];
+                        var odataSchema = schemas[schemaPropertyDef.Type.CustomTypeName];
                         if (inputProperty.CustomMembers == null)
                         {
                             detectedErrors.Add(new ValidationError(ValidationErrorCode.MissingCustomMembers, null, "Property {0} is missing custom members and cannot be validated.", inputProperty.Name));
@@ -380,7 +380,7 @@ namespace ApiDocs.Validation.Json
                         }
                     }
                 }
-                else if (schemaPropertyDef.Type == ParameterDataType.Object)
+                else if (schemaPropertyDef.Type.IsObject)
                 {
                     detectedErrors.Add(new ValidationWarning(ValidationErrorCode.CustomValidationNotSupported, null, "Schemas type was 'Custom' which is not supported. Add a resource type to the definition of property: {0}", inputProperty.Name));
                     return PropertyValidationOutcome.MissingResourceType;
@@ -465,7 +465,7 @@ namespace ApiDocs.Validation.Json
         /// <returns></returns>
         private bool SimpleValueTypes(params ParameterDataType[] types)
         {
-            return types.All(type => type != ParameterDataType.Resource && type != ParameterDataType.Object && type != ParameterDataType.Collection);
+            return types.All(type => !type.IsObject && !type.IsCollection);
         }
 
         private bool AllFalse(params bool[] input)
@@ -475,19 +475,18 @@ namespace ApiDocs.Validation.Json
 
         private PropertyValidationOutcome ValidateSimpleArrayProperty(JsonProperty actualProperty, JsonProperty expectedProperty, List<ValidationError> detectedErrors)
         {
-            if (actualProperty.IsArray != true || expectedProperty.IsArray != true)
+            if (!actualProperty.Type.IsCollection || !expectedProperty.Type.IsCollection)
             {
                 throw new SchemaBuildException("Cannot use simple array valiation without array types", null);
             }
 
             if (actualProperty.Type == expectedProperty.Type && 
-                expectedProperty.Type != ParameterDataType.Object && 
-                expectedProperty.Type != ParameterDataType.Resource && 
-                expectedProperty.Type != ParameterDataType.Collection)
+                !expectedProperty.Type.IsObject && 
+                !expectedProperty.Type.IsCollection)
             {
                 return PropertyValidationOutcome.Ok;
             }
-            else if (expectedProperty.IsArray && actualProperty.IsArray && actualProperty.OriginalValue == "[]")
+            else if (expectedProperty.Type.IsCollection && actualProperty.Type.IsCollection && actualProperty.OriginalValue == "[]")    // Check for the empty array case
             {
                 return PropertyValidationOutcome.Ok;
             }
@@ -510,13 +509,13 @@ namespace ApiDocs.Validation.Json
             JArray actualArray = (JArray)JsonConvert.DeserializeObject(actualProperty.OriginalValue);
 
             JsonSchema memberSchema;
-            if (string.IsNullOrEmpty(actualProperty.ODataTypeName))
+            if (string.IsNullOrEmpty(actualProperty.Type.CustomTypeName))
             {
                 return this.ValidateSimpleArrayProperty(actualProperty, this.ExpectedProperties[actualProperty.Name], detectedErrors);
             }
-            else if (!schemas.TryGetValue(actualProperty.ODataTypeName, out memberSchema))
+            else if (!schemas.TryGetValue(actualProperty.Type.CustomTypeName, out memberSchema))
             {
-                detectedErrors.Add(new ValidationError(ValidationErrorCode.ResourceTypeNotFound, null, "Failed to locate resource definition for: {0}", actualProperty.ODataTypeName));
+                detectedErrors.Add(new ValidationError(ValidationErrorCode.ResourceTypeNotFound, null, "Failed to locate resource definition for: {0}", actualProperty.Type.CustomTypeName));
                 return PropertyValidationOutcome.MissingResourceType;
             }
 
@@ -626,69 +625,67 @@ namespace ApiDocs.Validation.Json
                         var objectSchema = ObjectToSchema((JObject)value);
                         if (objectSchema.ContainsKey("@odata.type"))
                         {
-                            return new JsonProperty { Name = name, Type = ParameterDataType.Resource, ODataTypeName = objectSchema["@odata.type"].OriginalValue };
+                            return new JsonProperty { Name = name, Type = new ParameterDataType(objectSchema["@odata.type"].OriginalValue) };
                         }
                         else
                         {
                             // See if we can infer type from the parent scehma
                             JsonProperty schemaProperty;
-                            ParameterDataType propertyType = ParameterDataType.Object;
-                            string odataTypeName = null;
                             if (null != containerSchema && containerSchema.ExpectedProperties.TryGetValue(name, out schemaProperty))
                             {
-                                odataTypeName = schemaProperty.ODataTypeName;
-                                propertyType = schemaProperty.Type;
+                                return new JsonProperty
+                                {
+                                    Name = name,
+                                    Type = schemaProperty.Type,
+                                    CustomMembers = ObjectToSchema((JObject)value)
+                                };
                             }
-                            return new JsonProperty { Name = name, Type = propertyType, ODataTypeName = odataTypeName, CustomMembers = ObjectToSchema((JObject)value) };
+                            return new JsonProperty
+                            {
+                                Name = name,
+                                Type = ParameterDataType.GenericObject,
+                                CustomMembers = ObjectToSchema((JObject)value)
+                            };
                         }
                     }
 
                 case JTokenType.Array:
+                {
+                    ParameterDataType propertyType = ParameterDataType.GenericCollection;
+
+                    // Try to infer type from the items in the array
+                    var firstChild = value.First;
+                    if (null != firstChild)
                     {
-                        // Array
-                        ParameterDataType propertyType = ParameterDataType.Collection;
-                        string odataTypeName = null;
-
-                        // Infer type from the items in the array
-                        var firstChild = value.First;
-                        if (null != firstChild)
+                        var objectType = ParseProperty("array[0]", firstChild, null);
+                        if (null != objectType)
                         {
-                            var objectType = ParseProperty("array[0]", firstChild, null);
-                            if (null != objectType)
-                            {
-                                odataTypeName = objectType.ODataTypeName;
-                                propertyType = objectType.Type;
-                            }
+                            propertyType = ParameterDataType.CollectionOfType(objectType.Type);
                         }
-                        else
-                        {
-                            propertyType = ParameterDataType.Collection;
-                        }
-
-                        // See if we can do better than just Custom
-                        if (propertyType == ParameterDataType.Object)
-                        {
-                            JsonProperty schemaProperty;
-                            if (null != containerSchema && containerSchema.ExpectedProperties.TryGetValue(name, out schemaProperty))
-                            {
-                                // Use the parent schema's type indication
-                                odataTypeName = schemaProperty.ODataTypeName;
-                                propertyType = schemaProperty.Type;
-                            }
-                        }
-
-                        Dictionary<string, JsonProperty> members = null;
-                        if (propertyType == ParameterDataType.Object || propertyType == ParameterDataType.Collection)
-                        {
-                            var firstValue = (JObject)value.First;
-                            members = firstValue != null ? ObjectToSchema(firstValue) : new Dictionary<string, JsonProperty>();
-                        }
-
-                        return new JsonProperty { Name = name, Type = propertyType, ODataTypeName = odataTypeName, IsArray = true,
-                            OriginalValue = value.ToString(), CustomMembers = members };
                     }
+
+                    // See if we can do better than GenericCollection if that's the situation we're in.
+                    if (propertyType == ParameterDataType.GenericCollection)
+                    {
+                        JsonProperty schemaProperty;
+                        if (null != containerSchema && containerSchema.ExpectedProperties.TryGetValue(name, out schemaProperty))
+                        {
+                            // Use the parent schema's type indication
+                            propertyType = ParameterDataType.CollectionOfType(schemaProperty.Type);
+                        }
+                    }
+
+                    Dictionary<string, JsonProperty> members = null;
+                    if (propertyType.IsObject || propertyType.IsCollection)
+                    {
+                        var firstValue = (JObject)value.First;
+                        members = firstValue != null ? ObjectToSchema(firstValue) : new Dictionary<string, JsonProperty>();
+                    }
+
+                    return new JsonProperty { Name = name, Type = propertyType, OriginalValue = value.ToString(), CustomMembers = members };
+                }
                 case JTokenType.Null:
-                    return new JsonProperty { Name = name, Type = ParameterDataType.Object, IsArray = false, OriginalValue = null };
+                    return new JsonProperty { Name = name, Type = ParameterDataType.GenericObject, OriginalValue = null };
                 default:
                     Console.WriteLine("Unsupported: Property {0} is of type {1} which is not currently supported.", name, value.Type);
                     throw new NotSupportedException(string.Format("Unsupported: Property {0} is of type {1} which is not currently supported.", name, value.Type));

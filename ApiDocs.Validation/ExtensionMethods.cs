@@ -171,10 +171,10 @@ namespace ApiDocs.Validation
                 int index = headers.IndexOf(headerName);
                 if (index >= 0 && index < rowValues.Length)
                 {
-                    // Check to see if we need to clean up / remove any ` marks
+                    // Check to see if we need to clean up / remove any formatting marks
                     string tableCellContents = rowValues[index];
                     if (null != tableCellContents)
-                        return tableCellContents.Trim(' ', '`');
+                        return tableCellContents.Trim(' ', '`', '*', '_');
                     else
                         return null;
                 }
@@ -196,28 +196,60 @@ namespace ApiDocs.Validation
             return -1;
         }
 
-        public static ParameterDataType ToDataType(this string value, Action<ValidationError> addErrorAction = null)
+        /// <summary>
+        /// Helper method that converts a string value into a ParameterDataType instance
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="addErrorAction"></param>
+        /// <returns></returns>
+        public static ParameterDataType ParseParameterDataType(
+            this string value,
+            Action<ValidationError> addErrorAction = null)
         {
-            ParameterDataType output;
-            if (Enum.TryParse(value, true, out output))
-                return output;
-            if (null == value)
-                return ParameterDataType.Object;
-            if (value.ToLower().Contains("string"))
-                return ParameterDataType.String;
-            if (value.Equals("etag", StringComparison.OrdinalIgnoreCase))
-                return ParameterDataType.String;
-            if (value.Equals("range", StringComparison.OrdinalIgnoreCase))
-                return ParameterDataType.String;
-            if (value.ToLower().Contains("timestamp"))
-                return ParameterDataType.String;
-
-            if (null != addErrorAction)
+            var lowerValue = value.ToLowerInvariant();
+            switch (lowerValue)
             {
-                addErrorAction(new ValidationWarning(ValidationErrorCode.TypeConversionFailure, "Couldn't convert '{0}' into Json.JsonDataType enumeration. Assuming Object type.", value));
+                case "string":
+                    return ParameterDataType.String;
+                case "int64":
+                case "number":
+                    return ParameterDataType.Int64;
+                case "int32":
+                    return ParameterDataType.Int32;
+                case "double":
+                    return ParameterDataType.Double;
+                case "float":
+                    return ParameterDataType.Float;
+                case "guid":
+                    return ParameterDataType.Guid;
+                case "boolean":
+                    return ParameterDataType.Boolean;
+                case "datetime":
+                case "datetimeoffset":
+                    return ParameterDataType.DateTimeOffset;
+                case "etag":
+                case "range":
+                case "url":
+                    return ParameterDataType.String;
+                case "timestamp":
+                    return ParameterDataType.DateTimeOffset;
+                default:
+
+                    if (lowerValue.Contains("string"))
+                        return ParameterDataType.String;
+                    if (lowerValue.Contains("timestamp"))
+                        return ParameterDataType.DateTimeOffset;
+                    if (lowerValue.Contains("url") || lowerValue.Contains("uri"))
+                        return ParameterDataType.String;
+
+                    if (null != addErrorAction)
+                    {
+                        addErrorAction(new ValidationWarning(ValidationErrorCode.TypeConversionFailure, "Couldn't convert '{0}' into understood data type. Assuming Object type.", value));
+                    }
+                    return ParameterDataType.GenericObject;
             }
-            return ParameterDataType.Object;
         }
+
 
         public static bool IsRequired(this string description)
         {
