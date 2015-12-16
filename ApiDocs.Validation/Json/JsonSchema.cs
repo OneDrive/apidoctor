@@ -466,9 +466,7 @@ namespace ApiDocs.Validation.Json
                 throw new SchemaBuildException("Cannot use simple array valiation without array types", null);
             }
 
-            if (actualProperty.Type == expectedProperty.Type && 
-                !expectedProperty.Type.IsObject && 
-                !expectedProperty.Type.IsCollection)
+            if (actualProperty.Type == expectedProperty.Type)
             {
                 return PropertyValidationOutcome.Ok;
             }
