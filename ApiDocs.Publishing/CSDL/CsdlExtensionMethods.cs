@@ -23,38 +23,22 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-namespace ApiDocs.Validation.OData
+namespace ApiDocs.Publishing.CSDL
 {
-    using System;
-    using System.Linq;
-    using System.Xml.Linq;
-    using System.Collections.Generic;
-    using System.Xml.Serialization;
+    using ApiDocs.Validation;
 
-    [XmlRoot("EntityContainer")]
-    public class EntityContainer
+    internal static class CsdlExtensionMethods
     {
-        
-        public string Name { get; set; }
-        public List<EntitySet> EntitySets { get; set; }
-        public List<Singleton> Singletons { get; set; }
 
-        public static EntityContainer FromXml(XElement xml)
+        public static string RequestUriPathOnly(this MethodDefinition method)
         {
-            typeof(EntityContainer).ThrowIfWrongElement(xml);
+            var path = method.Request.FirstLineOnly().TextBetweenCharacters(' ', '?').TrimEnd('/');
 
-            EntityContainer obj = new EntityContainer
-            {
-                Name = xml.AttributeValue("Name"),
-                EntitySets = (from e in xml.Elements()
-                              where e.Name.LocalName == typeof(EntitySet).XmlElementName()
-                              select EntitySet.FromXml(e)).ToList(),
-                Singletons = (from e in xml.Elements()
-                              where e.Name.LocalName == typeof(Singleton).XmlElementName()
-                              select Singleton.FromXml(e)).ToList()
-            };
-            return obj;
+            // Normalize variables in the request path
+            path = path.ReplaceTextBetweenCharacters('{', '}', "var");
+            path = path.ReplaceTextBetweenCharacters(':', ':', "/{path}");
+
+            return path;
         }
-
     }
 }

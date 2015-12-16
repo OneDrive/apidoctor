@@ -79,7 +79,52 @@ namespace ApiDocs.Publishing.CSDL
                 }
             }
 
+            // Figure out the EntityCollection
+            BuildEntityCollection(edmx);
+
             return edmx;
+        }
+
+        private void BuildEntityCollection(EntityFramework edmx)
+        {
+            Dictionary<string, string> uniqueRequestPaths = new Dictionary<string, string>();
+            foreach (var m in Documents.Methods)
+            {
+                if (m.ExpectedResponseMetadata.ExpectError)
+                    continue;
+
+                var path = m.RequestUriPathOnly();
+                if (!path.StartsWith("/"))
+                    continue;
+                var responseType = m.ExpectedResponseMetadata.ResourceType;
+                uniqueRequestPaths[path] = responseType;
+            }
+
+            var resourcePaths = uniqueRequestPaths.Keys.OrderBy(x => x).ToArray();
+
+            EntityContainer container = new EntityContainer();
+            container.EntitySets = new List<EntitySet>();
+            foreach (var path in resourcePaths)
+            {
+                // EntitySet is something in the format of /name/{var}
+                // Singleton is something in the format of /name
+                if (path.EndsWith("/{var}"))
+                {
+                    container.EntitySets.Add(
+                        new EntitySet
+                        {
+                            Name = path.TextBetweenCharacters('/', '/'),
+                            EntityType = uniqueRequestPaths[path]
+                        });
+                }
+                Console.WriteLine("{0} --> {1}", path, uniqueRequestPaths[path]);
+            }
+
+            var largestSchema = (from x in edmx.DataServices.Schemas
+                orderby x.Entities.Count descending
+                select x).First();
+            container.Name = largestSchema.Namespace;
+            largestSchema.EntityContainers.Add(container);
         }
 
         private Schema FindOrCreateSchemaForNamespace(string ns, EntityFramework edmx)

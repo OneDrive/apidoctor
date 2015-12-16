@@ -335,6 +335,19 @@ namespace ApiDocs.Validation.OData
                 WriteEdmxFragment(set, writer);
             }
 
+            foreach (var singleton in container.Singletons)
+            {
+                WriteEdmxFragment(singleton, writer);
+            }
+
+            writer.WriteEndElement();
+        }
+
+        private static void WriteEdmxFragment(Singleton singleton, System.Xml.XmlWriter writer)
+        {
+            writer.WriteStartElement(singleton.GetType().XmlElementName(), EdmNamespace);
+            writer.WriteAttributeString("Name", singleton.Name);
+            writer.WriteAttributeString("Type", singleton.Type);
             writer.WriteEndElement();
         }
 

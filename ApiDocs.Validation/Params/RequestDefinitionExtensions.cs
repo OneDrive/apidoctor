@@ -97,7 +97,6 @@ namespace ApiDocs.Validation.Params
             return request;
         }
 
-
         /// <summary>
         /// Updates an HttpRequest with values from the request-parameters dictionary
         /// </summary>

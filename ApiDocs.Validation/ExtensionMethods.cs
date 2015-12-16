@@ -372,17 +372,59 @@ namespace ApiDocs.Validation
         /// <param name="first"></param>
         /// <param name="second"></param>
         /// <returns></returns>
-        internal static string TextBetweenCharacters(this string source, char first, char second)
+        public static string TextBetweenCharacters(this string source, char first, char second)
         {
             int startIndex = source.IndexOf(first);
             if (startIndex == -1)
                 return source;
 
-            int endIndex = source.IndexOf(second, startIndex);
+            int endIndex = source.IndexOf(second, startIndex+1);
             if (endIndex == -1)
                 return source.Substring(startIndex+1);
             else
                 return source.Substring(startIndex+1, endIndex - startIndex - 1);
+        }
+
+        /// <summary>
+        /// Replaces the text between first and second characters with the value of replacement. Does this for all instances of the first/second in the string.
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="first"></param>
+        /// <param name="second"></param>
+        /// <param name="replacement"></param>
+        /// <returns></returns>
+        public static string ReplaceTextBetweenCharacters(
+            this string source,
+            char first,
+            char second,
+            string replacement,
+            bool requireSecondChar = true)
+        {
+            StringBuilder output = new StringBuilder(source);
+            for (int i = 0; i < output.Length; i++)
+            {
+                if (output[i] == first)
+                {
+                    bool foundLastChar = false;
+                    int j = i + 1;
+                    for (; j < output.Length; j++)
+                    {
+                        if (output[j] == second)
+                        {
+                            foundLastChar = true;
+                            break;
+                        }
+                    }
+                    if (foundLastChar || !requireSecondChar)
+                    {
+                        output.Remove(i + 1, j - i - 1);
+                        output.Insert(i + 1, replacement);
+                        i += replacement.Length;
+                    }
+                }
+            }
+
+            return output.ToString();
         }
 
 

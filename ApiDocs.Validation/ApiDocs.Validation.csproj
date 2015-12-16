@@ -65,6 +65,7 @@
     <Compile Include="OData\EntityFramework.cs" />
     <Compile Include="OData\Key.cs" />
     <Compile Include="OData\PropertyRef.cs" />
+    <Compile Include="OData\Singleton.cs" />
     <Compile Include="OData\XmlParseHelper.cs" />
     <Compile Include="PageAnnotation.cs" />
     <Compile Include="ParameterDataType.cs" />

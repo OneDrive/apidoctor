@@ -31,27 +31,21 @@ namespace ApiDocs.Validation.OData
     using System.Collections.Generic;
     using System.Xml.Serialization;
 
-    [XmlRoot("EntityContainer")]
-    public class EntityContainer
+    [XmlRoot("Singleton")]
+    public class Singleton
     {
-        
+
         public string Name { get; set; }
-        public List<EntitySet> EntitySets { get; set; }
-        public List<Singleton> Singletons { get; set; }
+        public string Type { get; set; }
 
-        public static EntityContainer FromXml(XElement xml)
+        public static Singleton FromXml(XElement xml)
         {
-            typeof(EntityContainer).ThrowIfWrongElement(xml);
+            typeof(Singleton).ThrowIfWrongElement(xml);
 
-            EntityContainer obj = new EntityContainer
+            Singleton obj = new Singleton
             {
                 Name = xml.AttributeValue("Name"),
-                EntitySets = (from e in xml.Elements()
-                              where e.Name.LocalName == typeof(EntitySet).XmlElementName()
-                              select EntitySet.FromXml(e)).ToList(),
-                Singletons = (from e in xml.Elements()
-                              where e.Name.LocalName == typeof(Singleton).XmlElementName()
-                              select Singleton.FromXml(e)).ToList()
+                Type = xml.AttributeValue("Type")
             };
             return obj;
         }
