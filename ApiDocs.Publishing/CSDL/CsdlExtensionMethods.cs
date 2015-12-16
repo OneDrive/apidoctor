@@ -36,7 +36,9 @@ namespace ApiDocs.Publishing.CSDL
 
             // Normalize variables in the request path
             path = path.ReplaceTextBetweenCharacters('{', '}', "var");
-            path = path.ReplaceTextBetweenCharacters(':', ':', "/{path}");
+
+            // Rewrite path syntax into what it logically means
+            path = path.ReplaceTextBetweenCharacters(':', ':', "/children/{var}", requireSecondChar: false, removeTargetChars: true);
 
             return path;
         }

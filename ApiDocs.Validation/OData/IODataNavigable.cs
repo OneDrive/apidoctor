@@ -19,7 +19,54 @@ namespace ApiDocs.Validation.OData
         /// Returns the next component assuming that an entitytype key is provided
         /// </summary>
         /// <returns></returns>
-        IODataNavigable NavigateByEntityTypeKey();
+        IODataNavigable NavigateByEntityTypeKey(EntityFramework edmx);
+
+        string TypeIdentifier { get; }
+    }
+
+    internal class ODataCollection : IODataNavigable
+    {
+        public string TypeIdentifier { get; internal set; }
+
+        public ODataCollection(string typeIdentifier)
+        {
+            this.TypeIdentifier = typeIdentifier;
+        }
+
+        public IODataNavigable NavigateByUriComponent(string component, EntityFramework edmx)
+        {
+            throw new NotSupportedException();
+        }
+
+        public IODataNavigable NavigateByEntityTypeKey(EntityFramework edmx)
+        {
+            return edmx.FindTypeWithIdentifier(this.TypeIdentifier) as IODataNavigable;
+        }
+    }
+
+    public class ODataSimpleType : IODataNavigable
+    {
+        public SimpleDataType Type { get; internal set; }
+
+        public ODataSimpleType(SimpleDataType type)
+        {
+            this.Type = type;
+        }
+
+        public IODataNavigable NavigateByUriComponent(string component, EntityFramework edmx)
+        {
+            throw new NotSupportedException();
+        }
+
+        public IODataNavigable NavigateByEntityTypeKey(EntityFramework edmx)
+        {
+            throw new NotSupportedException();
+        }
+
+        public string TypeIdentifier
+        {
+            get { return Type.ODataResourceName(); }
+        }
     }
 
     public class ODataTargetInfo
@@ -39,6 +86,7 @@ namespace ApiDocs.Validation.OData
         EntitySet,
         Action,
         Function,
-        EntityContainer
+        EntityContainer,
+        SimpleType
     }
 }

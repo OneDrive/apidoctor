@@ -32,6 +32,21 @@ namespace ApiDocs.Validation.OData
 
     public static class ExtensionMethods
     {
+        private static readonly Dictionary<string, SimpleDataType> ODataSimpleTypeMap = new Dictionary<string, SimpleDataType>()
+        {
+            { "Edm.String", SimpleDataType.String },
+            { "Edm.Int64", SimpleDataType.Int64 },
+            { "Edm.Int32", SimpleDataType.Int32 },
+            { "Edm.Boolean", SimpleDataType.Boolean },
+            { "Edm.DateTimeOffset", SimpleDataType.DateTimeOffset },
+            { "Edm.Double", SimpleDataType.Double },
+            { "Edm.Float", SimpleDataType.Float },
+            { "Edm.Guid", SimpleDataType.Guid },
+            { "Edm.TimeSpan", SimpleDataType.TimeSpan },
+            { "Edm.Stream", SimpleDataType.Stream },
+            { "Edm.Object", SimpleDataType.Object }
+        };
+
         internal static bool ToBoolean(this string source)
         {
             if (string.IsNullOrEmpty(source)) return false;
@@ -94,20 +109,43 @@ namespace ApiDocs.Validation.OData
 
         internal static ComplexType FindTypeWithIdentifier(this EntityFramework edmx, string identifier)
         {
-            if (identifier.StartsWith("Collection("))
-            {
-                var innerId = identifier.Substring(11, identifier.Length - 12);
-                return edmx.FindTypeWithIdentifier(innerId);
-            }
+            var foundType = edmx.DataServices.Schemas.FindTypeWithIdentifier(identifier);
+            if (foundType != null)
+                return foundType;
 
-            return edmx.DataServices.Schemas.FindTypeWithIdentifier(identifier);
+            throw new KeyNotFoundException("Couldn't resolve type identifier: " + identifier);
         }
 
+        internal static IODataNavigable LookupNavigableType(this EntityFramework edmx, string identifier)
+        {
+            var foundType = edmx.DataServices.Schemas.FindTypeWithIdentifier(identifier);
+            if (null != foundType)
+            {
+                return (IODataNavigable)foundType;
+            }
+
+            SimpleDataType simpleType = identifier.ToODataSimpleType();
+            if (simpleType != SimpleDataType.Object)
+                return new ODataSimpleType(simpleType);
+
+            throw new InvalidOperationException("Could not resolve type identifier: " + identifier);
+        }
+
+        /// <summary>
+        /// Resolve an IODataNavigable instance into a type identifier string.
+        /// </summary>
+        /// <param name="edmx"></param>
+        /// <param name="type"></param>
+        /// <returns></returns>
         public static string LookupIdentifierForType(this EntityFramework edmx, IODataNavigable type)
         {
+            if (type is ODataSimpleType)
+            {
+                return ((ODataSimpleType)type).Type.ODataResourceName();
+            }
+
             foreach (var schema in edmx.DataServices.Schemas)
             {
-
                 if (type is EntityType)
                 {
                     foreach (var et in schema.Entities)
@@ -127,6 +165,93 @@ namespace ApiDocs.Validation.OData
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Returns "oneDrive" for "oneDrive.item" input.
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public static string NamespaceOnly(this string type)
+        {
+            var trimPoint = type.LastIndexOf('.');
+            if (trimPoint >= 0)
+                return type.Substring(0, trimPoint);
+            else
+                return type;
+        }
+
+
+        /// <summary>
+        /// Returns "item" for "oneDrive.item" input.
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public static string TypeOnly(this string type)
+        {
+            var trimPoint = type.LastIndexOf('.');
+            return type.Substring(trimPoint + 1);
+        }
+
+        /// <summary>
+        /// Convert a ParameterDataType instance into the OData equivelent.
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public static string ODataResourceName(this ParameterDataType type)
+        {
+
+            if (type.Type == SimpleDataType.Object && !string.IsNullOrEmpty(type.CustomTypeName))
+            {
+                return type.CustomTypeName;
+            }
+
+            if (type.Type == SimpleDataType.Collection)
+            {
+                return string.Format(
+                    "Collection({0})",
+                    type.CollectionResourceType.ODataResourceName(type.CustomTypeName));
+            }
+
+            return type.Type.ODataResourceName();
+        }
+
+
+
+
+        /// <summary>
+        /// Convert a simple type into OData equivelent. If Object is specified, a customDataType can be returned instead.
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="customDataType"></param>
+        /// <returns></returns>
+        public static string ODataResourceName(this SimpleDataType type, string customDataType = null)
+        {
+            if (type == SimpleDataType.Object && !string.IsNullOrEmpty(customDataType))
+                return customDataType;
+
+            string typeName = (from kv in ODataSimpleTypeMap where kv.Value == type select kv.Key).SingleOrDefault();
+            if (null == typeName)
+            {
+                throw new NotSupportedException(string.Format("Attempted to convert an unsupported SimpleDataType into OData: {0}", type));
+            }
+            return typeName;
+        }
+
+        /// <summary>
+        /// Convert from a typeName like Edm.String back into the internal SimpleDataType enum.
+        /// </summary>
+        /// <param name="typeName"></param>
+        /// <returns></returns>
+        public static SimpleDataType ToODataSimpleType(this string typeName)
+        {
+            SimpleDataType? dataType =
+                (from kv in ODataSimpleTypeMap where kv.Key == typeName select kv.Value).SingleOrDefault();
+
+            if (dataType.HasValue)
+                return dataType.Value;
+
+            return SimpleDataType.Object;
         }
     }
 }

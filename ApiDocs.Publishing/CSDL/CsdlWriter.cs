@@ -124,9 +124,15 @@ namespace ApiDocs.Publishing.CSDL
                         target.Name = requestTarget.Name.TypeOnly();
                         target.IsBound = true;
                         target.Parameters.Add(new Parameter { Name = "bindingParameter", Type = requestTarget.QualifiedType, Nullable = false });
-                        if (method.RequestBodyParameters.Count > 0)
+                        foreach (var param in method.RequestBodyParameters)
                         {
-                            // TODO: Convert RequestBodyParameters into Parameters
+                            target.Parameters.Add(
+                                new Parameter
+                                {
+                                    Name = param.Name,
+                                    Type = param.Type.ODataResourceName(),
+                                    Nullable = (param.Required.HasValue ? param.Required.Value : false)
+                                });
                         }
                     
                         if (method.ExpectedResponseMetadata.Type != null)
@@ -143,6 +149,7 @@ namespace ApiDocs.Publishing.CSDL
                 }
                 catch (Exception ex)
                 {
+                    Console.WriteLine("Couldn't serialize request for path {0} into EDMX: {1}", path, ex.Message);
                     continue;
                 }
             }
@@ -158,7 +165,7 @@ namespace ApiDocs.Publishing.CSDL
         /// <returns></returns>
         private static ODataTargetInfo ParseRequestTargetType(string requestPath, MethodDefinition requestMethod, EntityFramework edmx)
         {
-            string[] requestParts = requestPath.Substring(1).Split('/');
+            string[] requestParts = requestPath.Substring(1).Split(new char[] { '/'});
 
             EntityContainer entryPoint = (from s in edmx.DataServices.Schemas
                                           where s.EntityContainers.Count > 0
@@ -174,11 +181,10 @@ namespace ApiDocs.Publishing.CSDL
                 IODataNavigable nextObject = null;
                 if (uriPart == "{var}")
                 {
-                    nextObject = currentObject.NavigateByEntityTypeKey();
+                    nextObject = currentObject.NavigateByEntityTypeKey(edmx);
                 }
                 else
                 {
-                    // BUG: This is flawed, because even if we're navigation to a Collection(item), we just get item.
                     nextObject = currentObject.NavigateByUriComponent(uriPart, edmx);
                 }
 
@@ -194,7 +200,8 @@ namespace ApiDocs.Publishing.CSDL
                 }
                 else if (nextObject == null)
                 {
-                    throw new InvalidOperationException("Uri path requires navigating into unknown targets.");
+                    throw new InvalidOperationException(
+                        string.Format("Uri path requires navigating into unknown object hierarchy: missing property '{0}' on '{1}'", uriPart, currentObject.TypeIdentifier));
                 }
                 currentObject = nextObject;
             }
@@ -215,6 +222,8 @@ namespace ApiDocs.Publishing.CSDL
                 response.Classification = ODataTargetClassification.Function;
             if (currentObject is EntityContainer)
                 response.Classification = ODataTargetClassification.EntityContainer;
+            if (currentObject is ODataSimpleType)
+                response.Classification = ODataTargetClassification.SimpleType;
 
             return response;
         }
@@ -389,93 +398,6 @@ namespace ApiDocs.Publishing.CSDL
         }
 
 
-    }
-
-    internal static class ODataExtensionMethods
-    {
-        /// <summary>
-        /// Returns "oneDrive" for "oneDrive.item" input.
-        /// </summary>
-        /// <param name="type"></param>
-        /// <returns></returns>
-        public static string NamespaceOnly(this string type)
-        {
-            var trimPoint = type.LastIndexOf('.');
-            return type.Substring(0, trimPoint);
-        }
-
-
-        /// <summary>
-        /// Returns "item" for "oneDrive.item" input.
-        /// </summary>
-        /// <param name="type"></param>
-        /// <returns></returns>
-        public static string TypeOnly(this string type)
-        {
-            var trimPoint = type.LastIndexOf('.');
-            return type.Substring(trimPoint + 1);
-        }
-
-        /// <summary>
-        /// Convert a ParameterDataType instance into the OData equivelent.
-        /// </summary>
-        /// <param name="type"></param>
-        /// <returns></returns>
-        public static string ODataResourceName(this ParameterDataType type)
-        {
-
-            if (type.Type == SimpleDataType.Object && !string.IsNullOrEmpty(type.CustomTypeName))
-            {
-                return type.CustomTypeName;
-            }
-
-            if (type.Type == SimpleDataType.Collection)
-            {
-                return string.Format("Collection({0})", type.CollectionResourceType.ODataResourceName(type.CustomTypeName));
-            }
-
-            return type.Type.ODataResourceName();
-        }
-
-        /// <summary>
-        /// Convert a simple type into OData equivelent. If Object is specified, a customDataType can be returned instead.
-        /// </summary>
-        /// <param name="type"></param>
-        /// <param name="customDataType"></param>
-        /// <returns></returns>
-        public static string ODataResourceName(this SimpleDataType type, string customDataType = null)
-        {
-            switch (type)
-            {
-                case SimpleDataType.String:
-                    return "Edm.String";
-                case SimpleDataType.Int64:
-                    return "Edm.Int64";
-                case SimpleDataType.Int32:
-                    return "Edm.Int32";
-                case SimpleDataType.Boolean:
-                    return "Edm.Boolean";
-                case SimpleDataType.DateTimeOffset:
-                    return "Edm.DateTimeOffset";
-                case SimpleDataType.Double:
-                    return "Edm.Double";
-                case SimpleDataType.Float:
-                    return "Edm.Float";
-                case SimpleDataType.Guid:
-                    return "Edm.Guid";
-                case SimpleDataType.TimeSpan:
-                    return "Edm.TimeSpan";
-                case SimpleDataType.Stream:
-                    return "Edm.Stream";
-                case SimpleDataType.Object:
-                    if (string.IsNullOrEmpty(customDataType))
-                        return "Edm.Object";
-                    else
-                        return customDataType;
-                default:
-                    throw new NotSupportedException(string.Format("Attempted to convert an unsupported SimpleDataType into OData: {0}", type));
-            }
-        }
     }
 
 }

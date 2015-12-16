@@ -67,12 +67,20 @@ namespace ApiDocs.Validation.OData
                                            where n.Name == component
                                            select n).FirstOrDefault();
             if (null != navigationPropertyMatch)
-                return edmx.FindTypeWithIdentifier(navigationPropertyMatch.Type) as IODataNavigable;
+            {
+                var identifier = navigationPropertyMatch.Type;
+                if (identifier.StartsWith("Collection("))
+                {
+                    var innerId = identifier.Substring(11, identifier.Length - 12);
+                    return new ODataCollection(innerId);
+                }
+                return edmx.LookupNavigableType(identifier);
+            }
 
             return base.NavigateByUriComponent(component, edmx);
         }
 
-        public override IODataNavigable NavigateByEntityTypeKey()
+        public override IODataNavigable NavigateByEntityTypeKey(EntityFramework edmx)
         {
             throw new NotImplementedException();
         }

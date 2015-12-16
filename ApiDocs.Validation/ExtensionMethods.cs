@@ -401,7 +401,8 @@ namespace ApiDocs.Validation
             char first,
             char second,
             string replacement,
-            bool requireSecondChar = true)
+            bool requireSecondChar = true, 
+            bool removeTargetChars = false)
         {
             StringBuilder output = new StringBuilder(source);
             for (int i = 0; i < output.Length; i++)
@@ -420,8 +421,17 @@ namespace ApiDocs.Validation
                     }
                     if (foundLastChar || !requireSecondChar)
                     {
-                        output.Remove(i + 1, j - i - 1);
-                        output.Insert(i + 1, replacement);
+                        if (removeTargetChars)
+                        {
+                            output.Remove(i, j - i + (foundLastChar ? 1 : 0));
+                            output.Insert(i, replacement);
+                        }
+                        else
+                        {
+                            output.Remove(i + 1, j - i - (foundLastChar ? 1 : 0));
+                            output.Insert(i + 1, replacement);
+                        }
+                        
                         i += replacement.Length;
                     }
                 }

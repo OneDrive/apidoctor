@@ -47,13 +47,14 @@ namespace ApiDocs.Validation.OData
             typeof(ComplexType).ThrowIfWrongElement(xml);
 
             var obj = new ComplexType { Name = xml.AttributeValue("Name") };
-            obj.Properties.AddRange(from e in xml.Elements()
-                                    where e.Name.LocalName == "Property"
-                                    select Property.FromXml(e));
+            obj.Properties.AddRange(
+                from e in xml.Elements()
+                where e.Name.LocalName == "Property"
+                select Property.FromXml(e));
             return obj;
         }
 
-        public virtual IODataNavigable NavigateByEntityTypeKey()
+        public virtual IODataNavigable NavigateByEntityTypeKey(EntityFramework edmx)
         {
             throw new NotSupportedException("ComplexType cannot be navigated by key.");
         }
@@ -61,14 +62,25 @@ namespace ApiDocs.Validation.OData
         public virtual IODataNavigable NavigateByUriComponent(string component, EntityFramework edmx)
         {
             var propertyMatch = (from p in this.Properties
-                                 where p.Name == component
-                                 select p).FirstOrDefault();
+                where p.Name == component
+                select p).FirstOrDefault();
             if (null != propertyMatch)
-                return edmx.FindTypeWithIdentifier(propertyMatch.Type) as IODataNavigable;
+            {
+                var identifier = propertyMatch.Type;
+                if (identifier.StartsWith("Collection("))
+                {
+                    var innerId = identifier.Substring(11, identifier.Length - 12);
+                    return new ODataCollection(innerId);
+                }
+                return edmx.FindTypeWithIdentifier(identifier) as IODataNavigable;
+            }
 
             return null;
         }
 
-        
+        public string TypeIdentifier
+        {
+            get { return Name; }
+        }
     }
 }

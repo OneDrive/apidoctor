@@ -72,7 +72,8 @@ namespace ApiDocs.Validation.OData
                              select e).FirstOrDefault();
             if (null != entitySet)
             {
-                targetType = entitySet.EntityType;
+                // EntitySet is always a collection of an item type
+                targetType = "Collection(" + entitySet.EntityType + ")";
             }
             else
             {
@@ -88,15 +89,26 @@ namespace ApiDocs.Validation.OData
 
             if (targetType != null)
             {
+                if (targetType.StartsWith("Collection("))
+                {
+                    var innerId = targetType.Substring(11, targetType.Length - 12);
+                    return new ODataCollection(innerId);
+                }
+
                 return edmx.FindTypeWithIdentifier(targetType) as IODataNavigable;
             }
 
             return null;
         }
 
-        public IODataNavigable NavigateByEntityTypeKey()
+        public IODataNavigable NavigateByEntityTypeKey(EntityFramework edmx)
         {
             throw new NotSupportedException();
+        }
+
+        public string TypeIdentifier
+        {
+            get { return Name; }
         }
     }
 }
