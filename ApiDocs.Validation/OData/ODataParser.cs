@@ -35,6 +35,8 @@ namespace ApiDocs.Validation.OData
     using System.Xml.Linq;
     using Newtonsoft.Json;
     using System.Text;
+    using System.Xml;
+
     /// <summary>
     /// Converts OData input into json examples which can be validated against our 
     /// ResourceDefinitions in a DocSet.
@@ -267,6 +269,34 @@ namespace ApiDocs.Validation.OData
                 WriteEdmxFragment(action, writer);
             }
 
+            foreach (var term in schema.Terms)
+            {
+                WriteEdmxFragment(term, writer);
+            }
+
+            writer.WriteEndElement();
+        }
+
+        private static void WriteEdmxFragment(Term term, XmlWriter writer)
+        {
+            writer.WriteStartElement(term.GetType().XmlElementName(), EdmNamespace);
+            writer.WriteAttributeString("Name", term.Name);
+            writer.WriteAttributeString("Type", term.Type);
+            writer.WriteAttributeString("AppliesTo", term.AppliesTo);
+
+            foreach (var annotation in term.Annotations)
+            {
+                WriteEdmxFragment(annotation, writer);
+            }
+
+            writer.WriteEndElement();
+        }
+
+        private static void WriteEdmxFragment(Annotation annotation, XmlWriter writer)
+        {
+            writer.WriteStartElement(annotation.GetType().XmlElementName(), EdmNamespace);
+            writer.WriteAttributeString("Term", annotation.Term);
+            writer.WriteAttributeString("String", annotation.String);
             writer.WriteEndElement();
         }
 

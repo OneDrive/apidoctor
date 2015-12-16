@@ -629,10 +629,12 @@ namespace ApiDocs.Validation
                     switch (table.Type)
                     {
                         case TableBlockType.ResourcePropertyDescriptions:
+                        case TableBlockType.ResourceNavigationPropertyDescriptions:
                             // Merge information found in the resource property description table with the existing resources
                             MergeParametersIntoCollection(
                                 onlyResource.Parameters,
-                                table.Rows.Cast<ParameterDefinition>());
+                                table.Rows.Cast<ParameterDefinition>(), 
+                                table.Type == TableBlockType.ResourceNavigationPropertyDescriptions);
                             break;
                     }
                 }

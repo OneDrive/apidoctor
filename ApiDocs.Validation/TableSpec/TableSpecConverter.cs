@@ -80,6 +80,9 @@ namespace ApiDocs.Validation.TableSpec
                 case TableBlockType.ResponseObjectProperties:
                     items.AddRange(ParseParameterTable(tableShape, ParameterLocation.JsonObject));
                     break;
+                case TableBlockType.ResourceNavigationPropertyDescriptions:
+                    items.AddRange(ParseParameterTable(tableShape, ParameterLocation.JsonObject, true));
+                    break;
 
                 case TableBlockType.HttpHeaders:
                     items.AddRange(ParseHeadersTable(tableShape));
@@ -129,16 +132,17 @@ namespace ApiDocs.Validation.TableSpec
             return records;
         }
 
-        private static IEnumerable<ParameterDefinition> ParseParameterTable(IMarkdownTable table, ParameterLocation location)
+        private static IEnumerable<ParameterDefinition> ParseParameterTable(IMarkdownTable table, ParameterLocation location, bool navigationProperties = false)
         {
             var records = from r in table.RowValues
                           select new ParameterDefinition
                           {
-                              Name = r.ValueForColumn(table, "Parameter Name", "Property Name", "Name"),
+                              Name = r.ValueForColumn(table, "Parameter Name", "Property Name", "Name", "Relationship name"),
                               Type = r.ValueForColumn(table, "Type", "Value").ParseParameterDataType(),
                               Description = r.ValueForColumn(table, "Description"),
+                              Required = r.ValueForColumn(table, "Description").IsRequired(),
                               Location = location,
-                              Required = r.ValueForColumn(table, "Description").IsRequired()
+                              IsNavigatable = navigationProperties
                           };
             return records;
         }
@@ -185,6 +189,7 @@ namespace ApiDocs.Validation.TableSpec
             { "Error Response", TableBlockType.ErrorCodes },
             { "Path Parameters", TableBlockType.PathParameters },
             { "Properties", TableBlockType.ResourcePropertyDescriptions },
+            { "Relationships", TableBlockType.ResourceNavigationPropertyDescriptions },
             { "Request Body", TableBlockType.RequestObjectProperties },
             { "Query String Parameters", TableBlockType.QueryStringParameters },
             { "Request Headers", TableBlockType.HttpHeaders },
@@ -257,7 +262,7 @@ namespace ApiDocs.Validation.TableSpec
         /// Collection of ParameterDefinition objects for the URL path
         /// </summary>
         PathParameters,
-        AuthScopes
-
+        AuthScopes,
+        ResourceNavigationPropertyDescriptions
     }
 }

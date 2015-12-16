@@ -112,6 +112,12 @@ namespace ApiDocs.Validation
         public string KeyPropertyName { get; set; }
 
         /// <summary>
+        /// Use this property to delcare that a custom function request is idempotent (has no side-effects).
+        /// </summary>
+        [JsonProperty("idempotent", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public bool IsIdempotent { get; set; }
+
+        /// <summary>
         /// Convert a JSON string into an instance of this class
         /// </summary>
         /// <param name="json"></param>
@@ -128,6 +134,13 @@ namespace ApiDocs.Validation
                 return new CodeBlockAnnotation() { BlockType = CodeBlockType.Ignored };
             }
         }
+
+        public ParameterDataType Type
+        {
+            get { return new ParameterDataType(this.ResourceType, this.IsCollection); }
+        }
+
+        
     }
 
     public enum CodeBlockType

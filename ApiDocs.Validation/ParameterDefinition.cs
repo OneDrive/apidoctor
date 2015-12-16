@@ -65,6 +65,11 @@ namespace ApiDocs.Validation
         public string OriginalValue { get; set; }
 
         /// <summary>
+        /// Indicates that the parameter should be represented as a navigation property
+        /// </summary>
+        public bool IsNavigatable { get; internal set; }
+
+        /// <summary>
         /// Merge values from the param object into this object.
         /// </summary>
         /// <param name="param"></param>
@@ -72,6 +77,8 @@ namespace ApiDocs.Validation
         {
             if (!this.Required.HasValue && param.Required.HasValue)
                 this.Required = param.Required;
+
+            this.IsNavigatable = this.IsNavigatable | param.IsNavigatable;
 
             if (this.Type != param.Type)
             {

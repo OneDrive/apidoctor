@@ -305,6 +305,7 @@ namespace ApiDocs.Validation
         DateTimeOffset,
         Guid,
         TimeSpan,
+        Stream,
 
         /// <summary>
         /// Specifies that the value is an array of another data type

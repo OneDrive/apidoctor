@@ -31,20 +31,18 @@ namespace ApiDocs.Validation.OData
     using System.Xml.Linq;
     using System.Xml.Serialization;
 
+    /// <summary>
+    /// Function in OData is not allowed to modify data
+    /// or have side effects (must be idempotent). A 
+    /// function must return data back to the caller (ReturnType).
+    /// </summary>
     [XmlRoot("Function")]
-    public class Function
+    public class Function : ActionOrFunctionBase
     {
-        public Function()
+        public Function() : base()
         {
-            this.Parameters = new List<Parameter>();
         }
 
-        public string Name { get; set; }
-        public bool IsBound { get; set; }
-        public List<Parameter> Parameters { get; set; }
-        public ReturnType ReturnType { get; set; }
-
-        
         public static Function FromXml(XElement xml)
         {
             typeof(Function).ThrowIfWrongElement(xml);

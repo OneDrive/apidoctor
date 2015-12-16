@@ -30,7 +30,7 @@ namespace ApiDocs.Validation.OData
     using System.Linq;
     using System.Xml.Linq;
 
-    internal static class ExtensionMethods
+    public static class ExtensionMethods
     {
         internal static bool ToBoolean(this string source)
         {
@@ -51,23 +51,82 @@ namespace ApiDocs.Validation.OData
             return attribute.Value;
         }
 
+        /// <summary>
+        /// Resovles a fully qualified type identifier within a collection of schema.
+        /// </summary>
+        /// <param name="schemas"></param>
+        /// <param name="identifier"></param>
+        /// <returns></returns>
         internal static ComplexType FindTypeWithIdentifier(this IEnumerable<Schema> schemas, string identifier)
         {
-            string[] parts = identifier.Split('.');
-            if (parts.Length != 2)
+            // onedrive.item
+            int splitIndex = identifier.LastIndexOf('.');
+            if (splitIndex == -1)
                 throw new ArgumentException("identifier should be of format {schema}.{type}");
 
-            string schemaName = parts[0];
-            string typeName = parts[1];
+            string schemaName = identifier.Substring(0, splitIndex);
+            string typeName = identifier.Substring(splitIndex + 1);
 
-            var schema = (from s in schemas where s.Namespace == schemaName select s).FirstOrDefault();
-            if (null == schema) return null;
+            // Resolve the schema first
+            var schema = (from s in schemas
+                          where s.Namespace == schemaName
+                          select s).FirstOrDefault();
+            if (null == schema)
+            {
+                return null;
+            }
 
-            var matchingComplexType = (from ct in schema.ComplexTypes where ct.Name == typeName select ct).FirstOrDefault();
-            if (null != matchingComplexType) return matchingComplexType;
+            // Look for a matching complex type
+            var matchingComplexType = (from ct in schema.ComplexTypes
+                                       where ct.Name == typeName
+                                       select ct).FirstOrDefault();
+            if (null != matchingComplexType)
+            {
+                return matchingComplexType;
+            }
 
-            var matchingEntityType = (from et in schema.Entities where et.Name == typeName select et).FirstOrDefault();
+            // Look for a matching entity type
+            var matchingEntityType = (from et in schema.Entities
+                                      where et.Name == typeName
+                                      select et).FirstOrDefault();
             return matchingEntityType;
+        }
+
+        internal static ComplexType FindTypeWithIdentifier(this EntityFramework edmx, string identifier)
+        {
+            if (identifier.StartsWith("Collection("))
+            {
+                var innerId = identifier.Substring(11, identifier.Length - 12);
+                return edmx.FindTypeWithIdentifier(innerId);
+            }
+
+            return edmx.DataServices.Schemas.FindTypeWithIdentifier(identifier);
+        }
+
+        public static string LookupIdentifierForType(this EntityFramework edmx, IODataNavigable type)
+        {
+            foreach (var schema in edmx.DataServices.Schemas)
+            {
+
+                if (type is EntityType)
+                {
+                    foreach (var et in schema.Entities)
+                    {
+                        if (et == type)
+                            return schema.Namespace + "." + et.Name;
+                    }
+                }
+                else if (type is ComplexType)
+                {
+                    foreach (var ct in schema.ComplexTypes)
+                    {
+                        if (ct == type)
+                            return schema.Namespace + "." + ct.Name;
+                    }
+                }
+            }
+
+            return null;
         }
     }
 }

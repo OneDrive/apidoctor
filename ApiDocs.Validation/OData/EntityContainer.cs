@@ -32,12 +32,19 @@ namespace ApiDocs.Validation.OData
     using System.Xml.Serialization;
 
     [XmlRoot("EntityContainer")]
-    public class EntityContainer
+    public class EntityContainer : IODataNavigable
     {
+
+        public EntityContainer()
+        {
+            this.EntitySets = new List<EntitySet>();
+            this.Singletons = new List<Singleton>();
+        }
         
         public string Name { get; set; }
         public List<EntitySet> EntitySets { get; set; }
         public List<Singleton> Singletons { get; set; }
+
 
         public static EntityContainer FromXml(XElement xml)
         {
@@ -56,5 +63,40 @@ namespace ApiDocs.Validation.OData
             return obj;
         }
 
+        public IODataNavigable NavigateByUriComponent(string component, EntityFramework edmx)
+        {
+            string targetType = null;
+
+            var entitySet = (from e in EntitySets
+                             where e.Name == component
+                             select e).FirstOrDefault();
+            if (null != entitySet)
+            {
+                targetType = entitySet.EntityType;
+            }
+            else
+            {
+                var singleton = (from s in Singletons
+                                 where s.Name == component
+                                 select s).FirstOrDefault();
+
+                if (null != singleton)
+                {
+                    targetType = singleton.Type;
+                }
+            }
+
+            if (targetType != null)
+            {
+                return edmx.FindTypeWithIdentifier(targetType) as IODataNavigable;
+            }
+
+            return null;
+        }
+
+        public IODataNavigable NavigateByEntityTypeKey()
+        {
+            throw new NotSupportedException();
+        }
     }
 }

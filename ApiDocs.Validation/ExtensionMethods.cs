@@ -287,6 +287,9 @@ namespace ApiDocs.Validation
                 case "url":
                     simpleType = SimpleDataType.String;
                     break;
+                case "stream":
+                    simpleType = SimpleDataType.Stream;
+                    break;
             }
 
             // Check to see if this looks like an ISO 8601 date and call it DateTimeOffset if it does

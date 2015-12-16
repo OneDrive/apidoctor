@@ -31,20 +31,18 @@ namespace ApiDocs.Validation.OData
     using System.Xml.Linq;
     using System.Xml.Serialization;
 
+    /// <summary>
+    /// Action in OData is allowed to modify data on the 
+    /// server (can have side-effects). Action does not have to
+    /// return data.
+    /// </summary>
     [XmlRoot("Action")]
-    public class Action
+    public class Action : ActionOrFunctionBase
     {
-        public string Name { get; set; }
-        public bool IsBound { get; set; }
-        public List<Parameter> Parameters { get; set; }
-        public ReturnType ReturnType { get; set; }
-
-        public Action()
+        public Action() : base()
         {
-            this.Parameters = new List<Parameter>();
         }
-
-        
+       
         public static Action FromXml(XElement xml)
         {
             typeof(Action).ThrowIfWrongElement(xml);
@@ -62,5 +60,18 @@ namespace ApiDocs.Validation.OData
             return obj;
         }
 
+    }
+
+    public class ActionOrFunctionBase
+    {
+        public string Name { get; set; }
+        public bool IsBound { get; set; }
+        public List<Parameter> Parameters { get; set; }
+        public ReturnType ReturnType { get; set; }
+
+        protected ActionOrFunctionBase()
+        {
+            this.Parameters = new List<Parameter>();
+        }
     }
 }

@@ -32,6 +32,9 @@ namespace ApiDocs.Validation.OData
     [XmlRoot("Annotation")]
     public class Annotation
     {
+
+        public const string LongDescription = "Org.OData.Core.V1.LongDescription";
+
         public string Term { get; set; }
         public string String { get; set; }
         

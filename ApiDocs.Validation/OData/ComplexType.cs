@@ -32,7 +32,7 @@ namespace ApiDocs.Validation.OData
     using System.Xml.Serialization;
 
     [XmlRoot("ComplexType")]
-    public class ComplexType
+    public class ComplexType : IODataNavigable
     {
         public ComplexType()
         {
@@ -52,5 +52,23 @@ namespace ApiDocs.Validation.OData
                                     select Property.FromXml(e));
             return obj;
         }
+
+        public virtual IODataNavigable NavigateByEntityTypeKey()
+        {
+            throw new NotSupportedException("ComplexType cannot be navigated by key.");
+        }
+
+        public virtual IODataNavigable NavigateByUriComponent(string component, EntityFramework edmx)
+        {
+            var propertyMatch = (from p in this.Properties
+                                 where p.Name == component
+                                 select p).FirstOrDefault();
+            if (null != propertyMatch)
+                return edmx.FindTypeWithIdentifier(propertyMatch.Type) as IODataNavigable;
+
+            return null;
+        }
+
+        
     }
 }

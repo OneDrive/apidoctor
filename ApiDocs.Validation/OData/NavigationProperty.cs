@@ -32,8 +32,12 @@ namespace ApiDocs.Validation.OData
     [XmlRoot("NavigationProperty")]
     public class NavigationProperty : Property
     {
-        public bool ContainsTarget { get; set; }
+        public NavigationProperty()
+        {
+            ContainsTarget = true;
+        }
 
+        public bool ContainsTarget { get; set; }
         
         public static new NavigationProperty FromXml(XElement xml)
         {
