@@ -25,10 +25,6 @@
 
 namespace ApiDocs.Validation.OData
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Xml.Linq;
     using System.Xml.Serialization;
 
     /// <summary>
@@ -36,32 +32,11 @@ namespace ApiDocs.Validation.OData
     /// or have side effects (must be idempotent). A 
     /// function must return data back to the caller (ReturnType).
     /// </summary>
-    [XmlRoot("Function")]
+    [XmlRoot("Function", Namespace = ODataParser.EdmNamespace)]
     public class Function : ActionOrFunctionBase
     {
         public Function() : base()
         {
-        }
-
-        public static Function FromXml(XElement xml)
-        {
-            typeof(Function).ThrowIfWrongElement(xml);
-
-            var obj = new Function
-            {
-                Name = xml.AttributeValue("Name"),
-                IsBound = xml.AttributeValue("IsBound").ToBoolean()
-            };
-
-            obj.Parameters.AddRange(from e in xml.Elements()
-                                    where e.Name.LocalName == typeof(Parameter).XmlElementName()
-                                    select Parameter.FromXml(e));
-
-            obj.ReturnType = (from e in xml.Elements()
-                              where e.Name.LocalName == typeof(ReturnType).XmlElementName()
-                              select ReturnType.FromXml(e)).FirstOrDefault();
-
-            return obj;
         }
     }
 }

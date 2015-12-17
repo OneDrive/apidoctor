@@ -27,11 +27,12 @@ namespace ApiDocs.Validation.OData
 {
     using System;
     using System.Collections.Generic;
+    using System.ComponentModel;
     using System.Linq;
     using System.Xml.Linq;
     using System.Xml.Serialization;
 
-    [XmlRoot("ComplexType")]
+    [XmlRoot("ComplexType", Namespace = ODataParser.EdmNamespace)]
     public class ComplexType : IODataNavigable
     {
         public ComplexType()
@@ -39,20 +40,17 @@ namespace ApiDocs.Validation.OData
             this.Properties = new List<Property>();
         }
 
+        [XmlAttribute("Name")]
         public string Name { get; set; }
+
+        [XmlAttribute("OpenType"), DefaultValue(false)]
+        public bool OpenType { get; set; }
+
+
+
+        [XmlElement("Property", Namespace = ODataParser.EdmNamespace)]
         public List<Property> Properties { get; set; }
 
-        public static ComplexType FromXml(XElement xml)
-        {
-            typeof(ComplexType).ThrowIfWrongElement(xml);
-
-            var obj = new ComplexType { Name = xml.AttributeValue("Name") };
-            obj.Properties.AddRange(
-                from e in xml.Elements()
-                where e.Name.LocalName == "Property"
-                select Property.FromXml(e));
-            return obj;
-        }
 
         public virtual IODataNavigable NavigateByEntityTypeKey(EntityFramework edmx)
         {

@@ -343,7 +343,7 @@ namespace ApiDocs.Validation.Json
                 else if (schemaPropertyDef.Type.IsObject && inputProperty.Type.IsObject)
                 {
                     // Compare the ODataType schema to the custom schema
-                    if (!schemas.ContainsKey(schemaPropertyDef.Type.CustomTypeName))
+                    if (null == schemaPropertyDef.Type.CustomTypeName || !schemas.ContainsKey(schemaPropertyDef.Type.CustomTypeName))
                     {
                         detectedErrors.Add(new ValidationError(ValidationErrorCode.ResourceTypeNotFound, null, "Missing resource: resource {0} was not found (property name '{1}').", schemaPropertyDef.Type.CustomTypeName, inputProperty.Name));
                         return PropertyValidationOutcome.MissingResourceType;

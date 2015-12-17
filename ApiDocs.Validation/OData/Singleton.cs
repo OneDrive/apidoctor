@@ -25,30 +25,16 @@
 
 namespace ApiDocs.Validation.OData
 {
-    using System;
-    using System.Linq;
-    using System.Xml.Linq;
-    using System.Collections.Generic;
     using System.Xml.Serialization;
 
-    [XmlRoot("Singleton")]
+    [XmlRoot("Singleton", Namespace = ODataParser.EdmNamespace)]
     public class Singleton
     {
-
+        [XmlAttribute("Name")]
         public string Name { get; set; }
+
+        [XmlAttribute("Type")]
         public string Type { get; set; }
-
-        public static Singleton FromXml(XElement xml)
-        {
-            typeof(Singleton).ThrowIfWrongElement(xml);
-
-            Singleton obj = new Singleton
-            {
-                Name = xml.AttributeValue("Name"),
-                Type = xml.AttributeValue("Type")
-            };
-            return obj;
-        }
 
     }
 }

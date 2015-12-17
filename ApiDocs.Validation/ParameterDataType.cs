@@ -100,6 +100,11 @@ namespace ApiDocs.Validation
         /// <returns></returns>
         public static ParameterDataType CollectionOfType(ParameterDataType type)
         {
+            if (type.IsCollection)
+            {
+                throw new ArgumentException("Cannot create a collection for a collection");
+            }
+
             return new ParameterDataType
             {
                 Type = SimpleDataType.Collection,

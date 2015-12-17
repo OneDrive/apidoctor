@@ -31,7 +31,7 @@ namespace ApiDocs.Validation.OData
     using System.Collections.Generic;
     using System.Xml.Serialization;
 
-    [XmlRoot("EntityContainer")]
+    [XmlRoot("EntityContainer", Namespace = ODataParser.EdmNamespace)]
     public class EntityContainer : IODataNavigable
     {
 
@@ -41,27 +41,15 @@ namespace ApiDocs.Validation.OData
             this.Singletons = new List<Singleton>();
         }
         
+        [XmlAttribute("Name")]
         public string Name { get; set; }
+
+        [XmlElement("EntitySet")]
         public List<EntitySet> EntitySets { get; set; }
+
+        [XmlElement("Singleton")]
         public List<Singleton> Singletons { get; set; }
 
-
-        public static EntityContainer FromXml(XElement xml)
-        {
-            typeof(EntityContainer).ThrowIfWrongElement(xml);
-
-            EntityContainer obj = new EntityContainer
-            {
-                Name = xml.AttributeValue("Name"),
-                EntitySets = (from e in xml.Elements()
-                              where e.Name.LocalName == typeof(EntitySet).XmlElementName()
-                              select EntitySet.FromXml(e)).ToList(),
-                Singletons = (from e in xml.Elements()
-                              where e.Name.LocalName == typeof(Singleton).XmlElementName()
-                              select Singleton.FromXml(e)).ToList()
-            };
-            return obj;
-        }
 
         public IODataNavigable NavigateByUriComponent(string component, EntityFramework edmx)
         {

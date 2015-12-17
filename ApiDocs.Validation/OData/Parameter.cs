@@ -25,31 +25,19 @@
 
 namespace ApiDocs.Validation.OData
 {
-    using System;
-    using System.Xml.Linq;
     using System.Xml.Serialization;
 
-    [XmlRoot("Parameter")]
+    [XmlRoot("Parameter", Namespace = ODataParser.EdmNamespace)]
     public class Parameter
     {
+        [XmlAttribute("Name")]
         public string Name { get; set; }
+
+        [XmlAttribute("Type")]
         public string Type { get; set; }
+
+        [XmlAttribute("Nullable")]
         public bool Nullable { get; set; }
         
-        
-        internal static Parameter FromXml(XElement xml)
-        {
-            typeof(Parameter).ThrowIfWrongElement(xml);
-
-            var obj = new Parameter
-            {
-                Name = xml.Attribute("Name").Value,
-                Type = xml.Attribute("Type").Value,
-                Nullable = xml.Attribute("Nullable").Value.ToBoolean()
-            };
-
-
-            return obj;
-        }
     }
 }

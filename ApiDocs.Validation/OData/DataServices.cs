@@ -28,32 +28,11 @@ namespace ApiDocs.Validation.OData
     using System.Collections.Generic;
     using System.Xml.Serialization;
 
-    /*
-       <Term Name="sourceUrl" Type="Edm.String" AppliesTo="oneDrive.item">
-            <Annotation Term="Org.OData.Core.V1.LongDescription" String="When used on a PUT or POST call to an Item, causes the item's content to be copied from the URL specified in the attribute."/>
-       </Term>
-     */
-    [XmlRoot("Term", Namespace = ODataParser.EdmNamespace)]
-    public class Term
+    [XmlRoot("DataServices", Namespace = ODataParser.EdmNamespace)]
+    public class DataServices
     {
-        [XmlAttribute("Name")]
-        public string Name { get; set; }
-
-        [XmlAttribute("Type")]
-        public string Type { get; set; }
-
-        [XmlAttribute("AppliesTo")]
-        public string AppliesTo { get; set; }
-
-        [XmlElement("Annotation", Namespace = ODataParser.EdmNamespace)]
-        public List<Annotation> Annotations { get; set; }
-
-        public Term()
-        {
-            this.Annotations = new List<Annotation>();
-        }
-
-        public static string ElementName { get { return "Term"; } }
-
+        [XmlElement("Schema", Namespace = ODataParser.EdmNamespace)]
+        public List<Schema> Schemas { get; set; }
+      
     }
 }

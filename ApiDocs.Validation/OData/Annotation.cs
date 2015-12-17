@@ -29,26 +29,15 @@ namespace ApiDocs.Validation.OData
     using System.Xml.Linq;
     using System.Xml.Serialization;
 
-    [XmlRoot("Annotation")]
+    [XmlRoot("Annotation", Namespace = ODataParser.EdmNamespace)]
     public class Annotation
     {
-
         public const string LongDescription = "Org.OData.Core.V1.LongDescription";
 
+        [XmlAttribute("Term")]
         public string Term { get; set; }
+
+        [XmlAttribute("String")]
         public string String { get; set; }
-        
-
-        public static Annotation FromXml(XElement xml)
-        {
-            typeof(Annotation).ThrowIfWrongElement(xml);
-
-            var obj = new Annotation
-            {
-                Term = xml.AttributeValue("Term"),
-                String = xml.AttributeValue("String")
-            };
-            return obj;
-        }
     }
 }

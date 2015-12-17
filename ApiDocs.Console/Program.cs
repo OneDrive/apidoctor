@@ -1123,17 +1123,36 @@ namespace ApiDocs.ConsoleApp
             foreach (var resource in foundResources)
             {
                 FancyConsole.WriteLine();
-                FancyConsole.Write(FancyConsole.ConsoleHeaderColor, "Checking resource: {0}...", resource.Name);
+                FancyConsole.Write(FancyConsole.ConsoleHeaderColor, "Checking metadata resource: {0}...", resource.Name);
 
                 FancyConsole.VerboseWriteLine();
                 FancyConsole.VerboseWriteLine(resource.ExampleText);
                 FancyConsole.VerboseWriteLine();
 
-                // Verify that this resource matches the documentation
-                ValidationError[] errors;
-                docSet.ResourceCollection.ValidateJsonExample(resource.OriginalMetadata, resource.ExampleText, out errors, new ValidationOptions { RelaxedStringValidation = true });
-                results.IncrementResultCount(errors);
+                // Check if this resource exists in the documentation at all
+                var matchingDocumentationResource =
+                    (from r in docSet.Resources where r.Name == resource.Name select r).SingleOrDefault();
 
+                ValidationError[] errors;
+                if (null == matchingDocumentationResource)
+                {
+                    // Couldn't find this resource in the documentation!
+                    errors = new ValidationError[]
+                    {
+                        new ValidationError(
+                            ValidationErrorCode.ResourceTypeNotFound,
+                            null,
+                            "Resource {0} is not in the documentation.",
+                            resource.Name)
+                    };
+                }
+                else
+                {
+                    // Verify that this resource matches the documentation
+                    docSet.ResourceCollection.ValidateJsonExample(resource.OriginalMetadata, resource.ExampleText, out errors, new ValidationOptions { RelaxedStringValidation = true });
+                }
+                
+                results.IncrementResultCount(errors);
                 collectedErrors.AddRange(errors);
 
                 await WriteOutErrorsAndFinishTestAsync(errors, options.SilenceWarnings, successMessage: " no errors.");

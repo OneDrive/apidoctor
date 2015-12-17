@@ -36,14 +36,13 @@ namespace ApiDocs.Validation.OData
     using Newtonsoft.Json;
     using System.Text;
     using System.Xml;
-
+    using System.Xml.Serialization;
     /// <summary>
     /// Converts OData input into json examples which can be validated against our 
     /// ResourceDefinitions in a DocSet.
     /// </summary>
     public class ODataParser
     {
-
         private static readonly IDictionary<string, object> ODataSimpleTypeExamples = new Dictionary<string, object>() {
             { "Edm.String", "string" },
             { "Edm.Boolean", false },
@@ -61,16 +60,14 @@ namespace ApiDocs.Validation.OData
         };
 
         #region Static EDMX -> EntityFramework methods 
-        public static List<Schema> ReadSchemaFromMetadata(string metadataContent)
+        public static EntityFramework DeserializeEntityFramework(string metadataContent)
         {
-            XDocument doc = XDocument.Parse(metadataContent);
+            XmlSerializer ser = new XmlSerializer(typeof(EntityFramework));
 
-            List<Schema> schemas = new List<Schema>();
-            schemas.AddRange(from e in doc.Descendants()
-                             where e.Name.LocalName == "Schemas"
-                             select Schema.FromXml(e));
+            StringReader reader = new StringReader(metadataContent);
+            EntityFramework result = (EntityFramework)ser.Deserialize(reader);
 
-            return schemas;
+            return result;
         }
 
         public static async Task<EntityFramework> ParseEntityFrameworkFromUrlAsync(Uri remoteUrl)
@@ -91,8 +88,7 @@ namespace ApiDocs.Validation.OData
                 }
             }
 
-            var schemas = ReadSchemaFromMetadata(remoteMetadataContents);
-            return new EntityFramework(schemas);
+            return DeserializeEntityFramework(remoteMetadataContents);
         }
 
         public static async Task<EntityFramework> ParseEntityFrameworkFromFileAsync(string path)
@@ -100,9 +96,7 @@ namespace ApiDocs.Validation.OData
             StreamReader reader = new StreamReader(path);
             string localMetadataContents = await reader.ReadToEndAsync();
 
-            var schemas = ReadSchemaFromMetadata(localMetadataContents);
-
-            return new EntityFramework(schemas);
+            return  DeserializeEntityFramework(localMetadataContents);
         }
 
         /// <summary>
@@ -195,11 +189,10 @@ namespace ApiDocs.Validation.OData
 
         #endregion
 
+        #region EntityFramework -> EDMX methods
 
-        #region Static EntityFramework -> EDMX XML methods
-
-        private const string EdmxNamespace = "http://docs.oasis-open.org/odata/ns/edmx";
-        private const string EdmNamespace = "http://docs.oasis-open.org/odata/ns/edm";
+        public const string EdmxNamespace = "http://docs.oasis-open.org/odata/ns/edmx";
+        public const string EdmNamespace = "http://docs.oasis-open.org/odata/ns/edm";
 
         /// <summary>
         /// Generates an entity framework XML file for a given input
@@ -210,243 +203,20 @@ namespace ApiDocs.Validation.OData
         {
             StringBuilder sb = new StringBuilder();
             StringWriter stringWriter = new StringWriter(sb);
-            System.Xml.XmlTextWriter writer = new System.Xml.XmlTextWriter(stringWriter);
-            writer.Formatting = System.Xml.Formatting.Indented;
-            writer.Namespaces = true;
+            XmlWriter writer = XmlWriter.Create(
+                stringWriter,
+                new XmlWriterSettings { Encoding = new UTF8Encoding(false), OmitXmlDeclaration = true, Indent = true });
 
-            writer.WriteStartElement("edmx", input.GetType().XmlElementName(), EdmxNamespace);
-            writer.WriteAttributeString("Version", input.Version);
-            
-            if (input.DataServices != null)
-            {
-                WriteEdmxFragment(input.DataServices, writer);
-            }
+            XmlSerializerNamespaces ns = new XmlSerializerNamespaces();
+            ns.Add("edmx", ODataParser.EdmxNamespace);
 
-            writer.WriteEndElement();
+            XmlSerializer ser = new XmlSerializer(typeof(EntityFramework));
+            ser.Serialize(writer, input, ns);
             writer.Flush();
+
             return sb.ToString();
         }
-
-        private static void WriteEdmxFragment(DataServices input, System.Xml.XmlWriter writer)
-        {
-            writer.WriteStartElement("edmx", input.GetType().XmlElementName(), EdmxNamespace);
-
-            foreach (var schemas in input.Schemas)
-            {
-                WriteEdmxFragment(schemas, writer);
-            }
-
-            writer.WriteEndElement();
-        }
-
-        private static void WriteEdmxFragment(Schema schema, System.Xml.XmlWriter writer)
-        {
-            writer.WriteStartElement(schema.GetType().XmlElementName(), EdmNamespace);
-            writer.WriteAttributeString("Namespace", schema.Namespace);
-
-            foreach (var entity in schema.Entities)
-            {
-                WriteEdmxFragment(entity, writer);
-            }
-
-            foreach (var type in schema.ComplexTypes)
-            {
-                WriteEdmxFragment(type, writer);
-            }
-
-            foreach (var container in schema.EntityContainers)
-            {
-                WriteEdmxFragment(container, writer);
-            }
-
-            foreach (var function in schema.Functions)
-            {
-                WriteEdmxFragment(function, writer);
-            }
-
-            foreach (var action in schema.Actions)
-            {
-                WriteEdmxFragment(action, writer);
-            }
-
-            foreach (var term in schema.Terms)
-            {
-                WriteEdmxFragment(term, writer);
-            }
-
-            writer.WriteEndElement();
-        }
-
-        private static void WriteEdmxFragment(Term term, XmlWriter writer)
-        {
-            writer.WriteStartElement(term.GetType().XmlElementName(), EdmNamespace);
-            writer.WriteAttributeString("Name", term.Name);
-            writer.WriteAttributeString("Type", term.Type);
-            writer.WriteAttributeString("AppliesTo", term.AppliesTo);
-
-            foreach (var annotation in term.Annotations)
-            {
-                WriteEdmxFragment(annotation, writer);
-            }
-
-            writer.WriteEndElement();
-        }
-
-        private static void WriteEdmxFragment(Annotation annotation, XmlWriter writer)
-        {
-            writer.WriteStartElement(annotation.GetType().XmlElementName(), EdmNamespace);
-            writer.WriteAttributeString("Term", annotation.Term);
-            writer.WriteAttributeString("String", annotation.String);
-            writer.WriteEndElement();
-        }
-
-        private static void WriteEdmxFragment(EntityType type, System.Xml.XmlWriter writer)
-        {
-            writer.WriteStartElement(type.GetType().XmlElementName(), EdmNamespace);
-            writer.WriteAttributeString("Name", type.Name);
-
-            writer.WriteStartElement("Key");
-            writer.WriteStartElement("PropertyRef");
-            writer.WriteAttributeString("Name", "id");
-            writer.WriteEndElement();
-            writer.WriteEndElement();
-
-            foreach (var prop in type.Properties)
-            {
-                WriteEdmxFragment(prop, writer);
-            }
-
-            foreach (var navigationProp in type.NavigationProperties)
-            {
-                WriteEdmxFragment(navigationProp, writer);
-            }
-
-            writer.WriteEndElement();
-        }
-
-        private static void WriteEdmxFragment(Property prop, System.Xml.XmlWriter writer)
-        {
-            writer.WriteStartElement(prop.GetType().XmlElementName(), EdmNamespace);
-            writer.WriteAttributeString("Name", prop.Name);
-            writer.WriteAttributeString("Type", prop.Type);
-            writer.WriteAttributeString("Nullable", prop.Nullable.ToString());
-            writer.WriteEndElement();
-        }
-
-        private static void WriteEdmxFragment(NavigationProperty prop, System.Xml.XmlWriter writer)
-        {
-            writer.WriteStartElement(prop.GetType().XmlElementName(), EdmNamespace);
-            writer.WriteAttributeString("Name", prop.Name);
-            writer.WriteAttributeString("Type", prop.Type);
-            writer.WriteAttributeString("ContainsTarget", prop.ContainsTarget.ToString());
-            writer.WriteEndElement();
-        }
-
-        private static void WriteEdmxFragment(ComplexType type, System.Xml.XmlWriter writer)
-        {
-            writer.WriteStartElement(type.GetType().XmlElementName(), EdmNamespace);
-            writer.WriteAttributeString("Name", type.Name);
-
-            foreach (var prop in type.Properties)
-            {
-                WriteEdmxFragment(prop, writer);
-            }
-
-            writer.WriteEndElement();
-        }
-
-        private static void WriteEdmxFragment(EntityContainer container, System.Xml.XmlWriter writer)
-        {
-            writer.WriteStartElement(container.GetType().XmlElementName(), EdmNamespace);
-            writer.WriteAttributeString("Name", container.Name);
-
-            foreach (var set in container.EntitySets)
-            {
-                WriteEdmxFragment(set, writer);
-            }
-
-            foreach (var singleton in container.Singletons)
-            {
-                WriteEdmxFragment(singleton, writer);
-            }
-
-            writer.WriteEndElement();
-        }
-
-        private static void WriteEdmxFragment(Singleton singleton, System.Xml.XmlWriter writer)
-        {
-            writer.WriteStartElement(singleton.GetType().XmlElementName(), EdmNamespace);
-            writer.WriteAttributeString("Name", singleton.Name);
-            writer.WriteAttributeString("Type", singleton.Type);
-            writer.WriteEndElement();
-        }
-
-        private static void WriteEdmxFragment(EntitySet set, System.Xml.XmlWriter writer)
-        {
-            writer.WriteStartElement(set.GetType().XmlElementName(), EdmNamespace);
-            writer.WriteAttributeString("Name", set.Name);
-            writer.WriteAttributeString("EntityType", set.EntityType);
-            writer.WriteEndElement();
-        }
-
-        private static void WriteEdmxFragment(Function function, System.Xml.XmlWriter writer)
-        {
-            writer.WriteStartElement(function.GetType().XmlElementName(), EdmNamespace);
-
-            writer.WriteAttributeString("Name", function.Name);
-            writer.WriteAttributeString("IsBound", function.IsBound.ToString());
-
-            foreach (var parameter in function.Parameters)
-            {
-                WriteEdmxFragment(parameter, writer);
-            }
-
-            if (function.ReturnType != null)
-                WriteEdmxFragment(function.ReturnType, writer);
-
-
-            writer.WriteEndElement();
-        }
-
-        private static void WriteEdmxFragment(Parameter parameter, System.Xml.XmlWriter writer)
-        {
-            writer.WriteStartElement(parameter.GetType().XmlElementName(), EdmNamespace);
-            writer.WriteAttributeString("Name", parameter.Name);
-            writer.WriteAttributeString("Type", parameter.Type);
-            writer.WriteAttributeString("Nullable", parameter.Nullable.ToString());
-            writer.WriteEndElement();
-        }
-
-        private static void WriteEdmxFragment(ReturnType type, System.Xml.XmlWriter writer)
-        {
-            writer.WriteStartElement(type.GetType().XmlElementName(), EdmNamespace);
-
-            writer.WriteAttributeString("Type", type.Type);
-            writer.WriteAttributeString("Nullable", type.Nullable.ToString());
-
-            writer.WriteEndElement();
-        }
-
-        private static void WriteEdmxFragment(Action action, System.Xml.XmlWriter writer)
-        {
-            writer.WriteStartElement(action.GetType().XmlElementName(), EdmNamespace);
-
-            writer.WriteAttributeString("Name", action.Name);
-            writer.WriteAttributeString("IsBound", action.IsBound.ToString());
-
-            foreach (var parameter in action.Parameters)
-            {
-                WriteEdmxFragment(parameter, writer);
-            }
-
-            if (action.ReturnType != null)
-                WriteEdmxFragment(action.ReturnType, writer);
-
-            writer.WriteEndElement();
-        }
-
         #endregion
-
 
     }
 }

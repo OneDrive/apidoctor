@@ -177,8 +177,8 @@ namespace ApiDocs.Validation.OData
             var trimPoint = type.LastIndexOf('.');
             if (trimPoint >= 0)
                 return type.Substring(0, trimPoint);
-            else
-                return type;
+
+            throw new InvalidOperationException("Type doesn't appear to have a namespace assocaited with it: " + type);
         }
 
 

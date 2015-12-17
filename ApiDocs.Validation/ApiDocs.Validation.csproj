@@ -62,6 +62,8 @@
     <Compile Include="Json\ValidationOptions.cs" />
     <Compile Include="Logging.cs" />
     <Compile Include="MethodValidationExtensionMethods.cs" />
+    <Compile Include="OData\Annotations.cs" />
+    <Compile Include="OData\DataServices.cs" />
     <Compile Include="OData\EntityFramework.cs" />
     <Compile Include="OData\IODataNavigable.cs" />
     <Compile Include="OData\Key.cs" />

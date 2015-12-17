@@ -248,7 +248,6 @@ namespace ApiDocs.Publishing.CSDL
             EntityContainer container = new EntityContainer();
             foreach (var path in resourcePaths)
             {
-
                 if (EntitySetPathRegEx.IsMatch(path))
                 {
                     var name = EntitySetPathRegEx.Match(path).Groups[1].Value;
@@ -352,9 +351,11 @@ namespace ApiDocs.Publishing.CSDL
             else
             {
                 type = new ComplexType();
+                
                 schema.ComplexTypes.Add(type);
             }
             type.Name = resource.Name.TypeOnly();
+            type.OpenType = resource.OriginalMetadata.IsOpenType;
             type.Properties = (from p in resource.Parameters
                                where !p.IsNavigatable && !p.Name.StartsWith("@")
                                select ConvertParameterToProperty<Property>(p) ).ToList();

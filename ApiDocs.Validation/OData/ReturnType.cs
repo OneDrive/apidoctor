@@ -25,29 +25,16 @@
 
 namespace ApiDocs.Validation.OData
 {
-    using System;
-    using System.Xml.Linq;
     using System.Xml.Serialization;
 
-    [XmlRoot("ReturnType")]
+    [XmlRoot("ReturnType", Namespace = ODataParser.EdmNamespace)]
     public class ReturnType
     {
+        [XmlAttribute("Type")]
         public string Type { get; set; }
+
+        [XmlAttribute("Nullable")]
         public bool Nullable { get; set; }
-        
-        
-        internal static ReturnType FromXml(XElement xml)
-        {
-            typeof(ReturnType).ThrowIfWrongElement(xml);
-
-            var obj = new ReturnType
-            {
-                Type = xml.AttributeValue("Type"),
-                Nullable = xml.AttributeValue("Nullable").ToBoolean()
-            };
-
-            return obj;
-        }
 
     }
 }

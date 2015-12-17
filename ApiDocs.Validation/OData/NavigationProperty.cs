@@ -25,11 +25,9 @@
 
 namespace ApiDocs.Validation.OData
 {
-    using System;
-    using System.Xml.Linq;
     using System.Xml.Serialization;
 
-    [XmlRoot("NavigationProperty")]
+    [XmlRoot("NavigationProperty", Namespace = ODataParser.EdmNamespace)]
     public class NavigationProperty : Property
     {
         public NavigationProperty()
@@ -37,21 +35,7 @@ namespace ApiDocs.Validation.OData
             ContainsTarget = true;
         }
 
+        [XmlAttribute("ContainsTarget")]
         public bool ContainsTarget { get; set; }
-        
-        public static new NavigationProperty FromXml(XElement xml)
-        {
-            typeof(NavigationProperty).ThrowIfWrongElement(xml);
-
-            var obj = new NavigationProperty
-            {
-                Name = xml.AttributeValue("Name"),
-                Type = xml.AttributeValue("Type"),
-                Nullable = xml.AttributeValue("Nullable").ToBoolean(),
-                ContainsTarget = xml.AttributeValue("ContainsTarget").ToBoolean()
-            };
-            return obj;
-        }
-
     }
 }

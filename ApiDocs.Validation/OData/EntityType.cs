@@ -28,10 +28,9 @@ namespace ApiDocs.Validation.OData
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Xml.Linq;
     using System.Xml.Serialization;
 
-    [XmlRoot("EntityType")]
+    [XmlRoot("EntityType", Namespace = ODataParser.EdmNamespace)]
     public class EntityType : ComplexType, IODataNavigable
     {
         public EntityType()
@@ -40,26 +39,12 @@ namespace ApiDocs.Validation.OData
             this.NavigationProperties = new List<NavigationProperty>();
         }
 
-        public List<NavigationProperty> NavigationProperties { get; set; }
-
+        [XmlElement("Key", Namespace = ODataParser.EdmNamespace)]
         public Key Key { get; set; }
 
+        [XmlElement("NavigationProperty", Namespace = ODataParser.EdmNamespace)]
+        public List<NavigationProperty> NavigationProperties { get; set; }
 
-        public static new EntityType FromXml(XElement xml)
-        {
-            typeof(EntityType).ThrowIfWrongElement(xml);
-
-            var obj = new EntityType { Name = xml.AttributeValue("Name") };
-
-            obj.Properties.AddRange(from e in xml.Elements()
-                                    where e.Name.LocalName == typeof(Property).XmlElementName()
-                                    select Property.FromXml(e));
-            obj.NavigationProperties.AddRange(from e in xml.Elements()
-                                              where e.Name.LocalName == typeof(NavigationProperty).XmlElementName()
-                                              select NavigationProperty.FromXml(e));
-
-            return obj;
-        }
 
         public override IODataNavigable NavigateByUriComponent(string component, EntityFramework edmx)
         {

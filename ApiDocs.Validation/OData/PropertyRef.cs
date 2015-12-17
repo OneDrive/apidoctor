@@ -25,21 +25,13 @@
 
 namespace ApiDocs.Validation.OData
 {
-    using System.Xml.Linq;
     using System.Xml.Serialization;
 
-    [XmlRoot("PropertyRef")]
+    [XmlRoot("PropertyRef", Namespace = ODataParser.EdmNamespace)]
     public class PropertyRef
     {
         [XmlAttribute("Name")]
         public string Name { get; set; }
-
-        public static PropertyRef FromXml(XElement xml)
-        {
-            typeof(PropertyRef).ThrowIfWrongElement(xml);
-            var obj = new PropertyRef { Name = xml.AttributeValue("Name") };
-            return obj;
-        }
 
     }
 }

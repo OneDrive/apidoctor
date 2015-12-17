@@ -140,7 +140,12 @@ namespace ApiDocs.Validation
             get { return new ParameterDataType(this.ResourceType, this.IsCollection); }
         }
 
-        
+        /// <summary>
+        /// Indicates that a resource is extensible with additional properties that 
+        /// may not be defined in the documtnation.
+        /// </summary>
+        [JsonProperty("openType")]
+        public bool IsOpenType { get; set; }
     }
 
     public enum CodeBlockType

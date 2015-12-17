@@ -25,28 +25,15 @@
 
 namespace ApiDocs.Validation.OData
 {
-    using System;
-    using System.Xml.Linq;
     using System.Xml.Serialization;
 
-    [XmlRoot("EntitySet")]
+    [XmlRoot("EntitySet", Namespace = ODataParser.EdmNamespace)]
     public class EntitySet
     {
+        [XmlAttribute("Name")]
         public string Name { get; set; }
+
+        [XmlAttribute("EntityType")]
         public string EntityType { get; set; }
-
-        internal static EntitySet FromXml(XElement xml)
-        {
-            typeof(EntitySet).ThrowIfWrongElement(xml);
-
-            var obj = new EntitySet
-            {
-                Name = xml.AttributeValue("Name"),
-                EntityType = xml.AttributeValue("EntityType")
-            };
-            return obj;
-        }
-
-
     }
 }

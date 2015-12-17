@@ -36,37 +36,26 @@ namespace ApiDocs.Validation.OData
     /// server (can have side-effects). Action does not have to
     /// return data.
     /// </summary>
-    [XmlRoot("Action")]
+    [XmlRoot("Action", Namespace = ODataParser.EdmNamespace)]
     public class Action : ActionOrFunctionBase
     {
         public Action() : base()
         {
         }
-       
-        public static Action FromXml(XElement xml)
-        {
-            typeof(Action).ThrowIfWrongElement(xml);
-            var obj = new Action
-            {
-                Name = xml.AttributeValue("Name"),
-                IsBound = xml.AttributeValue("IsBound").ToBoolean()
-            };
-            obj.Parameters.AddRange(from e in xml.Elements()
-                                    where e.Name == typeof(Parameter).XmlElementName()
-                                    select Parameter.FromXml(e));
-            obj.ReturnType = (from e in xml.Elements()
-                              where e.Name.LocalName == typeof(ReturnType).XmlElementName()
-                              select ReturnType.FromXml(e)).FirstOrDefault();
-            return obj;
-        }
-
     }
 
     public class ActionOrFunctionBase
     {
+        [XmlAttribute("Name")]
         public string Name { get; set; }
+
+        [XmlAttribute("IsBound")]
         public bool IsBound { get; set; }
+
+        [XmlElement("Parameter")]
         public List<Parameter> Parameters { get; set; }
+
+        [XmlElement("ReturnType")]
         public ReturnType ReturnType { get; set; }
 
         protected ActionOrFunctionBase()

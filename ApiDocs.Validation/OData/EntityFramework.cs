@@ -36,11 +36,13 @@ namespace ApiDocs.Validation.OData
     /// <summary>
     /// Holds a representation of an entity framework model (EDMX)
     /// </summary>
-    [XmlRoot("Edmx")]
+    [XmlRoot("Edmx", Namespace = ODataParser.EdmxNamespace)]
     public class EntityFramework
     {
+        [XmlAttribute("Version")]
         public string Version { get; set; }
 
+        [XmlElement("DataServices")]
         public DataServices DataServices { get; set; } 
 
         public EntityFramework()
@@ -57,31 +59,5 @@ namespace ApiDocs.Validation.OData
             this.Version = "4.0";
         }
 
-        internal static EntityFramework FromXml(XElement xml)
-        {
-            typeof(EntityFramework).ThrowIfWrongElement(xml);
-
-            var ef = new EntityFramework();
-            ef.Version = xml.Attribute("Version").Value;
-            ef.DataServices = DataServices.FromXml(xml.Element("DataServices"));
-
-            return ef;
-        }
-
-    }
-
-    [XmlRoot("DataServices")]
-    public class DataServices
-    {
-        public List<Schema> Schemas { get; set; }
-
-        internal static DataServices FromXml(XElement xml)
-        {
-            typeof(DataServices).ThrowIfWrongElement(xml);
-
-            var ds = new DataServices();
-            ds.Schemas = (from schema in xml.Elements("Schema") select Schema.FromXml(schema)).ToList();
-            return ds;
-        }
     }
 }
