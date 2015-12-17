@@ -670,7 +670,8 @@ namespace ApiDocs.Validation.Json
                         if (null != containerSchema && containerSchema.ExpectedProperties.TryGetValue(name, out schemaProperty))
                         {
                             // Use the parent schema's type indication
-                            propertyType = ParameterDataType.CollectionOfType(schemaProperty.Type);
+                            //propertyType = ParameterDataType.CollectionOfType(schemaProperty.Type);
+                            propertyType = schemaProperty.Type;
                         }
                     }
 
