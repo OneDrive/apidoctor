@@ -25,19 +25,20 @@
 
 namespace ApiDocs.Validation.OData
 {
-    using System;
-    using System.Xml.Linq;
+    using System.Collections.Generic;
+    using System.ComponentModel;
     using System.Xml.Serialization;
 
     [XmlRoot("Annotation", Namespace = ODataParser.EdmNamespace)]
     public class Annotation
     {
-        public const string LongDescription = "Org.OData.Core.V1.LongDescription";
-
         [XmlAttribute("Term")]
         public string Term { get; set; }
 
-        [XmlAttribute("String")]
+        [XmlAttribute("String"), DefaultValue(null)]
         public string String { get; set; }
+
+        [XmlElement("Record", Namespace = ODataParser.EdmNamespace), DefaultValue(null)]
+        public List<Record> Records { get; set; }
     }
 }

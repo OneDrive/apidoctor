@@ -25,6 +25,7 @@
 
 namespace ApiDocs.Validation.OData
 {
+    using System.Collections.Generic;
     using System.ComponentModel;
     using System.Xml.Serialization;
 
@@ -40,5 +41,7 @@ namespace ApiDocs.Validation.OData
         [XmlAttribute("Nullable"), DefaultValue(false)]
         public bool Nullable { get; set; }
 
+        [XmlElement("Annotation", Namespace = ODataParser.EdmNamespace)]
+        public List<Annotation> Annotation { get; set; }
     }
 }

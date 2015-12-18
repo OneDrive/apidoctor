@@ -376,7 +376,7 @@ namespace ApiDocs.Publishing.CSDL
                 Term term = new Term { Name = localName, AppliesTo = containedResource.Name, Type = prop.Type.ODataResourceName() };
                 if (!string.IsNullOrEmpty(prop.Description))
                 {
-                    term.Annotations.Add(new Annotation { Term = Annotation.LongDescription, String = prop.Description });
+                    term.Annotations.Add(new Annotation { Term = Term.LongDescriptionTerm, String = prop.Description });
                 }
 
                 var targetSchema = FindOrCreateSchemaForNamespace(ns, edmx, overrideNamespaceFilter: true);
@@ -390,15 +390,26 @@ namespace ApiDocs.Publishing.CSDL
 
         private static T ConvertParameterToProperty<T>(ParameterDefinition param) where T : Property, new()
         {
-            return new T()
+            var prop = new T()
             {
                 Name = param.Name,
                 Nullable = (param.Required.HasValue ? !param.Required.Value : false),
                 Type = param.Type.ODataResourceName()
             };
+
+            // Add description annotation
+            if (!string.IsNullOrEmpty(param.Description))
+            {
+                prop.Annotation = new List<Annotation>();
+                prop.Annotation.Add(
+                    new Annotation()
+                    {
+                        Term = Term.DescriptionTerm,
+                        String = param.Description
+                    });
+            }
+            return prop;
         }
-
-
     }
 
 }

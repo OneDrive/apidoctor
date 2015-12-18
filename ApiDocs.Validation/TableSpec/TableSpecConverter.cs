@@ -194,7 +194,8 @@ namespace ApiDocs.Validation.TableSpec
             { "Query String Parameters", TableBlockType.QueryStringParameters },
             { "Request Headers", TableBlockType.HttpHeaders },
             { "Authentication Scopes", TableBlockType.AuthScopes },
-            { "EnumeratedValues", TableBlockType.EnumerationValues }
+            { "EnumeratedValues", TableBlockType.EnumerationValues },
+            { "Instance Attributes", TableBlockType.ResourcePropertyDescriptions }
         };
             
         private static TableBlockType CommonHeaderMatch(string lastHeader)

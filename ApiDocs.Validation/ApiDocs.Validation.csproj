@@ -68,6 +68,8 @@
     <Compile Include="OData\IODataNavigable.cs" />
     <Compile Include="OData\Key.cs" />
     <Compile Include="OData\PropertyRef.cs" />
+    <Compile Include="OData\PropertyValue.cs" />
+    <Compile Include="OData\Record.cs" />
     <Compile Include="OData\Singleton.cs" />
     <Compile Include="OData\XmlParseHelper.cs" />
     <Compile Include="PageAnnotation.cs" />

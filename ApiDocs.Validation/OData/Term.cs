@@ -53,7 +53,12 @@ namespace ApiDocs.Validation.OData
             this.Annotations = new List<Annotation>();
         }
 
-        public static string ElementName { get { return "Term"; } }
+        public const string DescriptionTerm = "Org.OData.Core.V1.Description";
+        public const string LongDescriptionTerm = "Org.OData.Core.V1.LongDescription";
+        public const string ExpandRestrictionsTerm = "Org.OData.Capabilities.V1.ExpandRestrictions";
+        public const string SearchRestrictionsTerm = "Org.OData.Capabilities.V1.SearchRestrictions";
+        public const string ChangeTrackingTerm = "Org.OData.Capabilities.V1.ChangeTracking";
+        public const string NavigationRestrictionsTerm = "Org.OData.Capabilities.V1.NavigationRestrictions";
 
     }
 }
