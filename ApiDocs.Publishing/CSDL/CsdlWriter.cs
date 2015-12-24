@@ -83,7 +83,7 @@ namespace ApiDocs.Publishing.CSDL
             BuildEntityCollection(edmx);
 
             // Add actions to the collection
-            BuildActionsAndFunctions(edmx);
+            this.ProcessRestRequestPaths(edmx);
 
             return edmx;
         }
@@ -93,66 +93,132 @@ namespace ApiDocs.Publishing.CSDL
         /// EntityFramework for matching call patterns.
         /// </summary>
         /// <param name="edmx"></param>
-        private void BuildActionsAndFunctions(EntityFramework edmx)
+        private void ProcessRestRequestPaths(EntityFramework edmx)
         {
-            Dictionary<string, MethodDefinition> uniqueRequestPaths = GetUniqueRequestPaths();
+            Dictionary<string, MethodCollection> uniqueRequestPaths = GetUniqueRequestPaths();
 
             foreach (var path in uniqueRequestPaths.Keys)
             {
-                var method = uniqueRequestPaths[path];
+                var methodCollection = uniqueRequestPaths[path];
 
                 ODataTargetInfo requestTarget = null;
                 try
                 {
-                    requestTarget = ParseRequestTargetType(path, method, edmx);
+                    requestTarget = ParseRequestTargetType(path, methodCollection, edmx);
                     if (requestTarget.Classification == ODataTargetClassification.Unknown &&
                         !string.IsNullOrEmpty(requestTarget.Name) &&
                         requestTarget.QualifiedType != null)
                     {
-                        // Create a new action (not idempotent) / function (idempotent) based on this request method!
-                        ActionOrFunctionBase target = null;
-                        if (method.RequestMetadata.IsIdempotent)
-                        {
-                            target = new Function();
-                        }
-                        else
-                        {
-                            target = new Validation.OData.Action();
-                        }
-
-                        var schemaName = requestTarget.Name.NamespaceOnly();
-                        target.Name = requestTarget.Name.TypeOnly();
-                        target.IsBound = true;
-                        target.Parameters.Add(new Parameter { Name = "bindingParameter", Type = requestTarget.QualifiedType, Nullable = false });
-                        foreach (var param in method.RequestBodyParameters)
-                        {
-                            target.Parameters.Add(
-                                new Parameter
-                                {
-                                    Name = param.Name,
-                                    Type = param.Type.ODataResourceName(),
-                                    Nullable = (param.Required.HasValue ? param.Required.Value : false)
-                                });
-                        }
-                    
-                        if (method.ExpectedResponseMetadata.Type != null)
-                        {
-                            target.ReturnType = new ReturnType { Type = method.ExpectedResponseMetadata.Type.ODataResourceName(), Nullable = false };
-                        }
-
-                        var schema = FindOrCreateSchemaForNamespace(schemaName, edmx, true);
-                        if (target is Function)
-                            schema.Functions.Add((Function)target);
-                        else
-                            schema.Actions.Add((Validation.OData.Action)target);
+                        CreateNewActionOrFunction(edmx, methodCollection, requestTarget);
+                    }
+                    else if (requestTarget.Classification == ODataTargetClassification.EntityType)
+                    {
+                        // We've learned more about this entity type, let's add that information to the state
+                        AppendToEntityType(edmx, requestTarget, methodCollection);
+                    }
+                    else if (requestTarget.Classification == ODataTargetClassification.NavigationProperty)
+                    {
+                        // TODO: Record somewhere the operations that are available on this NavigationProperty
+                        AppendToNavigationProperty(edmx, requestTarget, methodCollection);
+                    }
+                    else
+                    {
+                        // TODO: Are there interesting things to learn here?
+                        Console.WriteLine("Found type {0}: {1}", requestTarget.Classification, path);
                     }
                 }
                 catch (Exception ex)
                 {
+                    // TODO: Log this out better than this.
                     Console.WriteLine("Couldn't serialize request for path {0} into EDMX: {1}", path, ex.Message);
                     continue;
                 }
             }
+        }
+
+        private void AppendToNavigationProperty(EntityFramework edmx, ODataTargetInfo navigationProperty, MethodCollection methods)
+        {
+            EntityType parentType = edmx.ResourceWithIdentifier<EntityType>(navigationProperty.QualifiedType);
+
+            NavigationProperty matchingProperty =
+                (from np in parentType.NavigationProperties where np.Name == navigationProperty.Name select np)
+                    .FirstOrDefault();
+            if (null != matchingProperty)
+            {
+                // TODO: Append information from methods into this navigation property
+                StringBuilder sb = new StringBuilder();
+                const string seperator = ", ";
+                sb.AppendWithCondition(methods.GetAllowed, "GET", seperator);
+                sb.AppendWithCondition(methods.PostAllowed, "POST", seperator);
+                sb.AppendWithCondition(methods.PutAllowed, "PUT", seperator);
+                sb.AppendWithCondition(methods.DeleteAllowed, "DELETE", seperator);
+
+                Console.WriteLine("Collection '{0}' supports: ({1})", navigationProperty.QualifiedType + "/" + navigationProperty.Name, sb.ToString());
+            }
+            else
+            {
+                Console.WriteLine(
+                    "EntityType '{0}' doesn't have a matching navigationProperty '{1}' but a request exists for this. Sounds like a documentation error.",
+                    navigationProperty.QualifiedType,
+                    navigationProperty.Name);
+            }
+        }
+
+        /// <summary>
+        /// Use the properties of methodCollection to augment what we know about this entity type
+        /// </summary>
+        /// <param name="requestTarget"></param>
+        /// <param name="methodCollection"></param>
+        private void AppendToEntityType(EntityFramework edmx, ODataTargetInfo requestTarget, MethodCollection methodCollection)
+        {
+            StringBuilder sb = new StringBuilder();
+            const string seperator = ", ";
+            sb.AppendWithCondition(methodCollection.GetAllowed, "GET", seperator);
+            sb.AppendWithCondition(methodCollection.PostAllowed, "POST", seperator);
+            sb.AppendWithCondition(methodCollection.PutAllowed, "PUT", seperator);
+            sb.AppendWithCondition(methodCollection.DeleteAllowed, "DELETE", seperator);
+
+            Console.WriteLine("EntityType '{0}' supports: ({1})", requestTarget.QualifiedType, sb.ToString());
+        }
+
+        private void CreateNewActionOrFunction(EntityFramework edmx, MethodCollection methodCollection, ODataTargetInfo requestTarget)
+        {
+            // Create a new action (not idempotent) / function (idempotent) based on this request method!
+            ActionOrFunctionBase target = null;
+            if (methodCollection.AllMethodsIdempotent)
+            {
+                target = new Function();
+            }
+            else
+            {
+                target = new Validation.OData.Action();
+            }
+
+            var schemaName = requestTarget.Name.NamespaceOnly();
+            target.Name = requestTarget.Name.TypeOnly();
+            target.IsBound = true;
+            target.Parameters.Add(new Parameter { Name = "bindingParameter", Type = requestTarget.QualifiedType, Nullable = false });
+            foreach (var param in methodCollection.RequestBodyParameters)
+            {
+                target.Parameters.Add(
+                    new Parameter
+                    {
+                        Name = param.Name,
+                        Type = param.Type.ODataResourceName(),
+                        Nullable = (param.Required.HasValue ? param.Required.Value : false)
+                    });
+            }
+
+            if (methodCollection.ResponseType != null)
+            {
+                target.ReturnType = new ReturnType { Type = methodCollection.ResponseType.ODataResourceName(), Nullable = false };
+            }
+
+            var schema = FindOrCreateSchemaForNamespace(schemaName, edmx, true);
+            if (target is Function)
+                schema.Functions.Add((Function)target);
+            else
+                schema.Actions.Add((Validation.OData.Action)target);
         }
 
         /// <summary>
@@ -163,7 +229,7 @@ namespace ApiDocs.Publishing.CSDL
         /// <param name="requestMethod"></param>
         /// <param name="edmx"></param>
         /// <returns></returns>
-        private static ODataTargetInfo ParseRequestTargetType(string requestPath, MethodDefinition requestMethod, EntityFramework edmx)
+        private static ODataTargetInfo ParseRequestTargetType(string requestPath, MethodCollection requestMethodCollection, EntityFramework edmx)
         {
             string[] requestParts = requestPath.Substring(1).Split(new char[] { '/'});
 
@@ -174,6 +240,7 @@ namespace ApiDocs.Publishing.CSDL
             if (entryPoint == null) throw new InvalidOperationException("Couldn't locate an EntityContainer to begin target resolution");
 
             IODataNavigable currentObject = entryPoint;
+            IODataNavigable previousObject = null;
 
             for(int i=0; i<requestParts.Length; i++)
             {
@@ -191,10 +258,12 @@ namespace ApiDocs.Publishing.CSDL
                 if (nextObject == null && i == requestParts.Length - 1)
                 {
                     // The last component wasn't known already, so that means we have a new thing.
+                    // We assume that if the uriPart doesnt' have a namespace that this is a navigation property that isn't documented.
+
                     return new ODataTargetInfo
                     {
                         Name = uriPart,
-                        Classification = ODataTargetClassification.Unknown,
+                        Classification = uriPart.HasNamespace() ? ODataTargetClassification.Unknown : ODataTargetClassification.NavigationProperty,
                         QualifiedType = edmx.LookupIdentifierForType(currentObject)
                     };
                 }
@@ -203,6 +272,7 @@ namespace ApiDocs.Publishing.CSDL
                     throw new InvalidOperationException(
                         string.Format("Uri path requires navigating into unknown object hierarchy: missing property '{0}' on '{1}'", uriPart, currentObject.TypeIdentifier));
                 }
+                previousObject = currentObject;
                 currentObject = nextObject;
             }
 
@@ -214,16 +284,21 @@ namespace ApiDocs.Publishing.CSDL
 
             if (currentObject is EntityType)
                 response.Classification = ODataTargetClassification.EntityType;
-            if (currentObject is EntitySet)
+            else if (currentObject is EntitySet)
                 response.Classification = ODataTargetClassification.EntitySet;
-            if (currentObject is Validation.OData.Action)
+            else if (currentObject is Validation.OData.Action)
                 response.Classification = ODataTargetClassification.Action;
-            if (currentObject is Function)
+            else if (currentObject is Function)
                 response.Classification = ODataTargetClassification.Function;
-            if (currentObject is EntityContainer)
+            else if (currentObject is EntityContainer)
                 response.Classification = ODataTargetClassification.EntityContainer;
-            if (currentObject is ODataSimpleType)
+            else if (currentObject is ODataSimpleType)
                 response.Classification = ODataTargetClassification.SimpleType;
+            else if (currentObject is ODataCollection)
+            {
+                response.Classification = ODataTargetClassification.NavigationProperty;
+                response.QualifiedType = edmx.LookupIdentifierForType(previousObject);
+            }
 
             return response;
         }
@@ -242,7 +317,7 @@ namespace ApiDocs.Publishing.CSDL
         /// <param name="edmx"></param>
         private void BuildEntityCollection(EntityFramework edmx)
         {
-            Dictionary<string, MethodDefinition> uniqueRequestPaths = GetUniqueRequestPaths();
+            Dictionary<string, MethodCollection> uniqueRequestPaths = GetUniqueRequestPaths();
             var resourcePaths = uniqueRequestPaths.Keys.OrderBy(x => x).ToArray();
 
             EntityContainer container = new EntityContainer();
@@ -251,12 +326,12 @@ namespace ApiDocs.Publishing.CSDL
                 if (EntitySetPathRegEx.IsMatch(path))
                 {
                     var name = EntitySetPathRegEx.Match(path).Groups[1].Value;
-                    container.EntitySets.Add(new EntitySet { Name = name, EntityType = uniqueRequestPaths[path].ExpectedResponseMetadata.ResourceType });
+                    container.EntitySets.Add(new EntitySet { Name = name, EntityType = uniqueRequestPaths[path].ResponseType.ODataResourceName() });
                 }
                 else if (SingletonPathRegEx.IsMatch(path))
                 {
                     var name = SingletonPathRegEx.Match(path).Groups[1].Value;
-                    container.Singletons.Add(new Singleton { Name = name, Type = uniqueRequestPaths[path].ExpectedResponseMetadata.ResourceType });
+                    container.Singletons.Add(new Singleton { Name = name, Type = uniqueRequestPaths[path].ResponseType.ODataResourceName() });
                 }
             }
 
@@ -268,18 +343,18 @@ namespace ApiDocs.Publishing.CSDL
             largestSchema.EntityContainers.Add(container);
         }
 
-        private Dictionary<string, MethodDefinition> cachedUniqueRequestPaths = null;
+        private Dictionary<string, MethodCollection> cachedUniqueRequestPaths = null;
 
         /// <summary>
         /// Return a dictionary of the unique request paths in the 
         /// documentation and the method definitions that defined them.
         /// </summary>
         /// <returns></returns>
-        private Dictionary<string, MethodDefinition> GetUniqueRequestPaths()
+        private Dictionary<string, MethodCollection> GetUniqueRequestPaths()
         {
             if (cachedUniqueRequestPaths == null)
             {
-                Dictionary<string, MethodDefinition> uniqueRequestPaths = new Dictionary<string, MethodDefinition>();
+                Dictionary<string, MethodCollection> uniqueRequestPaths = new Dictionary<string, MethodCollection>();
                 foreach (var m in Documents.Methods)
                 {
                     if (m.ExpectedResponseMetadata.ExpectError)
@@ -294,7 +369,14 @@ namespace ApiDocs.Publishing.CSDL
                         // Ignore aboslute URI paths
                         continue;
                     }
-                    uniqueRequestPaths[path] = m;
+
+                    Console.WriteLine("Converted '{0}' into generic form '{1}'", m.Request.FirstLineOnly(), path);
+
+                    if (!uniqueRequestPaths.ContainsKey(path))
+                    {
+                        uniqueRequestPaths.Add(path, new MethodCollection());
+                    }
+                    uniqueRequestPaths[path].Add(m);
 
                     Console.WriteLine("{0} :: {1} --> {2}", path, m.RequestMetadata.ResourceType, m.ExpectedResponseMetadata.ResourceType);
                 }

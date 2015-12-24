@@ -35,5 +35,6 @@ namespace ApiDocs.Validation.OData
 
         [XmlAttribute("EntityType")]
         public string EntityType { get; set; }
+
     }
 }

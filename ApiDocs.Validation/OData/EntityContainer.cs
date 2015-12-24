@@ -82,8 +82,7 @@ namespace ApiDocs.Validation.OData
                     var innerId = targetType.Substring(11, targetType.Length - 12);
                     return new ODataCollection(innerId);
                 }
-
-                return edmx.FindTypeWithIdentifier(targetType) as IODataNavigable;
+                return edmx.ResourceWithIdentifier<IODataNavigable>(targetType);
             }
 
             return null;
@@ -94,9 +93,11 @@ namespace ApiDocs.Validation.OData
             throw new NotSupportedException();
         }
 
+        [XmlIgnore]
         public string TypeIdentifier
         {
             get { return Name; }
         }
+
     }
 }

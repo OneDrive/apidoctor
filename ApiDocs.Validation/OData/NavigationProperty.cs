@@ -37,5 +37,36 @@ namespace ApiDocs.Validation.OData
 
         [XmlAttribute("ContainsTarget")]
         public bool ContainsTarget { get; set; }
+
+
+        /// <summary>
+        /// Indicates that this property can be included in a $expand query
+        /// </summary>
+        [XmlIgnore]
+        public bool Expandable { get; set; }
+
+        /// <summary>
+        /// Indicates that the target of this property can be enumerated (e.g. GET /items)
+        /// </summary>
+        public bool Enumerable { get; set; }
+
+        /// <summary>
+        /// Indicates how this property can be navigated via the URL.
+        /// </summary>
+        [XmlIgnore]
+        public Navigability Navigation { get; set; }
+
+        /// <summary>
+        /// Indicates that change tracking can be used on this target.
+        /// </summary>
+        [XmlIgnore]
+        public bool ChangeTracking { get; set; }
+    }
+
+    public enum Navigability
+    {
+        Recursive,
+        Single,
+        None
     }
 }

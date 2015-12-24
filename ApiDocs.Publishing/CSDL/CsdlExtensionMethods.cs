@@ -26,7 +26,7 @@
 namespace ApiDocs.Publishing.CSDL
 {
     using ApiDocs.Validation;
-
+    using Validation.Http;
     internal static class CsdlExtensionMethods
     {
 
@@ -41,6 +41,25 @@ namespace ApiDocs.Publishing.CSDL
             path = path.ReplaceTextBetweenCharacters(':', ':', "/children/{var}", requireSecondChar: false, removeTargetChars: true);
 
             return path;
+        }
+
+
+        public static string HttpMethodVerb(this MethodDefinition method)
+        {
+            HttpParser parser = new HttpParser();
+            var request = parser.ParseHttpRequest(method.Request);
+            return request.Method;
+
+        }
+
+        internal static void AppendWithCondition(this System.Text.StringBuilder sb, bool condition, string text, string prefixIfExistingContent = null)
+        {
+            if (condition)
+            {
+                if (sb.Length > 0 && prefixIfExistingContent != null)
+                    sb.Append(prefixIfExistingContent);
+                sb.Append(text);
+            }
         }
     }
 }

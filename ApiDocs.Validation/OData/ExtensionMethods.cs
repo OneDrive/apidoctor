@@ -67,12 +67,13 @@ namespace ApiDocs.Validation.OData
         }
 
         /// <summary>
-        /// Resovles a fully qualified type identifier within a collection of schema.
+        /// Resovles a fully qualified type identifier within a collection of schema. 
+        /// Will match on ComplexType, EntityType, Action, or Function.
         /// </summary>
         /// <param name="schemas"></param>
         /// <param name="identifier"></param>
         /// <returns></returns>
-        internal static ComplexType FindTypeWithIdentifier(this IEnumerable<Schema> schemas, string identifier)
+        internal static object FindTypeWithIdentifier(this IEnumerable<Schema> schemas, string identifier)
         {
             // onedrive.item
             int splitIndex = identifier.LastIndexOf('.');
@@ -92,28 +93,53 @@ namespace ApiDocs.Validation.OData
             }
 
             // Look for a matching complex type
-            var matchingComplexType = (from ct in schema.ComplexTypes
-                                       where ct.Name == typeName
-                                       select ct).FirstOrDefault();
-            if (null != matchingComplexType)
-            {
-                return matchingComplexType;
-            }
+            var matchingComplexType = from ct in schema.ComplexTypes
+                where ct.Name == typeName
+                select ct;
+            if (matchingComplexType.Any())
+                return matchingComplexType.First();
 
             // Look for a matching entity type
-            var matchingEntityType = (from et in schema.Entities
+            var matchingEntityType = from et in schema.Entities
                                       where et.Name == typeName
-                                      select et).FirstOrDefault();
-            return matchingEntityType;
+                                      select et;
+            if (matchingEntityType.Any())
+                return matchingEntityType.First();
+
+            // Look up actions
+            var matchingAction = (from et in schema.Actions where et.Name == typeName select et);
+            if (matchingAction.Any())
+                return matchingAction.First();
+
+            // Look up functions
+            var matchingFunctions = (from et in schema.Functions where et.Name == typeName select et);
+            if (matchingFunctions.Any())
+                return matchingFunctions.First();
+
+            return null;
         }
 
-        internal static ComplexType FindTypeWithIdentifier(this EntityFramework edmx, string identifier)
+        public static T ResourceWithIdentifier<T>(this IEnumerable<Schema> schemas, string identifier)
         {
-            var foundType = edmx.DataServices.Schemas.FindTypeWithIdentifier(identifier);
-            if (foundType != null)
-                return foundType;
+            var type = schemas.FindTypeWithIdentifier(identifier);
+            if (type != null && type is T)
+            {
+                return (T)type;
+            }
 
-            throw new KeyNotFoundException("Couldn't resolve type identifier: " + identifier);
+            throw new KeyNotFoundException("Unable to find type identifier '" + identifier + "' as '" + typeof(T).Name + "'.");
+        }
+
+        /// <summary>
+        /// Look up a type in the EntityFramework based on the type identifier.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="edmx"></param>
+        /// <param name="identifier"></param>
+        /// <returns></returns>
+        public static T ResourceWithIdentifier<T>(this EntityFramework edmx, string identifier)
+        {
+            return edmx.DataServices.Schemas.ResourceWithIdentifier<T>(identifier);
         }
 
         internal static IODataNavigable LookupNavigableType(this EntityFramework edmx, string identifier)
@@ -142,6 +168,10 @@ namespace ApiDocs.Validation.OData
             if (type is ODataSimpleType)
             {
                 return ((ODataSimpleType)type).Type.ODataResourceName();
+            }
+            else if (type is ODataCollection)
+            {
+                return "Collection(" + ((ODataCollection)type).TypeIdentifier + ")";
             }
 
             foreach (var schema in edmx.DataServices.Schemas)
@@ -179,6 +209,12 @@ namespace ApiDocs.Validation.OData
                 return type.Substring(0, trimPoint);
 
             throw new InvalidOperationException("Type doesn't appear to have a namespace assocaited with it: " + type);
+        }
+
+        public static bool HasNamespace(this string type)
+        {
+            var trimPoint = type.LastIndexOf('.');
+            return trimPoint != -1;
         }
 
 
@@ -253,5 +289,6 @@ namespace ApiDocs.Validation.OData
 
             return SimpleDataType.Object;
         }
+
     }
 }

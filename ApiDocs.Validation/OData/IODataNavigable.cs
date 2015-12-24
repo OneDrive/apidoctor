@@ -24,7 +24,7 @@ namespace ApiDocs.Validation.OData
         string TypeIdentifier { get; }
     }
 
-    internal class ODataCollection : IODataNavigable
+    public class ODataCollection : IODataNavigable
     {
         public string TypeIdentifier { get; internal set; }
 
@@ -35,12 +35,13 @@ namespace ApiDocs.Validation.OData
 
         public IODataNavigable NavigateByUriComponent(string component, EntityFramework edmx)
         {
-            throw new NotSupportedException();
+            // NavigationByUriComponent for a collection means that we have a hard coded key in the example path.
+            return this.NavigateByEntityTypeKey(edmx);
         }
 
         public IODataNavigable NavigateByEntityTypeKey(EntityFramework edmx)
         {
-            return edmx.FindTypeWithIdentifier(this.TypeIdentifier) as IODataNavigable;
+            return edmx.ResourceWithIdentifier<IODataNavigable>(this.TypeIdentifier);
         }
     }
 
@@ -87,6 +88,7 @@ namespace ApiDocs.Validation.OData
         Action,
         Function,
         EntityContainer,
-        SimpleType
+        SimpleType,
+        NavigationProperty
     }
 }

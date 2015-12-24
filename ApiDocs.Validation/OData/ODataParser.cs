@@ -171,7 +171,7 @@ namespace ApiDocs.Validation.OData
             ComplexType matchingType = null;
             try
             {
-                matchingType = otherSchemas.FindTypeWithIdentifier(typeIdentifier);
+                matchingType = otherSchemas.ResourceWithIdentifier<ComplexType>(typeIdentifier);
             }
             catch (Exception ex)
             {

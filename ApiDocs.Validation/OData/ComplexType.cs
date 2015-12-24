@@ -54,6 +54,10 @@ namespace ApiDocs.Validation.OData
 
         public virtual IODataNavigable NavigateByEntityTypeKey(EntityFramework edmx)
         {
+            if (this.OpenType)
+            {
+                // TODO: This isn't illegal, but we don't know what you're going to get back anyway, so we just treat it the same for now.
+            }
             throw new NotSupportedException("ComplexType cannot be navigated by key.");
         }
 
@@ -70,7 +74,7 @@ namespace ApiDocs.Validation.OData
                     var innerId = identifier.Substring(11, identifier.Length - 12);
                     return new ODataCollection(innerId);
                 }
-                return edmx.FindTypeWithIdentifier(identifier) as IODataNavigable;
+                return edmx.ResourceWithIdentifier<IODataNavigable>(identifier);
             }
 
             return null;
