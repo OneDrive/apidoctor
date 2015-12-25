@@ -203,7 +203,7 @@ namespace ApiDocs.Validation
         /// <param name="value"></param>
         /// <param name="addErrorAction"></param>
         /// <returns></returns>
-        public static ParameterDataType ParseParameterDataType(this string value, Action<ValidationError> addErrorAction = null)
+        public static ParameterDataType ParseParameterDataType(this string value, Action<ValidationError> addErrorAction = null, ParameterDataType defaultValue = null )
         {
             if (value == null)
             {
@@ -241,6 +241,9 @@ namespace ApiDocs.Validation
 
             if (lowerValue.Contains("string"))
                 return ParameterDataType.String;
+
+            if (defaultValue != null)
+                return defaultValue;
 
             if (null != addErrorAction)
             {

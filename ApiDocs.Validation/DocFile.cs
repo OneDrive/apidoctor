@@ -359,7 +359,7 @@ namespace ApiDocs.Validation
                     if (null == blockBeforeTable) continue;
 
                     ValidationError[] parseErrors;
-                    var table = TableSpecConverter.ParseTableSpec(block, previousHeaderBlock, out parseErrors);
+                    var table = this.Parent.TableParser.ParseTableSpec(block, previousHeaderBlock, out parseErrors);
                     if (null != parseErrors) detectedErrors.AddRange(parseErrors);
 
                     detectedErrors.Add(new ValidationMessage(null, "Found table: {0}. Rows:\r\n{1}", table.Type,
