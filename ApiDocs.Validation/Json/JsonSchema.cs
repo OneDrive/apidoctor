@@ -300,6 +300,20 @@ namespace ApiDocs.Validation.Json
             }
             else if (actual.Type.IsLessSpecificThan(expected.Type))
             {
+                if (relaxStringValidation)
+                {
+                    detectedErrors.Add(
+                    new ValidationWarning(
+                        ValidationErrorCode.ExpectedTypeDifferent,
+                        null,
+                        "Expected type {0} but actual was {1}, which is less specific than the expected type. Property: {2}, actual value: '{3}'",
+                        expected.Type,
+                        actual.Type,
+                        actual.Name,
+                        actual.OriginalValue));
+                    return PropertyValidationOutcome.Ok;
+                }
+
                 detectedErrors.Add(
                     new ValidationError(
                         ValidationErrorCode.ExpectedTypeDifferent,
@@ -309,7 +323,7 @@ namespace ApiDocs.Validation.Json
                         actual.Type,
                         actual.Name,
                         actual.OriginalValue));
-                return PropertyValidationOutcome.Ok;
+                return PropertyValidationOutcome.BadStringValue;
             }
             else
             {
@@ -560,7 +574,7 @@ namespace ApiDocs.Validation.Json
             foreach (var inputProperty in properties)
             {
                 missingProperties.Remove(inputProperty.Name);
-                this.ValidateProperty(inputProperty, otherSchemas, detectedErrors, new ValidationOptions());
+                this.ValidateProperty(inputProperty, otherSchemas, detectedErrors, options);
             }
 
             this.CleanMissingProperties(options, missingProperties);

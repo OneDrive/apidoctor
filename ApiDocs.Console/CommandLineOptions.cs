@@ -140,6 +140,7 @@ namespace ApiDocs.ConsoleApp
     {
         [Option("metadata", HelpText = "Path or URL for the service metadata CSDL")]
         public string ServiceMetadataLocation { get; set; }
+
     }
 
     class PrintOptions : DocSetOptions
@@ -229,6 +230,9 @@ namespace ApiDocs.ConsoleApp
         public string Username { get; set; }
         [Option("password", HelpText="Provide a password for basic authentication.")]
         public string Password { get; set; }
+
+        [Option("relax-string-validation", HelpText="Relax the validation of JSON string properties.")]
+        public bool RelaxStringTypeValidation { get; set; }
 
         private IServiceAccount GetEnvironmentVariablesAccount()
         {

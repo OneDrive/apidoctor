@@ -818,7 +818,7 @@ namespace ApiDocs.ConsoleApp
                     "Running validation for method: {0}",
                     method.Identifier);
                 ScenarioDefinition[] scenarios = docset.TestScenarios.ScenariosForMethod(method);
-                ValidationResults results = await method.ValidateServiceResponseAsync(scenarios, account, credentials);
+                ValidationResults results = await method.ValidateServiceResponseAsync(scenarios, account, credentials, new ValidationOptions { RelaxedStringValidation = options.RelaxStringTypeValidation});
 
                 PrintResultsToConsole(method, account, results, options);
                 await TestReport.LogMethodTestResults(method, account, results);

@@ -97,7 +97,7 @@ namespace ApiDocs.Validation.Json
         /// <param name="expectedResponse"></param>
         /// <param name="schemaErrors"></param>
         /// <returns></returns>
-        internal bool ValidateResponseMatchesSchema(MethodDefinition method, HttpResponse actualResponse, HttpResponse expectedResponse, out ValidationError[] schemaErrors)
+        internal bool ValidateResponseMatchesSchema(MethodDefinition method, HttpResponse actualResponse, HttpResponse expectedResponse, out ValidationError[] schemaErrors, ValidationOptions options = null)
         {
             List<ValidationError> newErrors = new List<ValidationError>();
 
@@ -129,7 +129,7 @@ namespace ApiDocs.Validation.Json
             else
             {
                 ValidationError[] validationJsonOutput;
-                this.ValidateJsonCompilesWithSchema(schema, new JsonExample(actualResponse.Body, method.ExpectedResponseMetadata), out validationJsonOutput, (null != expectedResponseJson) ? new JsonExample(expectedResponseJson) : null);
+                this.ValidateJsonCompilesWithSchema(schema, new JsonExample(actualResponse.Body, method.ExpectedResponseMetadata), out validationJsonOutput, (null != expectedResponseJson) ? new JsonExample(expectedResponseJson) : null, options);
                 newErrors.AddRange(validationJsonOutput);
             }
 
@@ -187,11 +187,9 @@ namespace ApiDocs.Validation.Json
             }
 
             // If we didn't get an options, create a new one with some defaults provided by the annotation
-            options = options ?? new ValidationOptions()
-            {
-                AllowTruncatedResponses = (inputJson.Annotation ?? new CodeBlockAnnotation()).TruncatedResult,
-                CollectionPropertyName = collectionPropertyName
-            };
+            options = options ?? new ValidationOptions();
+            options.AllowTruncatedResponses = (inputJson.Annotation ?? new CodeBlockAnnotation()).TruncatedResult;
+            options.CollectionPropertyName = collectionPropertyName;
 
             return schema.ValidateJson(inputJson, out errors, this.registeredSchema, options, expectedJson);
         }
