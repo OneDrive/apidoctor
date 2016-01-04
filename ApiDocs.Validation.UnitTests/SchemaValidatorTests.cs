@@ -221,11 +221,11 @@ namespace ApiDocs.Validation.UnitTests
 
             testMethod.ValidateResponse(actualResponse, expectedResponse, null, out detectedErrors);
 
-            Assert.AreEqual(4, detectedErrors.Length);
-            foreach (var error in detectedErrors)
-            {
-                Assert.AreEqual(error.Code, ValidationErrorCode.RequiredPropertiesMissing);
-            }
+            Assert.AreEqual(2, detectedErrors.Length);
+            Assert.IsTrue(detectedErrors.Any(x => x.Code == ValidationErrorCode.RequiredPropertiesMissing), "Error with Code = RequiredPropertiesMissing");
+            Assert.IsTrue(
+                detectedErrors.Any(x => x.Code == ValidationErrorCode.SkippedSimilarErrors),
+                "Error with Code = SkippedSimilarErrors");
         }
 
     }
