@@ -490,8 +490,8 @@ namespace ApiDocs.Validation
         private static readonly string[] Iso8601Formats =
         {
             "yyyy-MM-dd",
-            @"HH\:mm\:ss.fff",
-            @"HH\:mm\:ss",
+            @"HH\:mm\:ss.fffZ",
+            @"HH\:mm\:ssZ",
             @"yyyy-MM-ddTHH\:mm\:ssZ",
             @"yyyy-MM-ddTHH\:mm\:ss.fZ",
             @"yyyy-MM-ddTHH\:mm\:ss.ffZ",
@@ -511,6 +511,43 @@ namespace ApiDocs.Validation
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Checks to see if a collection of errors already includes a similar error (matching Code + Message string)
+        /// </summary>
+        /// <param name="collection"></param>
+        /// <param name="error"></param>
+        /// <returns></returns>
+        public static bool ContainsSimilarError(this IEnumerable<ValidationError> collection, ValidationError error)
+        {
+            return collection.Any(x => x.Code == error.Code && x.Message == error.Message);
+        }
+
+        public static void AddUniqueErrors(
+            this List<ValidationError> collection,
+            IEnumerable<ValidationError> errorsToEvaluate)
+        {
+            foreach (var error in errorsToEvaluate)
+            {
+                if (!collection.ContainsSimilarError(error))
+                {
+                    collection.Add(error);
+                }
+                else
+                {
+                    if (!collection.Any(x => x.Code == ValidationErrorCode.SkippedSimilarErrors))
+                    {
+                        ValidationWarning skippedSimilarErrors =
+                            new ValidationWarning(
+                                ValidationErrorCode.SkippedSimilarErrors,
+                                null,
+                                "Similar errors were skipped.");
+                        collection.Add(skippedSimilarErrors);
+                    }
+
+                }
+            }
         }
     }
 

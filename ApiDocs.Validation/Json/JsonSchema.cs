@@ -195,14 +195,19 @@ namespace ApiDocs.Validation.Json
 
                 foreach (var jToken in collectionMembers)
                 {
+                    
                     var container = jToken as JContainer;
                     if (null != container)
                     {
+                        List<ValidationError> containerErrors = new List<ValidationError>();
+
                         this.ValidateContainerObject(
                             container,
                             new ValidationOptions { AllowTruncatedResponses = annotation.TruncatedResult },
                             otherSchemas,
-                            detectedErrors);
+                            containerErrors);
+
+                        detectedErrors.AddUniqueErrors(containerErrors);
                     }
                 }
             }
@@ -541,11 +546,7 @@ namespace ApiDocs.Validation.Json
 
                     // TODO: Filter out non-unique errors
                     hadErrors |= memberErrors.Count > 0;
-                    foreach (var error in memberErrors)
-                    {
-                        error.Source = string.Format("{0} [{1}]", actualProperty.Name, i);
-                        detectedErrors.Add(error);
-                    }
+                    detectedErrors.AddUniqueErrors(memberErrors);
                 }
             }
 

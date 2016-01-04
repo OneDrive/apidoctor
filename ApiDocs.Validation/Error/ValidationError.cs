@@ -110,7 +110,8 @@ namespace ApiDocs.Validation.Error
         ProhibitedDocumentHeaderFound,
         ExtraDocumentHeaderFound,
         RequiredDocumentHeaderMissing,
-        DocumentHeaderInWrongPosition
+        DocumentHeaderInWrongPosition,
+        SkippedSimilarErrors
     }
 
     public class ValidationError
