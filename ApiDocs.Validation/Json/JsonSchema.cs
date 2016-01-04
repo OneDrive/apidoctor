@@ -278,6 +278,50 @@ namespace ApiDocs.Validation.Json
             }
         }
 
+        private static PropertyValidationOutcome ValidateSameDataType(ParameterDefinition expected, ParameterDefinition actual, List<ValidationError> detectedErrors, bool relaxStringValidation)
+        {
+            if (expected.Type == actual.Type && actual.Type != ParameterDataType.String)
+            {
+                return PropertyValidationOutcome.Ok;
+            }
+            else if (expected.Type == actual.Type && actual.Type == ParameterDataType.String)
+            {
+                // Perform extra validation to see if the string is the right format (iso date, enum value, url, or just a string)
+                if (relaxStringValidation)
+                {
+                    return PropertyValidationOutcome.Ok;
+                }
+                return ValidateStringFormat(expected, actual, detectedErrors);
+            }
+            else if (actual.Type.IsLessSpecificThan(expected.Type))
+            {
+                detectedErrors.Add(
+                    new ValidationError(
+                        ValidationErrorCode.ExpectedTypeDifferent,
+                        null,
+                        "Expected type {0} but actual was {1}, which is less specific than the expected type. Property: {2}, actual value: '{3}'",
+                        expected.Type,
+                        actual.Type,
+                        actual.Name,
+                        actual.OriginalValue));
+                return PropertyValidationOutcome.Ok;
+            }
+            else
+            {
+                // Type of the inputProperty is mismatched from the expected value.
+                detectedErrors.Add(
+                    new ValidationError(
+                        ValidationErrorCode.ExpectedTypeDifferent,
+                        null,
+                        "Expected type {0} but was instead {1}. Property: {2}, actual value: '{3}'",
+                        expected.Type,
+                        actual.Type,
+                        actual.Name,
+                        actual.OriginalValue));
+                return PropertyValidationOutcome.InvalidType;
+            }
+        }
+
         /// <summary>
         /// Verify that a property from the json-to-validate matches something in our schema
         /// </summary>
@@ -296,24 +340,7 @@ namespace ApiDocs.Validation.Json
                 // Check for simple value types first
                 if (this.SimpleValueTypes(schemaPropertyDef.Type, inputProperty.Type) && this.AllFalse(schemaPropertyDef.Type.IsCollection, inputProperty.Type.IsCollection))
                 {
-                    if (schemaPropertyDef.Type == inputProperty.Type && inputProperty.Type != ParameterDataType.String)
-                    {
-                        return PropertyValidationOutcome.Ok;
-                    }
-                    else if (schemaPropertyDef.Type == inputProperty.Type && inputProperty.Type == ParameterDataType.String)
-                    {
-                        // Perform extra validation to see if the string is the right format (iso date, enum value, url, or just a string)
-                        if (null == options || options.RelaxedStringValidation)
-                            return PropertyValidationOutcome.Ok;
-
-                        return ValidateStringFormat(schemaPropertyDef, inputProperty, detectedErrors);
-                    }
-                    else
-                    {
-                        // Type of the inputProperty is mismatched from the expected value.
-                        detectedErrors.Add(new ValidationError(ValidationErrorCode.ExpectedTypeDifferent, null, "Expected type {0} but was instead {1}: {2}", schemaPropertyDef.Type, inputProperty.Type, inputProperty.Name));
-                        return PropertyValidationOutcome.InvalidType;
-                    }
+                    return ValidateSameDataType(schemaPropertyDef, inputProperty, detectedErrors, (null != options) ? options.RelaxedStringValidation : false);
                 }
                 else if (null == inputProperty.OriginalValue)
                 {
@@ -394,7 +421,7 @@ namespace ApiDocs.Validation.Json
             }
             else
             {
-                detectedErrors.Add(new ValidationWarning(ValidationErrorCode.AdditionalPropertyDetected, null, "Extra property: property '{0}' [{1}] was not expected.", inputProperty.Name, inputProperty.Type));
+                detectedErrors.Add(new ValidationWarning(ValidationErrorCode.AdditionalPropertyDetected, null, "Undocumented property '{0}' [{1}] was not expected.", inputProperty.Name, inputProperty.Type));
                 return PropertyValidationOutcome.MissingFromSchema;
             }
         }
@@ -512,6 +539,7 @@ namespace ApiDocs.Validation.Json
                     List<ValidationError> memberErrors = new List<ValidationError>();
                     memberSchema.ValidateContainerObject(member, options, schemas, memberErrors);
 
+                    // TODO: Filter out non-unique errors
                     hadErrors |= memberErrors.Count > 0;
                     foreach (var error in memberErrors)
                     {

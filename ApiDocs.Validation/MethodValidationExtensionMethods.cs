@@ -218,8 +218,17 @@ namespace ApiDocs.Validation
 
         public ValidationOutcome OverallOutcome 
         {
-            get 
+            get
             {
+                if (results.Any(x => x.Outcome == ValidationOutcome.Error))
+                    return ValidationOutcome.Error;
+                if (results.Any(x => x.Outcome == ValidationOutcome.Warning))
+                    return ValidationOutcome.Warning;
+                if (results.All(x => x.Outcome == ValidationOutcome.Skipped))
+                    return ValidationOutcome.Skipped;
+                if (results.All(x => x.Outcome == ValidationOutcome.Passed))
+                    return ValidationOutcome.Passed;
+
                 ValidationOutcome working = 0;
                 foreach (var result in results)
                 {

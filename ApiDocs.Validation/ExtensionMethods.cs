@@ -239,12 +239,13 @@ namespace ApiDocs.Validation
                 }
             }
 
-            if (lowerValue.Contains("string"))
-                return ParameterDataType.String;
             if (lowerValue.Contains("etag"))
                 return ParameterDataType.String;
             if (lowerValue.Contains("timestamp"))
                 return ParameterDataType.DateTimeOffset;
+            if (lowerValue.Contains("string"))
+                return ParameterDataType.String;
+
 
             if (defaultValue != null)
                 return defaultValue;
@@ -298,6 +299,9 @@ namespace ApiDocs.Validation
                     simpleType = SimpleDataType.Stream;
                     break;
             }
+
+            if (lowercaseString.Contains("timestamp"))
+                return SimpleDataType.DateTimeOffset;
 
             // Check to see if this looks like an ISO 8601 date and call it DateTimeOffset if it does
             var parsedDate = lowercaseString.ToUpperInvariant().TryParseIso8601Date();
@@ -453,7 +457,7 @@ namespace ApiDocs.Validation
             if (param.Type != ParameterDataType.String)
                 return ExpectedStringFormat.Generic;
 
-            if (param.OriginalValue == "timestamp" || param.OriginalValue == "datetime")
+            if (param.OriginalValue == "timestamp" || param.OriginalValue == "datetime" || param.OriginalValue.Contains("timestamp") )
                 return ExpectedStringFormat.Iso8601Date;
             if (param.OriginalValue == "url" || param.OriginalValue == "absolute url")
                 return ExpectedStringFormat.AbsoluteUrl;
