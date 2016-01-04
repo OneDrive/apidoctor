@@ -241,6 +241,10 @@ namespace ApiDocs.Validation
 
             if (lowerValue.Contains("string"))
                 return ParameterDataType.String;
+            if (lowerValue.Contains("etag"))
+                return ParameterDataType.String;
+            if (lowerValue.Contains("timestamp"))
+                return ParameterDataType.DateTimeOffset;
 
             if (defaultValue != null)
                 return defaultValue;
