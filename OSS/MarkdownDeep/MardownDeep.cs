@@ -869,14 +869,10 @@ namespace MarkdownDeep
         // HtmlEncode a range in a string to a specified string builder
         internal void HtmlEncode(StringBuilder dest, string str, int start, int len, bool allowBreakLines = false, bool allowHtmlTags = false)
 		{
-            if (allowBreakLines)
-            {
-                str = str.Replace("<br>", "\u0085");
-                str = str.Replace("<br />", "\u0085");
-            }
-
             m_StringScanner.Reset(str, start, len);
 			var p = m_StringScanner;
+
+            bool insideBreakTag = false;
 
 		    while (!p.eof)
 			{
@@ -889,18 +885,40 @@ namespace MarkdownDeep
 
 					case '<':
 				        if (allowHtmlTags)
+				        {
 				            dest.Append(ch);
-                        else
+				        }
+				        else if (allowBreakLines && !insideBreakTag)
+				        {
+                            // See if this is the start of a line break
+				            if (p.DoesMatchI("<br>") || p.DoesMatchI("<br />") || p.DoesMatchI("<br/>"))
+				            {
+				                insideBreakTag = true;
+				                dest.Append(ch);
+				            }
+				            else
+				            {
+				                dest.Append("&lt;");
+				            }
+				        }
+				        else
+				        {
 				            dest.Append("&lt;");
-                        
+				        }
+
 				        break;
 
 					case '>':
-                        if (allowHtmlTags)
-                            dest.Append(ch);
-                        else
-                            dest.Append("&gt;");
-						break;
+				        if (allowHtmlTags || (allowBreakLines &&  insideBreakTag))
+				        {
+				            dest.Append(ch);
+				            insideBreakTag = false;
+				        }
+				        else
+				        {
+				            dest.Append("&gt;");
+				        }
+				        break;
 
 					case '\"':
 						dest.Append("&quot;");
