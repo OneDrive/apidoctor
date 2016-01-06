@@ -43,7 +43,6 @@ namespace ApiDocs.Publishing.CSDL
             return path;
         }
 
-
         public static string HttpMethodVerb(this MethodDefinition method)
         {
             HttpParser parser = new HttpParser();

@@ -141,8 +141,7 @@ namespace ApiDocs.Publishing.CSDL
             EntityType parentType = edmx.ResourceWithIdentifier<EntityType>(navigationProperty.QualifiedType);
 
             NavigationProperty matchingProperty =
-                (from np in parentType.NavigationProperties where np.Name == navigationProperty.Name select np)
-                    .FirstOrDefault();
+                parentType.NavigationProperties.FirstOrDefault(np => np.Name == navigationProperty.Name);
             if (null != matchingProperty)
             {
                 // TODO: Append information from methods into this navigation property
@@ -153,7 +152,7 @@ namespace ApiDocs.Publishing.CSDL
                 sb.AppendWithCondition(methods.PutAllowed, "PUT", seperator);
                 sb.AppendWithCondition(methods.DeleteAllowed, "DELETE", seperator);
 
-                Console.WriteLine("Collection '{0}' supports: ({1})", navigationProperty.QualifiedType + "/" + navigationProperty.Name, sb.ToString());
+                Console.WriteLine("Collection '{0}' supports: ({1})", navigationProperty.QualifiedType + "/" + navigationProperty.Name, sb);
             }
             else
             {
@@ -187,7 +186,7 @@ namespace ApiDocs.Publishing.CSDL
             ActionOrFunctionBase target = null;
             if (methodCollection.AllMethodsIdempotent)
             {
-                target = new Function();
+                target = new Validation.OData.Function();
             }
             else
             {
@@ -284,12 +283,6 @@ namespace ApiDocs.Publishing.CSDL
 
             if (currentObject is EntityType)
                 response.Classification = ODataTargetClassification.EntityType;
-            else if (currentObject is EntitySet)
-                response.Classification = ODataTargetClassification.EntitySet;
-            else if (currentObject is Validation.OData.Action)
-                response.Classification = ODataTargetClassification.Action;
-            else if (currentObject is Function)
-                response.Classification = ODataTargetClassification.Function;
             else if (currentObject is EntityContainer)
                 response.Classification = ODataTargetClassification.EntityContainer;
             else if (currentObject is ODataSimpleType)
@@ -298,6 +291,12 @@ namespace ApiDocs.Publishing.CSDL
             {
                 response.Classification = ODataTargetClassification.NavigationProperty;
                 response.QualifiedType = edmx.LookupIdentifierForType(previousObject);
+            }
+            else
+            {
+                throw new NotSupportedException(
+                    string.Format("currentObject type {0} is not supported here.",
+                    currentObject.GetType().Name));
             }
 
             return response;
@@ -343,8 +342,8 @@ namespace ApiDocs.Publishing.CSDL
             largestSchema.EntityContainers.Add(container);
         }
 
-        private Dictionary<string, MethodCollection> cachedUniqueRequestPaths = null;
-
+        private Dictionary<string, MethodCollection> cachedUniqueRequestPaths { get; set; }
+    
         /// <summary>
         /// Return a dictionary of the unique request paths in the 
         /// documentation and the method definitions that defined them.

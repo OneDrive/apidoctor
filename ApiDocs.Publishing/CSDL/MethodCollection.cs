@@ -87,7 +87,7 @@ namespace ApiDocs.Publishing.CSDL
         protected bool HttpVerbAllowed(string verb)
         {
             var query = from m in this
-                        where m.HttpMethodVerb().ToUpperInvariant() == verb
+                        where m.HttpMethodVerb().Equals(verb, System.StringComparison.OrdinalIgnoreCase)
                         select verb;
 
             return query.Any();
