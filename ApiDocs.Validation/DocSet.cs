@@ -181,25 +181,24 @@ namespace ApiDocs.Validation
             var jsonFiles = docSetDir.GetFiles("*.json", SearchOption.AllDirectories);
             foreach (var file in jsonFiles)
             {
-                using (var reader = file.OpenText())
+                try
                 {
-                    try {
+                    using (var reader = file.OpenText())
+                    {
                         var config = JsonConvert.DeserializeObject<T>(reader.ReadToEnd());
                         if (null != config && config.IsValid)
                         {
                             validConfigurationFiles.Add(config);
                             config.SourcePath = file.FullName;
                         }
-                    } 
-                    catch (Exception)
-                    {
-                        // TODO: Make it possible to log out an error here.
-//                        RecordLogMessage(true, 
-//                            "Configuration Load Error", 
-//                            "Exception processing config file {0}: {1}", 
-//                            file.FullName, 
-//                            ex.Message);
                     }
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine(
+                        "Configuration load error: Exception processing file {0}: {1}",
+                        file.FullName,
+                        ex.Message);
                 }
             }
 

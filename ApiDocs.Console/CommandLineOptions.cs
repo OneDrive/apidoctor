@@ -340,17 +340,19 @@ namespace ApiDocs.ConsoleApp
             HelpText="Change the line endings for output files. Values: default, windows, unix, or macintosh")]
         public LineEndings LineEndings { get; set; }
 
-        [Option("files", HelpText = "Specify a particular source file that should be published, semi-colon separated.")]
+        [Option("files", HelpText = "Specify a particular source file that should be published, semicolon separated.")]
         public string SourceFiles { get; set; }
-        
 
-        [Option("namespaces", HelpText="Specify the namespaces that are included when publishing. Semi-colon separated values.")]
+        [Option("namespaces", HelpText="Specify the namespaces that are included when publishing Edmx. Semicolon separated values.")]
         public string Namespaces { get; set; }
 
         public string[] FilesToPublish {
             get { return (this.SourceFiles ?? string.Empty).Split(new char[] {';'}, StringSplitOptions.RemoveEmptyEntries); }
             set { this.SourceFiles = value.ComponentsJoinedByString(";"); }
         }
+
+        [Option("parameters", HelpText="Specify additional page variables that are used by the publishing engine. URL encoded: key=value&key2=value2.")]
+        public string AdditionalPageParameters { get; set; }
 
         #region Swagger2 output controls
 

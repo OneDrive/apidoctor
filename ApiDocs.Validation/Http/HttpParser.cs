@@ -28,13 +28,14 @@ namespace ApiDocs.Validation.Http
     using System;
     using System.IO;
     using System.Net;
+    using System.Collections.Generic;
 
     public class HttpParser
     {
         
         
         /// <summary>
-        /// Converts a raw HTTP request into an HttpWebRequest instance
+        /// Converts a raw HTTP request into an HttpWebRequest instance.
         /// </summary>
         /// <param name="requestString"></param>
         /// <returns></returns>
@@ -97,6 +98,11 @@ namespace ApiDocs.Validation.Http
             return request;
         }
 
+        /// <summary>
+        /// Convert a raw HTTP response into an HttpResponse instance.
+        /// </summary>
+        /// <param name="responseString"></param>
+        /// <returns></returns>
         public HttpResponse ParseHttpResponse(string responseString)
         {
             StringReader reader = new StringReader(responseString);
@@ -144,6 +150,24 @@ namespace ApiDocs.Validation.Http
             }
 
             return response;
+        }
+
+
+        /// <summary>
+        /// Take query string formatted input (a=1&b=2) and return a dictionary
+        /// of values.
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
+        public static System.Collections.Specialized.NameValueCollection ParseQueryString(string input)
+        {
+            if (input != null && input[0] != '?')
+            {
+                input = "?" + input;
+            }
+
+            var output = System.Web.HttpUtility.ParseQueryString(input);
+            return output;
         }
 
         private enum ParserMode
