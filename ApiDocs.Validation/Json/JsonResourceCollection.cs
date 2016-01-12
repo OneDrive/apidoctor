@@ -43,7 +43,7 @@ namespace ApiDocs.Validation.Json
         public void RegisterJsonResource(ResourceDefinition resource)
         {
             var schema = new JsonSchema(resource);
-            this.registeredSchema[resource.Metadata.ResourceType] = schema;
+            this.registeredSchema[resource.Name] = schema;
         }
 
         /// <summary>
@@ -97,7 +97,7 @@ namespace ApiDocs.Validation.Json
         /// <param name="expectedResponse"></param>
         /// <param name="schemaErrors"></param>
         /// <returns></returns>
-        internal bool ValidateResponseMatchesSchema(MethodDefinition method, HttpResponse actualResponse, HttpResponse expectedResponse, out ValidationError[] schemaErrors)
+        internal bool ValidateResponseMatchesSchema(MethodDefinition method, HttpResponse actualResponse, HttpResponse expectedResponse, out ValidationError[] schemaErrors, ValidationOptions options = null)
         {
             List<ValidationError> newErrors = new List<ValidationError>();
 
@@ -129,7 +129,7 @@ namespace ApiDocs.Validation.Json
             else
             {
                 ValidationError[] validationJsonOutput;
-                this.ValidateJsonCompilesWithSchema(schema, new JsonExample(actualResponse.Body, method.ExpectedResponseMetadata), out validationJsonOutput, (null != expectedResponseJson) ? new JsonExample(expectedResponseJson) : null);
+                this.ValidateJsonCompilesWithSchema(schema, new JsonExample(actualResponse.Body, method.ExpectedResponseMetadata), out validationJsonOutput, (null != expectedResponseJson) ? new JsonExample(expectedResponseJson) : null, options);
                 newErrors.AddRange(validationJsonOutput);
             }
 
@@ -168,7 +168,7 @@ namespace ApiDocs.Validation.Json
         /// Examines input json string to ensure that it compiles with the JsonSchema definition. Any errors in the
         /// validation of the schema are returned via the errors out parameter.
         /// </summary>
-        /// <param name="schema">Schema definition used as a reference.</param>
+        /// <param name="schema">Schemas definition used as a reference.</param>
         /// <param name="inputJson">Input json example to be validated</param>
         /// <param name="errors">Out parameter that provides any errors, warnings, or messages that were generated</param>
         /// <param name="expectedJson"></param>
@@ -187,11 +187,9 @@ namespace ApiDocs.Validation.Json
             }
 
             // If we didn't get an options, create a new one with some defaults provided by the annotation
-            options = options ?? new ValidationOptions()
-            {
-                AllowTruncatedResponses = (inputJson.Annotation ?? new CodeBlockAnnotation()).TruncatedResult,
-                CollectionPropertyName = collectionPropertyName
-            };
+            options = options ?? new ValidationOptions();
+            options.AllowTruncatedResponses = (inputJson.Annotation ?? new CodeBlockAnnotation()).TruncatedResult;
+            options.CollectionPropertyName = collectionPropertyName;
 
             return schema.ValidateJson(inputJson, out errors, this.registeredSchema, options, expectedJson);
         }

@@ -56,6 +56,12 @@ namespace ApiDocs.Validation.Writers
         /// from markdown. This defaults to ".htm" if not set.
         /// </summary>
         string OutputExtension { get; set; }
+
+
+        /// <summary>
+        /// URL encoded string that contains additional parameters that can be used by the rendering engine
+        /// </summary>
+        string AdditionalPageParameters { get; set; }
     }
 
     public class DefaultPublishOptions : IPublishOptions
@@ -67,5 +73,7 @@ namespace ApiDocs.Validation.Writers
         public string TemplateFilename { get; set; }
 
         public string OutputExtension { get; set; }
+
+        public string AdditionalPageParameters { get; set; }
     }
 }

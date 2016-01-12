@@ -34,14 +34,15 @@ namespace ApiDocs.Validation.OData
     using System.Threading.Tasks;
     using System.Xml.Linq;
     using Newtonsoft.Json;
-
+    using System.Text;
+    using System.Xml;
+    using System.Xml.Serialization;
     /// <summary>
     /// Converts OData input into json examples which can be validated against our 
     /// ResourceDefinitions in a DocSet.
     /// </summary>
     public class ODataParser
     {
-
         private static readonly IDictionary<string, object> ODataSimpleTypeExamples = new Dictionary<string, object>() {
             { "Edm.String", "string" },
             { "Edm.Boolean", false },
@@ -58,19 +59,18 @@ namespace ApiDocs.Validation.OData
             { "Edm.Time", "00:00:00Z" },
         };
 
-        public static List<Schema> ReadSchemaFromMetadata(string metadataContent)
+        #region Static EDMX -> EntityFramework methods 
+        public static EntityFramework DeserializeEntityFramework(string metadataContent)
         {
-            XDocument doc = XDocument.Parse(metadataContent);
+            XmlSerializer ser = new XmlSerializer(typeof(EntityFramework));
 
-            List<Schema> schemas = new List<Schema>();
-            schemas.AddRange(from e in doc.Descendants()
-                             where e.Name.LocalName == "Schema"
-                             select Schema.FromXml(e));
+            StringReader reader = new StringReader(metadataContent);
+            EntityFramework result = (EntityFramework)ser.Deserialize(reader);
 
-            return schemas;
+            return result;
         }
 
-        public static async Task<List<Schema>> ReadSchemaFromMetadataUrlAsync(Uri remoteUrl)
+        public static async Task<EntityFramework> ParseEntityFrameworkFromUrlAsync(Uri remoteUrl)
         {
             var request = WebRequest.CreateHttp(remoteUrl);
             var response = await request.GetResponseAsync();
@@ -88,15 +88,15 @@ namespace ApiDocs.Validation.OData
                 }
             }
 
-            return ReadSchemaFromMetadata(remoteMetadataContents);
+            return DeserializeEntityFramework(remoteMetadataContents);
         }
 
-        public static async Task<List<Schema>> ReadSchemaFromFileAsync(string path)
+        public static async Task<EntityFramework> ParseEntityFrameworkFromFileAsync(string path)
         {
             StreamReader reader = new StreamReader(path);
             string localMetadataContents = await reader.ReadToEndAsync();
 
-            return ReadSchemaFromMetadata(localMetadataContents);
+            return  DeserializeEntityFramework(localMetadataContents);
         }
 
         /// <summary>
@@ -117,7 +117,6 @@ namespace ApiDocs.Validation.OData
             return resources;
         }
 
-
         private static IEnumerable<ResourceDefinition> CreateResourcesFromSchema(Schema schema, IEnumerable<Schema> otherSchema)
         {
             List<ResourceDefinition> resources = new List<ResourceDefinition>();
@@ -132,7 +131,7 @@ namespace ApiDocs.Validation.OData
         {
             var annotation = new CodeBlockAnnotation() { ResourceType = string.Concat(schema.Namespace, ".", ct.Name), BlockType = CodeBlockType.Resource };
             var json = BuildJsonExample(ct, otherSchema);
-            ResourceDefinition rd = new ResourceDefinition(annotation, json, null, "json");
+            ResourceDefinition rd = new JsonResourceDefinition(annotation, json, null);
             return rd;
         }
 
@@ -172,7 +171,7 @@ namespace ApiDocs.Validation.OData
             ComplexType matchingType = null;
             try
             {
-                matchingType = otherSchemas.FindTypeWithIdentifier(typeIdentifier);
+                matchingType = otherSchemas.ResourceWithIdentifier<ComplexType>(typeIdentifier);
             }
             catch (Exception ex)
             {
@@ -187,5 +186,37 @@ namespace ApiDocs.Validation.OData
             else
                 return BuildDictionaryExample(matchingType, otherSchemas);
         }
+
+        #endregion
+
+        #region EntityFramework -> EDMX methods
+
+        public const string EdmxNamespace = "http://docs.oasis-open.org/odata/ns/edmx";
+        public const string EdmNamespace = "http://docs.oasis-open.org/odata/ns/edm";
+
+        /// <summary>
+        /// Generates an entity framework XML file for a given input
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
+        public static string GenerateEdmx(EntityFramework input)
+        {
+            StringBuilder sb = new StringBuilder();
+            StringWriter stringWriter = new StringWriter(sb);
+            XmlWriter writer = XmlWriter.Create(
+                stringWriter,
+                new XmlWriterSettings { Encoding = new UTF8Encoding(false), OmitXmlDeclaration = true, Indent = true });
+
+            XmlSerializerNamespaces ns = new XmlSerializerNamespaces();
+            ns.Add("edmx", ODataParser.EdmxNamespace);
+
+            XmlSerializer ser = new XmlSerializer(typeof(EntityFramework));
+            ser.Serialize(writer, input, ns);
+            writer.Flush();
+
+            return sb.ToString();
+        }
+        #endregion
+
     }
 }

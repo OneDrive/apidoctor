@@ -26,77 +26,130 @@
 namespace ApiDocs.Validation
 {
     using System;
+    using System.Linq;
     using ApiDocs.Validation.Error;
     using Newtonsoft.Json;
-
+    using System.Collections.Generic;
+    using Newtonsoft.Json.Linq;
     /// <summary>
-    /// Represents an entity resource in the API.
+    /// Represents a class, resource, complex type, or entity type from an API.
     /// </summary>
     public class ResourceDefinition : ItemDefinition
     {
-        public ResourceDefinition(CodeBlockAnnotation annotation, string content, DocFile source, string language)
+        private readonly CodeBlockAnnotation sourceAnnotation;
+
+        protected ResourceDefinition(CodeBlockAnnotation sourceAnnotation, string content, DocFile source, string language)
         {
-            if (null != language && !language.Equals("json", StringComparison.OrdinalIgnoreCase))
-            {
-                throw new ArgumentException("Resources only support JSON language.", "language");
-            }
-
-            this.Metadata = annotation;
-            this.OriginalExample = content;
+            this.sourceAnnotation = sourceAnnotation;
+            this.OriginalExampleText = content;
             this.SourceFile = source;
+            this.Name = sourceAnnotation.ResourceType;
+            this.KeyPropertyName = sourceAnnotation.KeyPropertyName;
 
+            if (string.IsNullOrEmpty(sourceAnnotation.ResourceType))
+            {
+                Logging.LogMessage(
+                    new ValidationError(
+                        ValidationErrorCode.MissingResourceName,
+                        source.DisplayName,
+                        "Resource definition is missing Name value"));
+            }
+        }
+
+
+        #region Public Properties
+
+        /// <summary>
+        /// For indexed resources, this specifies the property which is used as the index.
+        /// </summary>
+        public string KeyPropertyName { get; set; }
+
+        /// <summary>
+        /// Metadata read from the code block sourceAnnotation
+        /// </summary>
+        public CodeBlockAnnotation OriginalMetadata
+        {
+            get { return sourceAnnotation; }
+        }
+
+        /// <summary>
+        /// The type identifier for the resource defined in this class (@odata.type)
+        /// </summary>
+        public string Name { get; protected set; }
+
+        /// <summary>
+        /// Parsed and reformatted resource read from the documentation
+        /// </summary>
+        public string ExampleText { get; protected set; }
+
+        /// <summary>
+        /// Original json example as written in the documentation.
+        /// </summary>
+        public string OriginalExampleText { get; protected set; }
+
+        /// <summary>
+        /// The documentation file that was the sourceFile of this resource
+        /// </summary>
+        /// <value>The sourceFile file.</value>
+        public DocFile SourceFile {get; protected set;}
+
+        #endregion
+    }
+
+
+    public class JsonResourceDefinition : ResourceDefinition
+    {
+        public JsonResourceDefinition(CodeBlockAnnotation sourceAnnotation, string json, DocFile source)
+            : base(sourceAnnotation, json, source, "json")
+        {
+            ParseJsonInput();
+        }
+
+        #region Helper Methods
+        /// <summary>
+        /// Parse the example resource conetent and populate the resource definition
+        /// </summary>
+        /// <param name="jsonContent">JSON string representation of an object</param>
+        /// <param name="sourceFile"></param>
+        private void ParseJsonInput()
+        {
             try
             {
-                object inputObject = JsonConvert.DeserializeObject(content);
-                this.JsonExample = JsonConvert.SerializeObject(inputObject, Formatting.Indented);
+                JObject inputObject = (JObject)JsonConvert.DeserializeObject(this.OriginalExampleText);
+                this.ExtractProperties(inputObject);
+                this.ExampleText = JsonConvert.SerializeObject(inputObject, Formatting.Indented);
             }
             catch (Exception ex)
             {
                 Logging.LogMessage(
                     new ValidationError(
                         ValidationErrorCode.JsonParserException,
-                        source.DisplayName,
+                        this.SourceFile.DisplayName,
                         "Error parsing resource definition: {0}",
                         ex.Message));
                 throw;
             }
-
-            if (string.IsNullOrEmpty(annotation.ResourceType))
-            {
-                Logging.LogMessage(
-                    new ValidationError(
-                        ValidationErrorCode.MissingResourceName,
-                        source.DisplayName,
-                        "Resource definition is missing a @odata.type name"));
-            }
         }
 
         /// <summary>
-        /// Metadata read from the code block annotation
         /// </summary>
-        public CodeBlockAnnotation Metadata { get; private set; }
+        /// <param name="inputObject"></param>
+        private void ExtractProperties(JObject input)
+        {
+            var properties = input.Properties();
 
-        /// <summary>
-        /// The type identifier for the resource defined in this class
-        /// </summary>
-        public string ResourceType { get { return this.Metadata.ResourceType; } }
+            List<ParameterDefinition> parameters = new List<ParameterDefinition>();
+            foreach (var p in properties)
+            {
+                var param = Json.JsonSchema.ParseProperty(p.Name, p.Value, null);
+                param.Location = ParameterLocation.JsonObject;
+                param.Required = (this.OriginalMetadata != null && this.OriginalMetadata.OptionalProperties != null) ? !this.OriginalMetadata.OptionalProperties.Contains(param.Name) : true;
+                parameters.Add(param);
+            }
 
-        /// <summary>
-        /// Parsed and reformatted json resource read from the documentation
-        /// </summary>
-        public string JsonExample { get; private set; }
-
-        /// <summary>
-        /// Original json example as written in the documentation.
-        /// </summary>
-        public string OriginalExample { get; private set; }
-
-        /// <summary>
-        /// The documentation file that was the source of this resource
-        /// </summary>
-        /// <value>The source file.</value>
-        public DocFile SourceFile {get; private set;}
-
+            this.Parameters = parameters;
+        }
+        #endregion
     }
 }
 

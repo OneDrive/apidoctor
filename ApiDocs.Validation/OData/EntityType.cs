@@ -28,9 +28,10 @@ namespace ApiDocs.Validation.OData
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Xml.Linq;
+    using System.Xml.Serialization;
 
-    public class EntityType : ComplexType
+    [XmlRoot("EntityType", Namespace = ODataParser.EdmNamespace)]
+    public class EntityType : ComplexType, IODataNavigable
     {
         public EntityType()
         {
@@ -38,23 +39,35 @@ namespace ApiDocs.Validation.OData
             this.NavigationProperties = new List<NavigationProperty>();
         }
 
+        [XmlElement("Key", Namespace = ODataParser.EdmNamespace)]
+        public Key Key { get; set; }
+
+        [XmlElement("NavigationProperty", Namespace = ODataParser.EdmNamespace)]
         public List<NavigationProperty> NavigationProperties { get; set; }
 
-        public static new string ElementName { get { return "EntityType"; } }
-        public static new EntityType FromXml(XElement xml)
+
+        public override IODataNavigable NavigateByUriComponent(string component, EntityFramework edmx)
         {
-            if (xml.Name.LocalName != ElementName) throw new ArgumentException("xml is not an EntityType element");
+            var navigationPropertyMatch = (from n in this.NavigationProperties
+                                           where n.Name == component
+                                           select n).FirstOrDefault();
+            if (null != navigationPropertyMatch)
+            {
+                var identifier = navigationPropertyMatch.Type;
+                if (identifier.StartsWith("Collection("))
+                {
+                    var innerId = identifier.Substring(11, identifier.Length - 12);
+                    return new ODataCollection(innerId);
+                }
+                return edmx.LookupNavigableType(identifier);
+            }
 
-            var obj = new EntityType { Name = xml.AttributeValue("Name") };
+            return base.NavigateByUriComponent(component, edmx);
+        }
 
-            obj.Properties.AddRange(from e in xml.Elements()
-                                    where e.Name.LocalName == Property.ElementName
-                                    select Property.FromXml(e));
-            obj.NavigationProperties.AddRange(from e in xml.Elements()
-                                              where e.Name.LocalName == NavigationProperty.ElementName
-                                              select NavigationProperty.FromXml(e));
-
-            return obj;
+        public override IODataNavigable NavigateByEntityTypeKey(EntityFramework edmx)
+        {
+            throw new NotImplementedException();
         }
     }
 }

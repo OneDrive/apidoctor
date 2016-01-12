@@ -25,27 +25,20 @@
 
 namespace ApiDocs.Validation.OData
 {
-    using System;
-    using System.Xml.Linq;
+    using System.Collections.Generic;
+    using System.ComponentModel;
+    using System.Xml.Serialization;
 
+    [XmlRoot("Annotation", Namespace = ODataParser.EdmNamespace)]
     public class Annotation
     {
+        [XmlAttribute("Term")]
         public string Term { get; set; }
+
+        [XmlAttribute("String"), DefaultValue(null)]
         public string String { get; set; }
 
-
-        public static string ElementName { get { return "Annotation"; } }
-
-        public static Annotation FromXml(XElement xml)
-        {
-            if (xml.Name.LocalName != ElementName) throw new ArgumentException("xml was not an Annotation element");
-
-            var obj = new Annotation
-            {
-                Term = xml.AttributeValue("Term"),
-                String = xml.AttributeValue("String")
-            };
-            return obj;
-        }
+        [XmlElement("Record", Namespace = ODataParser.EdmNamespace), DefaultValue(null)]
+        public List<Record> Records { get; set; }
     }
 }

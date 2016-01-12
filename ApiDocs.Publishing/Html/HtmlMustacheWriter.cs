@@ -33,11 +33,13 @@ namespace ApiDocs.Publishing.Html
     using ApiDocs.Validation;
     using ApiDocs.Validation.Writers;
     using Mustache;
+    using System.Dynamic;
 
     public class HtmlMustacheWriter : DocumentPublisherHtml
     {
         private Generator generator;
         private FileTagDefinition fileTag;
+        private Dictionary<string, object> PageParameters { get; set; }
 
         public bool CollapseTocToActiveGroup { get; set; }
 
@@ -45,6 +47,8 @@ namespace ApiDocs.Publishing.Html
         public HtmlMustacheWriter(DocSet docs, IPublishOptions options) : base(docs, options)
         {
             this.CollapseTocToActiveGroup = false;
+            this.PageParameters = GeneratePageParameters(options);
+
         }
 
         protected override void LoadTemplate()
@@ -60,23 +64,11 @@ namespace ApiDocs.Publishing.Html
                 compiler.RegisterTag(this.fileTag, true);
                 compiler.RegisterTag(new IfMatchTagDefinition(), true);
                 compiler.RegisterTag(new ExtendedElseTagDefinition(), false);
-                //compiler.RegisterTag(new ExtendedElseIfTagDefinition(), false);
                 this.generator = compiler.Compile(this.TemplateHtml);
                 this.generator.KeyNotFound += this.Generator_KeyNotFound;
-                //this.generator.ValueRequested += this.Generator_ValueRequested;
-                //this.generator.KeyFound += this.Generator_KeyFound;
             }
         }
 
-        //void Generator_KeyFound(object sender, Mustache.KeyFoundEventArgs e)
-        //{
-        //    Console.WriteLine("KeyFound: " + e.Key);
-        //}
-
-        //void Generator_ValueRequested(object sender, Mustache.ValueRequestEventArgs e)
-        //{
-        //    Console.WriteLine("ValueRequested: " + e.Value);
-        //}
         void Generator_KeyNotFound(object sender, KeyNotFoundEventArgs e)
         {
             Console.WriteLine("Mustache template key not found. Empty string was returned: " + e.Key);
@@ -105,15 +97,16 @@ namespace ApiDocs.Publishing.Html
             if (page.Annotation.BodyFooterHtmlTags != null)
                 htmlFooters.AddRange(from h in page.Annotation.BodyFooterHtmlTags select new ValueObject<string> { Value = h });
 
-            dynamic templateObject = new System.Dynamic.ExpandoObject();
-            templateObject.Page = page.Annotation;
-            templateObject.Body = bodyHtml;
-            templateObject.Headers = tocHeaders;
-            templateObject.HtmlHeaderAdditions = htmlHeaders;
-            templateObject.HtmlFooterAdditions = htmlFooters;
-            templateObject.Source = new
+            var templateObject = new PageTemplateInput
             {
-                MarkdownPath = page.UrlRelativePathFromRoot()
+                Page = page.Annotation,
+                Body = bodyHtml,
+                Headers = tocHeaders,
+                HtmlHeaderAdditions = htmlHeaders,
+                HtmlFooterAdditions = htmlFooters,
+                OriginalSourceRelativePath = page.UrlRelativePathFromRoot(),
+                Parameters = this.PageParameters
+                
             };
 
             this.fileTag.DestinationFile = destinationFile;
@@ -125,6 +118,83 @@ namespace ApiDocs.Publishing.Html
             using (var outputWriter = new StreamWriter(destinationFile))
             {
                 await outputWriter.WriteAsync(pageHtml);
+            }
+        }
+
+        /// <summary>
+        /// Convert the page parameters in the publish options into an object we can use in the page template input.
+        /// </summary>
+        /// <param name="options"></param>
+        /// <returns></returns>
+        //private static ParameterPropertyBag GeneratePageParameters(IPublishOptions options)
+        //{
+        //    if (string.IsNullOrEmpty(options.AdditionalPageParameters))
+        //        return null;
+
+        //    dynamic data = new ParameterPropertyBag();
+
+        //    var parameters = Validation.Http.HttpParser.ParseQueryString(options.AdditionalPageParameters);
+        //    foreach (var key in parameters.AllKeys)
+        //    {
+        //        data[key] = parameters[key];
+        //    }
+        //    return data;
+        //}
+
+        private static Dictionary<string, object> GeneratePageParameters(IPublishOptions options)
+        {
+            if (string.IsNullOrEmpty(options.AdditionalPageParameters))
+                return null;
+
+            var data = new Dictionary<string, object>();
+
+            var parameters = Validation.Http.HttpParser.ParseQueryString(options.AdditionalPageParameters);
+            foreach (var key in parameters.AllKeys)
+            {
+                data[key] = parameters[key];
+            }
+            return data;
+        }
+
+        private class PageTemplateInput
+        {
+            public PageAnnotation Page { get; set; }
+            public string Body { get; set; }
+            public IEnumerable<TocItem> Headers { get; set; }
+            public List<ValueObject<string>> HtmlHeaderAdditions { get; set; }
+            public List<ValueObject<string>> HtmlFooterAdditions { get; set; }
+            public string OriginalSourceRelativePath { get; set; }
+            public Dictionary<string, object> Parameters { get; set; }
+        }
+
+        private class ParameterPropertyBag : System.Dynamic.DynamicObject
+        {
+            private Dictionary<string, object> storedValues;
+
+            public ParameterPropertyBag()
+            {
+                storedValues = new Dictionary<string, object>();
+            }
+
+            public override bool TryGetMember(System.Dynamic.GetMemberBinder binder, out object result)
+            {
+                return storedValues.TryGetValue(binder.Name, out result);
+            }
+
+            public override bool TryGetIndex(System.Dynamic.GetIndexBinder binder, object[] indexes, out object result)
+            {
+                return storedValues.TryGetValue((string)indexes[0], out result);
+            }
+
+            public override bool TrySetIndex(SetIndexBinder binder, object[] indexes, object value)
+            {
+                storedValues[(string)indexes[0]] = value;
+                return true;
+            }
+
+            public override IEnumerable<string> GetDynamicMemberNames()
+            {
+                return storedValues.Keys;
             }
         }
 

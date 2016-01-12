@@ -2,7 +2,7 @@
 ```json
 {
 	"id": "string",
-	"lastModifiedDateTime": "date-time",
+	"lastModifiedDateTime": "datetime",
 	"name": "string",
 	"size": 218753122201,
 	"webUrl": "url",

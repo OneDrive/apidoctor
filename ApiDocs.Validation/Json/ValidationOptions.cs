@@ -72,12 +72,18 @@ namespace ApiDocs.Validation.Json
         /// </summary>
         public bool RelaxedStringValidation { get; set; }
 
+        /// <summary>
+        /// Creates a new ValidationOptions instance inheriting values from this instance, and modified for the specific options of a property.
+        /// </summary>
+        /// <param name="propertyName"></param>
+        /// <returns></returns>
         internal ValidationOptions CreateForProperty(string propertyName)
         {
             var newOption = new ValidationOptions
             {
                 AllowTruncatedResponses = this.AllowTruncatedResponses,
-                CollectionPropertyName = this.CollectionPropertyName
+                CollectionPropertyName = this.CollectionPropertyName,
+                RelaxedStringValidation = this.RelaxedStringValidation
             };
 
             if (null != this.ExpectedJsonSchema)

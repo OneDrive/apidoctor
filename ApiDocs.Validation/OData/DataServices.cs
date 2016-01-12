@@ -25,42 +25,14 @@
 
 namespace ApiDocs.Validation.OData
 {
-    using System;
     using System.Collections.Generic;
-    using System.Linq;
-    using System.Xml.Linq;
     using System.Xml.Serialization;
 
-    /// <summary>
-    /// Action in OData is allowed to modify data on the 
-    /// server (can have side-effects). Action does not have to
-    /// return data.
-    /// </summary>
-    [XmlRoot("Action", Namespace = ODataParser.EdmNamespace)]
-    public class Action : ActionOrFunctionBase
+    [XmlRoot("DataServices", Namespace = ODataParser.EdmNamespace)]
+    public class DataServices
     {
-        public Action() : base()
-        {
-        }
-    }
-
-    public class ActionOrFunctionBase
-    {
-        [XmlAttribute("Name")]
-        public string Name { get; set; }
-
-        [XmlAttribute("IsBound")]
-        public bool IsBound { get; set; }
-
-        [XmlElement("Parameter")]
-        public List<Parameter> Parameters { get; set; }
-
-        [XmlElement("ReturnType")]
-        public ReturnType ReturnType { get; set; }
-
-        protected ActionOrFunctionBase()
-        {
-            this.Parameters = new List<Parameter>();
-        }
+        [XmlElement("Schema", Namespace = ODataParser.EdmNamespace)]
+        public List<Schema> Schemas { get; set; }
+      
     }
 }

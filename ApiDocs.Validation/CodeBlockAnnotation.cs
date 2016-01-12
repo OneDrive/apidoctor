@@ -104,6 +104,20 @@ namespace ApiDocs.Validation
         public string LongRunningResponseType { get; set; }
 
         /// <summary>
+        /// For blockType=resource, defines the property in the resource that is considered to be 
+        /// the "key" / "index" property. This also converts the resource into an EntityType for OData
+        /// purposes.
+        /// </summary>
+        [JsonProperty("keyProperty", DefaultValueHandling=DefaultValueHandling.Ignore)]
+        public string KeyPropertyName { get; set; }
+
+        /// <summary>
+        /// Use this property to delcare that a custom function request is idempotent (has no side-effects).
+        /// </summary>
+        [JsonProperty("idempotent", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public bool IsIdempotent { get; set; }
+
+        /// <summary>
         /// Convert a JSON string into an instance of this class
         /// </summary>
         /// <param name="json"></param>
@@ -120,6 +134,18 @@ namespace ApiDocs.Validation
                 return new CodeBlockAnnotation() { BlockType = CodeBlockType.Ignored };
             }
         }
+
+        public ParameterDataType Type
+        {
+            get { return new ParameterDataType(this.ResourceType, this.IsCollection); }
+        }
+
+        /// <summary>
+        /// Indicates that a resource is extensible with additional properties that 
+        /// may not be defined in the documtnation.
+        /// </summary>
+        [JsonProperty("openType")]
+        public bool IsOpenType { get; set; }
     }
 
     public enum CodeBlockType

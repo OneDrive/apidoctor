@@ -28,25 +28,75 @@ namespace ApiDocs.Validation.OData
     using System;
     using System.Linq;
     using System.Xml.Linq;
+    using System.Collections.Generic;
+    using System.Xml.Serialization;
 
-    public class EntityContainer
+    [XmlRoot("EntityContainer", Namespace = ODataParser.EdmNamespace)]
+    public class EntityContainer : IODataNavigable
     {
-        
-        public string Name { get; set; }
-        public EntitySet EntitySet { get; set; }
 
-        public static string ElementName { get { return "EntityContainer"; } }
-        public static EntityContainer FromXml(XElement xml)
+        public EntityContainer()
         {
-            if (xml.Name.LocalName != ElementName) throw new ArgumentException("xml was not an EntityContainer element");
-            EntityContainer obj = new EntityContainer
+            this.EntitySets = new List<EntitySet>();
+            this.Singletons = new List<Singleton>();
+        }
+        
+        [XmlAttribute("Name")]
+        public string Name { get; set; }
+
+        [XmlElement("EntitySet")]
+        public List<EntitySet> EntitySets { get; set; }
+
+        [XmlElement("Singleton")]
+        public List<Singleton> Singletons { get; set; }
+
+
+        public IODataNavigable NavigateByUriComponent(string component, EntityFramework edmx)
+        {
+            string targetType = null;
+
+            var entitySet = (from e in EntitySets
+                             where e.Name == component
+                             select e).FirstOrDefault();
+            if (null != entitySet)
             {
-                Name = xml.AttributeValue("Name"),
-                EntitySet = (from e in xml.Elements()
-                    where e.Name.LocalName == EntitySet.ElementName
-                    select EntitySet.FromXml(e)).FirstOrDefault()
-            };
-            return obj;
+                // EntitySet is always a collection of an item type
+                targetType = "Collection(" + entitySet.EntityType + ")";
+            }
+            else
+            {
+                var singleton = (from s in Singletons
+                                 where s.Name == component
+                                 select s).FirstOrDefault();
+
+                if (null != singleton)
+                {
+                    targetType = singleton.Type;
+                }
+            }
+
+            if (targetType != null)
+            {
+                if (targetType.StartsWith("Collection("))
+                {
+                    var innerId = targetType.Substring(11, targetType.Length - 12);
+                    return new ODataCollection(innerId);
+                }
+                return edmx.ResourceWithIdentifier<IODataNavigable>(targetType);
+            }
+
+            return null;
+        }
+
+        public IODataNavigable NavigateByEntityTypeKey(EntityFramework edmx)
+        {
+            throw new NotSupportedException();
+        }
+
+        [XmlIgnore]
+        public string TypeIdentifier
+        {
+            get { return Name; }
         }
 
     }

@@ -40,7 +40,6 @@ namespace ApiDocs.Validation
     /// </summary>
     public class DocFile
     {
-
         private const string PageAnnotationType = "#page.annotation";
 
         #region Instance Variables
@@ -134,6 +133,10 @@ namespace ApiDocs.Validation
 
         #region Markdown Parsing
 
+        /// <summary>
+        /// Populate this object based on input markdown data
+        /// </summary>
+        /// <param name="inputMarkdown"></param>
         protected void TransformMarkdownIntoBlocksAndLinks(string inputMarkdown)
         {
             Markdown md = new Markdown
@@ -245,6 +248,9 @@ namespace ApiDocs.Validation
             return header;
         }
 
+        /// <summary>
+        /// Headers found in the markdown input (#, h1, etc)
+        /// </summary>
         public List<Config.DocumentHeader> DocumentHeaders
         {
             get; set;
@@ -295,10 +301,10 @@ namespace ApiDocs.Validation
                         detectedErrors.Add(new ValidationWarning(ValidationErrorCode.MissingHeaderBlock, null, "Paragraph text found before a valid header: {0}", this.DisplayName));
                     }
                     else if (IsHeaderBlock(previousHeaderBlock))
-                {
-                    methodDescription = block.Content;
-                    detectedErrors.Add(new ValidationMessage(null, "Found description: {0}", methodDescription));
-                }
+                    {
+                        methodDescription = block.Content;
+                        detectedErrors.Add(new ValidationMessage(null, "Found description: {0}", methodDescription));
+                    }
                 }
                 else if (block.BlockType == BlockType.html)
                 {
@@ -353,7 +359,7 @@ namespace ApiDocs.Validation
                     if (null == blockBeforeTable) continue;
 
                     ValidationError[] parseErrors;
-                    var table = TableSpecConverter.ParseTableSpec(block, previousHeaderBlock, out parseErrors);
+                    var table = this.Parent.TableParser.ParseTableSpec(block, previousHeaderBlock, out parseErrors);
                     if (null != parseErrors) detectedErrors.AddRange(parseErrors);
 
                     detectedErrors.Add(new ValidationMessage(null, "Found table: {0}. Rows:\r\n{1}", table.Type,
@@ -623,12 +629,48 @@ namespace ApiDocs.Validation
                     switch (table.Type)
                     {
                         case TableBlockType.ResourcePropertyDescriptions:
-                            onlyResource.Parameters.AddRange(table.Rows.Cast<ParameterDefinition>());
+                        case TableBlockType.ResourceNavigationPropertyDescriptions:
+                            // Merge information found in the resource property description table with the existing resources
+                            MergeParametersIntoCollection(
+                                onlyResource.Parameters,
+                                table.Rows.Cast<ParameterDefinition>(), 
+                                table.Type == TableBlockType.ResourceNavigationPropertyDescriptions);
                             break;
                     }
                 }
             }
         }
+
+        /// <summary>
+        /// Merges parameter definitions from additionalData into the collection list. Pulls in missing data for existing
+        /// parameters and adds any additional parameters found in the additionalData.
+        /// </summary>
+        /// <param name="collection"></param>
+        /// <param name="additionalData"></param>
+        private static void MergeParametersIntoCollection(
+            List<ParameterDefinition> collection,
+            IEnumerable<ParameterDefinition> additionalData,
+            bool addMissingParameters = false)
+        {
+            foreach (var param in additionalData)
+            {
+                // See if this parameter already is known
+                var match = collection.SingleOrDefault(x => x.Name == param.Name);
+                if (match != null)
+                {
+                    // The parameter was always known, let's merge in additional data.
+                    match.AddMissingDetails(param);
+                }
+                else if (addMissingParameters)
+                {
+                    // TODO: This should be a warning reported by the tool.
+
+                    // The parameter didn't exist in the collection, so let's add it.
+                    collection.Add(param);
+                }
+            }
+        }
+
 
         private void PostProcessMethods(IEnumerable<MethodDefinition> foundMethods, IEnumerable<TableDefinition> foundTables, List<ValidationError> errors)
         {
@@ -676,7 +718,7 @@ namespace ApiDocs.Validation
                         break;
                     case TableBlockType.EnumerationValues:
                         // TODO: Support enumeration values
-                        Console.WriteLine("Enumeration that wasn't handled: {0} on method {1} ", table.Title, onlyMethod.RequestMetadata.MethodName);
+                        Console.WriteLine("EnumeratedValues that wasn't handled: {0} on method {1} ", table.Title, onlyMethod.RequestMetadata.MethodName);
                         break;
                     case TableBlockType.ErrorCodes:
                         onlyMethod.Errors = table.Rows.Cast<ErrorDefinition>().ToList();
@@ -759,7 +801,20 @@ namespace ApiDocs.Validation
             {
                 case CodeBlockType.Resource:
                     {
-                        var resource = new ResourceDefinition(annotation, code.Content, this, code.CodeLanguage);
+                        ResourceDefinition resource;
+                        if (code.CodeLanguage.Equals("json", StringComparison.OrdinalIgnoreCase))
+                        {
+                            resource = new JsonResourceDefinition(annotation, code.Content, this);
+                        }
+                        //else if (code.CodeLanguage.Equals("xml", StringComparison.OrdinalIgnoreCase))
+                        //{
+
+                        //}
+                        else
+                        {
+                            throw new NotSupportedException("Unsupported resource definition language: " + code.CodeLanguage);
+                        }
+
                         this.resources.Add(resource);
                         return resource;
                     }

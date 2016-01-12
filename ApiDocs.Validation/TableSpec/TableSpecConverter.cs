@@ -37,6 +37,44 @@ namespace ApiDocs.Validation.TableSpec
     /// </summary>
     internal class TableSpecConverter
     {
+
+        private readonly TableParserConfig Config;
+        private readonly Dictionary<string, TableDecoder> CommonHeaderContentMap;
+        public TableSpecConverter(TableParserConfig config)
+        {
+            this.Config = config;
+            Dictionary<string, TableDecoder> decoderRing = GenerateDecoderRing(config);
+
+            this.CommonHeaderContentMap = decoderRing;
+        }
+
+        private Dictionary<string, TableDecoder> GenerateDecoderRing(TableParserConfig config)
+        {
+            var decoderRing = new Dictionary<string, TableDecoder>();
+            foreach (var t in config.Tables)
+            {
+                foreach (var title in t.Titles)
+                {
+                    decoderRing[title] = t;
+                    t.ParseRule = config.Rules.Where(x => x.Type == t.ParseAs).Single();
+                }
+            }
+
+            return decoderRing;
+        }
+
+        /// <summary>
+        /// Creates a new instance of TableSpecConverter using the pre-programmed
+        /// table parser rules from Markdown Scanner.
+        /// </summary>
+        /// <returns></returns>
+        public static TableSpecConverter FromDefaultConfiguration()
+        {
+            var configFile = LoadDefaultConfiguration();
+            return new TableSpecConverter(configFile.TableDefinitions);
+        }
+
+
         /// <summary>
         /// Convert a tablespec block into one of our internal object model representations
         /// </summary>
@@ -44,70 +82,78 @@ namespace ApiDocs.Validation.TableSpec
         /// <param name="lastHeaderBlock"></param>
         /// <param name="errors"></param>
         /// <returns></returns>
-        public static TableDefinition ParseTableSpec(Block tableSpecBlock, Block lastHeaderBlock, out ValidationError[] errors)
+        public TableDefinition ParseTableSpec(Block tableSpecBlock, Block lastHeaderBlock, out ValidationError[] errors)
         {
             List<ValidationError> discoveredErrors = new List<ValidationError>();
             List<ItemDefinition> items = new List<ItemDefinition>();
 
             var tableShape = tableSpecBlock.Table;
-            TableBlockType discoveredTableType = TableBlockType.Unknown;
+
+            TableDecoder decoder = new TableDecoder { Type = TableBlockType.Unknown };
             string headerText = null;
             // Try matching based on header
             if (null != lastHeaderBlock && null != lastHeaderBlock.Content)
             {
                 headerText = lastHeaderBlock.Content;
-                discoveredTableType = CommonHeaderMatch(headerText);
+                var matchingDecoder = FindDecoderFromHeaderText(headerText);
+                if (null != matchingDecoder)
+                    decoder = matchingDecoder;
             }
 
             // Try matching based on shape
-            if (discoveredTableType == TableBlockType.Unknown && null != tableSpecBlock.Table)
+            if (decoder.Type == TableBlockType.Unknown && null != tableSpecBlock.Table)
             {
-                discoveredTableType = TableShapeMatch(tableShape);
+                var matchingDecoder = FindDecoderFromShape(tableShape);
+                if (null != matchingDecoder)
+                    decoder = matchingDecoder;
             }
 
-            switch (discoveredTableType)
+            switch (decoder.Type)
             {
                 case TableBlockType.ErrorCodes:
-                    items.AddRange(ParseErrorTable(tableShape));
+                    items.AddRange(ParseErrorTable(tableShape, decoder));
                     break;
 
                 case TableBlockType.PathParameters:
-                    items.AddRange(ParseParameterTable(tableShape, ParameterLocation.Path));
+                    items.AddRange(ParseParameterTable(tableShape, ParameterLocation.Path, decoder));
                     break;
 
                 case TableBlockType.ResourcePropertyDescriptions:
                 case TableBlockType.RequestObjectProperties:
                 case TableBlockType.ResponseObjectProperties:
-                    items.AddRange(ParseParameterTable(tableShape, ParameterLocation.JsonObject));
+                    items.AddRange(ParseParameterTable(tableShape, ParameterLocation.JsonObject, decoder));
+                    break;
+                case TableBlockType.ResourceNavigationPropertyDescriptions:
+                    items.AddRange(ParseParameterTable(tableShape, ParameterLocation.JsonObject, decoder, true));
                     break;
 
                 case TableBlockType.HttpHeaders:
-                    items.AddRange(ParseHeadersTable(tableShape));
+                    items.AddRange(ParseParameterTable(tableShape, ParameterLocation.Header, decoder));
                     break;
 
                 case TableBlockType.QueryStringParameters:
-                    items.AddRange(ParseParameterTable(tableShape, ParameterLocation.QueryString));
+                    items.AddRange(ParseParameterTable(tableShape, ParameterLocation.QueryString, decoder));
                     break;
 
                 case TableBlockType.EnumerationValues:
-                    items.AddRange(ParseEnumerationTable(tableShape));
+                    items.AddRange(ParseEnumerationTable(tableShape, decoder));
                     break;
 
                 case TableBlockType.AuthScopes:
-                    items.AddRange(ParseAuthScopeTable(tableShape));
+                    items.AddRange(ParseAuthScopeTable(tableShape, decoder));
                     break;
 
                 case TableBlockType.Unknown:
                     discoveredErrors.Add(new ValidationMessage(null, "Ignored unclassified table: headerText='{0}', tableHeaders='{1}'", headerText, tableShape.ColumnHeaders.ComponentsJoinedByString(",")));
                     break;
                 default:
-                    discoveredErrors.Add(new ValidationMessage(null, "Ignored table: classification='{2}', headerText='{0}', tableHeaders='{1}'", headerText, tableShape.ColumnHeaders.ComponentsJoinedByString(","), discoveredTableType));
+                    discoveredErrors.Add(new ValidationMessage(null, "Ignored table: classification='{2}', headerText='{0}', tableHeaders='{1}'", headerText, tableShape.ColumnHeaders.ComponentsJoinedByString(","), decoder.Type));
                     break;
             }
 
             errors = discoveredErrors.ToArray();
 
-            return new TableDefinition(discoveredTableType, items, headerText);
+            return new TableDefinition(decoder.Type, items, headerText);
         }
 
         /// <summary>
@@ -115,98 +161,80 @@ namespace ApiDocs.Validation.TableSpec
         /// </summary>
         /// <param name="table"></param>
         /// <returns></returns>
-        private static IEnumerable<ErrorDefinition> ParseErrorTable(IMarkdownTable table)
+        private static IEnumerable<ErrorDefinition> ParseErrorTable(IMarkdownTable table, TableDecoder decoder)
         {
             var records = from r in table.RowValues
                           select new ErrorDefinition 
                           { 
-                              HttpStatusCode = r.ValueForColumn(table, "HTTP Code"),
-                              HttpStatusMessage = r.ValueForColumn(table, "HTTP Error Message"),
-                              ErrorCode = r.ValueForColumn(table, "Error Code"),
-                              Description = r.ValueForColumn(table, "Error Message")
+                              HttpStatusCode = r.ValueForColumn(table, decoder.ParseRule.ColumnNames["httpStatusCode"]),
+                              HttpStatusMessage = r.ValueForColumn(table, decoder.ParseRule.ColumnNames["httpStatusMessage"]),
+                              ErrorCode = r.ValueForColumn(table, decoder.ParseRule.ColumnNames["errorCode"]),
+                              Description = r.ValueForColumn(table, decoder.ParseRule.ColumnNames["description"])
                           };
 
             return records;
         }
 
-        private static IEnumerable<ParameterDefinition> ParseParameterTable(IMarkdownTable table, ParameterLocation location)
+        private static IEnumerable<ParameterDefinition> ParseParameterTable(IMarkdownTable table, ParameterLocation location, TableDecoder decoder, bool navigationProperties = false)
         {
             var records = from r in table.RowValues
                           select new ParameterDefinition
                           {
-                              Name = r.ValueForColumn(table, "Parameter Name", "Property Name", "Name"),
-                              Type = r.ValueForColumn(table, "Type", "Value").ToDataType(),
-                              Description = r.ValueForColumn(table, "Description"),
+                              Name = r.ValueForColumn(table, decoder.ParseRule.ColumnNames["name"]),
+                              Type = r.ValueForColumn(table, decoder.ParseRule.ColumnNames["type"]).ParseParameterDataType(defaultValue: ParameterDataType.String),
+                              Description = r.ValueForColumn(table, decoder.ParseRule.ColumnNames["description"]),
+                              Required = r.ValueForColumn(table, decoder.ParseRule.ColumnNames["description"]).IsRequired(),
                               Location = location,
-                              Required = r.ValueForColumn(table, "Description").IsRequired()
+                              IsNavigatable = navigationProperties
                           };
             return records;
         }
 
-        private static IEnumerable<ParameterDefinition> ParseHeadersTable(IMarkdownTable table)
-        {
-            var records = from r in table.RowValues
-                          select new ParameterDefinition
-                          {
-                              Name = r.ValueForColumn(table, "Name", "Header Name"),
-                              Type = JsonDataType.String,
-                              Description = r.ValueForColumn(table, "Description"),
-                              Location = ParameterLocation.Header
-                          };
-            return records;
-        }
-
-        private static IEnumerable<EnumerationDefinition> ParseEnumerationTable(IMarkdownTable table)
+        private static IEnumerable<EnumerationDefinition> ParseEnumerationTable(IMarkdownTable table, TableDecoder decoder)
         {
             var records = from r in table.RowValues
                           select new EnumerationDefinition
                           {
-                              Value = r.ValueForColumn(table, "Value"),
-                              Description = r.ValueForColumn(table, "Description")
+                              Value = r.ValueForColumn(table, decoder.ParseRule.ColumnNames["value"]),
+                              Description = r.ValueForColumn(table, decoder.ParseRule.ColumnNames["description"])
                           };
             return records;
         }
 
-        private static IEnumerable<AuthScopeDefinition> ParseAuthScopeTable(IMarkdownTable table)
+        private static IEnumerable<AuthScopeDefinition> ParseAuthScopeTable(IMarkdownTable table, TableDecoder decoder)
         {
             var records = from r in table.RowValues
                           select new AuthScopeDefinition
                           {
-                              Scope = r.ValueForColumn(table, "Scope Name"),
-                              Title = r.ValueForColumn(table, "Title"),
-                              Description = r.ValueForColumn(table, "Description"),
-                              Required = r.ValueForColumn(table, "Required").ToBoolean()
+                              Scope = r.ValueForColumn(table, decoder.ParseRule.ColumnNames["scope"]),
+                              Title = r.ValueForColumn(table, decoder.ParseRule.ColumnNames["title"]),
+                              Description = r.ValueForColumn(table, decoder.ParseRule.ColumnNames["description"]),
+                              Required = r.ValueForColumn(table, decoder.ParseRule.ColumnNames["required"]).ToBoolean()
                           };
             return records;
         }
 
-        public static Dictionary<string, TableBlockType> CommonHeaderContentMap = new Dictionary<string, TableBlockType>
-        {
-            { "Error Response", TableBlockType.ErrorCodes },
-            { "Path Parameters", TableBlockType.PathParameters },
-            { "Properties", TableBlockType.ResourcePropertyDescriptions },
-            { "Request Body", TableBlockType.RequestObjectProperties },
-            { "Query String Parameters", TableBlockType.QueryStringParameters },
-            { "Request Headers", TableBlockType.HttpHeaders },
-            { "Authentication Scopes", TableBlockType.AuthScopes },
-            { "Enumeration", TableBlockType.EnumerationValues }
-        };
+       
             
-        private static TableBlockType CommonHeaderMatch(string lastHeader)
+        private TableDecoder FindDecoderFromHeaderText(string lastHeader)
         {
-            return (from key in CommonHeaderContentMap.Keys 
-                    where lastHeader.ContainsIgnoreCase(key) 
-                    select CommonHeaderContentMap[key]).FirstOrDefault();
+            TableDecoder decoder = (from key in CommonHeaderContentMap.Keys
+                                    where lastHeader.ContainsIgnoreCase(key)
+                                    select CommonHeaderContentMap[key]).FirstOrDefault();
+            return decoder;
         }
 
-        private static TableBlockType TableShapeMatch(IMarkdownTable table)
+        private TableDecoder FindDecoderFromShape(IMarkdownTable table)
         {
-            return TableBlockType.Unknown;
+            // TODO: Attempt to match this table based on the columns that are available
+            return new TableDecoder { Type = TableBlockType.Unknown };
         }
 
 
-        // Enumeration are usual Value | Description
-
+        private static TableParserConfigFile LoadDefaultConfiguration()
+        {
+            return Newtonsoft.Json.JsonConvert.DeserializeObject<TableParserConfigFile>(Properties.Resources.DefaultTableParserConfig);
+        }
     }
 
 
@@ -257,7 +285,7 @@ namespace ApiDocs.Validation.TableSpec
         /// Collection of ParameterDefinition objects for the URL path
         /// </summary>
         PathParameters,
-        AuthScopes
-
+        AuthScopes,
+        ResourceNavigationPropertyDescriptions
     }
 }

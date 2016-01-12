@@ -28,39 +28,36 @@ namespace ApiDocs.Validation.OData
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
     using System.Xml.Linq;
     using System.Xml.Serialization;
 
     /// <summary>
-    /// Action in OData is allowed to modify data on the 
-    /// server (can have side-effects). Action does not have to
-    /// return data.
+    /// Holds a representation of an entity framework model (EDMX)
     /// </summary>
-    [XmlRoot("Action", Namespace = ODataParser.EdmNamespace)]
-    public class Action : ActionOrFunctionBase
+    [XmlRoot("Edmx", Namespace = ODataParser.EdmxNamespace)]
+    public class EntityFramework
     {
-        public Action() : base()
+        [XmlAttribute("Version")]
+        public string Version { get; set; }
+
+        [XmlElement("DataServices")]
+        public DataServices DataServices { get; set; } 
+
+        public EntityFramework()
         {
+            this.DataServices = new DataServices();
+            this.DataServices.Schemas = new List<OData.Schema>();
+            this.Version = "4.0";
         }
-    }
 
-    public class ActionOrFunctionBase
-    {
-        [XmlAttribute("Name")]
-        public string Name { get; set; }
-
-        [XmlAttribute("IsBound")]
-        public bool IsBound { get; set; }
-
-        [XmlElement("Parameter")]
-        public List<Parameter> Parameters { get; set; }
-
-        [XmlElement("ReturnType")]
-        public ReturnType ReturnType { get; set; }
-
-        protected ActionOrFunctionBase()
+        public EntityFramework(IEnumerable<Schema> schemas)
         {
-            this.Parameters = new List<Parameter>();
+            this.DataServices = new DataServices();
+            this.DataServices.Schemas = new List<OData.Schema>(schemas);
+            this.Version = "4.0";
         }
+
     }
 }

@@ -25,31 +25,38 @@
 
 namespace ApiDocs.Validation.OData
 {
-    using System;
-    using System.Xml.Linq;
+    using System.Collections.Generic;
+    using System.ComponentModel;
+    using System.Xml.Serialization;
 
+    [XmlRoot("Property", Namespace = ODataParser.EdmNamespace)]
     public class Property
     {
+        [XmlAttribute("Name")]
         public string Name { get; set; }
+
+        [XmlAttribute("Type")]
         public string Type { get; set; }
+
+        [XmlAttribute("Nullable"), DefaultValue(false)]
         public bool Nullable { get; set; }
 
+        [XmlElement("Annotation", Namespace = ODataParser.EdmNamespace)]
+        public List<Annotation> Annotation { get; set; }
 
-        public static string ElementName { get { return "Property"; } }
 
-        public static Property FromXml(XElement xml)
-        {
-            if (xml.Name.LocalName != ElementName) throw new ArgumentException("xml wasn't a Property element");
+        /// <summary>
+        /// Indicates that this property can be used in a $select query parameter
+        /// </summary>
+        [XmlIgnore]
+        public bool Selectable { get; set; }
 
-            var obj = new Property
-            {
-                Name = xml.AttributeValue("Name"),
-                Type = xml.AttributeValue("Type"),
-                Nullable = xml.AttributeValue("Nullable").ToBoolean()
-            };
+        /// <summary>
+        /// Indicates this property can be used in a $filter query parameter
+        /// </summary>
+        [XmlIgnore]
+        public bool Filterable { get; set; }
 
-            return obj;
-        }
 
     }
 }

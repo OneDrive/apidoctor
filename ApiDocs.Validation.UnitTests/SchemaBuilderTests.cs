@@ -29,6 +29,7 @@ namespace ApiDocs.Validation.UnitTests
     using ApiDocs.Validation.Json;
     using Newtonsoft.Json;
     using NUnit.Framework;
+    using System.Linq;
 
     [TestFixture]
     public class SchemaBuilderTests
@@ -65,23 +66,23 @@ namespace ApiDocs.Validation.UnitTests
                 switch (property.Name)
                 {
                     case "stringProp":
-                        Assert.AreEqual(property.Type, JsonDataType.String);
+                        Assert.AreEqual(property.Type, ParameterDataType.String);
                         Assert.AreEqual("string", property.OriginalValue);
                         break;
                     case "urlProp":
-                        Assert.AreEqual(property.Type, JsonDataType.String);
+                        Assert.AreEqual(property.Type, ParameterDataType.String);
                         Assert.AreEqual("url", property.OriginalValue);
                         break;
                     case "numberProp":
-                        Assert.AreEqual(property.Type, JsonDataType.Number);
+                        Assert.AreEqual(property.Type, ParameterDataType.Int64);
                         Assert.AreEqual(123, Int32.Parse(property.OriginalValue));
                         break;
                     case "floatProp":
-                        Assert.AreEqual(property.Type, JsonDataType.Number);
+                        Assert.AreEqual(property.Type, ParameterDataType.Float);
                         Assert.AreEqual(123.121, Double.Parse(property.OriginalValue));
                         break;
                     case "dateProp":
-                        Assert.AreEqual(property.Type, JsonDataType.String);
+                        Assert.AreEqual(property.Type, ParameterDataType.DateTimeOffset);
                         Assert.AreEqual("datetime", property.OriginalValue);
                         break;
                     default:
@@ -99,16 +100,18 @@ namespace ApiDocs.Validation.UnitTests
             Assert.AreEqual(2, schema.Properties.Length);
             foreach (var prop in schema.Properties)
             {
-                Assert.AreEqual(JsonDataType.ODataType, prop.Type);
-                Assert.IsNull(prop.CustomMembers);
+                Assert.IsTrue(prop.Type.IsObject);
+                Assert.IsNull(prop.Type.CustomMembers);
                 switch (prop.Name)
                 {
                     case "complexTypeA":
-                        Assert.AreEqual("resource.a", prop.ODataTypeName);
+                        Assert.IsTrue(prop.Type.IsObject);
+                        Assert.AreEqual("resource.a", prop.Type.CustomTypeName);
                         
                         break;
                     case "complexTypeB":
-                        Assert.AreEqual("resource.b", prop.ODataTypeName);
+                        Assert.IsTrue(prop.Type.IsObject);
+                        Assert.AreEqual("resource.b", prop.Type.CustomTypeName);
                         break;
                 }
             }
@@ -126,13 +129,13 @@ namespace ApiDocs.Validation.UnitTests
                 switch (prop.Name)
                 {
                     case "arrayTypeA":
-                        this.CheckJsonProperty(prop, expectedType: JsonDataType.ODataType, odataTypeName: "resource.a", isArray: true, customMembersIsNull: true);
+                        this.CheckJsonProperty(prop, expectedType: new ParameterDataType("resource.a", true), customMembersIsNull: true);
                         break;
                     case "complexTypeB":
-                        this.CheckJsonProperty(prop, expectedType: JsonDataType.ODataType, odataTypeName: "resource.b", isArray: false, customMembersIsNull: true);
+                        this.CheckJsonProperty(prop, expectedType: new ParameterDataType("resource.b"), customMembersIsNull: true);
                         break;
                     case "simpleType":
-                        this.CheckJsonProperty(prop, expectedType: JsonDataType.String, isArray: false, customMembersIsNull: true);
+                        this.CheckJsonProperty(prop, expectedType: ParameterDataType.String, customMembersIsNull: true);
                         break;
                     default:
                         Assert.Fail("Unexpected property name: " + prop.Name);
@@ -158,18 +161,37 @@ namespace ApiDocs.Validation.UnitTests
         }
 
 
-        public void CheckJsonProperty(JsonProperty prop, JsonDataType? expectedType = null, string odataTypeName = null, bool? isArray = null, bool? customMembersIsNull = null)
+        [Test]
+        public void TestStringEnumCollection()
+        {
+            string json = "{ \"roles\": [\"read|write\"] }";
+
+            JsonSchema schema = new JsonSchema(json, null);
+            var property = schema.Properties.Single();
+
+            Assert.IsTrue(property.Type.IsCollection);
+            Assert.IsTrue(property.Type.CollectionResourceType == SimpleDataType.String);
+        }
+
+        [Test]
+        public void TestStringSpecificFormatDateTime()
+        {
+            string json = "{ \"createdDateTime\": \"datetime\", \"takenDateTime\": \"timestamp\" }";
+            JsonSchema schema = new JsonSchema(json, null);
+            foreach (var prop in schema.Properties)
+            {
+                Assert.IsTrue(prop.Type.Type == SimpleDataType.DateTimeOffset);
+            }
+        }
+
+        public void CheckJsonProperty(ParameterDefinition prop, ParameterDataType expectedType = null, bool? customMembersIsNull = null)
         {
             if (expectedType != null)
-                Assert.AreEqual(expectedType.Value, prop.Type);
-            if (odataTypeName != null)
-                Assert.AreEqual(odataTypeName, prop.ODataTypeName);
-            if (isArray != null)
-                Assert.AreEqual(isArray.Value, prop.IsArray);
+                Assert.AreEqual(expectedType, prop.Type);
             if (customMembersIsNull != null && customMembersIsNull.Value)
-                Assert.IsNull(prop.CustomMembers);
+                Assert.IsNull(prop.Type.CustomMembers);
             else if (customMembersIsNull != null && !customMembersIsNull.Value)
-                Assert.IsNotNull(prop.CustomMembers);
+                Assert.IsNotNull(prop.Type.CustomMembers);
                 
         }
     }

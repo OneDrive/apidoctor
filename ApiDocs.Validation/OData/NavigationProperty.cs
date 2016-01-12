@@ -25,27 +25,48 @@
 
 namespace ApiDocs.Validation.OData
 {
-    using System;
-    using System.Xml.Linq;
+    using System.Xml.Serialization;
 
+    [XmlRoot("NavigationProperty", Namespace = ODataParser.EdmNamespace)]
     public class NavigationProperty : Property
     {
-        public bool ContainsTarget { get; set; }
-
-        public static new string ElementName { get { return "NavigationProperty"; } }
-        public static new NavigationProperty FromXml(XElement xml)
+        public NavigationProperty()
         {
-            if (xml.Name.LocalName != ElementName) throw new ArgumentException("xml wasn't a Property element");
-
-            var obj = new NavigationProperty
-            {
-                Name = xml.AttributeValue("Name"),
-                Type = xml.AttributeValue("Type"),
-                Nullable = xml.AttributeValue("Nullable").ToBoolean(),
-                ContainsTarget = xml.AttributeValue("ContainsTarget").ToBoolean()
-            };
-            return obj;
+            ContainsTarget = true;
         }
 
+        [XmlAttribute("ContainsTarget")]
+        public bool ContainsTarget { get; set; }
+
+
+        /// <summary>
+        /// Indicates that this property can be included in a $expand query
+        /// </summary>
+        [XmlIgnore]
+        public bool Expandable { get; set; }
+
+        /// <summary>
+        /// Indicates that the target of this property can be enumerated (e.g. GET /items)
+        /// </summary>
+        public bool Enumerable { get; set; }
+
+        /// <summary>
+        /// Indicates how this property can be navigated via the URL.
+        /// </summary>
+        [XmlIgnore]
+        public Navigability Navigation { get; set; }
+
+        /// <summary>
+        /// Indicates that change tracking can be used on this target.
+        /// </summary>
+        [XmlIgnore]
+        public bool ChangeTracking { get; set; }
+    }
+
+    public enum Navigability
+    {
+        Recursive,
+        Single,
+        None
     }
 }

@@ -315,25 +315,23 @@ namespace ApiDocs.ConsoleApp
             FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, "Defined resources:");
             FancyConsole.WriteLine();
 
-            var sortedResources = docset.Resources.OrderBy(x => x.ResourceType);
+            var sortedResources = docset.Resources.OrderBy(x => x.Name);
 
             foreach (var resource in sortedResources)
             {
-
-
                 if (options.EnableVerboseOutput)
                 {
-                    string metadata = JsonConvert.SerializeObject(resource.Metadata);
+                    string metadata = JsonConvert.SerializeObject(resource.OriginalMetadata);
                     FancyConsole.Write("  ");
-                    FancyConsole.Write(FancyConsole.ConsoleHeaderColor, resource.ResourceType);
-                    FancyConsole.WriteLine(" flags: {1}", resource.ResourceType, metadata);
+                    FancyConsole.Write(FancyConsole.ConsoleHeaderColor, resource.Name);
+                    FancyConsole.WriteLine(" flags: {1}", resource.Name, metadata);
                 }
                 else
                 {
-                    FancyConsole.WriteLineIndented("  ", FancyConsole.ConsoleHeaderColor, resource.ResourceType);
+                    FancyConsole.WriteLineIndented("  ", FancyConsole.ConsoleHeaderColor, resource.Name);
                 }
 
-                FancyConsole.WriteLineIndented("    ", FancyConsole.ConsoleCodeColor, resource.JsonExample);
+                FancyConsole.WriteLineIndented("    ", FancyConsole.ConsoleCodeColor, resource.ExampleText);
                 FancyConsole.WriteLine();
             }
         }
@@ -820,7 +818,7 @@ namespace ApiDocs.ConsoleApp
                     "Running validation for method: {0}",
                     method.Identifier);
                 ScenarioDefinition[] scenarios = docset.TestScenarios.ScenariosForMethod(method);
-                ValidationResults results = await method.ValidateServiceResponseAsync(scenarios, account, credentials);
+                ValidationResults results = await method.ValidateServiceResponseAsync(scenarios, account, credentials, new ValidationOptions { RelaxedStringValidation = options.RelaxStringTypeValidation});
 
                 PrintResultsToConsole(method, account, results, options);
                 await TestReport.LogMethodTestResults(method, account, results);
@@ -1013,6 +1011,15 @@ namespace ApiDocs.ConsoleApp
                 case PublishOptions.PublishFormat.Outline:
                     publisher = new OutlinePublisher(docs);
                     break;
+                case PublishOptions.PublishFormat.Edmx:
+
+                    string[] namespaces = null;
+                    if (!string.IsNullOrEmpty(options.Namespaces))
+                    {
+                        namespaces = options.Namespaces.Split(';');
+                    }
+                    publisher = new Publishing.CSDL.CsdlWriter(docs, namespaces);
+                    break;
                 default:
                     FancyConsole.WriteLine(
                         FancyConsole.ConsoleErrorColor,
@@ -1066,17 +1073,17 @@ namespace ApiDocs.ConsoleApp
 
             FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, "Loading service metadata from '{0}'...", options.ServiceMetadataLocation);
 
-            List<Schema> schemas;
+            EntityFramework edmx = null;
             try
             {
                 Uri metadataUrl;
                 if (Uri.TryCreate(options.ServiceMetadataLocation, UriKind.Absolute, out metadataUrl))
                 {
-                    schemas = await ODataParser.ReadSchemaFromMetadataUrlAsync(metadataUrl);
+                    edmx = await ODataParser.ParseEntityFrameworkFromUrlAsync(metadataUrl);
                 }
                 else
                 {
-                    schemas = await ODataParser.ReadSchemaFromFileAsync(options.ServiceMetadataLocation);
+                    edmx = await ODataParser.ParseEntityFrameworkFromFileAsync(options.ServiceMetadataLocation);
                 }
             }
             catch (Exception ex)
@@ -1085,7 +1092,7 @@ namespace ApiDocs.ConsoleApp
                 return null;
             }
 
-            return schemas;
+            return edmx.DataServices.Schemas;
         }
 
         /// <summary>
@@ -1116,17 +1123,36 @@ namespace ApiDocs.ConsoleApp
             foreach (var resource in foundResources)
             {
                 FancyConsole.WriteLine();
-                FancyConsole.Write(FancyConsole.ConsoleHeaderColor, "Checking resource: {0}...", resource.Metadata.ResourceType);
+                FancyConsole.Write(FancyConsole.ConsoleHeaderColor, "Checking metadata resource: {0}...", resource.Name);
 
                 FancyConsole.VerboseWriteLine();
-                FancyConsole.VerboseWriteLine(resource.JsonExample);
+                FancyConsole.VerboseWriteLine(resource.ExampleText);
                 FancyConsole.VerboseWriteLine();
 
-                // Verify that this resource matches the documentation
+                // Check if this resource exists in the documentation at all
+                var matchingDocumentationResource =
+                    (from r in docSet.Resources where r.Name == resource.Name select r).SingleOrDefault();
+
                 ValidationError[] errors;
-                docSet.ResourceCollection.ValidateJsonExample(resource.Metadata, resource.JsonExample, out errors, new ValidationOptions { RelaxedStringValidation = true });
+                if (null == matchingDocumentationResource)
+                {
+                    // Couldn't find this resource in the documentation!
+                    errors = new ValidationError[]
+                    {
+                        new ValidationError(
+                            ValidationErrorCode.ResourceTypeNotFound,
+                            null,
+                            "Resource {0} is not in the documentation.",
+                            resource.Name)
+                    };
+                }
+                else
+                {
+                    // Verify that this resource matches the documentation
+                    docSet.ResourceCollection.ValidateJsonExample(resource.OriginalMetadata, resource.ExampleText, out errors, new ValidationOptions { RelaxedStringValidation = true });
+                }
+                
                 results.IncrementResultCount(errors);
-
                 collectedErrors.AddRange(errors);
 
                 await WriteOutErrorsAndFinishTestAsync(errors, options.SilenceWarnings, successMessage: " no errors.");

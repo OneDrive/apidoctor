@@ -57,7 +57,7 @@ namespace ApiDocs.Validation.UnitTests
         {
             var testFile = GetDocFile();
 
-            var resource = testFile.Resources.Single(x => x.ResourceType == "example.resource");
+            var resource = testFile.Resources.Single(x => x.Name == "example.resource");
             var schema = new JsonSchema(resource);
 
             var method = testFile.Requests.Single(x => x.Identifier == "valid-response");
@@ -76,7 +76,7 @@ namespace ApiDocs.Validation.UnitTests
         public void ResourceStringValidationBadTimestamp()
         {
             var testFile = GetDocFile();
-            var resource = testFile.Resources.Single(x => x.ResourceType == "example.resource");
+            var resource = testFile.Resources.Single(x => x.Name == "example.resource");
             var schema = new JsonSchema(resource);
 
             var method = testFile.Requests.Single(x => x.Identifier == "bad-timestamp");
@@ -87,7 +87,7 @@ namespace ApiDocs.Validation.UnitTests
             Assert.IsFalse(result);
             Assert.IsTrue(detectedErrors.WereErrors());
 
-            Assert.IsNotNull(detectedErrors.SingleOrDefault(x => x.Code == ValidationErrorCode.InvalidDateTimeString));
+            Assert.IsNotNull(detectedErrors.SingleOrDefault(x => x.Code == ValidationErrorCode.ExpectedTypeDifferent));
         }
 
         /// <summary>
@@ -98,7 +98,7 @@ namespace ApiDocs.Validation.UnitTests
         public void ResourceStringValidationBadEnumValue()
         {
             var testFile = GetDocFile();
-            var resource = testFile.Resources.Single(x => x.ResourceType == "example.resource");
+            var resource = testFile.Resources.Single(x => x.Name == "example.resource");
             var schema = new JsonSchema(resource);
 
             var method = testFile.Requests.Single(x => x.Identifier == "bad-enum-value");
@@ -120,7 +120,7 @@ namespace ApiDocs.Validation.UnitTests
         public void ResourceStringValidationBadUrlValue()
         {
             var testFile = GetDocFile();
-            var resource = testFile.Resources.Single(x => x.ResourceType == "example.resource");
+            var resource = testFile.Resources.Single(x => x.Name == "example.resource");
             var schema = new JsonSchema(resource);
 
             var method = testFile.Requests.Single(x => x.Identifier == "bad-url");

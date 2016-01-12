@@ -34,6 +34,7 @@ namespace ApiDocs.Validation
     using ApiDocs.Validation.Error;
     using ApiDocs.Validation.Params;
     using ApiDocs.Validation.Http;
+    using ApiDocs.Validation.Json;
 
     public static class MethodValidationExtensionMethods
     {
@@ -49,7 +50,8 @@ namespace ApiDocs.Validation
             this MethodDefinition method,
             ScenarioDefinition[] scenarios,
             IServiceAccount account,
-            AuthenicationCredentials credentials)
+            AuthenicationCredentials credentials, 
+            ValidationOptions options = null)
         {
             if (null == method)
                 throw new ArgumentNullException("method");
@@ -80,7 +82,7 @@ namespace ApiDocs.Validation
             {
                 try
                 {
-                    await ValidateMethodWithScenarioAsync(method, scenario, account, credentials, results);
+                    await ValidateMethodWithScenarioAsync(method, scenario, account, credentials, results, options);
                 }
                 catch (Exception ex)
                 {
@@ -102,7 +104,8 @@ namespace ApiDocs.Validation
             ScenarioDefinition scenario,
             IServiceAccount account,
             AuthenicationCredentials credentials,
-            ValidationResults results)
+            ValidationResults results,
+            ValidationOptions options = null)
         {
             if (null == method)
                 throw new ArgumentNullException("method");
@@ -169,7 +172,7 @@ namespace ApiDocs.Validation
 
             // Perform validation on the method's actual response
             ValidationError[] errors;
-            method.ValidateResponse(actualResponse, expectedResponse, scenario, out errors);
+            method.ValidateResponse(actualResponse, expectedResponse, scenario, out errors, options);
 
             requestResults.AddResults(errors);
 
@@ -218,8 +221,17 @@ namespace ApiDocs.Validation
 
         public ValidationOutcome OverallOutcome 
         {
-            get 
+            get
             {
+                if (results.Any(x => x.Outcome == ValidationOutcome.Error))
+                    return ValidationOutcome.Error;
+                if (results.Any(x => x.Outcome == ValidationOutcome.Warning))
+                    return ValidationOutcome.Warning;
+                if (results.All(x => x.Outcome == ValidationOutcome.Skipped))
+                    return ValidationOutcome.Skipped;
+                if (results.All(x => x.Outcome == ValidationOutcome.Passed))
+                    return ValidationOutcome.Passed;
+
                 ValidationOutcome working = 0;
                 foreach (var result in results)
                 {

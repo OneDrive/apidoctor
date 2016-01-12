@@ -27,28 +27,62 @@ namespace ApiDocs.Validation.OData
 {
     using System;
     using System.Collections.Generic;
+    using System.ComponentModel;
     using System.Linq;
     using System.Xml.Linq;
+    using System.Xml.Serialization;
 
-    public class ComplexType
+    [XmlRoot("ComplexType", Namespace = ODataParser.EdmNamespace)]
+    public class ComplexType : IODataNavigable
     {
         public ComplexType()
         {
             this.Properties = new List<Property>();
         }
 
+        [XmlAttribute("Name")]
         public string Name { get; set; }
+
+        [XmlAttribute("OpenType"), DefaultValue(false)]
+        public bool OpenType { get; set; }
+
+
+
+        [XmlElement("Property", Namespace = ODataParser.EdmNamespace)]
         public List<Property> Properties { get; set; }
 
-        public static string ElementName { get { return "ComplexType"; } }
-        public static ComplexType FromXml(XElement xml)
+
+        public virtual IODataNavigable NavigateByEntityTypeKey(EntityFramework edmx)
         {
-            if (xml.Name.LocalName != ElementName) throw new ArgumentException("xml was not a ComplexType element");
-            var obj = new ComplexType { Name = xml.AttributeValue("Name") };
-            obj.Properties.AddRange(from e in xml.Elements()
-                                    where e.Name.LocalName == "Property"
-                                    select Property.FromXml(e));
-            return obj;
+            if (this.OpenType)
+            {
+                // TODO: This isn't illegal, but we don't know what you're going to get back anyway, so we just treat it the same for now.
+            }
+            throw new NotSupportedException("ComplexType cannot be navigated by key.");
+        }
+
+        public virtual IODataNavigable NavigateByUriComponent(string component, EntityFramework edmx)
+        {
+            var propertyMatch = (from p in this.Properties
+                where p.Name == component
+                select p).FirstOrDefault();
+            if (null != propertyMatch)
+            {
+                var identifier = propertyMatch.Type;
+                if (identifier.StartsWith("Collection("))
+                {
+                    var innerId = identifier.Substring(11, identifier.Length - 12);
+                    return new ODataCollection(innerId);
+                }
+                return edmx.ResourceWithIdentifier<IODataNavigable>(identifier);
+            }
+
+            return null;
+        }
+
+        public string TypeIdentifier
+        {
+            get { return Name; }
         }
     }
 }

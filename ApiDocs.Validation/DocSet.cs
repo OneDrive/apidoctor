@@ -86,6 +86,8 @@ namespace ApiDocs.Validation
         public ApiRequirements Requirements { get; internal set; }
 
         public DocumentOutlineFile DocumentStructure { get; internal set;}
+
+        internal TableSpec.TableSpecConverter TableParser { get; private set; }
         #endregion
 
         #region Constructors
@@ -102,7 +104,10 @@ namespace ApiDocs.Validation
 
             this.LoadRequirements();
             this.LoadTestScenarios();
+            this.LoadTableParser();
         }
+
+
 
         public DocSet()
         {
@@ -126,6 +131,22 @@ namespace ApiDocs.Validation
             {
                 Console.WriteLine("Using document structure file: {0}", foundOutlines.SourcePath);
                 this.DocumentStructure = foundOutlines;
+            }
+        }
+
+        private void LoadTableParser()
+        {
+            TableSpec.TableParserConfigFile[] configurations = TryLoadConfigurationFiles<TableSpec.TableParserConfigFile>(this.SourceFolderPath);
+            var tableParserConfig = configurations.FirstOrDefault();
+            if (null != tableParserConfig)
+            {
+                Console.WriteLine("Using table definitions from: {0}", tableParserConfig.SourcePath);
+                this.TableParser = new TableSpec.TableSpecConverter(tableParserConfig.TableDefinitions);
+            }
+            else
+            {
+                Console.WriteLine("Using default table parser definitions");
+                this.TableParser = TableSpec.TableSpecConverter.FromDefaultConfiguration();
             }
         }
 
@@ -160,25 +181,24 @@ namespace ApiDocs.Validation
             var jsonFiles = docSetDir.GetFiles("*.json", SearchOption.AllDirectories);
             foreach (var file in jsonFiles)
             {
-                using (var reader = file.OpenText())
+                try
                 {
-                    try {
+                    using (var reader = file.OpenText())
+                    {
                         var config = JsonConvert.DeserializeObject<T>(reader.ReadToEnd());
                         if (null != config && config.IsValid)
                         {
                             validConfigurationFiles.Add(config);
                             config.SourcePath = file.FullName;
                         }
-                    } 
-                    catch (Exception)
-                    {
-                        // TODO: Make it possible to log out an error here.
-//                        RecordLogMessage(true, 
-//                            "Configuration Load Error", 
-//                            "Exception processing config file {0}: {1}", 
-//                            file.FullName, 
-//                            ex.Message);
                     }
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine(
+                        "Configuration load error: Exception processing file {0}: {1}",
+                        file.FullName,
+                        ex.Message);
                 }
             }
 
