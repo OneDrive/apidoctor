@@ -57,6 +57,7 @@ namespace ApiDocs.Validation.OData
             { "Edm.DateTime", "2014-01-01T00:00:00Z" },
             { "Edm.DateTimeOffset", "2014-01-01T00:00:00Z" },
             { "Edm.Time", "00:00:00Z" },
+            { "Edm.Guid", "9F328426-8A81-40D1-8F35-D619AA90A12C" }
         };
 
         #region Static EDMX -> EntityFramework methods 
