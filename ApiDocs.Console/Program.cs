@@ -1130,8 +1130,22 @@ namespace ApiDocs.ConsoleApp
                 FancyConsole.VerboseWriteLine();
 
                 // Check if this resource exists in the documentation at all
-                var matchingDocumentationResource =
-                    (from r in docSet.Resources where r.Name == resource.Name select r).SingleOrDefault();
+                ResourceDefinition matchingDocumentationResource = null;
+                    var docResourceQuery =
+                        from r in docSet.Resources
+                        where r.Name == resource.Name
+                        select r;
+                    matchingDocumentationResource = docResourceQuery.FirstOrDefault();
+                if (docResourceQuery.Count() > 1)
+                {
+                    // Log an error about multiple resource definitions
+                    FancyConsole.WriteLine("Multiple resource definitions for resource {0} in files:", resource.Name);
+                    foreach (var q in docResourceQuery)
+                    {
+                        FancyConsole.WriteLine(q.SourceFile.DisplayName);
+                    }
+                }
+
 
                 ValidationError[] errors;
                 if (null == matchingDocumentationResource)
