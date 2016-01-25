@@ -310,6 +310,13 @@ namespace ApiDocs.Validation
                 simpleType = SimpleDataType.DateTimeOffset;
             }
 
+            // Check to see if this can be parsed as a GUID
+            Guid testguid;
+            if (Guid.TryParse(lowercaseString, out testguid))
+            {
+                simpleType = SimpleDataType.Guid;
+            }
+
             return simpleType;
         }
 
