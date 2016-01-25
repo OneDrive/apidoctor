@@ -182,6 +182,10 @@ namespace ApiDocs.ConsoleApp
 
         [Option("force-all", HelpText="Force all defined scenarios to be executed, even if disabled.")]
         public bool ForceAllScenarios { get; set; }
+
+        [Option("relax-string-validation", HelpText = "Relax the validation of JSON string properties.")]
+        public bool RelaxStringTypeValidation { get; set; }
+
     }
 
     class CheckServiceOptions : BasicCheckOptions
@@ -231,8 +235,6 @@ namespace ApiDocs.ConsoleApp
         [Option("password", HelpText="Provide a password for basic authentication.")]
         public string Password { get; set; }
 
-        [Option("relax-string-validation", HelpText="Relax the validation of JSON string properties.")]
-        public bool RelaxStringTypeValidation { get; set; }
 
         private IServiceAccount GetEnvironmentVariablesAccount()
         {

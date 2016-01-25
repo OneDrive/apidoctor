@@ -493,7 +493,7 @@ namespace ApiDocs.ConsoleApp
                 {
                     continue;
                 }
-
+                
                 FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, "Checking examples in \"{0}\"...", doc.DisplayName);
 
                 foreach (var example in doc.Examples)
@@ -507,7 +507,7 @@ namespace ApiDocs.ConsoleApp
                     TestReport.StartTest(testName, doc.DisplayName);
 
                     ValidationError[] errors;
-                    docset.ResourceCollection.ValidateJsonExample(example.Metadata, example.SourceExample, out errors);
+                    docset.ResourceCollection.ValidateJsonExample(example.Metadata, example.SourceExample, out errors, new ValidationOptions { RelaxedStringValidation = options.RelaxStringTypeValidation });
 
                     await WriteOutErrorsAndFinishTestAsync(errors, options.SilenceWarnings, "   ", "No errors.", false, testName, "Warnings detected", "Errors detected");
                     results.IncrementResultCount(errors);
@@ -549,7 +549,7 @@ namespace ApiDocs.ConsoleApp
                 {
                     var expectedResponse = parser.ParseHttpResponse(method.ExpectedResponse);
                     
-                    method.ValidateResponse(expectedResponse, null, null, out errors);
+                    method.ValidateResponse(expectedResponse, null, null, out errors, new ValidationOptions { RelaxedStringValidation = options.RelaxStringTypeValidation });
                 }
                 catch (Exception ex)
                 {
