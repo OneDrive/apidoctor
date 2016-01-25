@@ -795,7 +795,7 @@ namespace ApiDocs.Validation
                 throw new ArgumentException("code block does not appear to be code");
 
             var metadataJsonString = metadata.Content.Substring(4, metadata.Content.Length - 9);
-            var annotation = CodeBlockAnnotation.FromJson(metadataJsonString);
+            CodeBlockAnnotation annotation = CodeBlockAnnotation.FromJson(metadataJsonString);
 
             switch (annotation.BlockType)
             {

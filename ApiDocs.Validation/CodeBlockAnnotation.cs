@@ -124,15 +124,7 @@ namespace ApiDocs.Validation
         /// <returns></returns>
         public static CodeBlockAnnotation FromJson(string json)
         {
-            try
-            {
-                return JsonConvert.DeserializeObject<CodeBlockAnnotation>(json);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine("Error parsing JSON annotation: " + ex.Message);
-                return new CodeBlockAnnotation() { BlockType = CodeBlockType.Ignored };
-            }
+            return JsonConvert.DeserializeObject<CodeBlockAnnotation>(json);
         }
 
         public ParameterDataType Type
