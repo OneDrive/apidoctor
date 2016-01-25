@@ -303,19 +303,23 @@ namespace ApiDocs.Validation.Json
                 }
                 return ValidateStringFormat(expected, actual, detectedErrors);
             }
+            else if (expected.Type == ParameterDataType.String && expected.Type.IsLessSpecificThan(actual.Type))
+            {
+                return PropertyValidationOutcome.Ok;
+            }
             else if (actual.Type.IsLessSpecificThan(expected.Type))
             {
                 if (relaxStringValidation)
                 {
                     detectedErrors.Add(
-                    new ValidationWarning(
-                        ValidationErrorCode.ExpectedTypeDifferent,
-                        null,
-                        "Expected type {0} but actual was {1}, which is less specific than the expected type. Property: {2}, actual value: '{3}'",
-                        expected.Type,
-                        actual.Type,
-                        actual.Name,
-                        actual.OriginalValue));
+                        new ValidationWarning(
+                            ValidationErrorCode.ExpectedTypeDifferent,
+                            null,
+                            "Expected type {0} but actual was {1}, which is less specific than the expected type. Property: {2}, actual value: '{3}'",
+                            expected.Type,
+                            actual.Type,
+                            actual.Name,
+                            actual.OriginalValue));
                     return PropertyValidationOutcome.Ok;
                 }
 
