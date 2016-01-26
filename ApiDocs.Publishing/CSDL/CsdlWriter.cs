@@ -441,7 +441,7 @@ namespace ApiDocs.Publishing.CSDL
                                where !p.IsNavigatable && !p.Name.StartsWith("@")
                                select ConvertParameterToProperty<Property>(p) ).ToList();
 
-            var annotations = (from p in resource.Parameters where p.Name.StartsWith("@") select p);
+            var annotations = (from p in resource.Parameters where p.Name != null && p.Name.StartsWith("@") select p);
             ParseInstanceAnnotations(annotations, resource, edmx);
         }
 
