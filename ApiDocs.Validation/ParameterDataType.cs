@@ -236,6 +236,15 @@ namespace ApiDocs.Validation
 
             return 0;
         }
+
+
+        public static ParameterDataType ChooseBest(ParameterDataType a, ParameterDataType b)
+        {
+            if (b.IsLessSpecificThan(a))
+                return a;
+            else
+                return b;
+        }
         #endregion
 
         #region Static property type definitions

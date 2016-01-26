@@ -370,6 +370,8 @@ namespace ApiDocs.ConsoleApp
         [Option("swagger-auth-scope", HelpText = "Override the auth scope detection with a default auth scope on every method")]
         public string AuthScopeDefault { get; set; }
 
+        [Option("base-url", HelpText = "Specify the base service URL included in method examples to be removed when generating metadata")]
+        public string BaseUrl { get; set; }
 
         #endregion
 

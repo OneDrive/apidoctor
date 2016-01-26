@@ -77,8 +77,16 @@ namespace ApiDocs.Publishing.CSDL
         {
             get
             {
-                // TODO: For collections with multiple requests, we should make sure the return types are consistent.
-                return this.First().ExpectedResponseMetadata.Type;
+                // For collections with multiple requests, we should make sure the return types are consistent.
+                Validation.ParameterDataType dataType = null;
+                foreach (Validation.MethodDefinition method in this)
+                {
+                    if (null == dataType)
+                        dataType = method.ExpectedResponseMetadata.Type;
+                    else
+                        dataType = Validation.ParameterDataType.ChooseBest(method.ExpectedResponseMetadata.Type, dataType);
+                }
+                return dataType;
             }
         }
 

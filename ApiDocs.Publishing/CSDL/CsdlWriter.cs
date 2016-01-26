@@ -36,18 +36,20 @@ namespace ApiDocs.Publishing.CSDL
 
     public class CsdlWriter : DocumentPublisher
     {
-        private string[] validNamespaces;
+        private readonly string[] validNamespaces;
+        private readonly string baseUrl;
 
-        public CsdlWriter(DocSet docs, string[] namespacesToExport)
+        public CsdlWriter(DocSet docs, string[] namespacesToExport, string baseUrl)
             : base(docs)
         {
-            validNamespaces = namespacesToExport;
+            this.validNamespaces = namespacesToExport;
+            this.baseUrl = baseUrl;
         }
 
         public override async Task PublishToFolderAsync(string outputFolder)
         {
             // Step 1: Generate an EntityFramework OM from the documentation
-            EntityFramework framework = CreateEntityFrameworkFromDocs();
+            EntityFramework framework = CreateEntityFrameworkFromDocs(this.baseUrl);
 
             // Step 2: Generate XML representation of EDMX
             var xmlData = ODataParser.GenerateEdmx(framework);
@@ -65,7 +67,7 @@ namespace ApiDocs.Publishing.CSDL
             }
         }
 
-        private EntityFramework CreateEntityFrameworkFromDocs()
+        private EntityFramework CreateEntityFrameworkFromDocs(string baseUrlToRemove)
         {
             var edmx = new EntityFramework();
             
@@ -80,10 +82,10 @@ namespace ApiDocs.Publishing.CSDL
             }
 
             // Figure out the EntityCollection
-            BuildEntityCollection(edmx);
+            this.BuildEntityCollection(edmx, baseUrlToRemove);
 
             // Add actions to the collection
-            this.ProcessRestRequestPaths(edmx);
+            this.ProcessRestRequestPaths(edmx, baseUrlToRemove);
 
             return edmx;
         }
@@ -93,9 +95,9 @@ namespace ApiDocs.Publishing.CSDL
         /// EntityFramework for matching call patterns.
         /// </summary>
         /// <param name="edmx"></param>
-        private void ProcessRestRequestPaths(EntityFramework edmx)
+        private void ProcessRestRequestPaths(EntityFramework edmx, string baseUrlToRemove)
         {
-            Dictionary<string, MethodCollection> uniqueRequestPaths = GetUniqueRequestPaths();
+            Dictionary<string, MethodCollection> uniqueRequestPaths = GetUniqueRequestPaths(baseUrlToRemove);
 
             foreach (var path in uniqueRequestPaths.Keys)
             {
@@ -247,7 +249,16 @@ namespace ApiDocs.Publishing.CSDL
                 IODataNavigable nextObject = null;
                 if (uriPart == "{var}")
                 {
-                    nextObject = currentObject.NavigateByEntityTypeKey(edmx);
+                    try
+                    {
+                        nextObject = currentObject.NavigateByEntityTypeKey(edmx);
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new NotSupportedException("Unable to navigation into EntityType by key: " + currentObject.TypeIdentifier + " (" + ex.Message + ")");
+                    }
+
+
                 }
                 else
                 {
@@ -258,6 +269,9 @@ namespace ApiDocs.Publishing.CSDL
                 {
                     // The last component wasn't known already, so that means we have a new thing.
                     // We assume that if the uriPart doesnt' have a namespace that this is a navigation property that isn't documented.
+
+                    // TODO: We may need to be smarter about this if we allow actions without namespaces. If that's the case, we could look at the request
+                    // method to figure out of this appears to be an action (POST?) or a navigationProperty (GET?)
 
                     return new ODataTargetInfo
                     {
@@ -289,14 +303,23 @@ namespace ApiDocs.Publishing.CSDL
                 response.Classification = ODataTargetClassification.SimpleType;
             else if (currentObject is ODataCollection)
             {
-                response.Classification = ODataTargetClassification.NavigationProperty;
-                response.QualifiedType = edmx.LookupIdentifierForType(previousObject);
+                if (previousObject != entryPoint)
+                {
+                    response.Classification = ODataTargetClassification.NavigationProperty;
+                    response.QualifiedType = edmx.LookupIdentifierForType(previousObject);
+                }
+                else
+                {
+                    response.Classification = ODataTargetClassification.EntitySet;
+                }
+            }
+            else if (currentObject is ComplexType)
+            {
+                throw new NotSupportedException(string.Format("Encountered a ComplexType. This is probably a doc bug where type '{0}' should be defined with keyProperty to be an EntityType", currentObject.TypeIdentifier));
             }
             else
             {
-                throw new NotSupportedException(
-                    string.Format("currentObject type {0} is not supported here.",
-                    currentObject.GetType().Name));
+                throw new NotSupportedException(string.Format("Unhandled object type: {0}", currentObject.GetType().Name));
             }
 
             return response;
@@ -314,9 +337,9 @@ namespace ApiDocs.Publishing.CSDL
         /// entity sets / singletons in the largest namespace.
         /// </summary>
         /// <param name="edmx"></param>
-        private void BuildEntityCollection(EntityFramework edmx)
+        private void BuildEntityCollection(EntityFramework edmx, string baseUrlToRemove)
         {
-            Dictionary<string, MethodCollection> uniqueRequestPaths = GetUniqueRequestPaths();
+            Dictionary<string, MethodCollection> uniqueRequestPaths = GetUniqueRequestPaths(baseUrlToRemove);
             var resourcePaths = uniqueRequestPaths.Keys.OrderBy(x => x).ToArray();
 
             EntityContainer container = new EntityContainer();
@@ -329,6 +352,14 @@ namespace ApiDocs.Publishing.CSDL
                 }
                 else if (SingletonPathRegEx.IsMatch(path))
                 {
+                    // Before we declare this a singleton, see if any other paths that have the same root match the entity set regex
+                    var query = (from p in resourcePaths where p.StartsWith(path + "/") && EntitySetPathRegEx.IsMatch(p) select p);
+                    if (query.Any())
+                    {
+                        // If there's a similar resource path that matches the entity, we don't declare a singleton.
+                        continue;
+                    }
+
                     var name = SingletonPathRegEx.Match(path).Groups[1].Value;
                     container.Singletons.Add(new Singleton { Name = name, Type = uniqueRequestPaths[path].ResponseType.ODataResourceName() });
                 }
@@ -349,7 +380,7 @@ namespace ApiDocs.Publishing.CSDL
         /// documentation and the method definitions that defined them.
         /// </summary>
         /// <returns></returns>
-        private Dictionary<string, MethodCollection> GetUniqueRequestPaths()
+        private Dictionary<string, MethodCollection> GetUniqueRequestPaths(string baseUrlToRemove)
         {
             if (cachedUniqueRequestPaths == null)
             {
@@ -362,7 +393,7 @@ namespace ApiDocs.Publishing.CSDL
                         continue;
                     }
 
-                    var path = m.RequestUriPathOnly();
+                    var path = m.RequestUriPathOnly(baseUrlToRemove);
                     if (!path.StartsWith("/"))
                     {
                         // Ignore aboslute URI paths

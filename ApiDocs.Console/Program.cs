@@ -210,8 +210,8 @@ namespace ApiDocs.ConsoleApp
             ValidationError[] loadErrors;
             if (!set.ScanDocumentation(out loadErrors))
             {
-                await WriteOutErrorsAndFinishTestAsync(loadErrors, options.SilenceWarnings);
-                return null;
+                FancyConsole.WriteLine("Errors detected while parsing documentation set:");
+                WriteMessages(loadErrors, false, "  ", false);
             }
                 
             return set;
@@ -1018,7 +1018,7 @@ namespace ApiDocs.ConsoleApp
                     {
                         namespaces = options.Namespaces.Split(';');
                     }
-                    publisher = new Publishing.CSDL.CsdlWriter(docs, namespaces);
+                    publisher = new Publishing.CSDL.CsdlWriter(docs, namespaces, options.BaseUrl);
                     break;
                 default:
                     FancyConsole.WriteLine(
