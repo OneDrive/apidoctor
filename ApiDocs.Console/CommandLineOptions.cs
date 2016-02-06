@@ -348,6 +348,12 @@ namespace ApiDocs.ConsoleApp
         [Option("namespaces", HelpText="Specify the namespaces that are included when publishing Edmx. Semicolon separated values.")]
         public string Namespaces { get; set; }
 
+        [Option("toc", HelpText="Specify the relative path to the output folder where the TOC should be written.")]
+        public string TableOfContentsOutputRelativePath
+        {
+            get; set;
+        }
+
         public string[] FilesToPublish {
             get { return (this.SourceFiles ?? string.Empty).Split(new char[] {';'}, StringSplitOptions.RemoveEmptyEntries); }
             set { this.SourceFiles = value.ComponentsJoinedByString(";"); }

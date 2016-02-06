@@ -144,10 +144,10 @@ namespace ApiDocs.Validation.TableSpec
                     break;
 
                 case TableBlockType.Unknown:
-                    discoveredErrors.Add(new ValidationMessage(null, "Ignored unclassified table: headerText='{0}', tableHeaders='{1}'", headerText, tableShape.ColumnHeaders.ComponentsJoinedByString(",")));
+                    discoveredErrors.Add(new ValidationMessage(null, "Ignored unclassified table: headerText='{0}', tableHeaders='{1}'", headerText, tableShape.ColumnHeaders != null ? tableShape.ColumnHeaders.ComponentsJoinedByString(",") : "null"));
                     break;
                 default:
-                    discoveredErrors.Add(new ValidationMessage(null, "Ignored table: classification='{2}', headerText='{0}', tableHeaders='{1}'", headerText, tableShape.ColumnHeaders.ComponentsJoinedByString(","), decoder.Type));
+                    discoveredErrors.Add(new ValidationMessage(null, "Ignored table: classification='{2}', headerText='{0}', tableHeaders='{1}'", headerText, tableShape.ColumnHeaders != null ? tableShape.ColumnHeaders.ComponentsJoinedByString(",") : "null", decoder.Type));
                     break;
             }
 

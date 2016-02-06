@@ -245,7 +245,15 @@ namespace ApiDocs.Validation.Writers
 			    this.LogMessage(new ValidationMessage(displayName, "Scanning directory."));
 			    await this.PublishFromDirectoryAsync(folder, destinationRoot);
 			}
+
+            await WriteAdditionalFilesAsync();
 		}
+
+        protected virtual Task WriteAdditionalFilesAsync()
+        {
+            return Task.FromResult(false);
+        }
+
 
         /// <summary>
         /// Called before anything happens to configure the root destination folder

@@ -549,7 +549,7 @@ namespace ApiDocs.Validation
 
         private PageAnnotation ParsePageAnnotation(Block block)
         {
-            var commentText = StripHtmlCommentTags(block.Content);
+            var commentText = StripHtmlCommentTags(block.Content).Trim();
 
             if (!commentText.StartsWith("{"))
                 return null;
