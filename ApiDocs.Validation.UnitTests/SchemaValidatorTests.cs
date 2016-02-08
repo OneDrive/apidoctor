@@ -67,6 +67,8 @@ namespace ApiDocs.Validation.UnitTests
         {
             var schema = SchemaBuilderTests.SimpleSchemaExample();
 
+            // There are two errors here, the first is that stringProp is a number, and the
+            // the second is that numberProp is a string. MDS needs to catch both.
             var newObj = new
             {
                 stringProp = 1231234,

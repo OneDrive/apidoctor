@@ -216,27 +216,49 @@ namespace ApiDocs.Validation
         /// <returns></returns>
         internal bool IsLessSpecificThan(ParameterDataType type)
         {
-            return this.SpecificityLevel() < type.SpecificityLevel();
+            /*
+                For JSON, we basically have the following hierarchy of data types:
+
+                string
+                -> GUID
+                -> DateTimeOffset
+                -> TimeSpan
+
+                int64
+                ->int32
+                ->int16
+                ->boolean
+
+                float
+                -> double
+
+                object
+                -> complex type
+
+                stream
+
+                We should never allow something from one three to be considered less specific than something in a different tree.
+            */
+
+            if (this.IsCollection != type.IsCollection)
+                return false;
+
+            if (this.Type == SimpleDataType.String &&
+                (type.Type == SimpleDataType.Guid || type.Type == SimpleDataType.DateTimeOffset || type.Type == SimpleDataType.TimeSpan))
+            {
+                return true;
+            }
+            else if (this.Type == SimpleDataType.Int64 && (type.Type == SimpleDataType.Int32 || type.Type == SimpleDataType.Int16 || type.Type == SimpleDataType.Boolean))
+            {
+                return true;
+            }
+            else if (this.Type == SimpleDataType.Double && (type.Type == SimpleDataType.Float))
+            {
+                return true;
+            }
+
+            return false;
         }
-
-        private int SpecificityLevel()
-        {
-            if (this.IsObject && !string.IsNullOrEmpty(this.CustomTypeName))
-                return 10;
-            if (this.IsCollection && this.CollectionResourceType == SimpleDataType.Object && !string.IsNullOrEmpty(this.CustomTypeName))
-                return 10;
-
-            SimpleDataType type = this.IsCollection ? this.CollectionResourceType : this.Type;
-            if (type == SimpleDataType.Int64)
-                return 4;
-            else if (type == SimpleDataType.String)
-                return 3;
-            else if (type != SimpleDataType.None && type != SimpleDataType.Object && type != SimpleDataType.Collection)
-                return 5;
-
-            return 0;
-        }
-
 
         public static ParameterDataType ChooseBest(ParameterDataType a, ParameterDataType b)
         {
@@ -310,12 +332,17 @@ namespace ApiDocs.Validation
     public enum SimpleDataType
     {
         None,
+
         String,
         Boolean,
+
+        Int16,
         Int32,
         Int64,
+        
         Float,
         Double,
+
         DateTimeOffset,
         Guid,
         TimeSpan,
