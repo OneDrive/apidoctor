@@ -34,7 +34,7 @@ namespace ApiDocs.Publishing.Html
     using ApiDocs.Validation.Writers;
     using Mustache;
     using System.Dynamic;
-
+    using Newtonsoft.Json;
     public class HtmlMustacheWriter : DocumentPublisherHtml
     {
         private Generator generator;
@@ -48,7 +48,6 @@ namespace ApiDocs.Publishing.Html
         {
             this.CollapseTocToActiveGroup = false;
             this.PageParameters = GeneratePageParameters(options);
-
         }
 
         protected override void LoadTemplate()
@@ -121,25 +120,14 @@ namespace ApiDocs.Publishing.Html
             }
         }
 
-        /// <summary>
-        /// Convert the page parameters in the publish options into an object we can use in the page template input.
-        /// </summary>
-        /// <param name="options"></param>
-        /// <returns></returns>
-        //private static ParameterPropertyBag GeneratePageParameters(IPublishOptions options)
-        //{
-        //    if (string.IsNullOrEmpty(options.AdditionalPageParameters))
-        //        return null;
-
-        //    dynamic data = new ParameterPropertyBag();
-
-        //    var parameters = Validation.Http.HttpParser.ParseQueryString(options.AdditionalPageParameters);
-        //    foreach (var key in parameters.AllKeys)
-        //    {
-        //        data[key] = parameters[key];
-        //    }
-        //    return data;
-        //}
+        protected override async Task WriteAdditionalFilesAsync()
+        {
+            if (!string.IsNullOrEmpty(this.Options.TableOfContentsOutputRelativePath))
+            {
+                var outputFile = Path.Combine(this.OutputFolder, this.Options.TableOfContentsOutputRelativePath);
+                await WriteTableOfContentsFileAsync(outputFile);
+            }
+        }
 
         private static Dictionary<string, object> GeneratePageParameters(IPublishOptions options)
         {
@@ -226,15 +214,16 @@ namespace ApiDocs.Publishing.Html
 
             // Generate headers for all tocPath entries
             var headersQuery = from d in this.Documents.Files
-                          where d.Annotation != null 
-                          && string.Equals(d.Annotation.Section, section, StringComparison.OrdinalIgnoreCase) 
-                          && !string.IsNullOrEmpty(d.Annotation.TocPath)
-                          orderby d.Annotation.TocPath
-                          select new TocItem {
-                              DocFile = d, 
-                              Title = d.Annotation.TocPath.LastPathComponent(), 
-                              TocPath = d.Annotation.TocPath,
-                              Url = this.RelativeUrlFromCurrentPage(d, destinationFile, rootDestinationFolder)
+                               where d.Annotation != null
+                               && string.Equals(d.Annotation.Section, section, StringComparison.OrdinalIgnoreCase)
+                               && !string.IsNullOrEmpty(d.Annotation.TocPath)
+                               orderby d.Annotation.TocPath
+                               select new TocItem {
+                                   DocFile = d,
+                                   Title = d.Annotation.TocPath.LastPathComponent(),
+                                   TocPath = d.Annotation.TocPath,
+                                   Url = this.RelativeUrlFromCurrentPage(d, destinationFile, rootDestinationFolder),
+                                   SortOrder = d.Annotation.TocIndex
                           };
 
             List<TocItem> headers = headersQuery.ToList();
@@ -242,10 +231,10 @@ namespace ApiDocs.Publishing.Html
             // Generate headers for all tocEntry items
             var multipleTocItemPages = from d in this.Documents.Files
                 where d.Annotation != null 
-                && d.Annotation.TocItems != null
+                && d.Annotation.TocBookmarks != null
                 && string.Equals(d.Annotation.Section, section, StringComparison.OrdinalIgnoreCase)
-                && d.Annotation.TocItems.Count > 0
-                select new { DocFile = d, TocItems = d.Annotation.TocItems };
+                && d.Annotation.TocBookmarks.Count > 0
+                select new { DocFile = d, TocItems = d.Annotation.TocBookmarks };
 
             foreach (var item in multipleTocItemPages)
             {
@@ -261,8 +250,47 @@ namespace ApiDocs.Publishing.Html
                     });
             }
             headers = headers.OrderBy(x => x.TocPath).ToList();
-            headers = this.CollapseHeadersByPath(headers, currentPage);
+            headers = this.BuildTreeFromList(headers, currentPage);
             return headers;
+        }
+
+        /// <summary>
+        /// Write the table of contents based on annotations in the page files to the destination filename
+        /// </summary>
+        /// <param name="destination"></param>
+        /// <returns></returns>
+        protected async Task WriteTableOfContentsFileAsync(string destination)
+        {
+            List<TocItem> allTocEntries = new List<TocItem>();
+            foreach (var file in this.Documents.Files)
+            {
+                allTocEntries.AddRange(TocItem.TocItemsForFile(file));
+            }
+
+            // Convert the Url properties to be usable by the output system
+            foreach (var item in allTocEntries)
+            {
+                item.Url = this.QualifyUrl(item.Url.Replace('\\', '/'));
+            }
+
+            allTocEntries = allTocEntries.OrderBy(x => x.TocPath).ToList();
+            var tree = BuildTreeFromList(allTocEntries, addLevelForSections: true);
+            var data = new { toc = tree };
+
+            string output = JsonConvert.SerializeObject(data, Formatting.Indented);
+
+            using (var writer = new StreamWriter(destination, false, new System.Text.UTF8Encoding(false)))
+            {
+                await writer.WriteLineAsync(output);
+                await writer.FlushAsync();
+            }
+        }
+
+        private static void AddFileToToc(DocFile file, Dictionary<string, TocItem> toc)
+        {
+            if (file.Annotation == null || file.Annotation.Section == null)
+                return;
+
         }
 
         /// <summary>
@@ -271,14 +299,20 @@ namespace ApiDocs.Publishing.Html
         /// <param name="headers"></param>
         /// <param name="currentPage"></param>
         /// <returns></returns>
-        private List<TocItem> CollapseHeadersByPath(List<TocItem> headers, DocFile currentPage)
+        private List<TocItem> BuildTreeFromList(List<TocItem> headers, DocFile currentPage = null, bool addLevelForSections = false)
         {
             List<TocItem> topLevelHeaders = new List<TocItem>();
             
             foreach (var header in headers)
             {
+                string pathForHeader = header.TocPath;
+                if (addLevelForSections)
+                {
+                    pathForHeader = header.Section + "\\" + pathForHeader;
+                }
+
                 var pathComponents =
-                    header.TocPath.Split(new char[] { '\\', '/' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+                    pathForHeader.Split(new char[] { '\\', '/' }, StringSplitOptions.RemoveEmptyEntries).ToList();
 
                 List<TocItem> headersForTargetLevel = topLevelHeaders;
 
@@ -286,11 +320,19 @@ namespace ApiDocs.Publishing.Html
                 {
                     // Point headersForTargetLevel to the proper level
                     var headerForNextLevel =
-                        (from h in headersForTargetLevel where h.Title == pathComponents[0] select h).FirstOrDefault();
+                        (from h in headersForTargetLevel
+                         where h.Title == pathComponents[0]
+                         select h).FirstOrDefault();
+
                     if (headerForNextLevel == null)
                     {
                         // We encountered a header that doesn't exist yet. Bummer. We should do something about that.
-                        headerForNextLevel = new TocItem() { Title = pathComponents[0] };
+                        headerForNextLevel = new TocItem()
+                        {
+                            Title = pathComponents[0],
+                            Section = header.Section
+                        };
+
                         headersForTargetLevel.Add(headerForNextLevel);
                     }
                     headersForTargetLevel = headerForNextLevel.NextLevel;
@@ -300,7 +342,7 @@ namespace ApiDocs.Publishing.Html
                 headersForTargetLevel.Add(header);
             }
 
-            if (this.CollapseTocToActiveGroup)
+            if (this.CollapseTocToActiveGroup && null != currentPage)
             {
                 var pageTocComponents = currentPage.Annotation.TocPath.FirstPathComponent();
                 foreach (var header in topLevelHeaders)
@@ -310,23 +352,95 @@ namespace ApiDocs.Publishing.Html
                 }
             }
 
-            return topLevelHeaders.OrderBy(v => v.Title).ToList();
+            return SortTocTree(topLevelHeaders);
         }
-        
 
+        private List<TocItem> SortTocTree(List<TocItem> tree)
+        {
+            if (tree == null)
+                return null;
+            if (tree.Count == 0)
+                return tree;
+
+            foreach (var item in tree)
+            {
+                item.NextLevel = SortTocTree(item.NextLevel);
+            }
+
+            var sorted = from item in tree
+                         orderby item.SortOrder, item.Title
+                         select item;
+
+            return sorted.ToList();
+        }
     }
 
     public class TocItem
     {
+        [JsonProperty("title", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public string Title { get; set; }
+
+        [JsonIgnore]
         public DocFile DocFile { get; set; }
+
+        [JsonIgnore]
         public string TocPath { get; set; }
+
+        [JsonProperty("url", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public string Url { get; set; }
+
+        [JsonProperty("children", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public List<TocItem> NextLevel { get; set; }
+
+        [JsonProperty("section")]
+        public string Section { get; set; }
+
+        [JsonIgnore]
+        public int SortOrder
+        {
+            get; set;
+        }
 
         public TocItem()
         {
             this.NextLevel = new List<TocItem>();
+        }
+
+        public static TocItem[] TocItemsForFile(DocFile file)
+        {
+            if (file.Annotation == null)
+                return new TocItem[0];
+
+            List<TocItem> items = new List<TocItem>();
+            if (!string.IsNullOrEmpty(file.Annotation.TocPath))
+            {
+                items.Add(new TocItem
+                {
+                    DocFile = file,
+                    Title = file.Annotation.TocPath.LastPathComponent(),
+                    TocPath = file.Annotation.TocPath,
+                    Url = file.DisplayName,
+                    Section = file.Annotation.Section,
+                    SortOrder = file.Annotation.TocIndex
+                });
+            }
+
+            if (file.Annotation.TocBookmarks != null)
+            {
+                foreach (var path in file.Annotation.TocBookmarks.Keys)
+                {
+                    items.Add(new TocItem
+                    {
+                        DocFile = file,
+                        Title = path.LastPathComponent(),
+                        TocPath = path,
+                        Url = file.DisplayName + file.Annotation.TocBookmarks[path],
+                        Section = file.Annotation.Section
+                    });
+                }
+            }
+
+            return items.ToArray();
         }
     }
 

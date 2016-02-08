@@ -141,7 +141,7 @@ namespace ApiDocs.Validation.Json
             // Check to see if this is a "collection" instance
             if (null != annotation && annotation.IsCollection)
             {
-                this.ValidateCollectionObject(obj, annotation, otherSchemas, options.CollectionPropertyName, detectedErrors);
+                this.ValidateCollectionObject(obj, annotation, otherSchemas, options.CollectionPropertyName, detectedErrors, options);
             }
             // otherwise verify the object matches this schema
             else
@@ -160,7 +160,7 @@ namespace ApiDocs.Validation.Json
             return detectedErrors.Count == 0;
         }
 
-        private void ValidateCollectionObject(JContainer obj, CodeBlockAnnotation annotation, Dictionary<string, JsonSchema> otherSchemas, string collectionPropertyName, List<ValidationError> detectedErrors)
+        private void ValidateCollectionObject(JContainer obj, CodeBlockAnnotation annotation, Dictionary<string, JsonSchema> otherSchemas, string collectionPropertyName, List<ValidationError> detectedErrors, ValidationOptions options)
         {
             // TODO: also validate additional properties on the collection, like nextDataLink
             var collection = obj[collectionPropertyName];
@@ -201,9 +201,14 @@ namespace ApiDocs.Validation.Json
                     {
                         List<ValidationError> containerErrors = new List<ValidationError>();
 
+                        var deeperOptions = new ValidationOptions(options)
+                        {
+                            AllowTruncatedResponses = annotation.TruncatedResult
+                        };
+
                         this.ValidateContainerObject(
                             container,
-                            new ValidationOptions { AllowTruncatedResponses = annotation.TruncatedResult },
+                            deeperOptions,
                             otherSchemas,
                             containerErrors);
 
@@ -298,19 +303,23 @@ namespace ApiDocs.Validation.Json
                 }
                 return ValidateStringFormat(expected, actual, detectedErrors);
             }
+            else if (expected.Type == ParameterDataType.String && expected.Type.IsLessSpecificThan(actual.Type))
+            {
+                return PropertyValidationOutcome.Ok;
+            }
             else if (actual.Type.IsLessSpecificThan(expected.Type))
             {
                 if (relaxStringValidation)
                 {
                     detectedErrors.Add(
-                    new ValidationWarning(
-                        ValidationErrorCode.ExpectedTypeDifferent,
-                        null,
-                        "Expected type {0} but actual was {1}, which is less specific than the expected type. Property: {2}, actual value: '{3}'",
-                        expected.Type,
-                        actual.Type,
-                        actual.Name,
-                        actual.OriginalValue));
+                        new ValidationWarning(
+                            ValidationErrorCode.ExpectedTypeDifferent,
+                            null,
+                            "Expected type {0} but actual was {1}, which is less specific than the expected type. Property: {2}, actual value: '{3}'",
+                            expected.Type,
+                            actual.Type,
+                            actual.Name,
+                            actual.OriginalValue));
                     return PropertyValidationOutcome.Ok;
                 }
 

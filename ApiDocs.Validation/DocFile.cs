@@ -342,7 +342,17 @@ namespace ApiDocs.Validation
                     else if (null == this.Annotation)
                     {
                         // See if this is the page-level annotation
-                        var annotation = this.ParsePageAnnotation(block);
+                        PageAnnotation annotation = null;
+                        try
+                        {
+                            annotation = this.ParsePageAnnotation(block);
+                        }
+                        catch (Exception ex)
+                        {
+                            detectedErrors.Add(new ValidationWarning(ValidationErrorCode.JsonParserException, this.DisplayName, "Unable to parse potential page annotation: {0}", ex.Message));
+                        }
+
+
                         if (null != annotation)
                         {
                             this.Annotation = annotation;
@@ -539,16 +549,15 @@ namespace ApiDocs.Validation
 
         private PageAnnotation ParsePageAnnotation(Block block)
         {
-            try
-            {
-                var response = JsonConvert.DeserializeObject<PageAnnotation>(StripHtmlCommentTags(block.Content));
-                if (null != response && null != response.Type && response.Type.Equals(PageAnnotationType, StringComparison.OrdinalIgnoreCase))
-                    return response;
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine("Ignored potential page annotation [{0}]: {1}", ex.Message, block.Content);
-            }
+            var commentText = StripHtmlCommentTags(block.Content).Trim();
+
+            if (!commentText.StartsWith("{"))
+                return null;
+
+            var response = JsonConvert.DeserializeObject<PageAnnotation>(commentText);
+            if (null != response && null != response.Type && response.Type.Equals(PageAnnotationType, StringComparison.OrdinalIgnoreCase))
+                return response;
+
             return null;
         }
 
@@ -794,8 +803,9 @@ namespace ApiDocs.Validation
             if (code.BlockType != BlockType.codeblock)
                 throw new ArgumentException("code block does not appear to be code");
 
-            var metadataJsonString = metadata.Content.Substring(4, metadata.Content.Length - 9);
-            var annotation = CodeBlockAnnotation.FromJson(metadataJsonString);
+            
+            var metadataJsonString = StripHtmlCommentTags(metadata.Content);
+            CodeBlockAnnotation annotation = CodeBlockAnnotation.FromJson(metadataJsonString);
 
             switch (annotation.BlockType)
             {

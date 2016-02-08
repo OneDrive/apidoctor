@@ -43,6 +43,19 @@ namespace ApiDocs.Validation.Json
             this.AllowTruncatedResponses = annotation.TruncatedResult;
         }
 
+        public ValidationOptions(ValidationOptions options)
+        {
+            if (null == options)
+                return;
+
+            this.AllowTruncatedResponses = options.AllowTruncatedResponses;
+            this.RequiredPropertyNames = options.RequiredPropertyNames;
+            this.CollectionPropertyName = options.CollectionPropertyName;
+            this.ExpectedJsonSchema = options.ExpectedJsonSchema;
+            this.NullablePropertyNames = options.NullablePropertyNames;
+            this.RelaxedStringValidation = options.RelaxedStringValidation;
+        }
+
         /// <summary>
         /// Specifies that the validate routines ignore errors/warnings 
         /// about missing properties that are defined in the schema

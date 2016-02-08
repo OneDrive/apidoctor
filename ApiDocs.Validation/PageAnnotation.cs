@@ -72,23 +72,25 @@ namespace ApiDocs.Validation
         /// Section of the website that this page appears under. This can be used to
         /// return a table of contents just for other files in the same section.
         /// </summary>
-        [JsonProperty("section")]
+        [JsonProperty("section", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public string Section { get; set; }
 
         /// <summary>
         /// A / separated hierarchy for where this page should be in the table of 
         /// contents when a TOC is generated.
         /// </summary>
-        [JsonProperty("tocPath")]
+        [JsonProperty("tocPath", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public string TocPath { get; set; }
 
+        [JsonProperty("tocIndex")]
+        public int TocIndex { get; set; }
 
         /// <summary>
-        /// A dictionary of Table of Contents items for this page. The key of the dictionary
+        /// A dictionary of bookmarks items for this page. The key of the dictionary
         /// is the TOC Path for the entry, and the value is the URL bookmark (#foo) for the entry.
         /// </summary>
-        [JsonProperty("tocItems")]
-        public Dictionary<string, string> TocItems { get; set; }
+        [JsonProperty("tocBookmarks", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public Dictionary<string, string> TocBookmarks { get; set; }
 
         /// <summary>
         /// A collection of HTML tags that should be added to the head element during HTML serialization.
@@ -101,9 +103,6 @@ namespace ApiDocs.Validation
         /// </summary>
         [JsonProperty("footerAdditions")]
         public string[] BodyFooterHtmlTags { get; set; }
-
-
-
 
 
         /// <summary>
@@ -125,7 +124,6 @@ namespace ApiDocs.Validation
                 return eoDynamic;
             }
         }
-
     }
     
 

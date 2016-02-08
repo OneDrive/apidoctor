@@ -182,6 +182,10 @@ namespace ApiDocs.ConsoleApp
 
         [Option("force-all", HelpText="Force all defined scenarios to be executed, even if disabled.")]
         public bool ForceAllScenarios { get; set; }
+
+        [Option("relax-string-validation", HelpText = "Relax the validation of JSON string properties.")]
+        public bool RelaxStringTypeValidation { get; set; }
+
     }
 
     class CheckServiceOptions : BasicCheckOptions
@@ -231,8 +235,6 @@ namespace ApiDocs.ConsoleApp
         [Option("password", HelpText="Provide a password for basic authentication.")]
         public string Password { get; set; }
 
-        [Option("relax-string-validation", HelpText="Relax the validation of JSON string properties.")]
-        public bool RelaxStringTypeValidation { get; set; }
 
         private IServiceAccount GetEnvironmentVariablesAccount()
         {
@@ -346,6 +348,12 @@ namespace ApiDocs.ConsoleApp
         [Option("namespaces", HelpText="Specify the namespaces that are included when publishing Edmx. Semicolon separated values.")]
         public string Namespaces { get; set; }
 
+        [Option("toc", HelpText="Specify the relative path to the output folder where the TOC should be written.")]
+        public string TableOfContentsOutputRelativePath
+        {
+            get; set;
+        }
+
         public string[] FilesToPublish {
             get { return (this.SourceFiles ?? string.Empty).Split(new char[] {';'}, StringSplitOptions.RemoveEmptyEntries); }
             set { this.SourceFiles = value.ComponentsJoinedByString(";"); }
@@ -368,6 +376,8 @@ namespace ApiDocs.ConsoleApp
         [Option("swagger-auth-scope", HelpText = "Override the auth scope detection with a default auth scope on every method")]
         public string AuthScopeDefault { get; set; }
 
+        [Option("base-url", HelpText = "Specify the base service URL included in method examples to be removed when generating metadata")]
+        public string BaseUrl { get; set; }
 
         #endregion
 

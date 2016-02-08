@@ -62,6 +62,15 @@ namespace ApiDocs.Validation.Writers
         /// URL encoded string that contains additional parameters that can be used by the rendering engine
         /// </summary>
         string AdditionalPageParameters { get; set; }
+
+
+        /// <summary>
+        /// Specify that a table of contents file should be written in the relative path provided.
+        /// </summary>
+        string TableOfContentsOutputRelativePath
+        {
+            get; set;
+        }
     }
 
     public class DefaultPublishOptions : IPublishOptions
@@ -75,5 +84,7 @@ namespace ApiDocs.Validation.Writers
         public string OutputExtension { get; set; }
 
         public string AdditionalPageParameters { get; set; }
+
+        public string TableOfContentsOutputRelativePath { get; set; }
     }
 }
