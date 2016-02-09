@@ -110,6 +110,15 @@ namespace ApiDocs.Validation.Http
             return resp;
         }
 
+        internal async Task WriteToStreamAsync(Stream responseStream)
+        {
+            using (TextWriter writer = new StreamWriter(responseStream, new UTF8Encoding(false), 4096, true))
+            {
+                await writer.WriteAsync(FullText(false));
+                await writer.FlushAsync();
+            }
+        }
+
         public string FullText(bool prettyPrintBody = true)
         {
             return this.FormatFullResponse(this.Body, prettyPrintBody);

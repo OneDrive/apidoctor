@@ -35,6 +35,9 @@ namespace ApiDocs.Validation.Http
 
     public class HttpRequest
     {
+
+        public static HttpLog.HttpLogGenerator HttpLogSession { get; set; }
+
         public HttpRequest()
         {
             this.Headers = new WebHeaderCollection();
@@ -45,6 +48,9 @@ namespace ApiDocs.Validation.Http
         public string Url { get; set; }
         public string Body { get; set; }
         public byte[] BodyBytes { get; set; }
+        
+        internal DateTimeOffset StartTime { get; set; }
+        internal Uri LastEffectiveUri { get; set; }
 
         public string Accept
         {
@@ -117,10 +123,24 @@ namespace ApiDocs.Validation.Http
             return effectiveUrl;
         }
 
+        /// <summary>
+        /// Serialize the HTTP request to an output stream
+        /// </summary>
+        /// <param name="requestStream"></param>
+        /// <returns></returns>
+        internal async Task WriteToStreamAsync(Stream requestStream)
+        {
+            using (TextWriter writer = new StreamWriter(requestStream, new UTF8Encoding(false), 4096, true))
+            {
+                await writer.WriteAsync(FullHttpText(showFullAuthorizationHeader: true));
+                await writer.FlushAsync();
+            }
+        }
+
         public HttpWebRequest PrepareHttpWebRequest(string baseUrl)
         {
-
             var effectiveUrl = GenerateAbsoluteUrl(baseUrl);
+            this.LastEffectiveUri = effectiveUrl;
 
             HttpWebRequest request = WebRequest.CreateHttp(effectiveUrl);
             request.AllowAutoRedirect = false;
@@ -132,7 +152,9 @@ namespace ApiDocs.Validation.Http
             foreach (var key in this.Headers.AllKeys)
             {
                 if (IgnoredHeaders.Contains(key.ToLower()))
+                {
                     continue;
+                }
                 
                 if (WebHeaderCollection.IsRestricted(key))
                 {
@@ -180,8 +202,6 @@ namespace ApiDocs.Validation.Http
                 {
                     request.Headers.Add(key, this.Headers[key]);
                 }
-
-
             }
 
             if (this.Body != null && this.BodyBytes == null)
@@ -201,8 +221,9 @@ namespace ApiDocs.Validation.Http
                 }
             }
             else if (this.Body != null && this.BodyBytes != null)
+            {
                 throw new InvalidOperationException("Body and BodyBytes cannot both be set on the same request");
-
+            }
 
             if (null != ValidationConfig.AdditionalHttpHeaders)
             {
@@ -211,7 +232,6 @@ namespace ApiDocs.Validation.Http
                     request.Headers.Add(header);
                 }
             }
-
 
             return request;
         }
@@ -254,17 +274,24 @@ namespace ApiDocs.Validation.Http
             }
         }
 
-        public string FullHttpText()
+        public string FullHttpText(bool showFullAuthorizationHeader = false)
         {
             StringBuilder sb = new StringBuilder();
             sb.Append(this.Method);
             sb.Append(" ");
-            sb.Append(this.Url);
+            if (this.LastEffectiveUri != null)
+            {
+                sb.Append(this.LastEffectiveUri.ToString());
+            }
+            else
+            {
+                sb.Append(this.Url);
+            }
             sb.Append(" ");
             sb.AppendLine("HTTP/1.1");
             foreach (string header in this.Headers.AllKeys)
             {
-                if (header.Equals("authorization", StringComparison.OrdinalIgnoreCase) && this.Headers[header].Length > 30)
+                if (!showFullAuthorizationHeader && header.Equals("authorization", StringComparison.OrdinalIgnoreCase) && this.Headers[header].Length > 30)
                 {
                     sb.AppendFormat("{0}: {1}...", header, this.Headers[header].Substring(0, 30));
                 }
@@ -292,7 +319,16 @@ namespace ApiDocs.Validation.Http
         public async Task<HttpResponse> GetResponseAsync(string baseUrl, int retryCount = 0)
         {
             var webRequest = this.PrepareHttpWebRequest(baseUrl);
-            var response = await HttpResponse.ResponseFromHttpWebResponseAsync(webRequest);
+            this.StartTime = DateTimeOffset.UtcNow;
+
+            HttpResponse response = await HttpResponse.ResponseFromHttpWebResponseAsync(webRequest);
+            TimeSpan duration = DateTimeOffset.UtcNow.Subtract(this.StartTime);
+
+            var logger = HttpRequest.HttpLogSession;
+            if (null != logger)
+            {
+                await logger.RecordSessionAsync(this, response, duration);
+            }
 
             if (ShouldRetryRequest(response))
             {
