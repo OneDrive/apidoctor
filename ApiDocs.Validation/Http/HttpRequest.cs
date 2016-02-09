@@ -276,6 +276,11 @@ namespace ApiDocs.Validation.Http
 
         public string FullHttpText(bool showFullAuthorizationHeader = false)
         {
+            if (this.BodyBytes != null)
+                Headers[HttpRequestHeader.ContentLength] = this.BodyBytes.Length.ToString();
+            else if (this.Body != null)
+                Headers[HttpRequestHeader.ContentLength] = Encoding.UTF8.GetByteCount(this.Body).ToString();
+
             StringBuilder sb = new StringBuilder();
             sb.Append(this.Method);
             sb.Append(" ");
