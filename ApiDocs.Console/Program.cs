@@ -742,6 +742,15 @@ namespace ApiDocs.ConsoleApp
                 }
             }
 
+            // Configure HTTP request logging
+            Validation.HttpLog.HttpLogGenerator httpLogging = null;
+            if (!string.IsNullOrEmpty(options.HttpLoggerOutputPath))
+            {
+                httpLogging = new Validation.HttpLog.HttpLogGenerator(options.HttpLoggerOutputPath);
+                httpLogging.InitializePackage();
+                HttpRequest.HttpLogSession = httpLogging;
+            }
+
             var docset = await GetDocSetAsync(options);
             if (null == docset)
             {
@@ -774,6 +783,14 @@ namespace ApiDocs.ConsoleApp
             {
                 allSuccessful &= await CheckMethodsForAccountAsync(options, account, methods, docset);
             }
+
+            // Disable http logging
+            if (null != httpLogging)
+            {
+                HttpRequest.HttpLogSession = null;
+                httpLogging.ClosePackage();
+            }
+
             return allSuccessful;
         }
 

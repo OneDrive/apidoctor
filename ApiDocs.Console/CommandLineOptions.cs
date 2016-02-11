@@ -194,6 +194,7 @@ namespace ApiDocs.ConsoleApp
         private const string ServiceUrlArgument = "url";
         private const string UsernameArgument = "username";
         private const string PasswordArgument = "password";
+        private const string HttpLoggerArgument = "httplog";
 
         public CheckServiceOptions()
         {
@@ -234,6 +235,9 @@ namespace ApiDocs.ConsoleApp
         public string Username { get; set; }
         [Option("password", HelpText="Provide a password for basic authentication.")]
         public string Password { get; set; }
+
+        [Option(HttpLoggerArgument, HelpText="Create an HTTP Session archive at the specify path.")]
+        public string HttpLoggerOutputPath { get; set; }
 
 
         private IServiceAccount GetEnvironmentVariablesAccount()
