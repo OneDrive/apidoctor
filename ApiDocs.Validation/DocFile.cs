@@ -1028,6 +1028,13 @@ namespace ApiDocs.Validation
                 linkUrl = linkUrl.Substring(0, indexOfHash);
             }
 
+            if (linkUrl.StartsWith("/"))
+            {
+                // URL is relative to the base for the documentation
+                rootPath = docSetBasePath;
+                linkUrl = linkUrl.Substring(1);
+            }
+
             while (linkUrl.StartsWith(".." + Path.DirectorySeparatorChar))
             {
                 var nextLevelParent = new DirectoryInfo(rootPath).Parent;
