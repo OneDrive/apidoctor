@@ -178,6 +178,9 @@ namespace ApiDocs.Validation
             List<T> validConfigurationFiles = new List<T>();
 
             DirectoryInfo docSetDir = new DirectoryInfo(path);
+            if (!docSetDir.Exists)
+                return new T[0];
+
             var jsonFiles = docSetDir.GetFiles("*.json", SearchOption.AllDirectories);
             foreach (var file in jsonFiles)
             {

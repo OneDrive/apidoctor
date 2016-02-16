@@ -101,7 +101,15 @@ namespace ApiDocs.ConsoleApp
             FancyConsole.LogFileName = verbOptions.LogFile;
 
             var task = Task.Run(() => RunInvokedMethodAsync(options, verbName, verbOptions));
-            task.Wait();
+            try
+            {
+                task.Wait();
+            }
+            catch (Exception ex)
+            {
+                FancyConsole.WriteLine(FancyConsole.ConsoleErrorColor, "Uncaught exception is causing a crash: {0}", ex);
+                Exit(failure: true, customExitCode: 40);
+            }
         }
 
         public static void LoadCurrentConfiguration(DocSetOptions options)
@@ -204,7 +212,17 @@ namespace ApiDocs.ConsoleApp
         private static async Task<DocSet> GetDocSetAsync(DocSetOptions options)
         {
             FancyConsole.VerboseWriteLine("Opening documentation from {0}", options.DocumentationSetPath);
-            DocSet set = new DocSet(options.DocumentationSetPath);
+            DocSet set = null;
+            try
+            {
+                set = new DocSet(options.DocumentationSetPath);
+            }
+            catch (System.IO.FileNotFoundException ex)
+            {
+                FancyConsole.WriteLine(FancyConsole.ConsoleErrorColor, ex.Message);
+                Exit(failure: true);
+                return null;
+            }
 
             FancyConsole.VerboseWriteLine("Scanning documentation files...");
             ValidationError[] loadErrors;
@@ -964,9 +982,13 @@ namespace ApiDocs.ConsoleApp
             }
         }
 
-        private static void Exit(bool failure)
+        private static void Exit(bool failure, int? customExitCode = null)
         {
-            var exitCode = failure ? ExitCodeFailure : ExitCodeSuccess;
+            int exitCode = failure ? ExitCodeFailure : ExitCodeSuccess;
+            if (customExitCode.HasValue)
+            {
+                exitCode = customExitCode.Value;
+            }
 #if DEBUG
             Console.WriteLine("Exit code: " + exitCode);
             if (Debugger.IsAttached)
