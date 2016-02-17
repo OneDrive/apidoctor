@@ -1086,6 +1086,7 @@ namespace ApiDocs.ConsoleApp
                     "An error occured while publishing: {0}",
                     ex.Message);
                 FancyConsole.VerboseWriteLine(ex.ToString());
+                Exit(failure: true, customExitCode: 99);
                 return false;
             }
 
