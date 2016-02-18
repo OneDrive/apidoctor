@@ -177,7 +177,7 @@ namespace ApiDocs.ConsoleApp
         [Option('m', "method", HelpText = "Name of the method to test. If omitted, all defined methods are tested.", MutuallyExclusiveSet="fileOrMethod")]
         public string MethodName { get; set; }
 
-        [Option("file", HelpText="Name of the doc file to test. If missing, all methods are tested.", MutuallyExclusiveSet="fileOrMethod")]
+        [Option("file", HelpText="Name of the files to test. Wildcard(*) is allowed. If missing, all methods are tested.", MutuallyExclusiveSet="fileOrMethod")]
         public string FileName { get; set; }
 
         [Option("force-all", HelpText="Force all defined scenarios to be executed, even if disabled.")]

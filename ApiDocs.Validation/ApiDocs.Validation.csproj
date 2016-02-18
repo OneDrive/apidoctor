@@ -79,6 +79,7 @@
     <Compile Include="PageAnnotation.cs" />
     <Compile Include="ParameterDataType.cs" />
     <Compile Include="ParameterDefinition.cs" />
+    <Compile Include="Params\CSharpEval.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
