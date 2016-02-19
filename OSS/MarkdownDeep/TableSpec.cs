@@ -227,15 +227,31 @@ namespace MarkdownDeep
 
         #region RGregg extensions
 
-        public string[] ColumnHeaders { get { return Headers.ToArray(); } }
+        public string[] ColumnHeaders
+        {
+            get
+            {
+                if (null != Headers)
+                    return Headers.ToArray();
+                else
+                    return new string[0];
+            }
+        }
 
         public string[][] RowValues
         { 
             get
-            { 
-                var rowArrays = from row in Rows
-                                select row.ToArray();
-                return rowArrays.ToArray();
+            {
+                if (null != Rows)
+                {
+                    var rowArrays = from row in Rows
+                                    select row.ToArray();
+                    return rowArrays.ToArray();
+                }
+                else
+                {
+                    return new string[][] { new string[] { } };
+                }
             }
         }
 
