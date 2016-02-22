@@ -196,13 +196,15 @@ namespace ApiDocs.Validation
                         }
                     }
                 }
+                catch (JsonException ex)
+                {
+                    Logging.LogMessage(new ValidationWarning(ValidationErrorCode.JsonParserException, file.FullName, "JSON parser error: {0}", ex.Message));
+                }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine(
-                        "Configuration load error: Exception processing file {0}: {1}",
-                        file.FullName,
-                        ex.Message);
+                    Logging.LogMessage(new ValidationWarning(ValidationErrorCode.JsonParserException, file.FullName, "Exception reading file: {0}", ex.Message));
                 }
+
             }
 
             return validConfigurationFiles.ToArray();

@@ -825,6 +825,11 @@ namespace ApiDocs.Validation
                             throw new NotSupportedException("Unsupported resource definition language: " + code.CodeLanguage);
                         }
 
+                        if (string.IsNullOrEmpty(resource.Name))
+                        {
+                            throw new InvalidDataException("Resource definition is missing a name");
+                        }
+
                         this.resources.Add(resource);
                         return resource;
                     }
