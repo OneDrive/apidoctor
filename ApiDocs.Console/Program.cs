@@ -54,6 +54,9 @@ namespace ApiDocs.ConsoleApp
         public static readonly BuildWorkerApi BuildWorker = new BuildWorkerApi();
         public static AppConfigFile CurrentConfiguration { get; private set; }
 
+        // Set to true to disable returning an error code when the app exits.
+        private static bool IgnoreErrors { get; set; }
+
         static void Main(string[] args)
         {
             Logging.ProviderLogger(new ConsoleAppLogger());
@@ -80,6 +83,7 @@ namespace ApiDocs.ConsoleApp
                 Exit(failure: true);
             }
 
+            IgnoreErrors = verbOptions.IgnoreErrors;
 #if DEBUG
             if (verbOptions.AttachDebugger)
             {
@@ -989,6 +993,13 @@ namespace ApiDocs.ConsoleApp
             {
                 exitCode = customExitCode.Value;
             }
+
+            if (IgnoreErrors)
+            {
+                FancyConsole.WriteLine("Ignoring errors and returning a successful exit code.");
+                exitCode = ExitCodeSuccess;
+            }
+
 #if DEBUG
             Console.WriteLine("Exit code: " + exitCode);
             if (Debugger.IsAttached)

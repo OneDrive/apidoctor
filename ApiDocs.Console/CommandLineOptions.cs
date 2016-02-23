@@ -92,6 +92,9 @@ namespace ApiDocs.ConsoleApp
         [Option("appveyor-url", HelpText="Specify the AppVeyor Build Worker API URL for output integration")]
         public string AppVeyorServiceUrl { get; set; }
 
+        [Option("ignore-errors", HelpText="Prevent errors from generating a non-zero return code.")]
+        public bool IgnoreErrors { get; set; }
+
 #if DEBUG
         [Option("debug", HelpText="Launch the debugger before doing anything interesting")]
         public bool AttachDebugger { get; set; }
