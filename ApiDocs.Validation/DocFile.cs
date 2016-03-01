@@ -907,6 +907,14 @@ namespace ApiDocs.Validation
 
             List<string> linkedPages = new List<string>();
 
+            // If there are no links in this document, just skip the validation.
+            if (this.MarkdownLinks == null)
+            {
+                errors = new ValidationError[0];
+                linkedDocFiles = new string[0];
+                return true;
+            }
+
             var foundErrors = new List<ValidationError>();
             foreach (var link in this.MarkdownLinks)
             {
