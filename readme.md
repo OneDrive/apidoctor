@@ -111,42 +111,16 @@ documentation set. Apidocs will look for any .json file that includes an
 `accounts` property include an array of account objects. These accounts will
 be used by the `check-service` command.
 
-Example configuration file:
-```json
-{
-  "checkServiceEnabledBranches": ["master", "release", "release-stage"],
-  "accounts": [
-    {
-      "name": "OneDriveProd",
-      "enabled": true,
-      "clientId": "123456",
-      "clientSecret": "987654321",
-      "tokenService": "https://login.live.com/oauth20_token.srf",
-      "redirectUri": "http://my-test-app.com",
-      "refreshToken": "1230913jkljsdklajslkj12lk3j1lknmjasad",
-      "serviceUrl": "https://api.onedrive.com/v1.0"
-    },
-    {
-      "name": "SharePointPreProduction",
-      "enabled": false,
-      "clientId": "50b5a58e-71e3-49c3-b5ad-123141234",
-      "clientSecret": "123u1n1klnkl1zxz1241klnek1",
-      "tokenService": "https://login.windows-ppe.net/common/oauth2/token",
-      "redirectUri": "https://onedrive-explorer-test.azurewebsites.net/callback.html",
-      "refreshToken": "alk1nkl1nkm1nszkjhaoi1asdasdgb1",
-      "serviceUrl": "https://prepsp-my.spoppe.com/personal/billtest_prepsp_ccsctp_net/_api/v2.0",
-      "additionalHeaders": [ "If-Match: *" ]
-    }
-  ]
-}
-```
+[See more details about account configuration files.](docs/account-configuration.md).
 
-#### Refresh Tokens
-Instead of using an access token on the command line, you can use the following
-environment variables to provide a refresh token and token service to generate
-access tokens. This enables the tool to be used in automation scripts and other
-scenarios where it may not be possible to have user-interaction to generate an
-access token.
+
+#### Account by environment variables
+
+Instead of using an access token on the command line or an account configuration file
+you can use the following environment variables to provide a refresh token and
+token service to generate access tokens. This enables the tool to be used in
+automation scripts and other scenarios where it may not be possible to provide
+an access-token in any other way.
 
 | Variable name           | Description                                                                |
 |:------------------------|:---------------------------------------------------------------------------|

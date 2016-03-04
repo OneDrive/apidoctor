@@ -114,22 +114,24 @@ namespace ApiDocs.Validation.Http
         {
             using (TextWriter writer = new StreamWriter(responseStream, new UTF8Encoding(false), 4096, true))
             {
-                await writer.WriteAsync(FullText(false));
+                await writer.WriteAsync(FullText(prettyPrintBody: false, useChunkedEncoding: true));
                 await writer.FlushAsync();
             }
         }
 
-        public string FullText(bool prettyPrintBody = true)
+        public string FullText(bool prettyPrintBody = true, bool useChunkedEncoding = false)
         {
-            return this.FormatFullResponse(this.Body, prettyPrintBody);
+            return this.FormatFullResponse(this.Body, prettyPrintBody, useChunkedEncoding);
         }
 
-        public string FormatFullResponse(string body, bool prettyPrintJson)
+        public string FormatFullResponse(string body, bool prettyPrintJson, bool useChunkedEncodingIfPresent = false)
         {
             StringBuilder sb = new StringBuilder();
             sb.AppendFormat("{0} {1} {2}", this.HttpVersion, this.StatusCode, this.StatusMessage);
             sb.AppendLine();
 
+
+            bool isChunkedEncoding = false;
             bool isJson = false;
             if (null != this.Headers)
             {
@@ -141,6 +143,10 @@ namespace ApiDocs.Validation.Http
                     if (key.Equals("content-type", StringComparison.OrdinalIgnoreCase))
                     {
                         isJson = this.Headers[key].StartsWith("application/json");
+                    }
+                    if (key.Equals("transfer-encoding", StringComparison.OrdinalIgnoreCase))
+                    {
+                        isChunkedEncoding = this.Headers[key].StartsWith("chunked");
                     }
                 }
                 sb.AppendLine();
@@ -158,6 +164,16 @@ namespace ApiDocs.Validation.Http
                 {
                     sb.Append(body);
                 }
+            }
+            else if (useChunkedEncodingIfPresent && isChunkedEncoding)
+            {
+                // Write out the response body using chunked encoding semantics
+                sb.AppendFormat("{0:x}", System.Text.Encoding.UTF8.GetByteCount(body));
+                sb.AppendLine();
+                sb.Append(body);
+                sb.AppendLine();
+                sb.AppendLine("0");
+                sb.AppendLine();
             }
             else
             {
