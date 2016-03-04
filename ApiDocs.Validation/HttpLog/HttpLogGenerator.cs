@@ -136,7 +136,7 @@ namespace ApiDocs.Validation.HttpLog
 
         private static Uri UriForPart(int sessionId, char mode)
         {
-            return new Uri(string.Format("/raw/{0}_{1}.{2}", sessionId, mode, (mode == 'm') ? "xml" : "txt"), UriKind.Relative);
+            return new Uri(string.Format("/raw/{0:D4}_{1}.{2}", sessionId, mode, (mode == 'm') ? "xml" : "txt"), UriKind.Relative);
         }
     }
 
