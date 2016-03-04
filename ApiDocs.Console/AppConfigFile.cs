@@ -28,6 +28,7 @@ namespace ApiDocs.ConsoleApp
     using ApiDocs.ConsoleApp.Auth;
     using ApiDocs.Validation.Config;
     using Newtonsoft.Json;
+    using ApiDocs.Validation;
 
     public class AppConfigFile : ConfigFile
     {

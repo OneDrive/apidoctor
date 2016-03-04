@@ -38,6 +38,9 @@ namespace ApiDocs.ConsoleApp.Auth
         [JsonProperty("enabled")]
         public bool Enabled { get; set; }
 
+        [JsonProperty("oauthType")]
+        public OAuthAccountType Type { get; set; }
+
         [JsonProperty("clientId")]
         public string ClientId { get; set; }
 
@@ -58,6 +61,12 @@ namespace ApiDocs.ConsoleApp.Auth
 
         [JsonProperty("resource")]
         public string Resource { get; set; }
+
+        [JsonProperty("username")]
+        public string Username { get; set; }
+
+        [JsonProperty("password")]
+        public string Password { get; set; }
 
         [JsonProperty("additionalHeaders")]
         public string[] AdditionalHeaders { get; set; }
@@ -96,6 +105,23 @@ namespace ApiDocs.ConsoleApp.Auth
 
         public async Task PrepareForRequestAsync()
         {
+            switch (this.Type)
+            {
+                case OAuthAccountType.RefreshToken:
+                    await RedeemRefreshTokenAsync();
+                    break;
+
+                case OAuthAccountType.UserPassword:
+                    await RedeemUsernameAndPasswordAsync();
+                    break;
+
+                default:
+                    throw new NotSupportedException("Unsupported oauthMode value:" + this.Type.ToString());
+            }
+        }
+
+        private async Task RedeemRefreshTokenAsync()
+        {
             // Make sure we have an access token for this API
             if (string.IsNullOrEmpty(this.AccessToken))
             {
@@ -112,10 +138,35 @@ namespace ApiDocs.ConsoleApp.Auth
             }
         }
 
+        private async Task RedeemUsernameAndPasswordAsync()
+        {
+            if (string.IsNullOrEmpty(this.AccessToken))
+            {
+                var creds = new Microsoft.IdentityModel.Clients.ActiveDirectory.UserCredential(this.Username, this.Password);
+                var context = new Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext(this.TokenService);
+                var token = await context.AcquireTokenAsync(this.Resource, this.ClientId, creds);
+                if (null != token)
+                {
+                    this.AccessToken = token.AccessToken;
+                }
+                else
+                {
+                    throw new InvalidOperationException(
+                        string.Format("Failed to convert username + password to access token for account: {0}", this.Name));
+                }
+            }
+        }
+
         public AuthenicationCredentials CreateCredentials()
         {
             return OAuthCredentials.CreateAutoCredentials(this.AccessToken);
         }
+    }
+
+    public enum OAuthAccountType
+    {
+        RefreshToken,
+        UserPassword
     }
 
 
