@@ -67,10 +67,12 @@ namespace ApiDocs.Validation.Writers
         /// <summary>
         /// Specify that a table of contents file should be written in the relative path provided.
         /// </summary>
-        string TableOfContentsOutputRelativePath
-        {
-            get; set;
-        }
+        string TableOfContentsOutputRelativePath { get; set; }
+
+        /// <summary>
+        /// Allows HTML tags in the markdown source to be passed through to the output markdown.
+        /// </summary>
+        bool AllowUnsafeHtmlContentInMarkdown { get; set; }
     }
 
     public class DefaultPublishOptions : IPublishOptions
@@ -86,5 +88,7 @@ namespace ApiDocs.Validation.Writers
         public string AdditionalPageParameters { get; set; }
 
         public string TableOfContentsOutputRelativePath { get; set; }
+
+        public bool AllowUnsafeHtmlContentInMarkdown { get; set; }
     }
 }

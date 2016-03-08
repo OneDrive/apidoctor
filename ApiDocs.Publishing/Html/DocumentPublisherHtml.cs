@@ -44,11 +44,18 @@ namespace ApiDocs.Publishing.Html
         public string HtmlOutputExtension { get; set; }
         public string TemplateHtmlFilename { get; set; }
 
+        /// <summary>
+        /// Allow HTML tags in the markdown source to pass through to the converted HTML. This is considered
+        /// unsafe.
+        /// </summary>
+        public bool EnableHtmlTagPassThrough { get; set; }
+
         public DocumentPublisherHtml(DocSet docs, IPublishOptions options) 
             : base(docs, options)
         {
             TemplateHtmlFilename =  options.TemplateFilename ?? "template.htm";
             HtmlOutputExtension = options.OutputExtension ?? ".htm";
+            EnableHtmlTagPassThrough = options.AllowUnsafeHtmlContentInMarkdown;
         }
 
         /// <summary>
@@ -182,7 +189,7 @@ namespace ApiDocs.Publishing.Html
             {
                 ExtraMode = true,
                 NewWindowForExternalLinks = true,
-                SafeMode = true,
+                SafeMode = this.EnableHtmlTagPassThrough,
                 AutoHeadingIDs = true,
                 QualifyUrl = this.QualifyUrl
             };
