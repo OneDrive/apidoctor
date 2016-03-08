@@ -16,6 +16,7 @@ apidocs.exe publish --output C:\html-output --template .\html-template --format 
 | `--template <value>`          | Specify the path to a folder that contains output template content.                              |
 | `--template-filename <value>` | Specify the name of the file in the template folder that should be used for the output template. |
 | `--file-ext <.htm>`           | Specify the extension used for files generated from markdown input.                              |
+| `--allow-unsafe-html`         | When converting to HTML, allow HTML tags in the markdown to be passed through without being encoded. |
 
 ## Publishing Basic HTML
 
