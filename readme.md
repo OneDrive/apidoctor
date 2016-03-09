@@ -26,7 +26,6 @@ platform. This tool is compatible with Mono or .NET.
 
 ![Screen shot of the command line tool in action](example-console.png)
 
-
 `apidocs.exe [command] [options]`
 
 Available commands are:
@@ -137,11 +136,11 @@ token service to retrieve an access token when necessary.
 ### Publish Command
 The `publish` command uses the documentation to generate a new set of outputs.
 
-See the documentation on [publishing using APIDocs](publishing.md) for
+See the documentation on [publishing using APIDocs](docs/publishing.md) for
 more details.
 
 ## Documentation format
-See [Markdown requirements](markdown-requirements.md) for more details about
+See [Markdown requirements](docs/markdown-requirements.md) for more details about
 requirements on the markdown source for documentation.
 
 ## Request parameters
