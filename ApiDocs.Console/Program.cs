@@ -606,20 +606,42 @@ namespace ApiDocs.ConsoleApp
             }
             else if (!string.IsNullOrEmpty(options.FileName))
             {
-                var selectedFileQuery = from f in docset.Files where f.DisplayName == options.FileName select f;
-                var selectedFile = selectedFileQuery.SingleOrDefault();
-                if (selectedFile == null)
+                var selectedFileQuery = FilesMatchingFilter(docset, options.FileName);
+                if (!selectedFileQuery.Any())
                 {
-                    FancyConsole.WriteLine(FancyConsole.ConsoleErrorColor, "Unable to locate file '{0}' in docset.", options.FileName);
+                    FancyConsole.WriteLine(FancyConsole.ConsoleErrorColor, "Unable to locate file matching '{0}' in docset.", options.FileName);
                     Exit(failure: true);
                 }
-                methods = selectedFile.Requests;
+
+                List<MethodDefinition> foundMethods = new List<MethodDefinition>();
+                foreach (var docFile in selectedFileQuery)
+                {
+                    foundMethods.AddRange(docFile.Requests);
+                }
+                methods = foundMethods.ToArray();
             }
             else
             {
                 methods = docset.Methods;
             }
             return methods;
+        }
+
+        private static IEnumerable<DocFile> FilesMatchingFilter(DocSet docset, string filter)
+        {
+            if (filter.EndsWith("*"))
+            {
+                return from f in docset.Files
+                       where f.DisplayName.StartsWith(filter.TrimEnd('*'))
+                       select f;
+
+            }
+            else
+            {
+                return from f in docset.Files
+                       where f.DisplayName == filter
+                       select f;
+            }
         }
 
 

@@ -128,6 +128,8 @@ namespace ApiDocs.Validation.Params
             }
             if (key.StartsWith("$"))
                 return PlaceholderLocation.Json;
+            if (key.StartsWith("#"))
+                return PlaceholderLocation.CSharpCode;
 
             return PlaceholderLocation.Invalid;
         }

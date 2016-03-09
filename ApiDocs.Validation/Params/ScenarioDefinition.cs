@@ -79,6 +79,7 @@ namespace ApiDocs.Validation.Params
         HttpHeader,
         Body,
         StoredValue,
-        BodyBase64Encoded
+        BodyBase64Encoded,
+        CSharpCode
     }
 }
