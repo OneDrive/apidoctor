@@ -58,6 +58,7 @@ The following properties are defined for code block annotations:
 | **truncated**          | Boolean          | If true, indicates that the example of the resource provided does not include all required fields, and that state shouldn't generate errors or warnings.                     |
 | **expectError**        | Boolean          | If true, indicates that the response should be an error response and not the standard resource response expected.                                                            |
 | **nullableProperties** | Array of strings | For a resource, define which properties can return null values. By default Markdown-scanner expects no null properties to be returned.                                       |
+| **scopes**             | String           | A space-seperated value of scopes which are required for this method to be useful. All scopes listed are required to be provided by the account for this method to be run. A warning is generated if the account doesn't have the required scopes.  |
 
 ## Pairing requests and responses
 
