@@ -111,7 +111,8 @@ namespace ApiDocs.Validation.Error
         ExtraDocumentHeaderFound,
         RequiredDocumentHeaderMissing,
         DocumentHeaderInWrongPosition,
-        SkippedSimilarErrors
+        SkippedSimilarErrors,
+        RequiredScopesMissing
     }
 
     public class ValidationError

@@ -65,8 +65,15 @@ namespace ApiDocs.Validation
             if (scenarios.Length == 0)
             {
                 // If no descenarios are defined for this method, add a new default scenario
-                scenarios = new ScenarioDefinition[] { new ScenarioDefinition { Description = "default-scenario", Enabled = true, MethodName = method.Identifier} };
-                results.AddResult("init", new ValidationMessage(null, "No scenarios were defined for method {0}. Will execute request as written.", method.Identifier), ValidationOutcome.None);
+                scenarios = new ScenarioDefinition[] {
+                    new ScenarioDefinition {
+                        Description = "verbatim",
+                        Enabled = true,
+                        MethodName = method.Identifier,
+                        RequiredScopes = method.RequiredScopes
+                    }
+                };
+                results.AddResult("init", new ValidationMessage(null, "No scenarios were defined for method {0}. Will request verbatim from docs.", method.Identifier), ValidationOutcome.None);
             }
 
             if (scenarios.Any() && !scenarios.Any(x => x.Enabled))
@@ -118,7 +125,23 @@ namespace ApiDocs.Validation
             if (null == results)
                 throw new ArgumentNullException("results");
 
+
             var actionName = scenario.Description;
+
+            // Check to see if the account + scenario scopes are aligned
+
+            string[] requiredScopes = method.RequiredScopes.Union(scenario.RequiredScopes).ToArray();
+
+            if (!account.Scopes.ProvidesScopes(requiredScopes, options.IgnoreRequiredScopes))
+            {
+                var missingScopes = from scope in requiredScopes where !account.Scopes.Contains(scope) select scope;
+
+                results.AddResult(actionName,
+                    new ValidationWarning(ValidationErrorCode.RequiredScopesMissing,
+                    null,
+                    "Scenario was not run. Scopes required were not available: {0}", missingScopes.ComponentsJoinedByString(",")));
+                return;
+            }
 
             // Generate the tested request by "previewing" the request and executing
             // all test-setup procedures

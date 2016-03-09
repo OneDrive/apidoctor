@@ -198,6 +198,7 @@ namespace ApiDocs.ConsoleApp
         private const string UsernameArgument = "username";
         private const string PasswordArgument = "password";
         private const string HttpLoggerArgument = "httplog";
+        private const string IgnoreRequiredScopesArgument = "ignore-scopes";
 
         public CheckServiceOptions()
         {
@@ -242,6 +243,8 @@ namespace ApiDocs.ConsoleApp
         [Option(HttpLoggerArgument, HelpText="Create an HTTP Session archive at the specify path.")]
         public string HttpLoggerOutputPath { get; set; }
 
+        [Option(IgnoreRequiredScopesArgument, HelpText="Disable checking accounts for required scopes before calling methods")]
+        public bool IgnoreRequiredScopes { get; set; }
 
         private IServiceAccount GetEnvironmentVariablesAccount()
         {

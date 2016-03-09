@@ -805,7 +805,7 @@ namespace ApiDocs.Validation
 
             
             var metadataJsonString = StripHtmlCommentTags(metadata.Content);
-            CodeBlockAnnotation annotation = CodeBlockAnnotation.FromJson(metadataJsonString);
+            CodeBlockAnnotation annotation = CodeBlockAnnotation.ParseMetadata(metadataJsonString, code);
 
             switch (annotation.BlockType)
             {
@@ -818,7 +818,7 @@ namespace ApiDocs.Validation
                         }
                         //else if (code.CodeLanguage.Equals("xml", StringComparison.OrdinalIgnoreCase))
                         //{
-
+                        //
                         //}
                         else
                         {

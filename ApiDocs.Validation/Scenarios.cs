@@ -50,6 +50,14 @@ namespace ApiDocs.Validation
 
     public static class ScenarioExtensionMethods
     {
+        /// <summary>
+        /// Filter an array of scenarios to those defined for the method + scopes provided by the account
+        /// </summary>
+        /// <param name="scenarios">List of all available scenarios</param>
+        /// <param name="method">Method to match scenarios with</param>
+        /// <param name="providedScopes">Scopes provided by the account</param>
+        /// <param name="ignoreScopes">Disable checking for matching scopes</param>
+        /// <returns></returns>
         public static ScenarioDefinition[] ScenariosForMethod(this IEnumerable<ScenarioDefinition> scenarios, MethodDefinition method)
         {
             var id = method.Identifier;
@@ -63,6 +71,28 @@ namespace ApiDocs.Validation
             }
 
             return query.ToArray();
+        }
+
+        /// <summary>
+        /// Returns true if all of the required scopes are in the provided scopes array, or if scope requirements are being ignored.
+        /// </summary>
+        /// <param name="requiredScopes"></param>
+        /// <param name="providedScopes"></param>
+        /// <returns></returns>
+        public static bool ProvidesScopes(this string[] providedScopes, string[] requiredScopes, bool ignoreScopes)
+        {
+            if (ignoreScopes || requiredScopes == null || requiredScopes.Length == 0)
+            {
+                return true;
+            }
+
+            if (providedScopes == null || providedScopes.Length == 0)
+            {
+                return false;
+            }
+
+            var intersection = providedScopes.Intersect(requiredScopes).ToArray();
+            return (intersection.Length == requiredScopes.Length);
         }
     }
 }

@@ -27,6 +27,7 @@ namespace ApiDocs.Validation
 {
     using System;
     using System.Diagnostics;
+    using MarkdownDeep;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Converters;
 
@@ -118,13 +119,73 @@ namespace ApiDocs.Validation
         public bool IsIdempotent { get; set; }
 
         /// <summary>
+        /// Space seperated list of OAuth scopes required for this method to be invoked.
+        /// </summary>
+        [JsonProperty("scopes", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public string Scopes { get; set; }
+
+        public string[] RequiredScopes
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(this.Scopes))
+                    return new string[0];
+                else
+                    return this.Scopes.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            }
+        }
+
+        /// <summary>
         /// Convert a JSON string into an instance of this class
         /// </summary>
         /// <param name="json"></param>
         /// <returns></returns>
-        public static CodeBlockAnnotation FromJson(string json)
+        public static CodeBlockAnnotation ParseMetadata(string json, MarkdownDeep.Block codeBlock = null)
         {
-            return JsonConvert.DeserializeObject<CodeBlockAnnotation>(json);
+            var response = JsonConvert.DeserializeObject<CodeBlockAnnotation>(json);
+
+            if (codeBlock != null)
+            {
+                // See if we can infer anything that's missing from response
+                if (response.BlockType == CodeBlockType.Unknown)
+                {
+                    response.BlockType = InferBlockType(codeBlock, response.ResourceType);
+                }
+            }
+            return response;
+        }
+
+        /// <summary>
+        /// Based on data in the codeBlock, see if we can infer what kind of block this is
+        /// </summary>
+        /// <param name="codeBlock"></param>
+        /// <returns></returns>
+        private static CodeBlockType InferBlockType(Block codeBlock, string resourceTypeName = null)
+        {
+            if (codeBlock.CodeLanguage == "http")
+            {
+                // See if this is an HTTP request or HTTP response
+                Http.HttpParser parser = new Http.HttpParser();
+                try
+                {
+                    parser.ParseHttpRequest(codeBlock.Content);
+                    return CodeBlockType.Request;
+                }
+                catch { }
+
+                try
+                {
+                    parser.ParseHttpResponse(codeBlock.Content);
+                    return CodeBlockType.Response;
+                }
+                catch { }
+            }
+            else if (codeBlock.CodeLanguage == "json" && !string.IsNullOrEmpty(resourceTypeName))
+            {
+                return CodeBlockType.Resource;
+            }
+
+            return CodeBlockType.Unknown;
         }
 
         public ParameterDataType Type
