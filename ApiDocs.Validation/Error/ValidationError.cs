@@ -111,7 +111,8 @@ namespace ApiDocs.Validation.Error
         ExtraDocumentHeaderFound,
         RequiredDocumentHeaderMissing,
         DocumentHeaderInWrongPosition,
-        SkippedSimilarErrors
+        SkippedSimilarErrors,
+        RequiredScopesMissing
     }
 
     public class ValidationError
@@ -126,6 +127,14 @@ namespace ApiDocs.Validation.Error
             this.Code = code;
             this.Source = source;
             this.Message = string.Format(messageformat, formatParams);
+        }
+
+        public static ValidationError CreateError(bool isWarning, ValidationErrorCode code, string source, string messageFormat, params object[] formatParams)
+        {
+            if (isWarning)
+                return new ValidationWarning(code, source, messageFormat, formatParams);
+            else
+                return new ValidationError(code, source, messageFormat, formatParams);
         }
 
         public ValidationErrorCode Code { get; set; }

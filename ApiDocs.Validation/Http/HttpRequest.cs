@@ -351,6 +351,7 @@ namespace ApiDocs.Validation.Http
         }
 
         public List<HttpStatusCode> RetryOnStatusCode { get; set; }
+        public string HttpVersion { get; internal set; }
 
         public bool ShouldRetryRequest(HttpResponse response)
         {

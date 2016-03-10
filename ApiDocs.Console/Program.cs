@@ -841,21 +841,19 @@ namespace ApiDocs.ConsoleApp
         /// <summary>
         /// Execute the provided methods on the given account.
         /// </summary>
-        /// <param name="options"></param>
+        /// <param name="commandLineOptions"></param>
         /// <param name="account"></param>
         /// <param name="methods"></param>
         /// <param name="docset"></param>
         /// <returns>True if the methods all passed, false if there were failures.</returns>
-        private static async Task<bool> CheckMethodsForAccountAsync(CheckServiceOptions options, IServiceAccount account, MethodDefinition[] methods, DocSet docset)
+        private static async Task<bool> CheckMethodsForAccountAsync(CheckServiceOptions commandLineOptions, IServiceAccount account, MethodDefinition[] methods, DocSet docset)
         {
-            //CheckResults results = new CheckResults();
-
-            ConfigureAdditionalHeadersForAccount(options, account);
+            ConfigureAdditionalHeadersForAccount(commandLineOptions, account);
 
             string testNamePrefix = account.Name.ToLower() + ": ";
             FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, "Testing with account: {0}", account.Name);
-
             FancyConsole.WriteLine(FancyConsole.ConsoleCodeColor, "Preparing authentication for requests...", account.Name);
+
             try
             {
                 await account.PrepareForRequestAsync();
@@ -867,29 +865,36 @@ namespace ApiDocs.ConsoleApp
             }
 
             AuthenicationCredentials credentials = account.CreateCredentials();
-            int concurrentTasks = options.ParallelTests ? ParallelTaskCount : 1;
+            int concurrentTasks = commandLineOptions.ParallelTests ? ParallelTaskCount : 1;
 
             CheckResults docSetResults = new CheckResults();
 
             await ForEachAsync(methods, concurrentTasks, async method =>
             {
-
                 FancyConsole.WriteLine(
                     FancyConsole.ConsoleCodeColor,
                     "Running validation for method: {0}",
                     method.Identifier);
-                ScenarioDefinition[] scenarios = docset.TestScenarios.ScenariosForMethod(method);
-                ValidationResults results = await method.ValidateServiceResponseAsync(scenarios, account, credentials, new ValidationOptions { RelaxedStringValidation = options.RelaxStringTypeValidation});
 
-                PrintResultsToConsole(method, account, results, options);
+                // List out the scenarios defined for this method
+                ScenarioDefinition[] scenarios = docset.TestScenarios.ScenariosForMethod(method);
+
+                // Test these scenarios and validate responses
+                ValidationResults results = await method.ValidateServiceResponseAsync(scenarios, account, credentials, 
+                    new ValidationOptions {
+                        RelaxedStringValidation = commandLineOptions.RelaxStringTypeValidation,
+                        IgnoreRequiredScopes = commandLineOptions.IgnoreRequiredScopes
+                    });
+
+                PrintResultsToConsole(method, account, results, commandLineOptions);
                 await TestReport.LogMethodTestResults(method, account, results);
-                docSetResults.RecordResults(results, options);
+                docSetResults.RecordResults(results, commandLineOptions);
                 
                 if (concurrentTasks == 1)
-                    AddPause(options);
+                    AddPause(commandLineOptions);
             });
 
-            if (options.IgnoreWarnings || options.SilenceWarnings)
+            if (commandLineOptions.IgnoreWarnings || commandLineOptions.SilenceWarnings)
             {
                 // Remove the warning flag from the outcomes
                 docSetResults.ConvertWarningsToSuccess();

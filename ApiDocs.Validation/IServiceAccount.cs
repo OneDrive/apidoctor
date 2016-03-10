@@ -36,7 +36,7 @@ namespace ApiDocs.Validation
         string Name { get; }
         bool Enabled { get; }
         string BaseUrl { get; }
-
+        string[] Scopes {get;}
         string[] AdditionalHeaders { get; }
 
         /// <summary>

@@ -324,7 +324,7 @@ namespace ApiDocs.Validation
                         }
                         catch (Exception ex)
                         {
-                            detectedErrors.Add(new ValidationError(ValidationErrorCode.MarkdownParserError, this.DisplayName, ex.Message));
+                            detectedErrors.Add(new ValidationError(ValidationErrorCode.MarkdownParserError, this.DisplayName, "{0}", ex.Message));
                         }
 
                         if (null != definition)
@@ -703,7 +703,7 @@ namespace ApiDocs.Validation
                 // TODO: Figure out how to map stuff when more than one method exists
                 if (null != errors)
                 {
-                    errors.Add(new ValidationWarning(ValidationErrorCode.UnmappedDocumentElements, "Unable to map elements in file {0}", this.DisplayName));
+                    errors.Add(new ValidationWarning(ValidationErrorCode.UnmappedDocumentElements, null, "Unable to map elements in file {0}", this.DisplayName));
                     
                     var unmappedMethods = (from m in foundMethods select m.RequestMetadata.MethodName).ComponentsJoinedByString("\r\n");
                     if (!string.IsNullOrEmpty(unmappedMethods)) 
@@ -805,7 +805,7 @@ namespace ApiDocs.Validation
 
             
             var metadataJsonString = StripHtmlCommentTags(metadata.Content);
-            CodeBlockAnnotation annotation = CodeBlockAnnotation.FromJson(metadataJsonString);
+            CodeBlockAnnotation annotation = CodeBlockAnnotation.ParseMetadata(metadataJsonString, code);
 
             switch (annotation.BlockType)
             {
@@ -818,7 +818,7 @@ namespace ApiDocs.Validation
                         }
                         //else if (code.CodeLanguage.Equals("xml", StringComparison.OrdinalIgnoreCase))
                         //{
-
+                        //
                         //}
                         else
                         {
@@ -884,7 +884,10 @@ namespace ApiDocs.Validation
                         return method;
                     }
                 default:
-                    throw new NotSupportedException("Unsupported block type: " + annotation.BlockType);
+                    {
+                    	var errorMessage = string.Format("Unable to parse metadata block or unsupported block type. Line {1}. Content: {0}", metadata.Content, metadata.LineStart);
+                        throw new NotSupportedException(errorMessage);
+                    }
             }
         }
 

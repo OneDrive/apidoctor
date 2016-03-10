@@ -55,6 +55,7 @@ namespace ApiDocs.Validation
             this.Enumerations = new Dictionary<string, List<ParameterDefinition>>();
             this.RequestBodyParameters = new List<ParameterDefinition>();
             this.Scenarios = new List<ScenarioDefinition>();
+            this.RequiredScopes = new string[0];
         }
 
         public static MethodDefinition FromRequest(string request, CodeBlockAnnotation annotation, DocFile source)
@@ -64,7 +65,8 @@ namespace ApiDocs.Validation
                 Request = request,
                 RequestMetadata = annotation,
                 Identifier = annotation.MethodName,
-                SourceFile = source
+                SourceFile = source,
+                RequiredScopes = annotation.RequiredScopes
             };
             method.Title = method.Identifier;
             return method;
@@ -116,6 +118,11 @@ namespace ApiDocs.Validation
         /// Scenarios defined inline with this method
         /// </summary>
         public List<ScenarioDefinition> Scenarios { get; private set; }
+
+        /// <summary>
+        /// Collection of required scopes for this method to be called successfully (Files.ReadWrite, User.Read, etc)
+        /// </summary>
+        public string[] RequiredScopes { get; set; }
         #endregion
 
         public void AddExpectedResponse(string rawResponse, CodeBlockAnnotation annotation)
@@ -366,7 +373,7 @@ namespace ApiDocs.Validation
 
             // Verify that the expected response headers match the actual response headers
             ValidationError[] httpErrors;
-            if (null != expectedResponse && !expectedResponse.ValidateResponseHeaders(actualResponse, out httpErrors))
+            if (null != expectedResponse && !expectedResponse.ValidateResponseHeaders(actualResponse, out httpErrors, (null != scenario) ? scenario.AllowedStatusCodes : null))
             {
                 detectedErrors.AddRange(httpErrors);
             }

@@ -71,6 +71,9 @@ namespace ApiDocs.ConsoleApp.Auth
         [JsonProperty("additionalHeaders")]
         public string[] AdditionalHeaders { get; set; }
 
+        [JsonProperty("scopes")]
+        public string[] Scopes { get; set; }
+
         [JsonIgnore]
         public string AccessToken { get; set; }
 
@@ -88,7 +91,8 @@ namespace ApiDocs.ConsoleApp.Auth
                 ClientId = ReadVariable("oauth-client-id"),
                 ClientSecret = ReadVariable("oauth-client-secret"),
                 TokenService = ReadVariable("oauth-token-service"),
-                RedirectUri = ReadVariable("oauth-redirect-uri")
+                RedirectUri = ReadVariable("oauth-redirect-uri"),
+                Scopes = ReadVariable("oauth-scopes").Split(',')
             };
         }
 

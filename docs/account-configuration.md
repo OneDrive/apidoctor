@@ -22,7 +22,9 @@ The format of the file is as follows:
       "tokenService": "http://login.live.com/oauth2_token.srf",
       "redirectUri": "appuri://redirect_from_auth",
       "refreshToken": "cached-refresh-token",
-      "serviceUrl": "https://api.onedrive.com/v1.0"
+      "serviceUrl": "https://api.onedrive.com/v1.0",
+      "scopes": ["scope1", "scope2"]
+
     }
   ]
 }
@@ -83,4 +85,4 @@ The following additional parameters are valid for all account types, but are opt
 |-------------------|------------------|-----------------------------------------------------------------------------------------------------------------------|
 | additionalHeaders | Array of Strings | An array of string values that are appended to all request headers verbatim.                                          |
 | type              | string           | Specify the type of the account, if your documentation has some methods that are only valid for certain account types |
-| scopes            | string           | Specify the scopes provided by this account configuration, so only tests that require these scopes are executed.      |
+| scopes            | Array of Strings | Specify the scopes provided by this account configuration, so only tests that require these scopes are executed.      |

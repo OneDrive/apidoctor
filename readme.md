@@ -26,7 +26,6 @@ platform. This tool is compatible with Mono or .NET.
 
 ![Screen shot of the command line tool in action](example-console.png)
 
-
 `apidocs.exe [command] [options]`
 
 Available commands are:
@@ -81,6 +80,7 @@ It verifies that:
 Example: `apidocs.exe check-docs --path ~/github/api-docs --method search`
 
 ### Check-service Command
+
 Check the documented requests and responses against an actual REST service. This
 option will load accounts from a configuration file (see below), environment
 variables or use the specified access-token and url parameters to determine
@@ -92,12 +92,13 @@ automatically be loaded and used by the check-service method.
 | Option                     | Description                                                                                                                                                                             |
 |:---------------------------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `--access-token "token"`   | OAuth access token to use when calling the service. You may need to escape the token value by enclosing it in double quotes.                                                            |
-| `--url <url>`              | Set the base URL for the service calls.                                                                                                                                                 |
-| `--pause`                  | Pause for a key press between API calls to the service to enable reading the responses.                                                                                                 |
-| `--method <method_name>`   | Optional. Check a single request/response method instead of everything in the documentation.                                                                                            |
 | `--branch-name <branch>`   | Optional. Specify the branch name that is the source of the documentation. Compares this name to the configuration file to see if the check-service command is allowed for this branch. |
 | `--headers <headers>`      | Optional. Enables adding additional headers to every API call made by check-service. The format should be a quoted string with a | separating different header lines.                   |
+| `--ignore-scopes`          | Optional. Disables using scopes to determine which methods are exercised on an account. |
+| `--method <method_name>`   | Optional. Check a single request/response method instead of everything in the documentation.                                                                                            |
 | `--odata-metadata <value>` | Optional. Specify the value of the odata.metadata level that is provided in the Accept header.                                                                                          |
+| `--pause`                  | Pause for a key press between API calls to the service to enable reading the responses.                                                                                                 |
+| `--url <url>`              | Set the base URL for the service calls.                                                                                                                                                 |
 
 Example:
 ```
@@ -137,11 +138,11 @@ token service to retrieve an access token when necessary.
 ### Publish Command
 The `publish` command uses the documentation to generate a new set of outputs.
 
-See the documentation on [publishing using APIDocs](publishing.md) for
+See the documentation on [publishing using APIDocs](docs/publishing.md) for
 more details.
 
 ## Documentation format
-See [Markdown requirements](markdown-requirements.md) for more details about
+See [Markdown requirements](docs/markdown-requirements.md) for more details about
 requirements on the markdown source for documentation.
 
 ## Request parameters

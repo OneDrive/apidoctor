@@ -86,6 +86,11 @@ namespace ApiDocs.Validation.Json
         public bool RelaxedStringValidation { get; set; }
 
         /// <summary>
+        /// Used to disable the scope requirement check and process all scenarios/methods for validation.
+        /// </summary>
+        public bool IgnoreRequiredScopes { get; set; }
+
+        /// <summary>
         /// Creates a new ValidationOptions instance inheriting values from this instance, and modified for the specific options of a property.
         /// </summary>
         /// <param name="propertyName"></param>

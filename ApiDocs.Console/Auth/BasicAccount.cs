@@ -37,6 +37,7 @@ namespace ApiDocs.ConsoleApp.Auth
         public string[] AdditionalHeaders { get; set; }
         public string Username { get; set; }
         public string Password { get; set; }
+        public string[] Scopes { get; set; }
 
         public Task PrepareForRequestAsync()
         {

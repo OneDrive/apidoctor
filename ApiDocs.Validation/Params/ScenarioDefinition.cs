@@ -47,7 +47,18 @@ namespace ApiDocs.Validation.Params
         [JsonProperty("status-codes-to-retry", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public int[] StatusCodesToRetry { get; set; }
 
+        [JsonProperty("scopes", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public string[] RequiredScopes
+        {
+            get; set;
+        }
+
         #endregion
+
+        public ScenarioDefinition()
+        {
+            this.RequiredScopes = new string[0];
+        }
 
         [JsonIgnore]
         public string DisplayText
