@@ -373,7 +373,7 @@ namespace ApiDocs.Validation
 
             // Verify that the expected response headers match the actual response headers
             ValidationError[] httpErrors;
-            if (null != expectedResponse && !expectedResponse.ValidateResponseHeaders(actualResponse, out httpErrors))
+            if (null != expectedResponse && !expectedResponse.ValidateResponseHeaders(actualResponse, out httpErrors, scenario.AllowedStatusCodes))
             {
                 detectedErrors.AddRange(httpErrors);
             }
