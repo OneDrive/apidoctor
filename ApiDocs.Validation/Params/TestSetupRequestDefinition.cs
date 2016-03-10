@@ -77,8 +77,17 @@ namespace ApiDocs.Validation.Params
         /// <param name="storedValues"></param>
         /// <param name="documents"></param>
         /// <returns></returns>
-        public async Task<ValidationResult<bool>> MakeSetupRequestAsync(string baseUrl, AuthenicationCredentials credentials, Dictionary<string, string> storedValues, DocSet documents, ScenarioDefinition scenario)
+        public async Task<ValidationResult<bool>> MakeSetupRequestAsync(string baseUrl, AuthenicationCredentials credentials, Dictionary<string, string> storedValues, DocSet documents, ScenarioDefinition scenario, Dictionary<string, string> parentOutputValues = null)
         {
+            // Copy the output values from parentOutputValues into our own
+            if (null != parentOutputValues)
+            {
+                foreach (var key in parentOutputValues.Keys)
+                {
+                    this.OutputValues.Add(key, parentOutputValues[key]);
+                }
+            }
+
             var errors = new List<ValidationError>();
             if (!string.IsNullOrEmpty(this.CannedRequestName))
             {
@@ -92,7 +101,7 @@ namespace ApiDocs.Validation.Params
                     return new ValidationResult<bool>(false, errors);
                 }
 
-                return await cannedRequest.MakeSetupRequestAsync(baseUrl, credentials, storedValues, documents, scenario);
+                return await cannedRequest.MakeSetupRequestAsync(baseUrl, credentials, storedValues, documents, scenario, this.OutputValues);
             }
             
             // Get the HttpRequest, either from MethodName or by parsing HttpRequest
