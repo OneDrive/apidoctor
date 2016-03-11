@@ -183,6 +183,17 @@ namespace ApiDocs.Validation.UnitTests
             dynamic result = JsonConvert.DeserializeObject(modifiedJson);
             Assert.AreEqual(JsonPath.ConvertValueForOutput(result.zippy.foo), "do-dah");
         }
+
+        [Test]
+        public void JsonPathComplexTypeName()
+        {
+            string json = "{ \"name\": \"foobar\" }";
+
+            string modifiedJson = JsonPath.SetValueForJsonPath(json, "$.['@name.conflictBehavior']", "replace");
+            dynamic result = JsonConvert.DeserializeObject(modifiedJson);
+            Assert.AreEqual(JsonPath.ConvertValueForOutput(result["@name.conflictBehavior"]), "replace");
+
+        }
     }
 }
 
