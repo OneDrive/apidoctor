@@ -73,7 +73,7 @@ namespace ApiDocs.Validation
                         RequiredScopes = method.RequiredScopes
                     }
                 };
-                results.AddResult("init", new ValidationMessage(null, "No scenarios were defined for method {0}. Will request verbatim from docs.", method.Identifier), ValidationOutcome.None);
+//                results.AddResult("init", new ValidationMessage(null, "No scenarios were defined for method {0}. Will request verbatim from docs.", method.Identifier), ValidationOutcome.None);
             }
 
             if (scenarios.Any() && !scenarios.Any(x => x.Enabled))
@@ -150,7 +150,7 @@ namespace ApiDocs.Validation
             TimeSpan generateMethodDuration = new TimeSpan(DateTimeOffset.UtcNow.Ticks - startTicks);
             
             // Check to see if an error occured building the request, and abort if so.
-            var generatorResults = results[actionName + " [test-setup requests]"];
+            var generatorResults = results[actionName /*+ " [test-setup requests]"*/];
             generatorResults.AddResults(requestPreviewResult.Messages, requestPreviewResult.IsWarningOrError ? ValidationOutcome.Error :  ValidationOutcome.Passed);
             generatorResults.Duration = generateMethodDuration;
 
