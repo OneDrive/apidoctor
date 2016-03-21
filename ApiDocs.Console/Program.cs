@@ -822,10 +822,11 @@ namespace ApiDocs.ConsoleApp
             
             var methods = FindTestMethods(options, docset);
 
-            bool allSuccessful = true;
+            Dictionary<string, CheckResults> results = new Dictionary<string, CheckResults>();
             foreach (var account in accountsToProcess)
             {
-                allSuccessful &= await CheckMethodsForAccountAsync(options, account, methods, docset);
+                var accountResults = await CheckMethodsForAccountAsync(options, account, methods, docset);
+                results[account.Name] = accountResults;
             }
 
             // Disable http logging
@@ -835,7 +836,14 @@ namespace ApiDocs.ConsoleApp
                 httpLogging.ClosePackage();
             }
 
-            return allSuccessful;
+            // TODO: Print out account summary if multiple accounts were used
+            foreach(var key in results.Keys)
+            {
+                FancyConsole.Write("Account {0}: ", key);
+                results[key].PrintToConsole(false);
+            }
+
+            return !results.Values.Any(x => x.WereFailures);
         }
 
         /// <summary>
@@ -845,13 +853,12 @@ namespace ApiDocs.ConsoleApp
         /// <param name="account"></param>
         /// <param name="methods"></param>
         /// <param name="docset"></param>
-        /// <returns>True if the methods all passed, false if there were failures.</returns>
-        private static async Task<bool> CheckMethodsForAccountAsync(CheckServiceOptions commandLineOptions, IServiceAccount account, MethodDefinition[] methods, DocSet docset)
+        /// <returns>A CheckResults instance that contains the details of the test run</returns>
+        private static async Task<CheckResults> CheckMethodsForAccountAsync(CheckServiceOptions commandLineOptions, IServiceAccount account, MethodDefinition[] methods, DocSet docset)
         {
             ConfigureAdditionalHeadersForAccount(commandLineOptions, account);
 
-            string testNamePrefix = account.Name.ToLower() + ": ";
-            FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, "Testing with account: {0}", account.Name);
+            FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, "Testing account: {0}", account.Name);
             FancyConsole.WriteLine(FancyConsole.ConsoleCodeColor, "Preparing authentication for requests...", account.Name);
 
             try
@@ -861,7 +868,7 @@ namespace ApiDocs.ConsoleApp
             catch (Exception ex)
             {
                 RecordError(ex.Message);
-                return false;
+                return null;
             }
 
             AuthenicationCredentials credentials = account.CreateCredentials();
@@ -891,7 +898,9 @@ namespace ApiDocs.ConsoleApp
                 docSetResults.RecordResults(results, commandLineOptions);
                 
                 if (concurrentTasks == 1)
+                {
                     AddPause(commandLineOptions);
+                }
             });
 
             if (commandLineOptions.IgnoreWarnings || commandLineOptions.SilenceWarnings)
@@ -902,10 +911,7 @@ namespace ApiDocs.ConsoleApp
 
             docSetResults.PrintToConsole();
 
-            bool hadWarnings = docSetResults.WarningCount > 0;
-            bool hadErrors = docSetResults.FailureCount > 0;
-
-            return !(hadErrors | hadWarnings);
+            return docSetResults;
         }
 
         
