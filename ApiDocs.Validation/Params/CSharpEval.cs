@@ -30,10 +30,10 @@ namespace ApiDocs.Validation.Params
     using System.Reflection;
     using Microsoft.CSharp;
     using System.CodeDom.Compiler;
-
+    using System.Collections.Generic;
     internal static class CSharpEval
     {
-        public static string Evaluate(string code)
+        public static string Evaluate(string code, IReadOnlyDictionary<string, string> values)
         {
             if (!code.EndsWith(";"))
             {
@@ -43,8 +43,9 @@ namespace ApiDocs.Validation.Params
             string codeWrapper = 
             "namespace MarkdownScanner.Eval { " +
                 "using System; " +
+                "using System.Collections.Generic; " +
                 "public class MethodEval {" +
-                    "public static object RunCode() {" +
+                    "public static object RunCode(IReadOnlyDictionary<string, string> values) {" +
                         "return " + code +
                     "}" +
                 "}" +
@@ -65,7 +66,7 @@ namespace ApiDocs.Validation.Params
             }
                 
             var methodInfo = t.GetMethod("RunCode");
-            object result = methodInfo.Invoke(null, new object[0]);
+            object result = methodInfo.Invoke(null, new object[] { values });
 
             if (result is DateTimeOffset)
             {

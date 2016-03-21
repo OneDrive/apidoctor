@@ -172,7 +172,7 @@ namespace ApiDocs.Validation.Params
 
             if (BasicRequestDefinition.LocationForKey(v.Value) == PlaceholderLocation.CSharpCode)
             {
-                v.Value = CSharpEval.Evaluate(v.Value.Substring(1));
+                v.Value = CSharpEval.Evaluate(v.Value.Substring(1), storedValues);
             }
 
             // Allow the random-filename generator to swap the value with a randomly generated filename.

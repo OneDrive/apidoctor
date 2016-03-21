@@ -299,7 +299,10 @@ namespace ApiDocs.Validation
                 if (param.PlaceholderKey.EndsWith(":"))
                     headerName = param.PlaceholderKey.Substring(0, param.PlaceholderKey.Length - 1);
 
-                request.Headers[headerName] = param.Value;
+                if (param.Value == null)
+                    request.Headers.Remove(headerName);
+                else 
+                    request.Headers[headerName] = param.Value;
             }
         }
 
