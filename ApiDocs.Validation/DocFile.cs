@@ -850,7 +850,7 @@ namespace ApiDocs.Validation
                             // Look up paired request by name
                             pairedRequest = (from m in this.requests where m.Identifier == annotation.MethodName select m).FirstOrDefault();
                         }
-                        else
+                        else if (this.requests.Any())
                         {
                             pairedRequest = Enumerable.Last(this.requests);
                         }
