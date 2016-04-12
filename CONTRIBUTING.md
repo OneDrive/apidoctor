@@ -4,10 +4,6 @@ Thank you for your interest in Markdown Scanner!
 
 * [Ways to contribute](#ways-to-contribute)
 * [Before we can accept your pull request](#before-we-can-accept-your-pull-request)
-* [Use GitHub, Git, and this repository](#use-github-git-and-this-repository)
-* [How to use Markdown to format your topic](#how-to-use-markdown-to-format-your-topic)
-* [Standard Markdown](#standard-markdown)
-* [More resources](#more-resources)
 
 ## Ways to contribute
 
