@@ -4,6 +4,7 @@ Thank you for your interest in Markdown Scanner!
 
 * [Ways to contribute](#ways-to-contribute)
 * [Before we can accept your pull request](#before-we-can-accept-your-pull-request)
+* [Contribute feature or bug fix](#contribute-feature-or-bug-fix)
 
 ## Ways to contribute
 
@@ -30,7 +31,7 @@ required if you wish to have your pull request considered.
 
 For details of how to use GitHub to contribute to a project most effectively, see the [Contributing to open source](https://guides.github.com/activities/contributing-to-open-source/) articles.
 
-### Contribute and edit content
+### Contribute feature or bug fix
 
 To make the contribution process as seamless as possible for you, follow this procedure.
 
