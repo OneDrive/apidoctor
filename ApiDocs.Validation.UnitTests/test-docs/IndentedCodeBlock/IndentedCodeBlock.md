@@ -7,3 +7,12 @@
   ```
 
 2. List item 2, continued from list item 1.
+
+
+More text here
+
+## another heading
+
+  ```xml
+  Badly indented code here. What happens now?
+  ```
