@@ -235,14 +235,14 @@ namespace MarkdownDeep
 		}
 
 		// Skip any whitespace
-		public bool SkipWhitespace()
+        public bool SkipWhitespace()
 		{
 			if (!char.IsWhiteSpace(current))
 				return false;
-			SkipForward(1);
+            SkipForward(1);
 
-			while (char.IsWhiteSpace(current))
-				SkipForward(1);
+            while (char.IsWhiteSpace(current))
+                SkipForward(1);    
 
 			return true;
 		}
@@ -254,14 +254,21 @@ namespace MarkdownDeep
 		}
 
 		// Skip spaces and tabs
-		public bool SkipLinespace()
+        public bool SkipLinespace(int maximumSkipped = 0)
 		{
 			if (!IsLineSpace(current))
 				return false;
-			SkipForward(1);
 
-			while (IsLineSpace(current))
-				SkipForward(1);
+            int skippedChars = 0;
+            while (IsLineSpace(current))
+            {
+                SkipForward(1);
+                skippedChars++;
+                if (skippedChars >= maximumSkipped)
+                {
+                    return true;
+                }
+            }
 
 			return true;
 		}

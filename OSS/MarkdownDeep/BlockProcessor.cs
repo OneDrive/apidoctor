@@ -254,7 +254,43 @@ namespace MarkdownDeep
 								break;
 						}
 						break;
+                    case BlockType.codeblock:
+                        switch (currentBlockType)
+                        {
+                            
+//                            case BlockType.Blank:
+//                            case BlockType.p:
+//                                lines.Add(b);
+//                                break;
 
+//                            case BlockType.quote:
+                            case BlockType.ol_li:
+                            case BlockType.ul_li:
+//                            case BlockType.dd:
+//                            case BlockType.footnote:
+//                                var prevline = lines.Last();
+//                                if (prevline.blockType == BlockType.Blank)
+//                                {
+//                                    CollapseLines(blocks, lines);
+//                                    lines.Add(b);
+//                                }
+//                                else
+//                                {
+                                    lines.Add(b);
+//                                }
+                                break;
+
+//                            case BlockType.indent:
+//                                CollapseLines(blocks, lines);
+//                                lines.Add(b);
+//                                break;
+//
+                            default:
+                                CollapseLines(blocks, lines);
+                                blocks.Add(b);
+                                break;
+                        }
+                        break;
 					case BlockType.indent:
 						switch (currentBlockType)
 						{
@@ -307,7 +343,7 @@ namespace MarkdownDeep
 					case BlockType.ul_li:
 						switch (currentBlockType)
 						{
-							case BlockType.Blank:
+							case BlockType.Blank:  // Start of a new list, add the current block to the lines collection
 								lines.Add(b);
 								break;
 
@@ -652,17 +688,7 @@ namespace MarkdownDeep
 
 				position = line_start;
 			}
-
-			// Fenced code blocks?
-			if (m_markdown.ExtraMode && (ch == '~' || ch=='`'))
-			{
-				if (ProcessFencedCodeBlock(b))
-					return b.blockType;
-
-				// Rewind
-				position = line_start;
-			}
-
+                
 			// Scan the leading whitespace, remembering how many spaces and where the first tab is
 			int tabPos = -1;
 			int leadingSpaces = 0;
@@ -723,6 +749,18 @@ namespace MarkdownDeep
 				// Rewind
 				position = b.contentStart;
 			}
+
+            // Fenced code blocks?
+            if (m_markdown.ExtraMode && (ch == '~' || ch=='`'))
+            {
+                // Allow for indented code blocks              
+                if (ProcessFencedCodeBlock(b, leadingSpaces))
+                    return b.blockType;
+
+                // Rewind
+                position = b.contentStart;
+            }
+
 
 			// Block quotes start with '>' and have one space or one tab following
 			if (ch == '>')
@@ -876,7 +914,7 @@ namespace MarkdownDeep
 					return BlockType.Blank;
 				}
 			}
-
+                
 			// Nothing special
 			return BlockType.p;
 		}
@@ -1271,7 +1309,15 @@ namespace MarkdownDeep
 					continue;
 				}
 
-				if (lines[i].blockType != BlockType.indent && lines[i].blockType != BlockType.Blank)
+                if (lines[i].blockType == BlockType.codeblock)
+                {
+                    int thisLeadingSpace = lines[i].leadingSpaces;
+                    if (thisLeadingSpace > leadingSpace)
+                    {
+                        var oldBlock = lines[i];
+                        lines[i] = CreateBlockWithoutLeadingSpace(oldBlock.buf, oldBlock.lineStart + thisLeadingSpace, oldBlock.contentEnd, thisLeadingSpace);
+                    }
+                } else if (lines[i].blockType != BlockType.indent && lines[i].blockType != BlockType.Blank)
 				{
 					int thisLeadingSpace = lines[i].leadingSpaces;
 					if (thisLeadingSpace > leadingSpace)
@@ -1321,8 +1367,8 @@ namespace MarkdownDeep
 					for (int j = start_of_li; j <= end_of_li; j++)
 					{
 						var l = lines[j];
-						sb.Append(l.buf, l.contentStart, l.contentLen);
-						sb.Append('\n');
+                        sb.Append(l.buf, l.contentStart, l.contentLen);
+                        sb.Append('\n');
 
 						if (lines[j].blockType == BlockType.Blank)
 						{
@@ -1480,7 +1526,7 @@ namespace MarkdownDeep
 			return item;
 		}
 
-		bool ProcessFencedCodeBlock(Block b)
+        bool ProcessFencedCodeBlock(Block b, int leadingSpaces = 0)
 		{
             char delim = current;
 
@@ -1494,34 +1540,29 @@ namespace MarkdownDeep
 			if (strFence.Length < 3)
 				return false;
 
-			// Rest of line must be blank
+			// Rest of the line can contain a language specifier
 			SkipLinespace();
             if (!eol)
             {
-                // Look for a language specifier
+                // Capture the language specifier
                 Mark();
-                while (char.IsLetterOrDigit(current) || current == '-')
-                {
-                    SkipForward(1);
-                }
+                SkipToEol();
                 string codeblockLangauge = Extract();
                 b.CodeLanguage = codeblockLangauge;
-                //return false;
-
-                SkipLinespace();
             }
 
 			// Skip the eol and remember start of code
 			SkipEol();
 			int startCode = position;
 
-			// Find the end fence
+            // Advance to the end fence (if one is found)
 			if (!Find(strFence))
 				return false;
 
-			// Character before must be a eol char
-			if (!IsLineEnd(CharAtOffset(-1)))
-				return false;
+            // Character before end of fence must be a eol char or expected linespace
+//            if (leadingSpaces == 0 && !IsLineEnd(CharAtOffset(-1)))
+//				return false;
+            // TODO: Make sure that leading whitespace is detected when expected.
 
 			int endCode = position;
 
@@ -1546,18 +1587,84 @@ namespace MarkdownDeep
 				endCode--;
 
 			// Create the child block with the entire content
-			var child = CreateBlock();
-			child.blockType = BlockType.indent;
-			child.buf = input;
-			child.contentStart = startCode;
-			child.contentEnd = endCode;
-			b.children.Add(child);
-
+            if (leadingSpaces == 0)
+            {
+                var child = CreateBlock();
+                child.blockType = BlockType.indent;
+                child.buf = input;
+                child.contentStart = startCode;
+                child.contentEnd = endCode;
+                b.children.Add(child);
+            }
+            else
+            {
+                // Remove leadingSpaces so we have a clean (unindented) code block
+                var child = CreateBlock();
+                child.blockType = BlockType.indent;
+                child.buf = RemoveLeadingSpaces(input, startCode, endCode, leadingSpaces);
+                child.contentStart = 0;
+                child.contentEnd = child.buf.Length;
+                b.children.Add(child);
+            }
 			return true;
 		}
+
+        /// <summary>
+        /// Removes N leading spaces from each line of a string, if they are detected on the first line of the string.
+        /// </summary>
+        /// <returns>The contents of the input string, without leading line spaces</returns>
+        /// <param name="input">Input string.</param>
+        /// <param name="startCode">Start position within the input string.</param>
+        /// <param name="endCode">End position within the input string.</param>
+        /// <param name="leadingSpaces">Number of leading spaces to remove.</param>
+        private string RemoveLeadingSpaces(string input, int startCode, int endCode, int leadingSpaces, bool skipFirstLineValidation = false)
+        {
+            StringScanner scanner = new StringScanner(input, startCode, endCode - startCode);
+            if (!skipFirstLineValidation)
+            {
+                for (int i = 0; i < leadingSpaces; i++)
+                {
+                    if (!IsLineSpace(scanner.CharAtOffset(i)))
+                    {
+                        // This string doesn't appear to have leadingSpaces linespace, so return the whole string.
+                        scanner.Mark();
+                        scanner.SkipToEof();
+                        return scanner.Extract();
+                    }
+                }
+            }
+                
+            StringBuilder output = new StringBuilder();
+            while (!scanner.eof)
+            {
+                scanner.SkipLinespace(leadingSpaces);
+                scanner.Mark();
+                scanner.SkipToEol();
+                output.Append(scanner.Extract());
+                output.Append('\n');
+                scanner.SkipEol();
+            }
+
+            var outputString = output.ToString();
+            if (outputString.Length > 0)
+                return outputString.Substring(0, outputString.Length - 1);
+            return outputString;
+        }
+
+        private Block CreateBlockWithoutLeadingSpace(string input, int startCode, int endCode, int leadingSpace)
+        {
+            Block b = new Block();
+            b.buf = RemoveLeadingSpaces(input, startCode, endCode, leadingSpace, true);
+            b.contentStart = 0;
+            b.contentEnd = b.buf.Length;
+            b.blockType = BlockType.indent;
+            return b;
+        }
 
 		Markdown m_markdown;
 		BlockType m_parentType;
 		bool m_bMarkdownInHtml;
 	}
+
+
 }
