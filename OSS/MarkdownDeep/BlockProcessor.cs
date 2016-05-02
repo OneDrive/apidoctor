@@ -257,10 +257,21 @@ namespace MarkdownDeep
                     case BlockType.codeblock:
                         switch (currentBlockType)
                         {
-                            
                             case BlockType.ol_li:
                             case BlockType.ul_li:
-                                lines.Add(b);
+                            case BlockType.quote:
+                            case BlockType.dd:
+                            case BlockType.footnote:
+                                var prevline = lines.Last();
+                                if (prevline.blockType == BlockType.Blank && prevline.leadingSpaces >= b.leadingSpaces)
+                                {
+                                    CollapseLines(blocks, lines);
+                                    blocks.Add(b);
+                                }
+                                else
+                                {
+                                    lines.Add(b);
+                                }
                                 break;
                             default:
                                 CollapseLines(blocks, lines);
