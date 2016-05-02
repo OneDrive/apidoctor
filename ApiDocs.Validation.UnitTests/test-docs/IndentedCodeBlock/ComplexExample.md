@@ -2,7 +2,6 @@
 
 1. item 1
 2. item 2
-
   ```
   item 2 code
   ```
@@ -25,7 +24,6 @@ code for item 1
 
 1. item 1
   * bullet 1
-
   ```
   code under bullet 1
   ```
