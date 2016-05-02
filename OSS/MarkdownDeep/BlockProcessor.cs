@@ -258,33 +258,10 @@ namespace MarkdownDeep
                         switch (currentBlockType)
                         {
                             
-//                            case BlockType.Blank:
-//                            case BlockType.p:
-//                                lines.Add(b);
-//                                break;
-
-//                            case BlockType.quote:
                             case BlockType.ol_li:
                             case BlockType.ul_li:
-//                            case BlockType.dd:
-//                            case BlockType.footnote:
-//                                var prevline = lines.Last();
-//                                if (prevline.blockType == BlockType.Blank)
-//                                {
-//                                    CollapseLines(blocks, lines);
-//                                    lines.Add(b);
-//                                }
-//                                else
-//                                {
-                                    lines.Add(b);
-//                                }
+                                lines.Add(b);
                                 break;
-
-//                            case BlockType.indent:
-//                                CollapseLines(blocks, lines);
-//                                lines.Add(b);
-//                                break;
-//
                             default:
                                 CollapseLines(blocks, lines);
                                 blocks.Add(b);
@@ -914,7 +891,7 @@ namespace MarkdownDeep
 					return BlockType.Blank;
 				}
 			}
-                
+
 			// Nothing special
 			return BlockType.p;
 		}
@@ -1366,7 +1343,7 @@ namespace MarkdownDeep
 					StringBuilder sb = m_markdown.GetStringBuilder();
 					for (int j = start_of_li; j <= end_of_li; j++)
 					{
-						var l = lines[j];
+                        var l = lines[j];
                         sb.Append(l.buf, l.contentStart, l.contentLen);
                         sb.Append('\n');
 
