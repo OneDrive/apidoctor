@@ -95,7 +95,7 @@ namespace ApiDocs.Validation
             get
             {
                 var query = from p in this.MarkdownLinks
-                            select p.def.url;
+                    select p.Definition.url;
                 return query.ToArray();
             }
         }
@@ -105,7 +105,7 @@ namespace ApiDocs.Validation
         /// </summary>
         protected Block[] OriginalMarkdownBlocks { get; set; }
 
-        protected List<LinkInfo> MarkdownLinks {get;set;}
+        protected List<ILinkInfo> MarkdownLinks {get;set;}
 
         public DocSet Parent { get; protected set; }
 
@@ -147,7 +147,7 @@ namespace ApiDocs.Validation
 
             this.HtmlContent = md.Transform(inputMarkdown);
             this.OriginalMarkdownBlocks = md.Blocks;
-            this.MarkdownLinks = new List<LinkInfo>(md.FoundLinks);
+            this.MarkdownLinks = new List<ILinkInfo>(md.FoundLinks);
         }
 
         protected virtual string GetContentsOfFile()
@@ -926,39 +926,39 @@ namespace ApiDocs.Validation
             var foundErrors = new List<ValidationError>();
             foreach (var link in this.MarkdownLinks)
             {
-                if (null == link.def)
+                if (null == link.Definition)
                 {
-                    foundErrors.Add(new ValidationError(ValidationErrorCode.MissingLinkSourceId, this.DisplayName, "Link specifies ID '{0}' which was not found in the document.", link.link_text));
+                    foundErrors.Add(new ValidationError(ValidationErrorCode.MissingLinkSourceId, this.DisplayName, "Link specifies ID '{0}' which was not found in the document.", link.Text));
                     continue;
                 }
 
                 string relativeFileName;
-                var result = this.VerifyLink(this.FullPath, link.def.url, this.BasePath, out relativeFileName);
+                var result = this.VerifyLink(this.FullPath, link.Definition.url, this.BasePath, out relativeFileName);
                 switch (result)
                 {
                     case LinkValidationResult.BookmarkSkipped:
                     case LinkValidationResult.ExternalSkipped:
                         if (includeWarnings)
-                            foundErrors.Add(new ValidationWarning(ValidationErrorCode.LinkValidationSkipped, this.DisplayName, "Skipped validation of link '{1}' to URL '{0}'", link.def.url, link.link_text));
+                            foundErrors.Add(new ValidationWarning(ValidationErrorCode.LinkValidationSkipped, this.DisplayName, "Skipped validation of link '{1}' to URL '{0}'", link.Definition.url, link.Text));
                         break;
                     case LinkValidationResult.FileNotFound:
-                        foundErrors.Add(new ValidationError(ValidationErrorCode.LinkDestinationNotFound, this.DisplayName, "Destination missing for link '{1}' to URL '{0}'", link.def.url, link.link_text));
+                        foundErrors.Add(new ValidationError(ValidationErrorCode.LinkDestinationNotFound, this.DisplayName, "Destination missing for link '{1}' to URL '{0}'", link.Definition.url, link.Text));
                         break;
                     case LinkValidationResult.ParentAboveDocSetPath:
-                        foundErrors.Add(new ValidationError(ValidationErrorCode.LinkDestinationOutsideDocSet, this.DisplayName, "Destination outside of doc set for link '{1}' to URL '{0}'", link.def.url, link.link_text));
+                        foundErrors.Add(new ValidationError(ValidationErrorCode.LinkDestinationOutsideDocSet, this.DisplayName, "Destination outside of doc set for link '{1}' to URL '{0}'", link.Definition.url, link.Text));
                         break;
                     case LinkValidationResult.UrlFormatInvalid:
-                        foundErrors.Add(new ValidationError(ValidationErrorCode.LinkFormatInvalid, this.DisplayName, "Invalid URL format for link '{1}' to URL '{0}'", link.def.url, link.link_text));
+                        foundErrors.Add(new ValidationError(ValidationErrorCode.LinkFormatInvalid, this.DisplayName, "Invalid URL format for link '{1}' to URL '{0}'", link.Definition.url, link.Text));
                         break;
                     case LinkValidationResult.Valid:
-                        foundErrors.Add(new ValidationMessage(this.DisplayName, "Link to URL '{0}' is valid.", link.def.url, link.link_text));
+                        foundErrors.Add(new ValidationMessage(this.DisplayName, "Link to URL '{0}' is valid.", link.Definition.url, link.Text));
                         if (null != relativeFileName)
                         {
                             linkedPages.Add(relativeFileName);
                         }
                         break;
                     default:
-                        foundErrors.Add(new ValidationError(ValidationErrorCode.Unknown, this.DisplayName, "{2}: for link '{1}' to URL '{0}'", link.def.url, link.link_text, result));
+                        foundErrors.Add(new ValidationError(ValidationErrorCode.Unknown, this.DisplayName, "{2}: for link '{1}' to URL '{0}'", link.Definition.url, link.Text, result));
                         break;
 
                 }

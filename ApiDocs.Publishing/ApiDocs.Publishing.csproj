@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -32,10 +32,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="mustache-sharp, Version=0.2.8.2, Culture=neutral, PublicKeyToken=40ca26c1e088cef4, processorArchitecture=MSIL">
-      <HintPath>..\packages\mustache-sharp.0.2.8.2\lib\net40\mustache-sharp.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\packages\Newtonsoft.Json.6.0.8\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
@@ -46,6 +42,9 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
+    <Reference Include="mustache-sharp, Version=0.2.8.2, Culture=neutral, PublicKeyToken=40ca26c1e088cef4">
+      <HintPath>..\packages\mustache-sharp.0.2.8.2\lib\net40\mustache-sharp.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CSDL\CsdlExtensionMethods.cs" />
@@ -64,13 +63,13 @@
     <Compile Include="Swagger\SwaggerWriter.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\OSS\MarkdownDeep\MarkdownDeep.csproj">
-      <Project>{1569ed47-c7c9-4261-b6f4-7445bd0f2c95}</Project>
-      <Name>MarkdownDeep</Name>
-    </ProjectReference>
     <ProjectReference Include="..\ApiDocs.Validation\ApiDocs.Validation.csproj">
-      <Project>{33b10320-3802-49cf-8965-3510ae66d5ec}</Project>
+      <Project>{33B10320-3802-49CF-8965-3510AE66D5EC}</Project>
       <Name>ApiDocs.Validation</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\OSS\markdowndeep\MarkdownDeep\MarkdownDeep.csproj">
+      <Project>{1569ED47-C7C9-4261-B6F4-7445BD0F2C95}</Project>
+      <Name>MarkdownDeep</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

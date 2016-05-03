@@ -205,7 +205,7 @@ namespace ApiDocs.Publishing.Html
         {
             if (url.StartsWith("#"))
                 return url;
-            if (Utils.IsUrlFullyQualified(url))
+            if (LinkDefinition.IsUrlFullyQualified(url))
                 return url;
 
             string filePath, bookmark;
