@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MarkdownDeep", "OSS\MarkdownDeep\MarkdownDeep.csproj", "{1569ED47-C7C9-4261-B6F4-7445BD0F2C95}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MarkdownDeep", "OSS\markdowndeep\MarkdownDeep\MarkdownDeep.csproj", "{1569ED47-C7C9-4261-B6F4-7445BD0F2C95}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiDocs.Validation", "ApiDocs.Validation\ApiDocs.Validation.csproj", "{33B10320-3802-49CF-8965-3510AE66D5EC}"
 EndProject
