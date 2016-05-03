@@ -300,8 +300,6 @@ namespace ApiDocs.Publishing.Swagger
             existingPathIfFound = null;
             return false;
         }
-
-        private Regex pathVariableRegex = new Regex("{(?<var>.*)}");
     }
 
     public class SwaggerAuth

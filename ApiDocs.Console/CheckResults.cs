@@ -106,7 +106,6 @@ namespace ApiDocs.ConsoleApp
                 percentCompleteFormat,
                 this.PercentSuccessful);
 
-            List<string> resultsOutput = new List<string>();
             if (this.FailureCount > 0 || this.WarningCount > 0)
             {
                 FancyConsole.Write(" (");

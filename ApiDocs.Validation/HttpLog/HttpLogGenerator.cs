@@ -42,7 +42,6 @@ namespace ApiDocs.Validation.HttpLog
     /// </summary>
     public class HttpLogGenerator
     {
-        private readonly List<SessionLogEntry> sessionLog;
         private Package outputPackage;
         private int nextSessionNumber = 1;
 
@@ -53,7 +52,6 @@ namespace ApiDocs.Validation.HttpLog
 
         public HttpLogGenerator(string outputFile)
         {
-            this.sessionLog = new List<SessionLogEntry>();
             this.OutputFile = outputFile;
         }
 
@@ -63,7 +61,7 @@ namespace ApiDocs.Validation.HttpLog
                 System.IO.FileMode.Create,
                 System.IO.FileAccess.ReadWrite);
 
-            PackagePart indexPackagePart = this.outputPackage.CreatePart(new Uri("/_index.htm", UriKind.Relative), "text/html");
+            this.outputPackage.CreatePart(new Uri("/_index.htm", UriKind.Relative), "text/html");
         }
 
         public void ClosePackage()
@@ -227,10 +225,11 @@ namespace ApiDocs.Validation.HttpLog
             get; set;
         }
 
-        internal async Task WriteToStreamAsync(Stream metadataStream)
+        internal Task WriteToStreamAsync(Stream metadataStream)
         {
             XmlSerializer serialize = new XmlSerializer(this.GetType());
             serialize.Serialize(metadataStream, this);
+            return Task.FromResult<bool>(true);
         }
     }
 
