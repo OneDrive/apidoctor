@@ -81,12 +81,12 @@ namespace ApiDocs.Validation
         /// <returns></returns>
         public static bool ProvidesScopes(this string[] providedScopes, string[] requiredScopes, bool ignoreScopes)
         {
-            if (ignoreScopes || requiredScopes == null || requiredScopes.Length == 0)
+            if (ignoreScopes || requiredScopes == null || requiredScopes.Length == 0 || providedScopes == null)
             {
                 return true;
             }
 
-            if (providedScopes == null || providedScopes.Length == 0)
+            if (providedScopes.Length == 0)
             {
                 return false;
             }
