@@ -199,6 +199,7 @@ namespace ApiDocs.ConsoleApp
         private const string PasswordArgument = "password";
         private const string HttpLoggerArgument = "httplog";
         private const string IgnoreRequiredScopesArgument = "ignore-scopes";
+        private const string ProvidedScopesArgument = "scopes";
 
         public CheckServiceOptions()
         {
@@ -246,6 +247,9 @@ namespace ApiDocs.ConsoleApp
         [Option(IgnoreRequiredScopesArgument, HelpText="Disable checking accounts for required scopes before calling methods")]
         public bool IgnoreRequiredScopes { get; set; }
 
+        [Option(ProvidedScopesArgument, HelpText = "Comma separated list of scopes provided for the command line account")]
+        public string ProvidedScopes { get; set; }
+
         private IServiceAccount GetEnvironmentVariablesAccount()
         {
             // Try to add an account from environment variables
@@ -276,16 +280,21 @@ namespace ApiDocs.ConsoleApp
             {
                 // Run the tests with a single account based on this access token
                 if (string.IsNullOrEmpty(this.ServiceRootUrl))
+                {
                     props.Add(ServiceUrlArgument);
+                }
                 else
+                {
                     this.FoundAccounts.Add(
                         new OAuthAccount
                         {
                             Name = "command-line-oauth",
                             Enabled = true,
                             AccessToken = this.AccessToken,
-                            BaseUrl = this.ServiceRootUrl
+                            BaseUrl = this.ServiceRootUrl,
+                            Scopes = (null != this.ProvidedScopes) ? this.ProvidedScopes.Split(',') : new string[0]
                         });
+                }
             }
             else if (!string.IsNullOrEmpty(this.Username))
             {
