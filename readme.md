@@ -98,6 +98,7 @@ automatically be loaded and used by the check-service method.
 | `--method <method_name>`   | Optional. Check a single request/response method instead of everything in the documentation.                                                                                            |
 | `--odata-metadata <value>` | Optional. Specify the value of the odata.metadata level that is provided in the Accept header.                                                                                          |
 | `--pause`                  | Pause for a key press between API calls to the service to enable reading the responses.                                                                                                 |
+| `--scopes <scopes>`        | Provide a command separated list of scopes which are provided by the command line accessToken. |
 | `--url <url>`              | Set the base URL for the service calls.                                                                                                                                                 |
 
 Example:
