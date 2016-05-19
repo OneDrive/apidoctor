@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <package >
   <metadata>
-    <id>OneDrive.ApiDocTools</id>
+    <id>MarkdownScanner.BinaryTools</id>
     <version>1.0.0</version>
-    <authors>rgregg@microsoft.com</authors>
+    <authors>Ryan Gregg</authors>
     <owners>rgregg@microsoft.com</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Toolkit that enables validation of API documentation</description>
     <releaseNotes>Check http://github.com/onedrive/markdown-scanner for details.</releaseNotes>
-    <copyright>Copyright 2015 Microsoft Corporation</copyright>
+    <copyright>Copyright Microsoft</copyright>
+    <licenseUrl>http://msdn.microsoft.com/en-US/cc300389</licenseUrl>
     <frameworkAssemblies>
       <frameworkAssembly assemblyName="System" targetFramework="net45" />
     </frameworkAssemblies>
