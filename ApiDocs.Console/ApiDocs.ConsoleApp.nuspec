@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>MarkdownScanner.BinaryTools</id>
-    <version>1.0.0</version>
+    <version>$version$</version>
     <authors>Ryan Gregg</authors>
     <owners>rgregg@microsoft.com</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
