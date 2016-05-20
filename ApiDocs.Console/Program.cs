@@ -434,7 +434,12 @@ namespace ApiDocs.ConsoleApp
             return await WriteOutErrorsAndFinishTestAsync(errors, options.SilenceWarnings, successMessage: "No link errors detected.", testName: testName);
         }
 
-
+        /// <summary>
+        /// Find the first instance of a method with a particular name in the docset.
+        /// </summary>
+        /// <param name="docset"></param>
+        /// <param name="methodName"></param>
+        /// <returns></returns>
         private static MethodDefinition LookUpMethod(DocSet docset, string methodName)
         {
             var query = from m in docset.Methods
@@ -444,6 +449,20 @@ namespace ApiDocs.ConsoleApp
             return query.FirstOrDefault();
         }
 
+        /// <summary>
+        /// Returns a collection of methods matching the string query. This can either be the
+        /// literal name of the method of a wildcard match for the method name.
+        /// </summary>
+        /// <param name="docs"></param>
+        /// <param name="query"></param>
+        /// <returns></returns>
+        private static MethodDefinition[] FindMethods(DocSet docs, string wildcardPattern)
+        {
+            var query = from m in docs.Methods
+                        where m.Identifier.IsWildcardMatch(wildcardPattern)
+                        select m;
+            return query.ToArray();
+        }
 
         /// <summary>
         /// Perform internal consistency checks on the documentation, including verify that 
@@ -596,13 +615,12 @@ namespace ApiDocs.ConsoleApp
             MethodDefinition[] methods = null;
             if (!string.IsNullOrEmpty(options.MethodName))
             {
-                var foundMethod = LookUpMethod(docset, options.MethodName);
-                if (null == foundMethod)
+                methods = FindMethods(docset, options.MethodName);
+                if (null == methods || methods.Length == 0)
                 {
                     FancyConsole.WriteLine(FancyConsole.ConsoleErrorColor, "Unable to locate method '{0}' in docset.", options.MethodName);
                     Exit(failure: true);
                 }
-                methods = new MethodDefinition[] { LookUpMethod(docset, options.MethodName) };
             }
             else if (!string.IsNullOrEmpty(options.FileName))
             {
@@ -627,21 +645,17 @@ namespace ApiDocs.ConsoleApp
             return methods;
         }
 
+        /// <summary>
+        /// Return a set of files matching a given wildcard filter
+        /// </summary>
+        /// <param name="docset"></param>
+        /// <param name="filter"></param>
+        /// <returns></returns>
         private static IEnumerable<DocFile> FilesMatchingFilter(DocSet docset, string filter)
         {
-            if (filter.EndsWith("*"))
-            {
-                return from f in docset.Files
-                       where f.DisplayName.StartsWith(filter.TrimEnd('*'))
-                       select f;
-
-            }
-            else
-            {
-                return from f in docset.Files
-                       where f.DisplayName == filter
-                       select f;
-            }
+            return from f in docset.Files
+                   where f.DisplayName.IsWildcardMatch(filter)
+                   select f;
         }
 
 
