@@ -15,6 +15,7 @@
     </frameworkAssemblies>
   </metadata>
   <files>
-    <file src="bin\Release\*" target="tools" />
+    <file src="bin\Release\apidocs.exe" target="tools" />
+    <file src="bin\Release\*.dll" target="tools" />
   </files>
 </package>
