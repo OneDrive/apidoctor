@@ -101,7 +101,10 @@ namespace ApiDocs.Validation.Params
                     return new ValidationResult<bool>(false, errors);
                 }
 
-                return await cannedRequest.MakeSetupRequestAsync(baseUrl, credentials, storedValues, documents, scenario, this.OutputValues);
+
+                // Need to make a copy of the canned request here so that our state doesn't continue to pile up
+                var cannedRequestInstance = cannedRequest.CopyInstance();
+                return await cannedRequestInstance.MakeSetupRequestAsync(baseUrl, credentials, storedValues, documents, scenario, this.OutputValues);
             }
             
             // Get the HttpRequest, either from MethodName or by parsing HttpRequest
