@@ -80,6 +80,16 @@ namespace ApiDocs.Validation.Params
 
         [JsonProperty("implicit-variable")]
         public string ImplicitVariable { get; set; }
+
+        /// <summary>
+        /// Copy all the paramters of this to a new instance so modifications to canned requests don't stack on each other
+        /// </summary>
+        /// <returns></returns>
+        public CannedRequestDefinition CopyInstance()
+        {
+            string data = Newtonsoft.Json.JsonConvert.SerializeObject(this);
+            return Newtonsoft.Json.JsonConvert.DeserializeObject<CannedRequestDefinition>(data);
+        }
     }
 
     public enum PlaceholderLocation
