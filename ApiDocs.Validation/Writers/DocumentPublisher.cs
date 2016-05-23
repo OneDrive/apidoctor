@@ -373,7 +373,7 @@ namespace ApiDocs.Validation.Writers
 		[ScanRule(ScanRuleTarget.FileInfo)]
 		public bool IsMarkdownFile(FileInfo file)
 		{
-			return this.ScannableExtensions.Contains(file.Extension);
+			return this.ScannableExtensions.Contains(file.Extension.ToLowerInvariant());
 		}
 
 		[ScanRule(ScanRuleTarget.FileInfo)]
