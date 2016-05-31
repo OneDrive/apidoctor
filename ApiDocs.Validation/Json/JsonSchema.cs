@@ -678,6 +678,10 @@ namespace ApiDocs.Validation.Json
                         {
                             param.Type = new ParameterDataType(objectSchema["@odata.type"].OriginalValue);
                         }
+                        else if (objectSchema.ContainsKey("@type"))
+                        {
+                            param.Type = new ParameterDataType(objectSchema["@type"].OriginalValue);
+                        }
                         else
                         {
                             // See if we can infer type from the parent scehma
