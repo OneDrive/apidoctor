@@ -37,14 +37,10 @@ namespace ApiDocs.Validation.TableSpec
     /// </summary>
     internal class TableSpecConverter
     {
-
-        private readonly TableParserConfig Config;
         private readonly Dictionary<string, TableDecoder> CommonHeaderContentMap;
         public TableSpecConverter(TableParserConfig config)
         {
-            this.Config = config;
             Dictionary<string, TableDecoder> decoderRing = GenerateDecoderRing(config);
-
             this.CommonHeaderContentMap = decoderRing;
         }
 

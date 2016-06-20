@@ -133,12 +133,6 @@
     <Compile Include="Writers\IPublishOptions.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\OSS\MarkdownDeep\MarkdownDeep.csproj">
-      <Project>{1569ED47-C7C9-4261-B6F4-7445BD0F2C95}</Project>
-      <Name>MarkdownDeep</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="packages.config" />
     <None Include="TableSpec\TableAndHeaderConfig.json" />
   </ItemGroup>
@@ -162,5 +156,11 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OSS\markdowndeep\MarkdownDeep\MarkdownDeep.csproj">
+      <Project>{1569ED47-C7C9-4261-B6F4-7445BD0F2C95}</Project>
+      <Name>MarkdownDeep</Name>
+    </ProjectReference>
   </ItemGroup>
 </Project>

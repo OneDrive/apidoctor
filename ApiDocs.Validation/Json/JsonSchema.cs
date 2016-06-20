@@ -474,7 +474,7 @@ namespace ApiDocs.Validation.Json
                     {
                         try
                         {
-                            Uri parsedUri = new Uri(inputProperty.OriginalValue, UriKind.Absolute);
+                            new Uri(inputProperty.OriginalValue, UriKind.Absolute);
                             return PropertyValidationOutcome.Ok;
                         }
                         catch (FormatException)

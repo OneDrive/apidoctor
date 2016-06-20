@@ -213,7 +213,7 @@ namespace ApiDocs.ConsoleApp
         /// </summary>
         /// <param name="options"></param>
         /// <returns></returns>
-        private static async Task<DocSet> GetDocSetAsync(DocSetOptions options)
+        private static Task<DocSet> GetDocSetAsync(DocSetOptions options)
         {
             FancyConsole.VerboseWriteLine("Opening documentation from {0}", options.DocumentationSetPath);
             DocSet set = null;
@@ -225,7 +225,7 @@ namespace ApiDocs.ConsoleApp
             {
                 FancyConsole.WriteLine(FancyConsole.ConsoleErrorColor, ex.Message);
                 Exit(failure: true);
-                return null;
+                return Task.FromResult<DocSet>(null);
             }
 
             FancyConsole.VerboseWriteLine("Scanning documentation files...");
@@ -235,8 +235,8 @@ namespace ApiDocs.ConsoleApp
                 FancyConsole.WriteLine("Errors detected while parsing documentation set:");
                 WriteMessages(loadErrors, false, "  ", false);
             }
-                
-            return set;
+
+            return Task.FromResult<DocSet>(set);
         }
 
         public static void RecordWarning(string format, params object[] variables)
