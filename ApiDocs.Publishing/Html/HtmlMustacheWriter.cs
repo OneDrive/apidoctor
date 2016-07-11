@@ -39,7 +39,6 @@ namespace ApiDocs.Publishing.Html
     {
         private Generator generator;
         private FileTagDefinition fileTag;
-        private Dictionary<string, object> PageParameters { get; set; }
 
         public bool CollapseTocToActiveGroup { get; set; }
 
@@ -47,7 +46,6 @@ namespace ApiDocs.Publishing.Html
         public HtmlMustacheWriter(DocSet docs, IPublishOptions options) : base(docs, options)
         {
             this.CollapseTocToActiveGroup = false;
-            this.PageParameters = GeneratePageParameters(options);
         }
 
         protected override void LoadTemplate()
@@ -127,21 +125,6 @@ namespace ApiDocs.Publishing.Html
                 var outputFile = Path.Combine(this.OutputFolder, this.Options.TableOfContentsOutputRelativePath);
                 await WriteTableOfContentsFileAsync(outputFile);
             }
-        }
-
-        private static Dictionary<string, object> GeneratePageParameters(IPublishOptions options)
-        {
-            if (string.IsNullOrEmpty(options.AdditionalPageParameters))
-                return null;
-
-            var data = new Dictionary<string, object>();
-
-            var parameters = Validation.Http.HttpParser.ParseQueryString(options.AdditionalPageParameters);
-            foreach (var key in parameters.AllKeys)
-            {
-                data[key] = parameters[key];
-            }
-            return data;
         }
 
         private class PageTemplateInput
