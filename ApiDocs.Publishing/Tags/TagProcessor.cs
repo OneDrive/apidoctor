@@ -67,8 +67,8 @@ namespace ApiDocs.Publishing.Tags
             StreamReader reader = new StreamReader(sourceFile.OpenRead());
 
             long lineNumber = 0;
-            bool inTag = false;
-            bool dropTagContent = false;
+            int tagCount = 0;
+            int dropCount = 0;
             string nextLine;
             while ((nextLine = await reader.ReadLineAsync()) != null)
             {
@@ -78,16 +78,19 @@ namespace ApiDocs.Publishing.Tags
                 if (IsEndLine(nextLine))
                 {
                     // We SHOULD be in a tag
-                    if (inTag)
+                    if (tagCount > 0)
                     {
-                        if (!dropTagContent)
+                        if (dropCount <= 0)
                         {
                             await writer.WriteLineAsync(nextLine);
                         }
+                        else
+                        {
+                            dropCount--;
+                        }
 
-                        // Reset tag state
-                        inTag = false;
-                        dropTagContent = false;
+                        // Decrement tag count
+                        tagCount--;
                     }
                     else
                     {
@@ -98,7 +101,47 @@ namespace ApiDocs.Publishing.Tags
                     continue;
                 }
 
-                if (inTag && dropTagContent)
+                // Check if this is a [TAGS] marker
+                if (IsTagLine(nextLine, sourceFile.Name, lineNumber))
+                {
+                    //if (inTag)
+                    //{
+                    //    // Nested tags not allowed
+                    //    LogMessage(new ValidationError(ValidationErrorCode.MarkdownParserError,
+                    //        string.Concat(sourceFile.Name, ":", lineNumber), "Nested tags are not supported."));
+                    //}
+
+                    string[] tags = GetTags(nextLine);
+
+                    LogMessage(new ValidationMessage(string.Concat(sourceFile.Name, ":", lineNumber), "Found TAGS line with {0}", string.Join(",", tags)));
+
+                    tagCount++;
+
+                    if (dropCount > 0 || !TagsAreIncluded(tags))
+                    {
+                        dropCount++;
+                    }
+
+                    if (dropCount == 1)
+                    {
+                        LogMessage(new ValidationMessage(string.Concat(sourceFile.Name, ":", lineNumber), 
+                            "{0} not found in the specified tags to include, content will be dropped.", string.Join(",", tags)));
+                    }
+                    else if (dropCount > 1)
+                    {
+                        LogMessage(new ValidationMessage(string.Concat(sourceFile.Name, ":", lineNumber), 
+                            "Dropping content due to containing [TAGS]"));
+                    }
+                    else
+                    {
+                        // Keep line
+                        await writer.WriteLineAsync(nextLine);
+                    }
+
+                    continue;
+                }
+
+                if (tagCount > 0 && dropCount > 0)
                 {
                     // Inside of a tag that shouldn't be included
                     LogMessage(new ValidationMessage(string.Concat(sourceFile.Name, ":", lineNumber), "Removing tagged content"));
@@ -112,39 +155,12 @@ namespace ApiDocs.Publishing.Tags
                     continue;
                 }
 
-                // Check if this is a [TAGS] marker
-                if (IsTagLine(nextLine, sourceFile.Name, lineNumber))
-                {
-                    if (inTag)
-                    {
-                        // Nested tags not allowed
-                        LogMessage(new ValidationError(ValidationErrorCode.MarkdownParserError,
-                            string.Concat(sourceFile.Name, ":", lineNumber), "Nested tags are not supported."));
-                    }
-
-                    string[] tags = GetTags(nextLine);
-
-                    LogMessage(new ValidationMessage(string.Concat(sourceFile.Name, ":", lineNumber), "Found TAGS line with {0}", string.Join(",", tags)));
-
-                    inTag = true;
-                    dropTagContent = !TagsAreIncluded(tags);
-                    if (dropTagContent)
-                    {
-                        LogMessage(new ValidationMessage(string.Concat(sourceFile.Name, ":", lineNumber), "{0} are not found in the specified tags to include, content will be dropped.", string.Join(",", tags)));
-                    }
-                    else
-                    {
-                        // Replace line with div
-                        await writer.WriteLineAsync(nextLine);
-                    }
-
-                    continue;
-                }
+                
 
                 await writer.WriteLineAsync(nextLine);
             }
 
-            if (inTag)
+            if (tagCount > 0)
             {
                 // If inTag is true, there was a missing [END] tag somewhere
                 LogMessage(new ValidationError(ValidationErrorCode.MarkdownParserError,
