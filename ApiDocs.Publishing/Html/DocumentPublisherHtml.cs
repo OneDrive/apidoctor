@@ -235,7 +235,7 @@ namespace ApiDocs.Publishing.Html
 
             var converter = this.GetMarkdownConverter();
             var html = converter.Transform(await tagProcessor.Preprocess(sourceFile));
-            html = await tagProcessor.PostProcess(html);
+            html = await tagProcessor.PostProcess(html, sourceFile, converter);
 
             var pageData = page.Annotation ?? new PageAnnotation();
             if (string.IsNullOrEmpty(pageData.Title))
