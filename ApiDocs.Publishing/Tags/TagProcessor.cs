@@ -104,13 +104,6 @@ namespace ApiDocs.Publishing.Tags
                 // Check if this is a [TAGS] marker
                 if (IsTagLine(nextLine, sourceFile.Name, lineNumber))
                 {
-                    //if (inTag)
-                    //{
-                    //    // Nested tags not allowed
-                    //    LogMessage(new ValidationError(ValidationErrorCode.MarkdownParserError,
-                    //        string.Concat(sourceFile.Name, ":", lineNumber), "Nested tags are not supported."));
-                    //}
-
                     string[] tags = GetTags(nextLine);
 
                     LogMessage(new ValidationMessage(string.Concat(sourceFile.Name, ":", lineNumber), "Found TAGS line with {0}", string.Join(",", tags)));
