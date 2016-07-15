@@ -36,8 +36,15 @@ namespace ApiDocs.Validation
         /// <summary>
         /// The OData type name of the resource
         /// </summary>
-        [JsonProperty("@odata.type", NullValueHandling=NullValueHandling.Ignore )]
+        [JsonProperty("@type", NullValueHandling=NullValueHandling.Ignore )]
         public string ResourceType { get; set; }
+
+        [JsonProperty("@odata.type", NullValueHandling = NullValueHandling.Ignore)]
+        public string LegacyResourceType
+        {
+            get { return ResourceType; }
+            set { this.ResourceType = value; }
+        }
 
         /// <summary>
         /// Type of code block
