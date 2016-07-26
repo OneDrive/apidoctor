@@ -32,6 +32,7 @@ namespace ApiDocs.Validation
     using System.Linq;
     using ApiDocs.Validation.Error;
     using ApiDocs.Validation.TableSpec;
+    using Tags;
     using MarkdownDeep;
     using Newtonsoft.Json;
 
@@ -152,10 +153,10 @@ namespace ApiDocs.Validation
 
         protected virtual string GetContentsOfFile()
         {
-            using (StreamReader reader = File.OpenText(this.FullPath))
-            {
-                return reader.ReadToEnd();
-            }
+            // Preprocess file content
+            FileInfo docFile = new FileInfo(this.FullPath);
+            TagProcessor tagProcessor = new TagProcessor(string.Empty);
+            return tagProcessor.Preprocess(docFile);
         }
 
 

@@ -31,9 +31,9 @@ using ApiDocs.Validation.Error;
 using System.Text.RegularExpressions;
 using MarkdownDeep;
 
-namespace ApiDocs.Publishing.Tags
+namespace ApiDocs.Validation.Tags
 {
-    class TagProcessor
+    public class TagProcessor
     {
         private string[] TagsToInclude = null;
         private static string[] tagSeparators = { ",", " " };
@@ -61,7 +61,7 @@ namespace ApiDocs.Publishing.Tags
         /// </summary>
         /// <param name="sourceFile">The file containing the Markdown contents to preprocess.</param>
         /// <returns>The preprocessed contents of the file.</returns>
-        public async Task<string> Preprocess(FileInfo sourceFile)
+        public string Preprocess(FileInfo sourceFile)
         {   
             StringWriter writer = new StringWriter();
             StreamReader reader = new StreamReader(sourceFile.OpenRead());
@@ -70,7 +70,7 @@ namespace ApiDocs.Publishing.Tags
             int tagCount = 0;
             int dropCount = 0;
             string nextLine;
-            while ((nextLine = await reader.ReadLineAsync()) != null)
+            while ((nextLine = reader.ReadLine()) != null)
             {
                 lineNumber++;
 
@@ -82,7 +82,7 @@ namespace ApiDocs.Publishing.Tags
                     {
                         if (dropCount <= 0)
                         {
-                            await writer.WriteLineAsync(nextLine);
+                            writer.WriteLine(nextLine);
                         }
                         else
                         {
@@ -128,7 +128,7 @@ namespace ApiDocs.Publishing.Tags
                     else
                     {
                         // Keep line
-                        await writer.WriteLineAsync(nextLine);
+                        writer.WriteLine(nextLine);
                     }
 
                     continue;
@@ -166,9 +166,9 @@ namespace ApiDocs.Publishing.Tags
                             continue;
                         }
 
-                        string includeContent = await Preprocess(includeFile);
+                        string includeContent = Preprocess(includeFile);
 
-                        await writer.WriteLineAsync(includeContent);
+                        writer.WriteLine(includeContent);
                     }
                     else
                     {
@@ -178,7 +178,7 @@ namespace ApiDocs.Publishing.Tags
                     continue;
                 }
 
-                await writer.WriteLineAsync(nextLine);
+                writer.WriteLine(nextLine);
             }
 
             if (tagCount > 0)

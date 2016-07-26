@@ -61,7 +61,6 @@
     <Compile Include="Swagger\SwaggerClasses.cs" />
     <Compile Include="Swagger\SwaggerExtensionMethods.cs" />
     <Compile Include="Swagger\SwaggerWriter.cs" />
-    <Compile Include="Tags\TagProcessor.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ApiDocs.Validation\ApiDocs.Validation.csproj">

@@ -36,7 +36,7 @@ namespace ApiDocs.Publishing.Html
     using ApiDocs.Validation.Writers;
     using MarkdownDeep;
     using Newtonsoft.Json;
-    using Tags;
+    using Validation.Tags;
 
     public class DocumentPublisherHtml : DocumentPublisher
     {
@@ -234,7 +234,7 @@ namespace ApiDocs.Publishing.Html
             TagProcessor tagProcessor = new TagProcessor(PageParameters?["tags"]?.ToString(), LogMessage);
 
             var converter = this.GetMarkdownConverter();
-            var html = converter.Transform(await tagProcessor.Preprocess(sourceFile));
+            var html = converter.Transform(tagProcessor.Preprocess(sourceFile));
             html = await tagProcessor.PostProcess(html, sourceFile, converter);
 
             var pageData = page.Annotation ?? new PageAnnotation();
