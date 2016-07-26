@@ -230,7 +230,7 @@ namespace ApiDocs.ConsoleApp
 
             FancyConsole.VerboseWriteLine("Scanning documentation files...");
             ValidationError[] loadErrors;
-            if (!set.ScanDocumentation(out loadErrors))
+            if (!set.ScanDocumentation(options.PageParameterDict?["tags"]?.ToString(), out loadErrors))
             {
                 FancyConsole.WriteLine("Errors detected while parsing documentation set:");
                 WriteMessages(loadErrors, false, "  ", false);

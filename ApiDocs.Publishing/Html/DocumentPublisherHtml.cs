@@ -58,7 +58,7 @@ namespace ApiDocs.Publishing.Html
             TemplateHtmlFilename =  options.TemplateFilename ?? "template.htm";
             HtmlOutputExtension = options.OutputExtension ?? ".htm";
             EnableHtmlTagPassThrough = options.AllowUnsafeHtmlContentInMarkdown;
-            PageParameters = GeneratePageParameters(options);
+            PageParameters = options.PageParameterDict;
         }
 
         /// <summary>
@@ -332,21 +332,6 @@ namespace ApiDocs.Publishing.Html
 
             return returnValue;
 
-        }
-
-        private static Dictionary<string, object> GeneratePageParameters(IPublishOptions options)
-        {
-            if (string.IsNullOrEmpty(options.AdditionalPageParameters))
-                return null;
-
-            var data = new Dictionary<string, object>();
-
-            var parameters = Validation.Http.HttpParser.ParseQueryString(options.AdditionalPageParameters);
-            foreach (var key in parameters.AllKeys)
-            {
-                data[key] = parameters[key];
-            }
-            return data;
         }
 
         // ReSharper disable once ClassNeverInstantiated.Local

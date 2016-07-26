@@ -151,11 +151,11 @@ namespace ApiDocs.Validation
             this.MarkdownLinks = new List<ILinkInfo>(md.FoundLinks);
         }
 
-        protected virtual string GetContentsOfFile()
+        protected virtual string GetContentsOfFile(string tags)
         {
             // Preprocess file content
             FileInfo docFile = new FileInfo(this.FullPath);
-            TagProcessor tagProcessor = new TagProcessor(string.Empty);
+            TagProcessor tagProcessor = new TagProcessor(tags);
             return tagProcessor.Preprocess(docFile);
         }
 
@@ -163,14 +163,14 @@ namespace ApiDocs.Validation
         /// <summary>
         /// Read the contents of the file into blocks and generate any resource or method definitions from the contents
         /// </summary>
-        public bool Scan(out ValidationError[] errors)
+        public bool Scan(string tags, out ValidationError[] errors)
         {
             this.HasScanRun = true;
             List<ValidationError> detectedErrors = new List<ValidationError>();
             
             try
             {
-                this.TransformMarkdownIntoBlocksAndLinks(this.GetContentsOfFile());
+                this.TransformMarkdownIntoBlocksAndLinks(this.GetContentsOfFile(tags));
             }
             catch (IOException ioex)
             {
