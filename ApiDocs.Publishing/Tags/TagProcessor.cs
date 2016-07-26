@@ -40,7 +40,7 @@ namespace ApiDocs.Publishing.Tags
 
         private static Regex ValidTagFormat = new Regex(@"^\[TAGS=[-\.\w]+(?:,\s?[-\.\w]*)*\]", RegexOptions.IgnoreCase);
         private static Regex GetTagList = new Regex(@"\[TAGS=([-\.,\s\w]+)\]", RegexOptions.IgnoreCase);
-        private static Regex ConvertedIncludeFormat = new Regex(@"<p>\[INCLUDE\s*<a href=""([-/.\w]+)"">[-.\w]+</a>\]</p>", RegexOptions.IgnoreCase);
+        private static Regex IncludeFormat = new Regex(@"\[INCLUDE\s*\[[-/.\w]+\]\(([-/.\w]+)\)\]", RegexOptions.IgnoreCase);
 
         private Action<ValidationError> LogMessage = null;
 
@@ -148,7 +148,35 @@ namespace ApiDocs.Publishing.Tags
                     continue;
                 }
 
-                
+                // Import include file content
+                if (IsIncludeLine(nextLine))
+                {
+                    FileInfo includeFile = GetIncludeFile(nextLine, sourceFile);
+                    if (!includeFile.Exists)
+                    {
+                        LogMessage(new ValidationError(ValidationErrorCode.ErrorOpeningFile, nextLine, "The included file {0} was not found", includeFile.FullName));
+                        continue;
+                    }
+
+                    if (includeFile != null)
+                    {
+                        if (includeFile.FullName.Equals(sourceFile.FullName))
+                        {
+                            LogMessage(new ValidationError(ValidationErrorCode.MarkdownParserError, nextLine, "A Markdown file cannot include itself"));
+                            continue;
+                        }
+
+                        string includeContent = await Preprocess(includeFile);
+
+                        await writer.WriteLineAsync(includeContent);
+                    }
+                    else
+                    {
+                        LogMessage(new ValidationError(ValidationErrorCode.ErrorReadingFile, nextLine, "Could not load include content from {0}", includeFile.FullName));
+                    }
+
+                    continue;
+                }
 
                 await writer.WriteLineAsync(nextLine);
             }
@@ -193,36 +221,6 @@ namespace ApiDocs.Publishing.Tags
                 if (IsConvertedEndLine(nextLine))
                 {
                     await writer.WriteLineAsync(GetEndDivMarker());
-                    continue;
-                }
-
-                // Load includes
-                if (IsConvertedIncludeLine(nextLine))
-                {
-                    FileInfo includeFile = GetIncludeFile(nextLine, sourceFile);
-                    if (!includeFile.Exists)
-                    {
-                        LogMessage(new ValidationError(ValidationErrorCode.ErrorOpeningFile, nextLine, "The included file {0} was not found", includeFile.FullName));
-                        continue;
-                    }
-
-                    if (includeFile != null)
-                    {
-                        if (includeFile.FullName.Equals(sourceFile.FullName))
-                        {
-                            LogMessage(new ValidationError(ValidationErrorCode.MarkdownParserError, nextLine, "A Markdown file cannot include itself"));
-                            continue;
-                        }
-
-                        string includeContent = await GetIncludedContent(includeFile, converter);
-
-                        await writer.WriteLineAsync(includeContent);
-                    }
-                    else
-                    {
-                        LogMessage(new ValidationError(ValidationErrorCode.ErrorReadingFile, nextLine, "Could not load include content from {0}", includeFile.FullName));
-                    }
-
                     continue;
                 }
 
@@ -291,6 +289,16 @@ namespace ApiDocs.Publishing.Tags
             return text.Trim().ToUpper().Equals("[END]");
         }
 
+        private bool IsIncludeLine(string text)
+        {
+            if (text.ToUpper().Contains("INCLUDE"))
+            {
+                return IncludeFormat.IsMatch(text);
+            }
+
+            return false;
+        }
+
         private bool IsConvertedTagLine(string text)
         {
             // To handle edge case where you have a [TAGS] type entry inside
@@ -308,19 +316,9 @@ namespace ApiDocs.Publishing.Tags
             return text.Equals("<p>[END]</p>");
         }
 
-        private bool IsConvertedIncludeLine(string text)
-        {
-            if (text.ToUpper().Contains("INCLUDE"))
-            {
-                return ConvertedIncludeFormat.IsMatch(text);
-            }
-
-            return false;
-        }
-
         private FileInfo GetIncludeFile(string text, FileInfo sourceFile)
         {
-            Match m = ConvertedIncludeFormat.Match(text);
+            Match m = IncludeFormat.Match(text);
 
             if (m.Success && m.Groups.Count == 2)
             {
@@ -345,14 +343,6 @@ namespace ApiDocs.Publishing.Tags
         private string GetEndDivMarker()
         {
             return "</div>";
-        }
-
-        private async Task<string> GetIncludedContent (FileInfo includeFile, Markdown converter)
-        {
-            // Do inline conversion, including pre and post processing
-            string html = converter.Transform(await Preprocess(includeFile));
-
-            return await PostProcess(html, includeFile, converter);
         }
 
         private void DefaultLogMessage(ValidationError msg)
