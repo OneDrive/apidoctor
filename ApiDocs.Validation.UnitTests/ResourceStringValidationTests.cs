@@ -41,7 +41,7 @@ namespace ApiDocs.Validation.UnitTests
             DocFile testFile = new DocFileForTesting(Resources.ExampleResources, "\resources.md", "\resources.md", docSet);
 
             ValidationError[] detectedErrors;
-            testFile.Scan(out detectedErrors);
+            testFile.Scan(string.Empty, out detectedErrors);
 
             Assert.IsFalse(detectedErrors.WereWarningsOrErrors(), "Detected warnings or errors when reading the example markdown file.");
             
