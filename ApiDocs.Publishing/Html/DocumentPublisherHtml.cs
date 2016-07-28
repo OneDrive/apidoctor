@@ -231,7 +231,8 @@ namespace ApiDocs.Publishing.Html
             var destinationPath = this.GetPublishedFilePath(sourceFile, destinationRoot, HtmlOutputExtension);
 
             // Create a tag processor
-            TagProcessor tagProcessor = new TagProcessor(PageParameters?["tags"]?.ToString(), LogMessage);
+            TagProcessor tagProcessor = new TagProcessor(PageParameters?["tags"]?.ToString(),
+                page.Parent.SourceFolderPath, LogMessage);
 
             var converter = this.GetMarkdownConverter();
             var html = converter.Transform(tagProcessor.Preprocess(sourceFile));

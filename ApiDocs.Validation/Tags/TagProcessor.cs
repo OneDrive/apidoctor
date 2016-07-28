@@ -36,6 +36,7 @@ namespace ApiDocs.Validation.Tags
     public class TagProcessor
     {
         private string[] TagsToInclude = null;
+        private string DocSetRoot = null;
         private static string[] tagSeparators = { ",", " " };
 
         private static Regex ValidTagFormat = new Regex(@"^\[TAGS=[-\.\w]+(?:,\s?[-\.\w]*)*\]", RegexOptions.IgnoreCase);
@@ -44,13 +45,15 @@ namespace ApiDocs.Validation.Tags
 
         private Action<ValidationError> LogMessage = null;
 
-        public TagProcessor(string tags, Action<ValidationError> logMethod = null)
+        public TagProcessor(string tags, string docSetRoot, Action<ValidationError> logMethod = null)
         {
             if (!string.IsNullOrEmpty(tags))
             {
                 TagsToInclude = tags.ToUpper().Split(TagProcessor.tagSeparators,
                     StringSplitOptions.RemoveEmptyEntries);
             }
+
+            DocSetRoot = docSetRoot;
 
             // If not logging method supplied default to a no-op
             LogMessage = logMethod ?? DefaultLogMessage;
@@ -324,7 +327,20 @@ namespace ApiDocs.Validation.Tags
             {
                 string relativePath = Path.ChangeExtension(m.Groups[1].Value, "md");
 
-                return new FileInfo(Path.Combine(sourceFile.Directory.FullName, relativePath));
+                string fullPathToIncludeFile = string.Empty;
+
+                if (Path.IsPathRooted(relativePath))
+                {
+                    // Path is relative to the root of the doc set
+                    relativePath = relativePath.TrimStart('/');
+                    fullPathToIncludeFile = Path.Combine(DocSetRoot, relativePath);
+                }
+                else
+                {
+                    fullPathToIncludeFile = Path.Combine(sourceFile.Directory.FullName, relativePath);
+                }
+
+                return new FileInfo(fullPathToIncludeFile);
             }
 
             return null;

@@ -155,7 +155,7 @@ namespace ApiDocs.Validation
         {
             // Preprocess file content
             FileInfo docFile = new FileInfo(this.FullPath);
-            TagProcessor tagProcessor = new TagProcessor(tags);
+            TagProcessor tagProcessor = new TagProcessor(tags, Parent.SourceFolderPath);
             return tagProcessor.Preprocess(docFile);
         }
 
