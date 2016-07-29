@@ -261,7 +261,7 @@ namespace ApiDocs.Validation.Tags
 
             if (m.Success && m.Groups.Count == 2)
             {
-                return m.Groups[1].Value.Split(TagProcessor.tagSeparators,
+                return m.Groups[1].Value.ToUpper().Split(TagProcessor.tagSeparators,
                     StringSplitOptions.RemoveEmptyEntries);
             }
 
