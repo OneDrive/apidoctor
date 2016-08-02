@@ -929,7 +929,13 @@ namespace ApiDocs.Validation
             {
                 if (null == link.Definition)
                 {
-                    foundErrors.Add(new ValidationError(ValidationErrorCode.MissingLinkSourceId, this.DisplayName, "Link specifies ID '{0}' which was not found in the document.", link.Text));
+                    // Don't treat TAGS or END markers like links
+                    if (!link.Text.ToUpper().Equals("END") && !link.Text.ToUpper().StartsWith("TAGS="))
+                    {
+                        foundErrors.Add(new ValidationError(ValidationErrorCode.MissingLinkSourceId, this.DisplayName, 
+                            "Link specifies ID '{0}' which was not found in the document.", link.Text));
+                    }
+                    
                     continue;
                 }
 
