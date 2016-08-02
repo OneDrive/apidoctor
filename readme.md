@@ -63,7 +63,7 @@ Check for broken links in the documentation.
 No specific options are required. Using `--verbose` will include warnings about
 links that were not verified.
 
-Example: `apidocs.exe links --path ~/github/api-docs --method search`
+Example: `apidocs.exe check-links --path ~/github/api-docs --method search`
 
 ### Check-docs Command
 The `check-docs` command ensures that the documentation is internally consistent.
