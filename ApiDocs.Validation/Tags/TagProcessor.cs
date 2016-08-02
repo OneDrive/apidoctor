@@ -85,6 +85,8 @@ namespace ApiDocs.Validation.Tags
                     {
                         if (dropCount <= 0)
                         {
+                            // To keep output clean if author did not insert blank line before
+                            writer.WriteLine("");
                             writer.WriteLine(nextLine);
                         }
                         else
@@ -132,6 +134,8 @@ namespace ApiDocs.Validation.Tags
                     {
                         // Keep line
                         writer.WriteLine(nextLine);
+                        // To keep output clean if author did not insert blank line after
+                        writer.WriteLine("");
                     }
 
                     continue;
