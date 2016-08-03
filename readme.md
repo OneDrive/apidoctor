@@ -44,6 +44,7 @@ All commands have the following options available:
 | `--short`          | Print concise output to the console.                                                        |
 | `--verbose`        | Print verbose output to the console, including full HTTP requests/responses.                |
 | `--log <log_file>` | Log console output to a file.                                                               |
+| `--parameters <params>` | A URL-encoded string containing key/value pairs. Allows additional parameters to be passed to the task. Currently used by the tagging feature to specify content to include. For more information see [Markdown customizations](docs/markdown-customizations.md). |
 
 ### Print Command
 Print information about the source files, resources, methods, and requests

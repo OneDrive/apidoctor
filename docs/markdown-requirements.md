@@ -19,6 +19,10 @@ To work with this tool, the source documentation has a few basic requirements:
 Markdown supports the GitHub flavored markdown format. This is less useful for
 the automated test scenarios, but is required for HTML publishing.
 
+## Markdown customizations
+
+Markdown scanner provides additional features on top of the Markdown language. For details, see [Markdown customizations](/docs/markdown-customizations.md).
+
 ## Code blocks
 
 Markdown scanner recognizes fenced code blocks with three back-tick characters.
