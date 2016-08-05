@@ -217,7 +217,8 @@ namespace ApiDocs.Validation
                 var userFolderPath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
                 return Path.Combine(userFolderPath, path.Substring(2));
             }
-            return path;
+            // Return absolute path
+            return Path.GetFullPath(path);
         }
 
         /// <summary>
