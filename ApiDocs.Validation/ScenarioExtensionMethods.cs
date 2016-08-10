@@ -113,9 +113,48 @@ namespace ApiDocs.Validation
                 return true;
             }
 
-            if (null != (expectedValues as IList<JToken>))
+
+            // Possible states
+            //   1. expectedValues is an Array, but actualValue is a value type. ==> actualValue must match a value the expected values array
+            //   2. expectedValues is an Array, and actualValue is an array ==> Arrays must match
+            //   3. expectedValues is a value, and actualValue is a value. ==> Values must match
+            //   4. expectedValues is a value, and actualValue is an array ==> Error
+
+
+            var actualValueArray = actualValue as IList<JToken>;
+            var expectedValueArray = expectedValues as IList<JToken>;
+
+            if (null != actualValueArray && null != expectedValueArray)
             {
-                if (((IList<JToken>)expectedValues).Any(possibleValue => JsonPath.TokenEquals(possibleValue, actualValue)))
+                // All items must match
+                if (actualValueArray.Count == expectedValueArray.Count)
+                {
+                    var sortedActualValue = actualValueArray.ToList();
+                    sortedActualValue.Sort();
+                    var sortedExpectedValue = expectedValueArray.ToList();
+                    sortedExpectedValue.Sort();
+
+                    bool foundMismatch = false;
+                    for(int i=0; i<sortedActualValue.Count; i++)
+                    {
+                        if (!sortedActualValue[i].Equals(sortedExpectedValue[i]))
+                        {
+                            foundMismatch = true;
+                            break;
+                        }
+                    }
+                    if (!foundMismatch)
+                        return true;
+                }
+            }
+            else if (null != actualValueArray)
+            {
+                // Error state, because we're comparing an array to a single value.
+            }
+            else if (null != expectedValueArray)
+            {
+                // actualValue is a single value, which must exist in expectedValueArray
+                if (expectedValueArray.Any(possibleVAlue => JsonPath.TokenEquals(possibleVAlue, actualValue)))
                 {
                     return true;
                 }
@@ -126,7 +165,9 @@ namespace ApiDocs.Validation
                 if (token != null)
                 {
                     if (JsonPath.TokenEquals(token, actualValue))
+                    {
                         return true;
+                    }
                 }
                 else if (actualValue.Equals(expectedValues))
                 {
