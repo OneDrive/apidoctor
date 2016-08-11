@@ -1,6 +1,6 @@
 # API Documentation Test Tool
 
-[![Build status](https://ci.appveyor.com/api/projects/status/4y5c14kagoh2ljsw/branch/master?svg=true)](https://ci.appveyor.com/project/OneDrive/markdown-scanner/branch/master)
+[![Build status](https://ci.appveyor.com/api/projects/status/ahf4yakswc3np2qu/branch/master?svg=true)](https://ci.appveyor.com/project/OneDrive/markdown-scanner/branch/master)
 
 The API documentation test tool makes it easy to validate that the Markdown-based API
 documentation matches a REST service implementation.
