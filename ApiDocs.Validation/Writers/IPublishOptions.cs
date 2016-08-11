@@ -85,7 +85,7 @@ namespace ApiDocs.Validation.Writers
 
         public string OutputExtension { get; set; }
 
-        public Dictionary<string,object> PageParameterDict { get; }
+        public Dictionary<string,object> PageParameterDict { get; set; }
 
         public string TableOfContentsOutputRelativePath { get; set; }
 
