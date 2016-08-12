@@ -32,6 +32,7 @@ namespace ApiDocs.Validation
     using System.Linq;
     using ApiDocs.Validation.Error;
     using ApiDocs.Validation.TableSpec;
+    using Tags;
     using MarkdownDeep;
     using Newtonsoft.Json;
 
@@ -150,26 +151,26 @@ namespace ApiDocs.Validation
             this.MarkdownLinks = new List<ILinkInfo>(md.FoundLinks);
         }
 
-        protected virtual string GetContentsOfFile()
+        protected virtual string GetContentsOfFile(string tags)
         {
-            using (StreamReader reader = File.OpenText(this.FullPath))
-            {
-                return reader.ReadToEnd();
-            }
+            // Preprocess file content
+            FileInfo docFile = new FileInfo(this.FullPath);
+            TagProcessor tagProcessor = new TagProcessor(tags, Parent.SourceFolderPath);
+            return tagProcessor.Preprocess(docFile);
         }
 
 
         /// <summary>
         /// Read the contents of the file into blocks and generate any resource or method definitions from the contents
         /// </summary>
-        public bool Scan(out ValidationError[] errors)
+        public bool Scan(string tags, out ValidationError[] errors)
         {
             this.HasScanRun = true;
             List<ValidationError> detectedErrors = new List<ValidationError>();
             
             try
             {
-                this.TransformMarkdownIntoBlocksAndLinks(this.GetContentsOfFile());
+                this.TransformMarkdownIntoBlocksAndLinks(this.GetContentsOfFile(tags));
             }
             catch (IOException ioex)
             {
@@ -928,7 +929,13 @@ namespace ApiDocs.Validation
             {
                 if (null == link.Definition)
                 {
-                    foundErrors.Add(new ValidationError(ValidationErrorCode.MissingLinkSourceId, this.DisplayName, "Link specifies ID '{0}' which was not found in the document.", link.Text));
+                    // Don't treat TAGS or END markers like links
+                    if (!link.Text.ToUpper().Equals("END") && !link.Text.ToUpper().StartsWith("TAGS="))
+                    {
+                        foundErrors.Add(new ValidationError(ValidationErrorCode.MissingLinkSourceId, this.DisplayName, 
+                            "Link specifies ID '{0}' which was not found in the document.", link.Text));
+                    }
+                    
                     continue;
                 }
 

@@ -37,7 +37,7 @@ namespace ApiDocs.Validation.UnitTests
             this.Parent = parent;
         }
 
-        protected override string GetContentsOfFile()
+        protected override string GetContentsOfFile(string tags)
         {
             return this.contentsOfFile;
         }

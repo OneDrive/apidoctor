@@ -88,6 +88,7 @@
     <Compile Include="ScenarioExtensionMethods.cs" />
     <Compile Include="TableSpec\TableDefinition.cs" />
     <Compile Include="TableSpec\TableParserConfig.cs" />
+    <Compile Include="Tags\TagProcessor.cs" />
     <Compile Include="ValidationConfig.cs" />
     <Compile Include="Writers\MarkdownPublisher.cs.cs" />
     <Compile Include="Writers\DocumentPublisher.cs" />

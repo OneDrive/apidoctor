@@ -217,14 +217,15 @@ namespace ApiDocs.Validation
                 var userFolderPath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
                 return Path.Combine(userFolderPath, path.Substring(2));
             }
-            return path;
+            // Return absolute path
+            return Path.GetFullPath(path);
         }
 
         /// <summary>
         /// Scan all files in the documentation set to load
         /// information about resources and methods defined in those files
         /// </summary>
-        public bool ScanDocumentation(out ValidationError[] errors)
+        public bool ScanDocumentation(string tags, out ValidationError[] errors)
         {
             var foundResources = new List<ResourceDefinition>();
             var foundMethods = new List<MethodDefinition>();
@@ -245,7 +246,7 @@ namespace ApiDocs.Validation
             foreach (var file in this.Files)
             {
                 ValidationError[] parseErrors;
-                if (!file.Scan(out parseErrors))
+                if (!file.Scan(tags, out parseErrors))
                 {
                     detectedErrors.AddRange(parseErrors);
                 }

@@ -36,6 +36,7 @@ namespace ApiDocs.Publishing.Html
     using ApiDocs.Validation.Writers;
     using MarkdownDeep;
     using Newtonsoft.Json;
+    using Validation.Tags;
 
     public class DocumentPublisherHtml : DocumentPublisher
     {
@@ -43,6 +44,7 @@ namespace ApiDocs.Publishing.Html
 
         public string HtmlOutputExtension { get; set; }
         public string TemplateHtmlFilename { get; set; }
+        protected Dictionary<string, object> PageParameters { get; set; }
 
         /// <summary>
         /// Allow HTML tags in the markdown source to pass through to the converted HTML. This is considered
@@ -56,6 +58,7 @@ namespace ApiDocs.Publishing.Html
             TemplateHtmlFilename =  options.TemplateFilename ?? "template.htm";
             HtmlOutputExtension = options.OutputExtension ?? ".htm";
             EnableHtmlTagPassThrough = options.AllowUnsafeHtmlContentInMarkdown;
+            PageParameters = options.PageParameterDict;
         }
 
         /// <summary>
@@ -185,6 +188,7 @@ namespace ApiDocs.Publishing.Html
         /// <returns></returns>
         protected virtual Markdown GetMarkdownConverter()
         {
+            //var converter = new Markdown
             var converter = new Markdown
             {
                 ExtraMode = true,
@@ -226,24 +230,13 @@ namespace ApiDocs.Publishing.Html
 
             var destinationPath = this.GetPublishedFilePath(sourceFile, destinationRoot, HtmlOutputExtension);
 
-            StringWriter writer = new StringWriter();
-            StreamReader reader = new StreamReader(sourceFile.OpenRead());
-
-            long lineNumber = 0;
-            string nextLine;
-            while ((nextLine = await reader.ReadLineAsync()) != null)
-            {
-                lineNumber++;
-                if (this.IsDoubleBlockQuote(nextLine))
-                {
-                    this.LogMessage(new ValidationMessage(string.Concat(sourceFile.Name, ":", lineNumber), "Removing DoubleBlockQuote"));
-                    continue;
-                }
-                await writer.WriteLineAsync(nextLine);
-            }
+            // Create a tag processor
+            TagProcessor tagProcessor = new TagProcessor(PageParameters?["tags"]?.ToString(),
+                page.Parent.SourceFolderPath, LogMessage);
 
             var converter = this.GetMarkdownConverter();
-            var html = converter.Transform(writer.ToString());
+            var html = converter.Transform(tagProcessor.Preprocess(sourceFile));
+            html = await tagProcessor.PostProcess(html, sourceFile, converter);
 
             var pageData = page.Annotation ?? new PageAnnotation();
             if (string.IsNullOrEmpty(pageData.Title))

@@ -95,6 +95,26 @@ namespace ApiDocs.ConsoleApp
         [Option("ignore-errors", HelpText="Prevent errors from generating a non-zero return code.")]
         public bool IgnoreErrors { get; set; }
 
+        [Option("parameters", HelpText = "Specify additional page variables that are used by the publishing engine. URL encoded: key=value&key2=value2.")]
+        public string AdditionalPageParameters { get; set; }
+
+        public Dictionary<string,object> PageParameterDict {
+            get
+            {
+                if (string.IsNullOrEmpty(AdditionalPageParameters))
+                    return null;
+
+                var data = new Dictionary<string, object>();
+
+                var parameters = Validation.Http.HttpParser.ParseQueryString(AdditionalPageParameters.ToLower());
+                foreach (var key in parameters.AllKeys)
+                {
+                    data[key] = parameters[key];
+                }
+                return data;
+            }
+        }
+
 #if DEBUG
         [Option("debug", HelpText="Launch the debugger before doing anything interesting")]
         public bool AttachDebugger { get; set; }
@@ -377,9 +397,6 @@ namespace ApiDocs.ConsoleApp
             get { return (this.SourceFiles ?? string.Empty).Split(new char[] {';'}, StringSplitOptions.RemoveEmptyEntries); }
             set { this.SourceFiles = value.ComponentsJoinedByString(";"); }
         }
-
-        [Option("parameters", HelpText="Specify additional page variables that are used by the publishing engine. URL encoded: key=value&key2=value2.")]
-        public string AdditionalPageParameters { get; set; }
 
         [Option("allow-unsafe-html", HelpText="Allows HTML tags in the markdown source to be passed through to the output markdown.")]
         public bool AllowUnsafeHtmlContentInMarkdown { get; set; }
