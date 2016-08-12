@@ -85,6 +85,7 @@ namespace ApiDocs.Validation.Writers
 
         public string OutputExtension { get; set; }
 
+        // Added set to make AppVeyor happy
         public Dictionary<string,object> PageParameterDict { get; set; }
 
         public string TableOfContentsOutputRelativePath { get; set; }
