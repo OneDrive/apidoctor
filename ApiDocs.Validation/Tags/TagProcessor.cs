@@ -30,6 +30,7 @@ using System.Threading.Tasks;
 using ApiDocs.Validation.Error;
 using System.Text.RegularExpressions;
 using MarkdownDeep;
+using System.Collections.Generic;
 
 namespace ApiDocs.Validation.Tags
 {
@@ -369,5 +370,39 @@ namespace ApiDocs.Validation.Tags
         {
             // Empty method
         }
+    }
+
+    public static class TagProcessorExtensions
+    {
+        public static T ValueForKey<T>(this Dictionary<string, object> source, string key, StringComparison comparison)
+        {
+            object value;
+            if (source.TryGetValueForKey(key, comparison, out value))
+                return (T)value;
+
+            return default(T);
+        }
+
+        public static bool TryGetValueForKey<T>(this Dictionary<string, object> source, string key, StringComparison comparison, out T value)
+        {
+            if (source != null)
+            {
+                string keyName = source.Keys.Where(x => x.Equals(key, comparison)).FirstOrDefault();
+                if (null != keyName)
+                {
+                    value = (T)source[keyName];
+                    return true;
+                }
+            }
+
+            value = default(T);
+            return false;
+        }
+
+        public static bool TryGetValueForKey(this Dictionary<string, object> source, string key, StringComparison comparison, out object value)
+        {
+            return source.TryGetValueForKey<object>(key, comparison, out value);
+        }
+            
     }
 }

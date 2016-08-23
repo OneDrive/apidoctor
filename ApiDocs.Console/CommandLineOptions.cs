@@ -106,7 +106,7 @@ namespace ApiDocs.ConsoleApp
 
                 var data = new Dictionary<string, object>();
 
-                var parameters = Validation.Http.HttpParser.ParseQueryString(AdditionalPageParameters.ToLower());
+                var parameters = Validation.Http.HttpParser.ParseQueryString(AdditionalPageParameters);
                 foreach (var key in parameters.AllKeys)
                 {
                     data[key] = parameters[key];

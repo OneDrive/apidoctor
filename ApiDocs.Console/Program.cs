@@ -41,6 +41,7 @@ namespace ApiDocs.ConsoleApp
     using ApiDocs.Validation.OData;
     using ApiDocs.Validation.Params;
     using ApiDocs.Validation.Writers;
+    using ApiDocs.Validation.Tags;
     using CommandLine;
     using Newtonsoft.Json;
     
@@ -231,13 +232,7 @@ namespace ApiDocs.ConsoleApp
             FancyConsole.VerboseWriteLine("Scanning documentation files...");
             ValidationError[] loadErrors;
 
-            string tagsToInclude = string.Empty;
-            if (options.PageParameterDict != null &&
-                options.PageParameterDict.ContainsKey("tags"))
-            {
-                tagsToInclude = options.PageParameterDict["tags"]?.ToString();
-            }
-
+            string tagsToInclude =  options.PageParameterDict.ValueForKey<string>("tags", StringComparison.OrdinalIgnoreCase) ?? string.Empty;
             if (!set.ScanDocumentation(tagsToInclude, out loadErrors))
             {
                 FancyConsole.WriteLine("Errors detected while parsing documentation set:");
