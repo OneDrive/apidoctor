@@ -1097,6 +1097,9 @@ namespace ApiDocs.ConsoleApp
                 case PublishOptions.PublishFormat.Mustache:
                     publisher = new HtmlMustacheWriter(docs, options);
                     break;
+                case PublishOptions.PublishFormat.JsonToc:
+                    publisher = new HtmlMustacheWriter(docs, options) { TocOnly = true };
+                    break;
                 case PublishOptions.PublishFormat.Swagger2:
                     publisher = new SwaggerWriter(docs, "https://service.org")  // TODO: Plumb in the base URL.
                     {

@@ -439,7 +439,8 @@ namespace ApiDocs.ConsoleApp
             Swagger2,
             Outline,
             Mustache,
-            Edmx
+            Edmx,
+            JsonToc
         }
     }
 }

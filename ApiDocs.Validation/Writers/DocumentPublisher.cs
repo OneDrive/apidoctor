@@ -198,20 +198,11 @@ namespace ApiDocs.Validation.Writers
 
 			var filesInDirectory = directory.GetFiles();
 			if (filesInDirectory.Length > 0)
-			{
-				// Create folder in the destination
+            {
+                EnsureDirectoryExists(directory, destinationRoot, pathDisplayName);
+            }
 
-				var relativePath = this.RelativeDirectoryPath(directory, false);
-                var newDirectoryPath = Path.Combine(destinationRoot.FullName, relativePath);
-				var newDirectory = new DirectoryInfo(newDirectoryPath);
-				if (!newDirectory.Exists)
-				{
-				    this.LogMessage(new ValidationMessage(pathDisplayName, "Creating new directory in output folder."));
-					newDirectory.Create();
-				}
-			}
-
-		    this.ConfigureOutputDirectory(destinationRoot);
+            this.ConfigureOutputDirectory(destinationRoot);
 
 			foreach (var file in filesInDirectory)
 			{
@@ -248,6 +239,18 @@ namespace ApiDocs.Validation.Writers
 
             await WriteAdditionalFilesAsync();
 		}
+
+        protected virtual void EnsureDirectoryExists(DirectoryInfo directory, DirectoryInfo destinationRoot, string pathDisplayName)
+        {
+            var relativePath = this.RelativeDirectoryPath(directory, false);
+            var newDirectoryPath = Path.Combine(destinationRoot.FullName, relativePath);
+            var newDirectory = new DirectoryInfo(newDirectoryPath);
+            if (!newDirectory.Exists)
+            {
+                this.LogMessage(new ValidationMessage(pathDisplayName, "Creating new directory in output folder."));
+                newDirectory.Create();
+            }
+        }
 
         protected virtual Task WriteAdditionalFilesAsync()
         {
