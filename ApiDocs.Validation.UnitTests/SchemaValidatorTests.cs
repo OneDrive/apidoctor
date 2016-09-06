@@ -159,7 +159,7 @@ namespace ApiDocs.Validation.UnitTests
             DocFile testFile = new DocFileForTesting(Resources.ExampleValidateResponse, "\test\test.md", "test.md", docSet);
 
             ValidationError[] detectedErrors;
-            testFile.Scan(out detectedErrors);
+            testFile.Scan(string.Empty, out detectedErrors);
 
             Assert.IsEmpty(detectedErrors.Where(x => x.IsError));
 
@@ -185,7 +185,7 @@ namespace ApiDocs.Validation.UnitTests
             DocFile testFile = new DocFileForTesting(Resources.ExampleValidationSelectStatement, "\test\test.md", "test.md", docSet);
 
             ValidationError[] detectedErrors;
-            testFile.Scan(out detectedErrors);
+            testFile.Scan(string.Empty, out detectedErrors);
 
             Assert.IsEmpty(detectedErrors.Where(x => x.IsError));
 
@@ -209,7 +209,7 @@ namespace ApiDocs.Validation.UnitTests
             DocFile testFile = new DocFileForTesting(Resources.ExampleValidationSelectStatementFailure, "\test\test.md", "test.md", docSet);
 
             ValidationError[] detectedErrors;
-            testFile.Scan(out detectedErrors);
+            testFile.Scan(string.Empty, out detectedErrors);
 
             Assert.IsEmpty(detectedErrors.Where(x => x.IsError));
 

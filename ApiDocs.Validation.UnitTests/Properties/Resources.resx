@@ -119,15 +119,15 @@
   </resheader>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="ExampleResources" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\test-docs\exampleresources.md;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+    <value>..\test-docs\ExampleResources.md;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
   </data>
   <data name="ExampleValidateResponse" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\test-docs\examplevalidateresponse.md;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+    <value>..\test-docs\ExampleValidateResponse.md;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
   </data>
   <data name="ExampleValidationSelectStatement" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\test-docs\examplevalidationselectstatement.md;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+    <value>..\test-docs\ExampleValidationSelectStatement.md;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
   </data>
   <data name="ExampleValidationSelectStatementFailure" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\test-docs\examplevalidationselectstatementfailure.md;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+    <value>..\test-docs\ExampleValidationSelectStatementFailure.md;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
   </data>
 </root>
