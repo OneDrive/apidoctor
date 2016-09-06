@@ -78,12 +78,12 @@ namespace ApiDocs.Publishing.Html
             e.Handled = true;
         }
 
-        protected override void EnsureDirectoryExists(DirectoryInfo directory, DirectoryInfo destinationRoot, string pathDisplayName)
+        protected override void EnsureDirectoryExists(DirectoryInfo directory, DirectoryInfo destinationRoot, string pathDisplayName, bool isRootPath)
         {
-            if (this.TocOnly)
+            if (!isRootPath && this.TocOnly)
                 return;
 
-            base.EnsureDirectoryExists(directory, destinationRoot, pathDisplayName);
+            base.EnsureDirectoryExists(directory, destinationRoot, pathDisplayName, isRootPath);
         }
 
         protected override bool ShouldPublishFile(DocFile file)
@@ -91,6 +91,13 @@ namespace ApiDocs.Publishing.Html
             if (this.TocOnly)
                 return false;
 
+            return base.ShouldPublishFile(file);
+        }
+
+        protected override bool ShouldPublishFile(FileInfo file)
+        {
+            if (this.TocOnly)
+                return false;
             return base.ShouldPublishFile(file);
         }
 
