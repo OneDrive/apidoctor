@@ -130,7 +130,7 @@ namespace ApiDocs.Validation.Writers
             DirectoryInfo destination = new DirectoryInfo(outputFolder);
             this.SnapVariables();
 
-			await this.PublishFromDirectoryAsync(new DirectoryInfo(this.RootPath), destination);
+			await this.PublishFromDirectoryAsync(new DirectoryInfo(this.RootPath), destination, true);
 		}
 
         protected void SnapVariables()
@@ -186,7 +186,7 @@ namespace ApiDocs.Validation.Writers
 	    /// </summary>
 	    /// <param name="directory">Directory.</param>
 	    /// <param name="destinationRoot"></param>
-	    protected virtual async Task PublishFromDirectoryAsync(DirectoryInfo directory, DirectoryInfo destinationRoot)
+	    protected virtual async Task PublishFromDirectoryAsync(DirectoryInfo directory, DirectoryInfo destinationRoot, bool isRootPath)
 		{
             if (directory.FullName == this.Options.TemplatePath)
             {
@@ -198,20 +198,11 @@ namespace ApiDocs.Validation.Writers
 
 			var filesInDirectory = directory.GetFiles();
 			if (filesInDirectory.Length > 0)
-			{
-				// Create folder in the destination
+            {
+                EnsureDirectoryExists(directory, destinationRoot, pathDisplayName, isRootPath);
+            }
 
-				var relativePath = this.RelativeDirectoryPath(directory, false);
-                var newDirectoryPath = Path.Combine(destinationRoot.FullName, relativePath);
-				var newDirectory = new DirectoryInfo(newDirectoryPath);
-				if (!newDirectory.Exists)
-				{
-				    this.LogMessage(new ValidationMessage(pathDisplayName, "Creating new directory in output folder."));
-					newDirectory.Create();
-				}
-			}
-
-		    this.ConfigureOutputDirectory(destinationRoot);
+            this.ConfigureOutputDirectory(destinationRoot);
 
 			foreach (var file in filesInDirectory)
 			{
@@ -225,7 +216,7 @@ namespace ApiDocs.Validation.Writers
                     if (this.ShouldPublishFile(docFile))
 					    await this.PublishFileToDestinationAsync(file, destinationRoot, docFile);
 				}
-				else
+				else if (this.ShouldPublishFile(file))
 				{
 				    this.CopyFileToDestination(file, destinationRoot);
 				}
@@ -243,11 +234,28 @@ namespace ApiDocs.Validation.Writers
 			    
                 var displayName = this.RelativeDirectoryPath(folder, true);
 			    this.LogMessage(new ValidationMessage(displayName, "Scanning directory."));
-			    await this.PublishFromDirectoryAsync(folder, destinationRoot);
+			    await this.PublishFromDirectoryAsync(folder, destinationRoot, false);
 			}
 
             await WriteAdditionalFilesAsync();
 		}
+
+        protected virtual bool ShouldPublishFile(FileInfo file)
+        {
+            return true;
+        }
+
+        protected virtual void EnsureDirectoryExists(DirectoryInfo directory, DirectoryInfo destinationRoot, string pathDisplayName, bool isRootPath)
+        {
+            var relativePath = this.RelativeDirectoryPath(directory, false);
+            var newDirectoryPath = Path.Combine(destinationRoot.FullName, relativePath);
+            var newDirectory = new DirectoryInfo(newDirectoryPath);
+            if (!newDirectory.Exists)
+            {
+                this.LogMessage(new ValidationMessage(pathDisplayName, "Creating new directory in output folder."));
+                newDirectory.Create();
+            }
+        }
 
         protected virtual Task WriteAdditionalFilesAsync()
         {

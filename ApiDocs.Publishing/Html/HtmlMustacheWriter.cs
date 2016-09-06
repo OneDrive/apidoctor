@@ -42,6 +42,10 @@ namespace ApiDocs.Publishing.Html
 
         public bool CollapseTocToActiveGroup { get; set; }
 
+        /// <summary>
+        /// Switch off the output of HTML files and just generate the TOC file
+        /// </summary>
+        public bool TocOnly { get; set; }
 
         public HtmlMustacheWriter(DocSet docs, IPublishOptions options) : base(docs, options)
         {
@@ -72,6 +76,29 @@ namespace ApiDocs.Publishing.Html
 
             e.Substitute = "";
             e.Handled = true;
+        }
+
+        protected override void EnsureDirectoryExists(DirectoryInfo directory, DirectoryInfo destinationRoot, string pathDisplayName, bool isRootPath)
+        {
+            if (!isRootPath && this.TocOnly)
+                return;
+
+            base.EnsureDirectoryExists(directory, destinationRoot, pathDisplayName, isRootPath);
+        }
+
+        protected override bool ShouldPublishFile(DocFile file)
+        {
+            if (this.TocOnly)
+                return false;
+
+            return base.ShouldPublishFile(file);
+        }
+
+        protected override bool ShouldPublishFile(FileInfo file)
+        {
+            if (this.TocOnly)
+                return false;
+            return base.ShouldPublishFile(file);
         }
 
 

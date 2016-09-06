@@ -364,7 +364,7 @@ namespace ApiDocs.ConsoleApp
         [Option("output", Required=true, HelpText="Output directory for sanitized documentation.")]
         public string OutputDirectory { get; set; }
 
-        [Option("format", DefaultValue=PublishFormat.Markdown, HelpText="Format of the output documentation.")]
+        [Option("format", DefaultValue=PublishFormat.Markdown, HelpText="Format of the output documentation. Possiblev values are html, markdown, mustache, jsontoc, swagger, and edmx.")]
         public PublishFormat Format { get; set; }
 
         [Option("template", HelpText = "Specify the folder where output template files are located.")]
@@ -456,7 +456,8 @@ namespace ApiDocs.ConsoleApp
             Swagger2,
             Outline,
             Mustache,
-            Edmx
+            Edmx,
+            JsonToc
         }
     }
 }
