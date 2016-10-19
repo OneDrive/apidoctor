@@ -348,9 +348,13 @@ namespace ApiDocs.Validation
                         {
                             annotation = this.ParsePageAnnotation(block);
                         }
+                        catch (JsonReaderException readerEx)
+                        {
+                            detectedErrors.Add(new ValidationWarning(ValidationErrorCode.JsonParserException, this.DisplayName, "Unable to parse page annotation JSON: {0}", readerEx.Message));
+                        }
                         catch (Exception ex)
                         {
-                            detectedErrors.Add(new ValidationWarning(ValidationErrorCode.JsonParserException, this.DisplayName, "Unable to parse potential page annotation: {0}", ex.Message));
+                            detectedErrors.Add(new ValidationWarning(ValidationErrorCode.AnnotationParserException, this.DisplayName, "Unable to parse annotation: {0}", ex.Message));
                         }
 
 

@@ -259,8 +259,48 @@ namespace ApiDocs.Validation
             this.Resources = foundResources.ToArray();
             this.Methods = foundMethods.ToArray();
 
+            //CheckForDuplicatesResources(foundResources, detectedErrors);
+            //CheckForDuplicatesMethods(foundMethods, detectedErrors);
+
             errors = detectedErrors.ToArray();
             return detectedErrors.Count == 0;
+        }
+
+        /// <summary>
+        /// Report errors if there are any methods with duplicate identifiers discovered
+        /// </summary>
+        /// <param name="foundMethods"></param>
+        /// <param name="detectedErrors"></param>
+        private void CheckForDuplicatesMethods(List<MethodDefinition> foundMethods, List<ValidationError> detectedErrors)
+        {
+            Dictionary<string, DocFile> identifiers = new Dictionary<string, DocFile>();
+            foreach (var method in foundMethods)
+            {
+                if (identifiers.ContainsKey(method.Identifier))
+                {
+                    detectedErrors.Add(new ValidationError(ValidationErrorCode.DuplicateMethodIdentifier, null, "Duplicate method identifier detected: {0} in {1} and {2}.", method.Identifier, identifiers[method.Identifier].DisplayName, method.SourceFile.DisplayName));
+                }
+                else
+                {
+                    identifiers.Add(method.Identifier, method.SourceFile);
+                }
+            }
+        }
+
+        private void CheckForDuplicatesResources(List<ResourceDefinition> foundResources, List<ValidationError> detectedErrors)
+        {
+            Dictionary<string, DocFile> identifiers = new Dictionary<string, DocFile>();
+            foreach (var resource in foundResources)
+            {
+                if (identifiers.ContainsKey(resource.Name))
+                {
+                    detectedErrors.Add(new ValidationError(ValidationErrorCode.DuplicateMethodIdentifier, null, "Duplicate method identifier detected: {0} in {1} and {2}.", resource.Name, identifiers[resource.Name].DisplayName, resource.SourceFile.DisplayName));
+                }
+                else
+                {
+                    identifiers.Add(resource.Name, resource.SourceFile);
+                }
+            }
         }
 
         /// <summary>

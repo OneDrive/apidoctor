@@ -39,24 +39,29 @@ namespace ApiDocs.ConsoleApp
         private static readonly Dictionary<string, long> TestStartTimes = new Dictionary<string, long>();
         private static readonly Dictionary<string, string> TestStartFilename = new Dictionary<string, string>();
 
-        public static void StartTest(string testName, string filename = null)
+        public static void StartTest(string testName, string filename = null, bool skipPrintingHeader = false)
         {
-            FancyConsole.WriteLine();
-            FancyConsole.Write(FancyConsole.ConsoleHeaderColor, "Starting test: ");
-            FancyConsole.Write(FancyConsole.ConsoleDefaultColor, testName);
+            if (!skipPrintingHeader)
+            {
+                FancyConsole.WriteLine();
+                FancyConsole.Write(FancyConsole.ConsoleHeaderColor, "Starting test: ");
+                FancyConsole.Write(FancyConsole.ConsoleDefaultColor, testName);
+            }
 
             if (null != filename)
             {
-                FancyConsole.Write(" [{0}]", filename);
+                if (!skipPrintingHeader)
+                    FancyConsole.Write(" [{0}]", filename);
                 TestStartFilename[testName] = filename;
             }
-            FancyConsole.WriteLine();
+            if (!skipPrintingHeader)
+                FancyConsole.WriteLine();
 
             TestStartTimes[testName] = DateTimeOffset.Now.Ticks;
         }
 
 
-        public static async Task FinishTestAsync(string testName, TestOutcome outcome, string message = null, string filename = null, string stdOut = null)
+        public static async Task FinishTestAsync(string testName, TestOutcome outcome, string message = null, string filename = null, string stdOut = null, bool printFailuresOnly = false)
         {
             var endTime = DateTimeOffset.Now.Ticks;
 
@@ -78,22 +83,23 @@ namespace ApiDocs.ConsoleApp
                 TestStartFilename.Remove(testName);
             }
 
-            FancyConsole.Write("Test {0} complete.", testName);
-
-            switch (outcome)
+            if (!printFailuresOnly || outcome != TestOutcome.Passed)
             {
-                case TestOutcome.Failed:
-                    FancyConsole.Write(ConsoleColor.Red, " Failed: {0}", message);
-                    break;
-                case TestOutcome.Passed:
-                    FancyConsole.Write(ConsoleColor.Green, " Passed: {0}", message);
-                    break;
-                default:
-                    FancyConsole.Write(" {0}: {1}", outcome, message);
-                    break;
+                FancyConsole.Write("Test {0} complete.", testName);
+                switch (outcome)
+                {
+                    case TestOutcome.Failed:
+                        FancyConsole.Write(ConsoleColor.Red, " Failed: {0}", message);
+                        break;
+                    case TestOutcome.Passed:
+                        FancyConsole.Write(ConsoleColor.Green, " Passed: {0}", message);
+                        break;
+                    default:
+                        FancyConsole.Write(" {0}: {1}", outcome, message);
+                        break;
+                }
+                FancyConsole.WriteLine(" duration: {0}", duration);
             }
-
-            FancyConsole.WriteLine(" duration: {0}", duration);
 
             await BuildWorkerApi.RecordTestAsync(testName, TestFrameworkName, outcome: outcome, durationInMilliseconds: (long)duration.TotalMilliseconds, errorMessage: message, filename: filename, stdOut: stdOut);
         }

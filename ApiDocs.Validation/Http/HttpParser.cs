@@ -149,7 +149,7 @@ namespace ApiDocs.Validation.Http
 
                         // Parse each header
                         int split = line.IndexOf(": ", StringComparison.Ordinal);
-                        if (split < 1) throw new ArgumentException("requestString contains an invalid header definition");
+                        if (split < 1) throw new ArgumentException($"Request contains an invalid header definition: \"{line}\". Missing whitespace between the headers and body?");
 
                         var headerName = line.Substring(0, split);
                         var headerValue = line.Substring(split + 1);

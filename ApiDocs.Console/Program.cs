@@ -138,7 +138,7 @@ namespace ApiDocs.ConsoleApp
             {
                 var error = new ValidationError(ValidationErrorCode.MissingRequiredArguments, null, "Command line is missing required arguments: {0}", missingProps.ComponentsJoinedByString(", "));
                 FancyConsole.WriteLine(origCommandLineOpts.GetUsage(invokedVerb));
-                await WriteOutErrorsAndFinishTestAsync(new ValidationError[] { error }, options.SilenceWarnings);
+                await WriteOutErrorsAndFinishTestAsync(new ValidationError[] { error }, options.SilenceWarnings, printFailuresOnly: options.PrintFailuresOnly);
                 Exit(failure: true);
             }
 
@@ -434,7 +434,7 @@ namespace ApiDocs.ConsoleApp
                 await TestReport.LogMessageAsync(message, category);
             }
 
-            return await WriteOutErrorsAndFinishTestAsync(errors, options.SilenceWarnings, successMessage: "No link errors detected.", testName: testName);
+            return await WriteOutErrorsAndFinishTestAsync(errors, options.SilenceWarnings, successMessage: "No link errors detected.", testName: testName, printFailuresOnly: options.PrintFailuresOnly);
         }
 
         /// <summary>
@@ -514,7 +514,7 @@ namespace ApiDocs.ConsoleApp
             {
                 detectedErrors.AddRange(doc.CheckDocumentStructure());
             }
-            await WriteOutErrorsAndFinishTestAsync(detectedErrors, options.SilenceWarnings, "    ", "No errors.", false, "Verify document structure", "Warnings detected", "Errors detected");
+            await WriteOutErrorsAndFinishTestAsync(detectedErrors, options.SilenceWarnings, "    ", "Passed.", false, "Verify document structure", "Warnings detected", "Errors detected", printFailuresOnly: options.PrintFailuresOnly);
             results.IncrementResultCount(detectedErrors);
 
             return results;
@@ -553,7 +553,7 @@ namespace ApiDocs.ConsoleApp
                     ValidationError[] errors;
                     docset.ResourceCollection.ValidateJsonExample(example.Metadata, example.SourceExample, out errors, new ValidationOptions { RelaxedStringValidation = options.RelaxStringTypeValidation });
 
-                    await WriteOutErrorsAndFinishTestAsync(errors, options.SilenceWarnings, "   ", "No errors.", false, testName, "Warnings detected", "Errors detected");
+                    await WriteOutErrorsAndFinishTestAsync(errors, options.SilenceWarnings, "   ", "Passed.", false, testName, "Warnings detected", "Errors detected", printFailuresOnly: options.PrintFailuresOnly);
                     results.IncrementResultCount(errors);
                 }
             }
@@ -575,12 +575,13 @@ namespace ApiDocs.ConsoleApp
 
             foreach (var method in methods)
             {
-                var testName = "check-method-syntax: " + method.Identifier;
-                TestReport.StartTest(testName, method.SourceFile.DisplayName);
+                var testName = "API Request: " + method.Identifier;
+                
+                TestReport.StartTest(testName, method.SourceFile.DisplayName, skipPrintingHeader: options.PrintFailuresOnly);
 
                 if (string.IsNullOrEmpty(method.ExpectedResponse))
                 {
-                    await TestReport.FinishTestAsync(testName, TestOutcome.Failed, "Null response where one was expected.");
+                    await TestReport.FinishTestAsync(testName, TestOutcome.Failed, "Null response where one was expected.", printFailuresOnly: options.PrintFailuresOnly);
                     results.FailureCount++;
                     continue;
                 }
@@ -600,7 +601,7 @@ namespace ApiDocs.ConsoleApp
                     errors = new ValidationError[] { new ValidationError(ValidationErrorCode.ExceptionWhileValidatingMethod, method.SourceFile.DisplayName, ex.Message) };
                 }
 
-                await WriteOutErrorsAndFinishTestAsync(errors, options.SilenceWarnings, "   ", "No errors.", false, testName, "Warnings detected", "Errors detected");
+                await WriteOutErrorsAndFinishTestAsync(errors, options.SilenceWarnings, "   ", "Passed.", false, testName, "Warnings detected", "Errors detected", printFailuresOnly: options.PrintFailuresOnly);
                 results.IncrementResultCount(errors);
             }
 
@@ -675,10 +676,17 @@ namespace ApiDocs.ConsoleApp
         /// <param name="warningsMessage"></param>
         /// <param name="errorsMessage"></param>
         /// <returns></returns>
-        private static async Task<bool> WriteOutErrorsAndFinishTestAsync(IEnumerable<ValidationError> errors, bool silenceWarnings, string indent = "", string successMessage = null, bool endLineBeforeWriting = false, string testName = null, string warningsMessage = null, string errorsMessage = null)
+        private static async Task<bool> WriteOutErrorsAndFinishTestAsync(IEnumerable<ValidationError> errors, bool silenceWarnings, string indent = "", string successMessage = null, bool endLineBeforeWriting = false, string testName = null, string warningsMessage = null, string errorsMessage = null, bool printFailuresOnly = false)
         {
             var validationErrors = errors as ValidationError[] ?? errors.ToArray();
-            WriteMessages(validationErrors, silenceWarnings, indent, endLineBeforeWriting);
+
+            string writeMessageHeader = null;
+            if (printFailuresOnly)
+            {
+                writeMessageHeader = $"Test {testName} results:";
+            }
+
+            WriteMessages(validationErrors, silenceWarnings, indent, endLineBeforeWriting, beforeWriteHeader: writeMessageHeader);
 
             TestOutcome outcome = TestOutcome.None;
             string outputMessage = null;
@@ -707,7 +715,7 @@ namespace ApiDocs.ConsoleApp
                     outputMessage = "Multiple warnings occured.";
                 outcome = TestOutcome.Passed;
             }
-            else
+            else 
             {
                 // write success message!
                 outputMessage = successMessage;
@@ -718,7 +726,7 @@ namespace ApiDocs.ConsoleApp
             if (null != testName)
             {
                 var errorMessage = (from e in validationErrors select e.ErrorText).ComponentsJoinedByString("\r\n");
-                await TestReport.FinishTestAsync(testName, outcome, outputMessage, stdOut: errorMessage);
+                await TestReport.FinishTestAsync(testName, outcome, outputMessage, stdOut: errorMessage, printFailuresOnly: printFailuresOnly);
             }
 
             return outcome == TestOutcome.Passed;
@@ -731,8 +739,9 @@ namespace ApiDocs.ConsoleApp
         /// <param name="errorsOnly"></param>
         /// <param name="indent"></param>
         /// <param name="endLineBeforeWriting"></param>
-        private static void WriteMessages(ValidationError[] validationErrors, bool errorsOnly = false, string indent = "", bool endLineBeforeWriting = false)
+        private static void WriteMessages(ValidationError[] validationErrors, bool errorsOnly = false, string indent = "", bool endLineBeforeWriting = false, string beforeWriteHeader = null)
         {
+            bool writtenHeader = false;
             foreach (var error in validationErrors)
             {
                 // Skip messages if verbose output is off
@@ -752,6 +761,11 @@ namespace ApiDocs.ConsoleApp
                     FancyConsole.WriteLine();
                 }
 
+                if (!writtenHeader && beforeWriteHeader != null)
+                {
+                    writtenHeader = true;
+                    FancyConsole.WriteLine(beforeWriteHeader);
+                }
                 WriteValidationError(indent, error);
             }
         }
@@ -1273,7 +1287,7 @@ namespace ApiDocs.ConsoleApp
                 results.IncrementResultCount(errors);
                 collectedErrors.AddRange(errors);
 
-                await WriteOutErrorsAndFinishTestAsync(errors, options.SilenceWarnings, successMessage: " no errors.");
+                await WriteOutErrorsAndFinishTestAsync(errors, options.SilenceWarnings, successMessage: " passed.", printFailuresOnly: options.PrintFailuresOnly);
             }
 
             if (options.IgnoreWarnings)

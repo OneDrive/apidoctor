@@ -70,7 +70,7 @@ namespace ApiDocs.Validation.Http
             {
                 foreach (var headerName in request.Headers.AllKeys)
                 {
-                    if (!reqs.StandardHeaders.Contains(headerName))
+                    if (!reqs.StandardHeaders.ContainsString(headerName, apiRequirements.CaseSensativeHeaders))
                     {
                         errors.Add(new ValidationWarning(ValidationErrorCode.NonStandardHeaderUsed, sourceFile, "Request includes a non-standard header: {0}", headerName));
                     }
@@ -78,6 +78,11 @@ namespace ApiDocs.Validation.Http
             }
 
             return new ValidationResult<bool>(!errors.Any(), errors);
+        }
+
+        public static bool ContainsString(this string[] array, string value, bool caseSenativeComparison = false)
+        {
+            return array.Any(x => x.Equals(value, caseSenativeComparison ? System.StringComparison.Ordinal : System.StringComparison.OrdinalIgnoreCase));
         }
 
         /// <summary>

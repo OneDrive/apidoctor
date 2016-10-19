@@ -51,6 +51,12 @@ namespace ApiDocs.Validation.Config
 
         [JsonProperty("jsonSerialization")]
         public JsonSerializationRequirements JsonSerialization {get;set;}
+
+        [JsonProperty("ignorableProperties")]
+
+        public string[] IgnorableProperties { get; set; }
+        [JsonProperty("caseSensativeHeaders")]
+        public bool CaseSensativeHeaders { get; set; }
     }
 
     public class HttpRequestRequirements

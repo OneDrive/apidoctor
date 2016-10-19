@@ -37,15 +37,15 @@ namespace ApiDocs.Validation.Json
     public class JsonSchema
     {
         #region Properties
-        public string ResourceName { get { return this.Metadata.ResourceType; } }
+        public string ResourceName { get { return this.Metadata?.ResourceType; } }
 
         protected Dictionary<string, ParameterDefinition> ExpectedProperties { get; private set; }
 
         internal CodeBlockAnnotation Metadata { get; private set; }
 
-        public string[] OptionalProperties { get { return (null == this.Metadata) ? null : this.Metadata.OptionalProperties; } }
+        public string[] OptionalProperties { get { return this.Metadata?.OptionalProperties; } }
 
-        public string[] NullableProperties { get { return (null == this.Metadata) ? null : this.Metadata.NullableProperties; } }
+        public string[] NullableProperties { get { return this.Metadata?.NullableProperties; } }
 
         public ResourceDefinition OriginalResource { get; set; }
 
@@ -449,8 +449,44 @@ namespace ApiDocs.Validation.Json
             }
             else
             {
-                detectedErrors.Add(new ValidationWarning(ValidationErrorCode.AdditionalPropertyDetected, null, "Undocumented property '{0}' [{1}] was not expected.", inputProperty.Name, inputProperty.Type));
+
+                // Check to see if this property is on the ignorable list
+                string[] ignorableUndocumentedProperties = this.OriginalResource?.SourceFile.Parent.Requirements?.IgnorableProperties;
+
+                string propertyName = inputProperty.Name;
+                string annotationName = null;
+                var indexOfAtSign = propertyName.IndexOf('@');
+                if (indexOfAtSign > 0)
+                {
+                    // attachments@odata.nextLink is an example of what we're looking for here
+                    annotationName = propertyName.Substring(indexOfAtSign);
+                    propertyName = propertyName.Substring(0, indexOfAtSign);
+                }
+
+
+                if (null != annotationName)
+                {
+                    // Check to see if propertyName is known or not. If it isn't known, fail.
+                    if (this.Properties.Any(x => x.Name.Equals(propertyName)))
+                    {
+                        // If the cleaned up propertyName is known, then check to see if the annotation is ignorable
+                        if (null != ignorableUndocumentedProperties && ignorableUndocumentedProperties.Contains(annotationName))
+                        {
+                            // If we know of both the property and the annotation, we're good.
+                            return PropertyValidationOutcome.Ok;
+                        }
+                    }
+                }
+
+                if (null != ignorableUndocumentedProperties && ignorableUndocumentedProperties.Contains(propertyName))
+                {
+                    return PropertyValidationOutcome.Ok;
+                }
+
+                // This property isn't legit
+                detectedErrors.Add(new ValidationWarning(ValidationErrorCode.AdditionalPropertyDetected, null, "Undocumented property '{0}' [{1}] was not expected on resource {2}.", inputProperty.Name, inputProperty.Type, this.ResourceName));
                 return PropertyValidationOutcome.MissingFromSchema;
+
             }
         }
 
@@ -545,14 +581,29 @@ namespace ApiDocs.Validation.Json
         /// <param name="options"></param>
         private PropertyValidationOutcome ValidateArrayProperty(ParameterDefinition actualProperty, Dictionary<string, JsonSchema> schemas, List<ValidationError> detectedErrors, ValidationOptions options)
         {
-            JArray actualArray = (JArray)JsonConvert.DeserializeObject(actualProperty.OriginalValue);
+            JArray actualArray = null;
+            try
+            {
+                actualArray = (JArray)JsonConvert.DeserializeObject(actualProperty.OriginalValue);
+            }
+            catch (InvalidCastException ex)
+            {
+                throw new InvalidCastException($"Property {actualProperty.Name} expected to be an array, but failed to cast value to an array: {actualProperty.OriginalValue}");
+            }
 
-            JsonSchema memberSchema;
-            if (string.IsNullOrEmpty(actualProperty.Type.CustomTypeName))
+            var expectedPropertyDefinition = this.ExpectedProperties[actualProperty.Name];
+            JsonSchema memberSchema = null;
+            if (actualProperty.Type.CollectionResourceType == SimpleDataType.Object && expectedPropertyDefinition.Type.CustomTypeName != null)
+            {
+                // We have an ambigious array, but we know what it's supposed to be so let's use that
+                schemas.TryGetValue(expectedPropertyDefinition.Type.CustomTypeName, out memberSchema);
+            }
+
+            if (memberSchema == null && string.IsNullOrEmpty(actualProperty.Type.CustomTypeName))
             {
                 return this.ValidateSimpleArrayProperty(actualProperty, this.ExpectedProperties[actualProperty.Name], detectedErrors);
             }
-            else if (!schemas.TryGetValue(actualProperty.Type.CustomTypeName, out memberSchema))
+            else if (memberSchema == null && !schemas.TryGetValue(actualProperty.Type.CustomTypeName, out memberSchema))
             {
                 detectedErrors.Add(new ValidationError(ValidationErrorCode.ResourceTypeNotFound, null, "Failed to locate resource definition for: {0}", actualProperty.Type.CustomTypeName));
                 return PropertyValidationOutcome.MissingResourceType;

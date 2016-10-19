@@ -98,6 +98,11 @@ namespace ApiDocs.ConsoleApp
         [Option("parameters", HelpText = "Specify additional page variables that are used by the publishing engine. URL encoded: key=value&key2=value2.")]
         public string AdditionalPageParameters { get; set; }
 
+        [Option("print-failures-only", HelpText = "Only prints test failures to the console.")]
+        public bool PrintFailuresOnly { get; set; }
+
+
+
         public Dictionary<string,object> PageParameterDict {
             get
             {

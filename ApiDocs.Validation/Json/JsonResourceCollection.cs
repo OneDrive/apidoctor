@@ -151,7 +151,7 @@ namespace ApiDocs.Validation.Json
             JsonSchema schema;
             if (string.IsNullOrEmpty(resourceType))
             {
-                errors.Add(new ValidationMessage(null, "Resource type was null or missing, so we assume there is no response to validate."));
+                errors.Add(new ValidationError(ValidationErrorCode.ResponseResourceTypeMissing, null, "Resource type was null or missing, so we assume there is no response to validate."));
                 schema = JsonSchema.EmptyResponseSchema;
             }
             else if (!this.registeredSchema.TryGetValue(resourceType, out schema) && !string.IsNullOrEmpty(jsonStringForFallbackIfMissingResource))
