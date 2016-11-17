@@ -65,7 +65,7 @@ namespace ApiDocs.Validation
                         break;
 
                     case PlaceholderLocation.HttpHeader:
-                        ExpectationSatisfied(key, actualResponse.Headers[keyIndex].FirstOrDefault(), expectedValues, detectedErrors);
+                        ExpectationSatisfied(key, actualResponse.Headers[keyIndex], expectedValues, detectedErrors);
                         break;
 
                     case PlaceholderLocation.Json:

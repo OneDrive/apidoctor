@@ -66,7 +66,7 @@ namespace ApiDocs.ConsoleApp
             FancyConsole.WriteLine();
             if (args.Length > 0)
                 FancyConsole.WriteLine("Command line: " + args.ComponentsJoinedByString(" "));
-            
+
 
             string verbName = null;
             BaseOptions verbOptions = null;
@@ -92,18 +92,7 @@ namespace ApiDocs.ConsoleApp
             }
 #endif
 
-            if (!string.IsNullOrEmpty(verbOptions.AppVeyorServiceUrl))
-            {
-                BuildWorker.UrlEndPoint = new Uri(verbOptions.AppVeyorServiceUrl);
-            }
-
-            var commandOptions = verbOptions as DocSetOptions;
-            if (null != commandOptions)
-            {
-                FancyConsole.WriteVerboseOutput = commandOptions.EnableVerboseOutput;
-            }
-
-            FancyConsole.LogFileName = verbOptions.LogFile;
+            SetStateFromOptions(verbOptions);
 
             var task = Task.Run(() => RunInvokedMethodAsync(options, verbName, verbOptions));
             try
@@ -115,6 +104,45 @@ namespace ApiDocs.ConsoleApp
                 FancyConsole.WriteLine(FancyConsole.ConsoleErrorColor, "Uncaught exception is causing a crash: {0}", ex);
                 Exit(failure: true, customExitCode: 40);
             }
+        }
+
+        private static void SetStateFromOptions(BaseOptions verbOptions)
+        {
+            if (!string.IsNullOrEmpty(verbOptions.AppVeyorServiceUrl))
+            {
+                BuildWorker.UrlEndPoint = new Uri(verbOptions.AppVeyorServiceUrl);
+            }
+
+            var commandOptions = verbOptions as DocSetOptions;
+            if (null != commandOptions)
+            {
+                FancyConsole.WriteVerboseOutput = commandOptions.EnableVerboseOutput;
+            }
+
+            var checkOptions = verbOptions as BasicCheckOptions;
+            if (null != checkOptions)
+            {
+                if (!string.IsNullOrEmpty(checkOptions.FilesChangedFromOriginalBranch))
+                {
+                    if (string.IsNullOrEmpty(checkOptions.GitExecutablePath))
+                    {
+                        var foundPath = GitHelper.FindGitLocation();
+                        if (null == foundPath)
+                        {
+                            FancyConsole.WriteLine(FancyConsole.ConsoleErrorColor, "To use changes-since-branch-only, git-path must be specified.");
+                            Exit(failure: true, customExitCode: 41);
+                        }
+                        else
+                        {
+                            FancyConsole.WriteLine(FancyConsole.ConsoleDefaultColor, $"Using GIT executable: {foundPath}");
+                            checkOptions.GitExecutablePath = foundPath;
+                        }
+
+                    }
+                }
+            }
+
+            FancyConsole.LogFileName = verbOptions.LogFile;
         }
 
         public static void LoadCurrentConfiguration(DocSetOptions options)
@@ -152,7 +180,7 @@ namespace ApiDocs.ConsoleApp
                     await PrintDocInformationAsync((PrintOptions)options);
                     break;
                 case CommandLineOptions.VerbCheckLinks:
-                    returnSuccess = await CheckLinksAsync((DocSetOptions)options);
+                    returnSuccess = await CheckLinksAsync((BasicCheckOptions)options);
                     break;
                 case CommandLineOptions.VerbDocs:
                     returnSuccess = await CheckDocsAsync((BasicCheckOptions)options);
@@ -406,7 +434,7 @@ namespace ApiDocs.ConsoleApp
         /// </summary>
         /// <param name="options"></param>
         /// <param name="docs"></param>
-        private static async Task<bool> CheckLinksAsync(DocSetOptions options, DocSet docs = null)
+        private static async Task<bool> CheckLinksAsync(BasicCheckOptions options, DocSet docs = null)
         {
             const string testName = "Check-links";
             var docset = docs ?? await GetDocSetAsync(options);
@@ -415,10 +443,17 @@ namespace ApiDocs.ConsoleApp
                 return false;
 
 
-            TestReport.StartTest(testName);
+            string[] interestingFiles = null;
+            if (!string.IsNullOrEmpty(options.FilesChangedFromOriginalBranch))
+            {
+                GitHelper helper = new GitHelper(options.GitExecutablePath, options.DocumentationSetPath);
+                interestingFiles = helper.FilesChangedFromBranch(options.FilesChangedFromOriginalBranch);
+            }
 
+            TestReport.StartTest(testName);
+            
             ValidationError[] errors;
-            docset.ValidateLinks(options.EnableVerboseOutput, out errors);
+            docset.ValidateLinks(options.EnableVerboseOutput, interestingFiles, out errors);
 
             foreach (var error in errors)
             {
@@ -608,6 +643,28 @@ namespace ApiDocs.ConsoleApp
             return results;
         }
 
+        private static DocFile[] GetSelectedFiles(BasicCheckOptions options, DocSet docset)
+        {
+            List<DocFile> files = new List<DocFile>();
+            if (!string.IsNullOrEmpty(options.FilesChangedFromOriginalBranch))
+            {
+                GitHelper helper = new GitHelper(options.GitExecutablePath, options.DocumentationSetPath);
+                var changedFiles = helper.FilesChangedFromBranch(options.FilesChangedFromOriginalBranch);
+                
+                foreach (var filePath in changedFiles)
+                {
+                    var file = docset.LookupFileForPath(filePath);
+                    if (null != file)
+                        files.Add(file);
+                }
+            }
+            else
+            {
+                files.AddRange(docset.Files);
+            }
+            return files.ToArray();
+        }
+
         /// <summary>
         /// Parse the command line parameters into a set of methods that match the command line parameters.
         /// </summary>
@@ -617,7 +674,20 @@ namespace ApiDocs.ConsoleApp
         private static MethodDefinition[] FindTestMethods(BasicCheckOptions options, DocSet docset)
         {
             MethodDefinition[] methods = null;
-            if (!string.IsNullOrEmpty(options.MethodName))
+            if (!string.IsNullOrEmpty(options.FilesChangedFromOriginalBranch))
+            {
+                GitHelper helper = new GitHelper(options.GitExecutablePath, options.DocumentationSetPath);
+                var changedFiles = helper.FilesChangedFromBranch(options.FilesChangedFromOriginalBranch);
+                List<MethodDefinition> foundMethods = new List<MethodDefinition>();
+                foreach (var filePath in changedFiles)
+                {
+                    var file = docset.LookupFileForPath(filePath);
+                    if (null != file)
+                        foundMethods.AddRange(file.Requests);
+                }
+                return foundMethods.ToArray();
+            }
+            else if (!string.IsNullOrEmpty(options.MethodName))
             {
                 methods = FindMethods(docset, options.MethodName);
                 if (null == methods || methods.Length == 0)

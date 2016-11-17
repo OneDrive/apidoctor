@@ -79,6 +79,7 @@
     <Compile Include="CheckResults.cs" />
     <Compile Include="CommandLineOptions.cs" />
     <Compile Include="FancyConsole.cs" />
+    <Compile Include="GitHelper.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TestReport.cs" />
