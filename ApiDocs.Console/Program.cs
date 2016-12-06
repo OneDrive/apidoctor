@@ -971,8 +971,7 @@ namespace ApiDocs.ConsoleApp
                 RecordError(ex.Message);
                 return null;
             }
-
-            AuthenicationCredentials credentials = account.CreateCredentials();
+            
             int concurrentTasks = commandLineOptions.ParallelTests ? ParallelTaskCount : 1;
 
             CheckResults docSetResults = new CheckResults();
@@ -988,7 +987,7 @@ namespace ApiDocs.ConsoleApp
                 ScenarioDefinition[] scenarios = docset.TestScenarios.ScenariosForMethod(method);
 
                 // Test these scenarios and validate responses
-                ValidationResults results = await method.ValidateServiceResponseAsync(scenarios, account, credentials, 
+                ValidationResults results = await method.ValidateServiceResponseAsync(scenarios, account, 
                     new ValidationOptions {
                         RelaxedStringValidation = commandLineOptions.RelaxStringTypeValidation,
                         IgnoreRequiredScopes = commandLineOptions.IgnoreRequiredScopes

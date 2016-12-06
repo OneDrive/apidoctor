@@ -72,13 +72,14 @@ namespace ApiDocs.Validation.Params
         /// Make a call to the HttpRequest and populate the Value property of 
         /// every PlaceholderValue in Values based on the result.
         /// </summary>
-        /// <param name="baseUrl"></param>
-        /// <param name="credentials"></param>
         /// <param name="storedValues"></param>
         /// <param name="documents"></param>
+        /// <param name="scenario"></param>
+        /// <param name="account"></param>
+        /// <param name="parentOutputValues"></param>
         /// <returns></returns>
-        public async Task<ValidationResult<bool>> MakeSetupRequestAsync(string baseUrl, AuthenicationCredentials credentials, Dictionary<string, string> storedValues, DocSet documents, ScenarioDefinition scenario, Dictionary<string, string> parentOutputValues = null)
-        {
+        public async Task<ValidationResult<bool>> MakeSetupRequestAsync(Dictionary<string, string> storedValues, DocSet documents, ScenarioDefinition scenario, IServiceAccount account, Dictionary<string, string> parentOutputValues = null)
+        {  
             // Copy the output values from parentOutputValues into our own
             if (null != parentOutputValues)
             {
@@ -104,7 +105,7 @@ namespace ApiDocs.Validation.Params
 
                 // Need to make a copy of the canned request here so that our state doesn't continue to pile up
                 var cannedRequestInstance = cannedRequest.CopyInstance();
-                return await cannedRequestInstance.MakeSetupRequestAsync(baseUrl, credentials, storedValues, documents, scenario, this.OutputValues);
+                return await cannedRequestInstance.MakeSetupRequestAsync(storedValues, documents, scenario, account, this.OutputValues);
             }
             
             // Get the HttpRequest, either from MethodName or by parsing HttpRequest
@@ -120,6 +121,7 @@ namespace ApiDocs.Validation.Params
             }
 
             MethodDefinition.AddTestHeaderToRequest(scenario, request);
+            MethodDefinition.AddAdditionalHeadersToRequest(account, request);            
 
             // If this is a canned request, we need to merge the parameters / placeholders here
             var placeholderValues = this.RequestParameters.ToPlaceholderValuesArray(storedValues);
@@ -134,12 +136,12 @@ namespace ApiDocs.Validation.Params
                 errors.Add(new ValidationError(ValidationErrorCode.ParameterParserError, SourceName, "Error rewriting the request with parameters from the scenario: {0}", ex.Message));
                 return new ValidationResult<bool>(false, errors);
             }
-            MethodDefinition.AddAccessTokenToRequest(credentials, request);
+            MethodDefinition.AddAccessTokenToRequest(account.CreateCredentials(), request);
             errors.Add(new ValidationMessage(null, "Test-setup request:\n{0}", request.FullHttpText()));
 
             try
             {
-                var response = await request.GetResponseAsync(baseUrl);
+                var response = await request.GetResponseAsync(account.BaseUrl);
                 if (response.RetryCount > 0)
                 {
                     errors.Add(new ValidationWarning(ValidationErrorCode.RequestWasRetried, null, "HTTP request was retried {0} times.", response.RetryCount));

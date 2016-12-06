@@ -160,18 +160,18 @@ namespace ApiDocs.Validation
         /// the base URL to the request URL, executing any test-setup requests, and replacing the placeholders in the prototype
         /// request with proper values.
         /// </summary>
-        /// <param name="scenario"></param>
-        /// <param name="baseUrl"></param>
-        /// <param name="credentials"></param>
+        /// <param name="scenario"></param>        
         /// <param name="documents"></param>
+        /// <param name="account"></param>
         /// <returns></returns>
-        public async Task<ValidationResult<HttpRequest>> GenerateMethodRequestAsync(ScenarioDefinition scenario, string baseUrl, AuthenicationCredentials credentials, DocSet documents)
+        public async Task<ValidationResult<HttpRequest>> GenerateMethodRequestAsync(ScenarioDefinition scenario, DocSet documents, IServiceAccount account)
         {
             var parser = new HttpParser();
             var request = parser.ParseHttpRequest(this.Request);
 
-            AddAccessTokenToRequest(credentials, request);
+            AddAccessTokenToRequest(account.CreateCredentials(), request);
             AddTestHeaderToRequest(scenario, request);
+            AddAdditionalHeadersToRequest(account, request);
 
             List<ValidationError> errors = new List<ValidationError>();
 
@@ -183,7 +183,7 @@ namespace ApiDocs.Validation
                 {
                     foreach (var setupRequest in scenario.TestSetupRequests)
                     {
-                        var result = await setupRequest.MakeSetupRequestAsync(baseUrl, credentials, storedValuesForScenario, documents, scenario);
+                        var result = await setupRequest.MakeSetupRequestAsync(storedValuesForScenario, documents, scenario, account);
                         errors.AddRange(result.Messages);
 
                         if (result.IsWarningOrError)
@@ -194,7 +194,7 @@ namespace ApiDocs.Validation
                     }
                 }
 
-                try 
+                try
                 {
                     var placeholderValues = scenario.RequestParameters.ToPlaceholderValuesArray(storedValuesForScenario);
                     request.RewriteRequestWithParameters(placeholderValues);
@@ -207,7 +207,7 @@ namespace ApiDocs.Validation
                             ValidationErrorCode.RewriteRequestFailure,
                             "GenerateMethodRequestAsync",
                             ex.Message));
-                    
+
                     return new ValidationResult<HttpRequest>(null, errors);
                 }
 
@@ -246,6 +246,24 @@ namespace ApiDocs.Validation
                 scenario.Description);
             request.Headers.Add("ApiDocsTestInfo", headerValue);
         }
+
+        /// <summary>
+        /// Breaks down the key/value string and adds to the request header
+        /// </summary>
+        /// <param name="headerKeyValueString"></param>
+        /// <returns></returns>
+        internal static void AddAdditionalHeadersToRequest(IServiceAccount account, HttpRequest request)
+        {
+            // parse the passed in addtional headers and add to request..format for headers should be <HeaderName>:<HeaderValue>
+            if (account.AdditionalHeaders != null && account.AdditionalHeaders.Length > 0)
+            {
+                foreach (string nameValueHeader in account.AdditionalHeaders)
+                {
+                    string[] split = nameValueHeader.Split(new Char[] { ':' }, 2);
+                    request.Headers.Add(split[0], split[1]);
+                }
+            }
+        }    
 
         internal static void AddAccessTokenToRequest(AuthenicationCredentials credentials, HttpRequest request)
         {

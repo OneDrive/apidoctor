@@ -26,6 +26,7 @@
 namespace ApiDocs.Validation
 {
     using System;
+    using System.Net;
     using Http;
 
     /// <summary>
@@ -134,10 +135,10 @@ namespace ApiDocs.Validation
 
         public override void AuthenticateRequest(HttpRequest request)
         {
-            
+
         }
     }
-
+    
     /// <summary>
     /// Enable username and password credentials.
     /// </summary>
@@ -150,6 +151,19 @@ namespace ApiDocs.Validation
         public override void AuthenticateRequest(HttpRequest request)
         {
             request.Credentials = new System.Net.NetworkCredential(this.Username, this.Password);
+        }
+    }
+
+    /// <summary>
+    /// Enable NTLM User credentials
+    /// </summary>
+    public class NtlmCredentials : AuthenicationCredentials
+    {
+        public ICredentials UserNtlmCreds { get; set; }
+
+        public override void AuthenticateRequest(HttpRequest request)
+        {
+            request.Credentials = UserNtlmCreds;
         }
     }
 }
