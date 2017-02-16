@@ -23,35 +23,29 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-namespace ApiDocs.Validation.Error
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using Newtonsoft.Json;
+using NUnit.Framework;
+using ApiDocs.Validation.Json;
+using System.Collections.Specialized;
+
+namespace ApiDocs.Validation.UnitTests
 {
-    public class ValidationWarning : ValidationError
+    [TestFixture]
+    public class JsonRewriteTests
     {
-
-        public ValidationWarning(ValidationErrorCode code, string source, string format, params object[] formatParams)
-            : base(code, source, format, formatParams)
+        [Test]
+        public void BasicRewrite()
         {
-
+            var json = "{ \"name\": \"foo\", \"@microsoft.graph.downloadUrl\": \"https://foo/bar/baz\", \"@microsoft.graph.conflictBehavior\": \"fail\" }";
+            var map = new Dictionary<string, string>();
+            map.Add("@microsoft.graph.downloadUrl", "@oneDrive.downloadUrl");
+            map.Add("@microsoft.graph.", "@oneDrive.");
+            var output = JsonRewriter.RewriteJsonProperties(json, map);
         }
-
-        public override bool IsWarning { get { return true; } }
-
-        public override bool IsError { get { return false; } }
-    }
-
-
-    public class UndocumentedPropertyWarning : ValidationWarning
-    {
-        public UndocumentedPropertyWarning(string source, string propertyName, ParameterDataType propertyType, string resourceName)
-            : base(ValidationErrorCode.AdditionalPropertyDetected, source, "Undocumented property '{0}' [{1}] was not expected on resource {2}.", propertyName, propertyType, resourceName)
-        {
-            this.PropertyName = propertyName;
-            this.PropertyType = propertyType;
-            this.ResourceName = resourceName;
-        }
-
-        public string PropertyName { get; private set; }
-        public ParameterDataType PropertyType { get; private set; }
-        public string ResourceName { get; private set; }
     }
 }

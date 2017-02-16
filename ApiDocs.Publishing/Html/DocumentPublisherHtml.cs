@@ -44,7 +44,7 @@ namespace ApiDocs.Publishing.Html
 
         public string HtmlOutputExtension { get; set; }
         public string TemplateHtmlFilename { get; set; }
-        protected Dictionary<string, object> PageParameters { get; set; }
+        protected Dictionary<string, string> PageParameters { get; set; }
 
         /// <summary>
         /// Allow HTML tags in the markdown source to pass through to the converted HTML. This is considered
@@ -231,8 +231,11 @@ namespace ApiDocs.Publishing.Html
             var destinationPath = this.GetPublishedFilePath(sourceFile, destinationRoot, HtmlOutputExtension);
 
             // Create a tag processor
-            string tagsInput = PageParameters.ValueForKey<string>("tags", StringComparison.OrdinalIgnoreCase) ?? string.Empty;
-
+            string tagsInput;
+            if (null == PageParameters || !PageParameters.TryGetValue("tags", out tagsInput))
+            {
+                tagsInput = string.Empty;
+            }
             TagProcessor tagProcessor = new TagProcessor(tagsInput,
                 page.Parent.SourceFolderPath, LogMessage);
 

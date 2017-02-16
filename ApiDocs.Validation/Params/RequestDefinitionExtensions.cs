@@ -31,6 +31,7 @@ namespace ApiDocs.Validation.Params
     using System.Linq;
     using ApiDocs.Validation.Http;
     using ApiDocs.Validation.Json;
+    using Newtonsoft.Json;
 
     public static class RequestDefinitionExtensions
     {
@@ -41,7 +42,7 @@ namespace ApiDocs.Validation.Params
         /// <param name="definition"></param>
         /// <param name="documents"></param>
         /// <returns></returns>
-        public static HttpRequest GetHttpRequest(this BasicRequestDefinition definition, DocSet documents)
+        public static HttpRequest GetHttpRequest(this BasicRequestDefinition definition, DocSet documents, IServiceAccount account)
         {
             HttpRequest foundRequest = null;
             if (!string.IsNullOrEmpty(definition.RawHttpRequest))
@@ -50,17 +51,17 @@ namespace ApiDocs.Validation.Params
             }
             else if (!string.IsNullOrEmpty(definition.MethodName))
             {
-                foundRequest = LookupHttpRequestForMethod(definition.MethodName, documents);
+                foundRequest = LookupHttpRequestForMethod(definition.MethodName, documents, account);
             }
             else if (!string.IsNullOrEmpty(definition.CannedRequestName))
             {
-                foundRequest = HttpRequestForCannedRequest(definition.CannedRequestName, documents);
+                foundRequest = HttpRequestForCannedRequest(definition.CannedRequestName, documents, account);
             }
 
             return foundRequest;
         }
 
-        private static HttpRequest LookupHttpRequestForMethod(string methodName, DocSet docset)
+        private static HttpRequest LookupHttpRequestForMethod(string methodName, DocSet docset, IServiceAccount account)
         {
             var queryForMethod = from m in docset.Methods
                                  where m.Identifier == methodName
@@ -72,10 +73,13 @@ namespace ApiDocs.Validation.Params
                 throw new Exception(string.Format("Failed to locate method {0} in the docset.", methodName));
             }
 
-            return ParseHttpRequest(foundMethod.Request);
+            var request = ParseHttpRequest(foundMethod.Request);
+            foundMethod.ModifyRequestForAccount(request, account);
+
+            return request;
         }
 
-        private static HttpRequest HttpRequestForCannedRequest(string requestName, DocSet docset)
+        private static HttpRequest HttpRequestForCannedRequest(string requestName, DocSet docset, IServiceAccount account)
         {
             var queryForRequest = from m in docset.CannedRequests
                 where m.Name == requestName
@@ -86,7 +90,7 @@ namespace ApiDocs.Validation.Params
                 throw new Exception(string.Format("Failed to find canned response {0} in the docset.", requestName));
             }
 
-            return GetHttpRequest(foundRequest, docset);
+            return GetHttpRequest(foundRequest, docset, account); ;
 
         }
 
@@ -137,6 +141,57 @@ namespace ApiDocs.Validation.Params
             }
         }
 
+        /// <summary>
+        /// Apply any namespace translations defined in the account to the parameters in the request body
+        /// </summary>
+        /// <param name="request"></param>
+        /// <param name="account"></param>
+        public static void RewriteRequestBodyNamespaces(this HttpRequest request, IServiceAccount account)
+        {
+            if (account.Transformations?.Request?.Properties == null)
+                return;
+
+            if (request.IsMatchingContentType("application/json"))
+            {
+                var translatedBody = JsonRewriter.RewriteJsonProperties(request.Body, account.Transformations.Request.Properties);
+                request.Body = translatedBody;
+            }
+            else if (request.IsMatchingContentType("multipart/related"))
+            {
+                var parsedBody = new MultipartMime.MultipartMimeContent(request.ContentType, request.Body);
+                var partsToRewrite = parsedBody.PartsWithContentType("application/json");
+                foreach(var part in partsToRewrite)
+                {
+                    part.Body = JsonRewriter.RewriteJsonProperties(part.Body, account.Transformations.Request.Properties);
+                }
+                request.Body = parsedBody.ToString();
+            }
+        }
+
+        public static void RewriteResponseBodyNamespaces(this HttpResponse response, IServiceAccount account)
+        {
+            if (account.Transformations?.Response?.Properties == null)
+                return;
+            if (!response.IsMatchingContentType("application/json"))
+                return;
+            if (response.Body.Length == 0)
+                return;
+
+            var translatedBody = JsonRewriter.RewriteJsonProperties(response.Body, account.Transformations.Response.Properties);
+            response.Body = translatedBody;
+        }
+
+        public static Dictionary<string, string> RemoveKnownEntities(this Dictionary<string, string> namespaceMap)
+        {
+            var knownKeys = new string[] { "!action" };
+            var output = new Dictionary<string, string>(namespaceMap);
+            foreach(var key in knownKeys)
+            {
+                output.Remove(key);
+            }
+            return output;
+        }
+
         public static PlaceholderValue[] ToPlaceholderValuesArray(this Dictionary<string, string> parameters, Dictionary<string, string> storedValues)
         {
             if (parameters == null)
@@ -159,21 +214,27 @@ namespace ApiDocs.Validation.Params
         /// <returns></returns>
         public static PlaceholderValue ConvertToPlaceholderValue(string key, string value, Dictionary<string, string> storedValues)
         {
+            string replacementValue = value;
+            switch(BasicRequestDefinition.LocationForKey(value))
+            {
+                case PlaceholderLocation.StoredValue:
+                    if (!storedValues.TryGetValue(value, out replacementValue))
+                    {
+                        throw new PlaceholderValueNotFoundException($"Unable to locate the placeholder value {value} in available values: {storedValues.Keys.ComponentsJoinedByString(",")}");
+                    }
+                    break;
+                case PlaceholderLocation.CSharpCode:
+                    replacementValue = CSharpEval.Evaluate(value.Substring(1), storedValues);
+                    break;
+            }
+
             PlaceholderValue v = new PlaceholderValue
             {
                 PlaceholderKey = key,
                 DefinedValue = value,
                 Location = BasicRequestDefinition.LocationForKey(key),
-                Value =
-                    BasicRequestDefinition.LocationForKey(value) == PlaceholderLocation.StoredValue
-                        ? storedValues[value]
-                        : value
+                Value = replacementValue
             };
-
-            if (BasicRequestDefinition.LocationForKey(v.Value) == PlaceholderLocation.CSharpCode)
-            {
-                v.Value = CSharpEval.Evaluate(v.Value.Substring(1), storedValues);
-            }
 
             // Allow the random-filename generator to swap the value with a randomly generated filename.
             int index = value == null ? -1 : value.IndexOf(RandomFilenameValuePrefix);
@@ -199,7 +260,6 @@ namespace ApiDocs.Validation.Params
                     }
                 }
                 string randomFilename = GenerateRandomFilename(placeholder);
-
                 v.Value = value.Replace(placeholder, randomFilename);
             }
 

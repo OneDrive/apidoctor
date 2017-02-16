@@ -49,7 +49,7 @@ namespace ApiDocs.Validation.UnitTests
             TestableDocFile file = new TestableDocFile(markdown);
             ValidationError[] errors;
 
-            Assert.IsTrue(file.Scan(out errors));
+            Assert.IsTrue(file.Scan(string.Empty, out errors));
             Assert.IsEmpty(errors.WarningsOrErrorsOnly());
 
             Assert.IsTrue(file.ValidateNoBrokenLinks(false, out errors));
@@ -75,7 +75,7 @@ This link goes [up one level](../anotherfile.md)
 
             ValidationError[] errors;
 
-            Assert.IsTrue(file.Scan(out errors));
+            Assert.IsTrue(file.Scan(string.Empty, out errors));
             var realErrors = from e in errors where e.IsWarning || e.IsError select e;
             Assert.IsEmpty(realErrors);
 
@@ -115,7 +115,7 @@ This link goes [up one level](../anotherfile.md)
 
             ValidationError[] errors;
 
-            Assert.IsTrue(file.Scan(out errors));
+            Assert.IsTrue(file.Scan(string.Empty, out errors));
             Assert.IsEmpty(errors.WarningsOrErrorsOnly());
 
             Assert.IsFalse(file.ValidateNoBrokenLinks(false, out errors));
@@ -142,7 +142,7 @@ This link goes [up one level](../anotherfile.md)
 
             ValidationError[] errors;
 
-            Assert.IsTrue(file.Scan(out errors));
+            Assert.IsTrue(file.Scan(string.Empty, out errors));
             Assert.IsEmpty(errors.WarningsOrErrorsOnly());
 
             Assert.IsFalse(file.ValidateNoBrokenLinks(false, out errors));
@@ -164,7 +164,7 @@ This link goes [up one level](../anotherfile.md)
             this.DisplayName = "testable_doc_file";
         }
 
-        public new bool Scan(out ValidationError[] errors)
+        public override bool Scan(string tags, out ValidationError[] errors)
         {
             this.HasScanRun = true;
             this.TransformMarkdownIntoBlocksAndLinks(this.Markdown);

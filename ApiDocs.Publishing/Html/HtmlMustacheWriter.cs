@@ -162,7 +162,7 @@ namespace ApiDocs.Publishing.Html
             public List<ValueObject<string>> HtmlHeaderAdditions { get; set; }
             public List<ValueObject<string>> HtmlFooterAdditions { get; set; }
             public string OriginalSourceRelativePath { get; set; }
-            public Dictionary<string, object> Parameters { get; set; }
+            public Dictionary<string, string> Parameters { get; set; }
         }
 
         private class ParameterPropertyBag : System.Dynamic.DynamicObject

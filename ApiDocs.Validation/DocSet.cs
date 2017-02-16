@@ -318,8 +318,8 @@ namespace ApiDocs.Validation
 
             List<ValidationError> detectedErrors = new List<ValidationError>();
 
-            // Verify the request is valid (headers, etc)
-            method.VerifyHttpRequest(detectedErrors);
+            // Verify the request is valid (headers, request body)
+            method.VerifyRequestFormat(detectedErrors);
 
             // Verify that the expected response headers match the actual response headers
             ValidationError[] httpErrors;

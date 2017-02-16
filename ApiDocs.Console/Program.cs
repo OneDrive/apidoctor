@@ -58,6 +58,8 @@ namespace ApiDocs.ConsoleApp
         // Set to true to disable returning an error code when the app exits.
         private static bool IgnoreErrors { get; set; }
 
+        private static List<UndocumentedPropertyWarning> DiscoveredUndocumentedProperties = new List<UndocumentedPropertyWarning>();
+
         static void Main(string[] args)
         {
             Logging.ProviderLogger(new ConsoleAppLogger());
@@ -260,7 +262,12 @@ namespace ApiDocs.ConsoleApp
             FancyConsole.VerboseWriteLine("Scanning documentation files...");
             ValidationError[] loadErrors;
 
-            string tagsToInclude =  options.PageParameterDict.ValueForKey<string>("tags", StringComparison.OrdinalIgnoreCase) ?? string.Empty;
+            string tagsToInclude;
+            if (null == options.PageParameterDict || !options.PageParameterDict.TryGetValue("tags", out tagsToInclude))
+            {
+                tagsToInclude = String.Empty;
+            }
+
             if (!set.ScanDocumentation(tagsToInclude, out loadErrors))
             {
                 FancyConsole.WriteLine("Errors detected while parsing documentation set:");
@@ -814,6 +821,8 @@ namespace ApiDocs.ConsoleApp
             bool writtenHeader = false;
             foreach (var error in validationErrors)
             {
+                RecordUndocumentedProperties(error);
+
                 // Skip messages if verbose output is off
                 if (!error.IsWarning && !error.IsError && !FancyConsole.WriteVerboseOutput)
                 {
@@ -837,6 +846,21 @@ namespace ApiDocs.ConsoleApp
                     FancyConsole.WriteLine(beforeWriteHeader);
                 }
                 WriteValidationError(indent, error);
+            }
+        }
+
+        private static void RecordUndocumentedProperties(ValidationError error)
+        {
+            if (error is UndocumentedPropertyWarning)
+            {
+                DiscoveredUndocumentedProperties.Add((UndocumentedPropertyWarning)error);
+            }
+            else if (error.InnerErrors != null && error.InnerErrors.Any())
+            {
+                foreach(var innerError in error.InnerErrors)
+                {
+                    RecordUndocumentedProperties(innerError);
+                }
             }
         }
 
@@ -877,7 +901,7 @@ namespace ApiDocs.ConsoleApp
             if (!string.IsNullOrEmpty(options.BranchName))
             {
                 string[] validBranches = null;
-                if (null != CurrentConfiguration) 
+                if (null != CurrentConfiguration)
                     validBranches = CurrentConfiguration.CheckServiceEnabledBranches;
 
                 if (null != validBranches && !validBranches.Contains(options.BranchName))
@@ -920,14 +944,17 @@ namespace ApiDocs.ConsoleApp
                     x => string.IsNullOrEmpty(options.AccountName)
                         ? x.Enabled
                         : options.AccountName.Equals(x.Name));
-            
+
             var methods = FindTestMethods(options, docset);
 
             Dictionary<string, CheckResults> results = new Dictionary<string, CheckResults>();
             foreach (var account in accountsToProcess)
             {
                 var accountResults = await CheckMethodsForAccountAsync(options, account, methods, docset);
-                results[account.Name] = accountResults;
+                if (null != accountResults)
+                {
+                    results[account.Name] = accountResults;
+                }
             }
 
             // Disable http logging
@@ -937,14 +964,43 @@ namespace ApiDocs.ConsoleApp
                 httpLogging.ClosePackage();
             }
 
-            // TODO: Print out account summary if multiple accounts were used
-            foreach(var key in results.Keys)
+            // Print out account summary if multiple accounts were used
+            foreach (var key in results.Keys)
             {
                 FancyConsole.Write("Account {0}: ", key);
                 results[key].PrintToConsole(false);
             }
 
+            // Print out undocumented properties, if any where found.
+            WriteUndocumentedProperties();
+
             return !results.Values.Any(x => x.WereFailures);
+        }
+
+        private static void WriteUndocumentedProperties()
+        {
+            // Collapse all the properties we've discovered down into an easy-to-digest list of properties and resources
+            Dictionary<string, HashSet<string>> undocumentedProperties = new Dictionary<string, HashSet<string>>();
+            foreach (var props in DiscoveredUndocumentedProperties)
+            {
+                HashSet<string> foundPropertiesOnResource;
+                if (!undocumentedProperties.TryGetValue(props.ResourceName, out foundPropertiesOnResource))
+                {
+                    foundPropertiesOnResource = new HashSet<string>();
+                    undocumentedProperties.Add(props.ResourceName, foundPropertiesOnResource);
+                }
+                foundPropertiesOnResource.Add(props.PropertyName);
+            }
+
+            string seperator = ", ";
+            if (undocumentedProperties.Any())
+            {
+                FancyConsole.WriteLine(FancyConsole.ConsoleWarningColor, "The following undocumented properties were detected:");
+                foreach (var resource in undocumentedProperties)
+                {
+                    Console.WriteLine($"Resource {resource.Key}: {resource.Value.ComponentsJoinedByString(seperator)}");
+                }
+            }
         }
 
         /// <summary>
@@ -1072,6 +1128,7 @@ namespace ApiDocs.ConsoleApp
                                     "    ",
                                     FancyConsole.ConsoleDefaultColor,
                                     message.ErrorText);
+                            RecordUndocumentedProperties(message);
                         }
 
                         if (options.SilenceWarnings && scenario.Outcome == ValidationOutcome.Warning)

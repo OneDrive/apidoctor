@@ -27,17 +27,39 @@ namespace ApiDocs.Validation
 {
     using System;
     using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
     using System.Threading.Tasks;
 
     public interface IServiceAccount
     {
+        /// <summary>
+        /// Display name of the account
+        /// </summary>
         string Name { get; }
+        
+        /// <summary>
+        /// Determine if the account is enabled for use in test runs.
+        /// </summary>
         bool Enabled { get; }
+        
+        /// <summary>
+        /// Base URL for all relative API URLs
+        /// </summary>
         string BaseUrl { get; }
+        
+        /// <summary>
+        /// Scopes supported by this account / authentication
+        /// </summary>
         string[] Scopes {get;}
+        
+        /// <summary>
+        /// Additional HTTP headers added to all requests for this account
+        /// </summary>
         string[] AdditionalHeaders { get; }
+        
+        /// <summary>
+        /// Collection of namespaces that are rewritten when a request is generated. Allows conversion between microsoft.graph and workload namespace, for example.
+        /// </summary>
+        AccountTransforms Transformations { get; }
 
         /// <summary>
         /// Called the first time an account is created, allowing the account to 
@@ -50,6 +72,5 @@ namespace ApiDocs.Validation
         /// </summary>
         /// <returns></returns>
         AuthenicationCredentials CreateCredentials();
-
     }
 }

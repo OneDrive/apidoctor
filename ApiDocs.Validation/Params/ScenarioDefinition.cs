@@ -25,8 +25,10 @@
 
 namespace ApiDocs.Validation.Params
 {
+    using System;
     using System.Collections.Generic;
     using Newtonsoft.Json;
+    using System.Linq;
 
     /// <summary>
     /// Class represents information about a set of parameters that are used to make a request
@@ -67,6 +69,11 @@ namespace ApiDocs.Validation.Params
             {
                 return string.Concat(this.Description, " (", this.MethodName, ")");
             }
+        }
+
+        internal MethodDefinition GetMethodDefinition(DocSet documents)
+        {
+            return documents.Methods.FirstOrDefault(x => x.Identifier == this.MethodName);
         }
     }
 

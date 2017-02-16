@@ -112,14 +112,13 @@ namespace ApiDocs.Validation.Params
             HttpRequest request;
             try
             {
-                request = this.GetHttpRequest(documents);
+                request = this.GetHttpRequest(documents, account);
             }
             catch (Exception ex)
             {
                 errors.Add(new ValidationError(ValidationErrorCode.InvalidRequestFormat, null, "An error occured creating the http request: {0}", ex.Message));
                 return new ValidationResult<bool>(false, errors);
             }
-
             MethodDefinition.AddTestHeaderToRequest(scenario, request);
             MethodDefinition.AddAdditionalHeadersToRequest(account, request);            
 
@@ -141,7 +140,7 @@ namespace ApiDocs.Validation.Params
 
             try
             {
-                var response = await request.GetResponseAsync(account.BaseUrl);
+                var response = await request.GetResponseAsync(account);
                 if (response.RetryCount > 0)
                 {
                     errors.Add(new ValidationWarning(ValidationErrorCode.RequestWasRetried, null, "HTTP request was retried {0} times.", response.RetryCount));

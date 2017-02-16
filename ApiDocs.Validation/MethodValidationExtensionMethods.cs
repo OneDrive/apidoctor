@@ -168,7 +168,7 @@ namespace ApiDocs.Validation
 
             // Execute the actual tested method (the result of the method preview call, which made the test-setup requests)
             startTicks = DateTimeOffset.UtcNow.Ticks;
-            var actualResponse = await requestPreview.GetResponseAsync(account.BaseUrl);
+            var actualResponse = await requestPreview.GetResponseAsync(account);
             TimeSpan actualMethodDuration = new TimeSpan(DateTimeOffset.UtcNow.Ticks - startTicks);
 
             var requestResults = results[actionName];
@@ -184,7 +184,6 @@ namespace ApiDocs.Validation
                 new ValidationError[]
                 { new ValidationMessage(null, "HTTP Response:\r\n{0}", actualResponse.FullText(false)) });
             requestResults.Duration = actualMethodDuration;
-           
 
             // Perform validation on the method's actual response
             ValidationError[] errors;

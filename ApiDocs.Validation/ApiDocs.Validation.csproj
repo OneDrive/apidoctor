@@ -59,13 +59,18 @@
     <Compile Include="ExtensionMethods.cs" />
     <Compile Include="HttpLog\HttpLogGenerator.cs" />
     <Compile Include="Http\HttpParser.cs" />
+    <Compile Include="Http\HttpParserRequestException.cs" />
     <Compile Include="Http\HttpRequest.cs" />
     <Compile Include="Http\HttpResponse.cs" />
     <Compile Include="IServiceAccount.cs" />
     <Compile Include="Json\JsonExample.cs" />
+    <Compile Include="Json\JsonRewriter.cs" />
     <Compile Include="Json\ValidationOptions.cs" />
     <Compile Include="Logging.cs" />
+    <Compile Include="MetadataTransforms.cs" />
     <Compile Include="MethodValidationExtensionMethods.cs" />
+    <Compile Include="MultipartMime\MimeContentType.cs" />
+    <Compile Include="MultipartMime\MultipartMimeContent.cs" />
     <Compile Include="OData\Annotations.cs" />
     <Compile Include="OData\DataServices.cs" />
     <Compile Include="OData\EntityFramework.cs" />
@@ -80,6 +85,7 @@
     <Compile Include="ParameterDataType.cs" />
     <Compile Include="ParameterDefinition.cs" />
     <Compile Include="Params\CSharpEval.cs" />
+    <Compile Include="Params\PlaceholderValueNotFoundException.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -90,6 +96,7 @@
     <Compile Include="TableSpec\TableParserConfig.cs" />
     <Compile Include="Tags\TagProcessor.cs" />
     <Compile Include="ValidationConfig.cs" />
+    <Compile Include="StringSuggestions.cs" />
     <Compile Include="Writers\MarkdownPublisher.cs.cs" />
     <Compile Include="Writers\DocumentPublisher.cs" />
     <Compile Include="ItemDefinition.cs" />

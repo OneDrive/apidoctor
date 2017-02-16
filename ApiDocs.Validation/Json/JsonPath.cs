@@ -121,6 +121,7 @@ namespace ApiDocs.Validation.Json
             return JsonConvert.SerializeObject(originalObject, Formatting.Indented);
         }
 
+
         /// <summary>
         /// Decompose path string into the individual navigation members (propertyName[arrayindex])
         /// Property names can be separated by periods ($.foo.bar) and can be enclosed in square brackets ($.['foo'].['bar'])
@@ -285,13 +286,9 @@ namespace ApiDocs.Validation.Json
                 object foundValue = null;
                 if (null != container)
                 {
-                    try
+                    if (!container.TryGetPropertyValue(this.PropertyName, out foundValue) && !createIfMissing)
                     {
-                        foundValue = container[this.PropertyName];
-                    }
-                    catch (Exception ex)
-                    {
-                        throw new JsonPathException(string.Format("Couldn't locate property {0}", this.PropertyName), ex);
+                        throw new JsonPathException($"Couldn't locate property {this.PropertyName} in JSON object.");
                     }
 
                     if (foundValue == null && (this.Child != null || this.ArrayIndex >= 0))
@@ -305,9 +302,13 @@ namespace ApiDocs.Validation.Json
                         foundValue = container[this.PropertyName];
                     }
                 }
+                else if (null == source)
+                {
+                    throw new JsonPathException($"Null object encountered while parsing JsonPath");
+                }
                 else
                 {
-                    throw new JsonPathException("Unsupported object type: " + source.ToString());
+                    throw new JsonPathException($"Unsupported object type: {source}");
                 }
 
                 if (this.ArrayIndex >= 0)
@@ -342,7 +343,11 @@ namespace ApiDocs.Validation.Json
                     {
                         if (null == value)
                         {
-                            container[this.PropertyName] = null;
+                            JProperty prop;
+                            if (container.TryGetProperty(this.PropertyName, out prop))
+                            {
+                                prop.Remove();
+                            }
                         }
                         else
                         {

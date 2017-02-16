@@ -114,7 +114,8 @@ namespace ApiDocs.Validation.Error
         SkippedSimilarErrors,
         RequiredScopesMissing,
         AnnotationParserException,
-        DuplicateMethodIdentifier
+        DuplicateMethodIdentifier,
+        ContentFormatException
     }
 
     public class ValidationError

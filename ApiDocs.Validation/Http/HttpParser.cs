@@ -59,12 +59,12 @@ namespace ApiDocs.Validation.Http
                     case ParserMode.FirstLine:
                         var components = line.Split(' ');
                         if (components.Length < 2) 
-                            throw new ArgumentException("requestString does not contain a proper HTTP request first line.");
+                            throw new HttpParserRequestException("RequestString does not contain a proper HTTP request first line.");
                         if (components.Length > 3)
-                            throw new ArgumentException("requestString does not contain a proper HTTP request first line (more than the expected 3 components)");
+                            throw new HttpParserRequestException("RequestString does not contain a proper HTTP request first line (more than the expected 3 components)");
 
                         if (components[0].StartsWith("HTTP/"))
-                            throw new ArgumentException("requestString contains an HTTP response.");
+                            throw new HttpParserRequestException("RequestString contains an HTTP response.");
 
                         request.Method = components[0];
                         request.Url = components[1];

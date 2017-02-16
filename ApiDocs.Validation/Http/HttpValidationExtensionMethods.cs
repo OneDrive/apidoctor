@@ -49,9 +49,9 @@ namespace ApiDocs.Validation.Http
 
             var reqs = apiRequirements.HttpRequest;
 
-            var requestMimeType = ConvertToMimeType(request.ContentType);
-            if (null != reqs.ContentTypes && null != requestMimeType 
-                && !reqs.ContentTypes.Contains(requestMimeType))
+            var requestMimeType = new MultipartMime.MimeContentType(request.ContentType);
+            if (null != reqs.ContentTypes && null != requestMimeType.MimeType 
+                && !reqs.ContentTypes.Contains(requestMimeType.MimeType))
             {
                 errors.Add(new ValidationWarning(ValidationErrorCode.InvalidContentType, sourceFile, "Request content-type header value is not in the supported list of content-types: {0}", request.ContentType));
             }
@@ -85,23 +85,6 @@ namespace ApiDocs.Validation.Http
             return array.Any(x => x.Equals(value, caseSenativeComparison ? System.StringComparison.Ordinal : System.StringComparison.OrdinalIgnoreCase));
         }
 
-        /// <summary>
-        /// Converts to just the MIME type (application/json) for a content type header (application/json; odata.metadata=full)
-        /// </summary>
-        /// <param name="contentTypeHeaderValue"></param>
-        /// <returns></returns>
-        public static string ConvertToMimeType(string contentTypeHeaderValue)
-        {
-            if (null == contentTypeHeaderValue)
-                return null;
-
-            var splitIndex = contentTypeHeaderValue.IndexOf(';');
-            if (-1 == splitIndex)
-                return contentTypeHeaderValue;
-
-            return contentTypeHeaderValue.Substring(0, splitIndex).TrimEnd();
-        }
-
         public static ValidationResult<bool> IsResponseValid(this HttpResponse response, string sourceFile, ApiRequirements requirements)
         {
             if (null == requirements || null == requirements.HttpResponse)
@@ -111,9 +94,9 @@ namespace ApiDocs.Validation.Http
 
             var reqs = requirements.HttpResponse;
 
-            var responseMimeType = ConvertToMimeType(response.ContentType);
+            var responseMimeType = new MultipartMime.MimeContentType(response.ContentType);
             if (reqs.ContentTypes != null && null != responseMimeType 
-                && !reqs.ContentTypes.Contains(responseMimeType))
+                && !reqs.ContentTypes.Contains(responseMimeType.MimeType))
             {
                 errors.Add(new ValidationWarning(ValidationErrorCode.InvalidContentType, sourceFile, "Response Content-Type header value is not in the supported list of content-types: {0}", response.ContentType));
             }

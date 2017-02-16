@@ -206,6 +206,18 @@ namespace ApiDocs.Validation
         /// </summary>
         [JsonProperty("openType")]
         public bool IsOpenType { get; set; }
+
+        [JsonProperty("target")]
+        public TargetType Target { get; set; }
+    }
+
+    public enum TargetType
+    {
+        Unspecified,
+        Object,
+        Collection,
+        Action,
+        Function
     }
 
     public enum CodeBlockType

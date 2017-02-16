@@ -26,7 +26,7 @@
 namespace ApiDocs.ConsoleApp.Auth
 {
     using System;
-    using ApiDocs.Validation;
+    using Validation;
     using Newtonsoft.Json;
     using System.Threading.Tasks;
 
@@ -74,6 +74,9 @@ namespace ApiDocs.ConsoleApp.Auth
         [JsonProperty("scopes")]
         public string[] Scopes { get; set; }
 
+        [JsonProperty("transformations")]
+        public AccountTransforms Transformations { get; set; }
+
         [JsonIgnore]
         public string AccessToken { get; set; }
 
@@ -101,7 +104,7 @@ namespace ApiDocs.ConsoleApp.Auth
             var value = Environment.GetEnvironmentVariable(name);
             if (string.IsNullOrEmpty(value))
             {
-                throw new InvalidOperationException(
+                throw new OAuthAccountException(
                     string.Format("No value was found for environment variable: {0}", name));
             }
             return value;
@@ -120,7 +123,7 @@ namespace ApiDocs.ConsoleApp.Auth
                     break;
 
                 default:
-                    throw new NotSupportedException("Unsupported oauthMode value:" + this.Type.ToString());
+                    throw new OAuthAccountException("Unsupported oauthMode value:" + this.Type.ToString());
             }
         }
 
@@ -136,7 +139,7 @@ namespace ApiDocs.ConsoleApp.Auth
                 }
                 else
                 {
-                    throw new InvalidOperationException(
+                    throw new OAuthAccountException(
                         string.Format("Failed to retrieve access token for account: {0}", this.Name));
                 }
             }
@@ -155,7 +158,7 @@ namespace ApiDocs.ConsoleApp.Auth
                 }
                 else
                 {
-                    throw new InvalidOperationException(
+                    throw new OAuthAccountException(
                         string.Format("Failed to convert username + password to access token for account: {0}", this.Name));
                 }
             }

@@ -35,6 +35,7 @@ namespace ApiDocs.Validation
     using ApiDocs.Validation.Json;
     using ApiDocs.Validation.Params;
     using Newtonsoft.Json;
+    using MultipartMime;
 
     /// <summary>
     /// Definition of a request / response pair for the API
@@ -168,7 +169,6 @@ namespace ApiDocs.Validation
         {
             var parser = new HttpParser();
             var request = parser.ParseHttpRequest(this.Request);
-
             AddAccessTokenToRequest(account.CreateCredentials(), request);
             AddTestHeaderToRequest(scenario, request);
             AddAdditionalHeadersToRequest(account, request);
@@ -183,13 +183,20 @@ namespace ApiDocs.Validation
                 {
                     foreach (var setupRequest in scenario.TestSetupRequests)
                     {
-                        var result = await setupRequest.MakeSetupRequestAsync(storedValuesForScenario, documents, scenario, account);
-                        errors.AddRange(result.Messages);
-
-                        if (result.IsWarningOrError)
+                        try
                         {
-                            // If we can an error or warning back from a setup method, we fail the whole request.
-                            return new ValidationResult<HttpRequest>(null, errors);
+                            var result = await setupRequest.MakeSetupRequestAsync(storedValuesForScenario, documents, scenario, account);
+                            errors.AddRange(result.Messages);
+
+                            if (result.IsWarningOrError)
+                            {
+                                // If we can an error or warning back from a setup method, we fail the whole request.
+                                return new ValidationResult<HttpRequest>(null, errors);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            return new ValidationResult<HttpRequest>(null, new ValidationError(ValidationErrorCode.ConsolidatedError, null, "An exception occured while processing setup-requests: {0}", ex.Message));
                         }
                     }
                 }
@@ -230,7 +237,59 @@ namespace ApiDocs.Validation
                 }
             }
 
+            this.ModifyRequestForAccount(request, account);
             return new ValidationResult<HttpRequest>(request, errors);
+        }
+
+        /// <summary>
+        ///  This method will adapt a request based on parameters for an account. It should be the last thing we do before sending
+        ///  the request to the account.
+        /// </summary>
+        /// <param name="request"></param>
+        /// <param name="account"></param>
+        public void ModifyRequestForAccount(HttpRequest request, IServiceAccount account)
+        {
+            if (account.Transformations?.Request?.Actions?.Prefix == null)
+                return;
+
+
+            if (this.RequestMetadata.Target == TargetType.Action || this.RequestMetadata.Target == TargetType.Function)
+            {
+                // Add the ActionPrefix to the last path component of the URL
+                AddPrefixToLastUrlComponent(request, account.Transformations.Request.Actions.Prefix);
+            }
+        }
+
+        private static void AddPrefixToLastUrlComponent(HttpRequest request, string actionPrefix)
+        {
+            UriBuilder builder = null;
+            string path = null;
+            if (request.Url.StartsWith("/"))
+            {
+                path = request.Url;
+            }
+            else
+            {
+                builder = new UriBuilder(request.Url);
+                path = builder.Path;
+            }
+            
+            string[] parts = path.Split('/');
+            if (parts.Length > 0)
+            {
+                parts[parts.Length - 1] = $"{actionPrefix}{parts[parts.Length - 1]}";
+                path = "/"  + parts.ComponentsJoinedByString("/");
+            }
+
+            if (null != builder)
+            {
+                builder.Path = path;
+                request.Url = builder.ToString();
+            }
+            else
+            {
+                request.Url = path;
+            }
         }
 
         /// <summary>
@@ -328,7 +387,7 @@ namespace ApiDocs.Validation
         /// Check to ensure the http request is valid
         /// </summary>
         /// <param name="detectedErrors"></param>
-        internal void VerifyHttpRequest(List<ValidationError> detectedErrors)
+        internal void VerifyRequestFormat(List<ValidationError> detectedErrors)
         {
             HttpParser parser = new HttpParser();
             HttpRequest request;
@@ -344,34 +403,74 @@ namespace ApiDocs.Validation
 
             if (null != request.ContentType)
             {
-                if (request.IsMatchingContentType(MimeTypeJson))
-                {
-                    // Verify that the request is valid JSON
-                    try
-                    {
-                        JsonConvert.DeserializeObject(request.Body);
-                    }
-                    catch (Exception ex)
-                    {
-                        detectedErrors.Add(new ValidationError(ValidationErrorCode.JsonParserException, null, "Invalid JSON format: {0}", ex.Message));
-                    }
-                }
-                else if (request.IsMatchingContentType(MimeTypeMultipartRelated))
-                {
-                    // TODO: Parse the multipart/form-data body to ensure it's properly formatted
-                }
-                else if (request.IsMatchingContentType(MimeTypePlainText))
-                {
-                    // Ignore this, because it isn't something we can verify
-                }
-                else
-                {
-                    detectedErrors.Add(new ValidationWarning(ValidationErrorCode.UnsupportedContentType, null, "Unvalidated request content type: {0}", request.ContentType));
-                }
+                ValidateContentForType(new MimeContentType(request.ContentType), request.Body, detectedErrors);
             }
 
             var verifyApiRequirementsResponse = request.IsRequestValid(this.SourceFile.DisplayName, this.SourceFile.Parent.Requirements);
             detectedErrors.AddRange(verifyApiRequirementsResponse.Messages);
+        }
+
+        private void ValidateContentForType(MimeContentType contentType, string content, List<ValidationError> detectedErrors, bool validateJsonSchema = false)
+        {
+            if (contentType.MimeType.Equals(MimeTypeJson, StringComparison.OrdinalIgnoreCase))
+            {
+                // Verify that the request is valid JSON
+                try
+                {
+                    JsonConvert.DeserializeObject(content);
+
+                    if (validateJsonSchema)
+                    {
+                        ValidationError[] schemaErrors;
+                        if (!ContentMatchesResourceSchema(content, RequestMetadata.ResourceType, SourceFile.Parent.ResourceCollection, out schemaErrors))
+                        {
+                            detectedErrors.AddRange(schemaErrors);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    detectedErrors.Add(new ValidationError(ValidationErrorCode.JsonParserException, null, "Invalid JSON format: {0}", ex.Message));
+                }
+            }
+            else if (contentType.MimeType.Equals(MimeTypeMultipartRelated, StringComparison.OrdinalIgnoreCase))
+            {
+                // Parse the multipart/form-data body to ensure it's properly formatted
+                try
+                {
+                    MultipartMimeContent multipartContent = new MultipartMime.MultipartMimeContent(contentType, content);
+                    var part = multipartContent.PartWithId("<metadata>");
+                    ValidateContentForType(part.ContentType, part.Body, detectedErrors, validateJsonSchema: true);
+                }
+                catch (Exception ex)
+                {
+                    detectedErrors.Add(new ValidationError(ValidationErrorCode.ContentFormatException, null, "Invalid Multipart MIME content format: {0}", ex.Message));
+                }
+
+            }
+            else if (contentType.MimeType.Equals(MimeTypePlainText, StringComparison.OrdinalIgnoreCase))
+            {
+                // Ignore this, because it isn't something we can verify
+            }
+            else
+            {
+                detectedErrors.Add(new ValidationWarning(ValidationErrorCode.UnsupportedContentType, null, "Unvalidated request content type: {0}", contentType.MimeType));
+            }
+        }
+
+        private bool ContentMatchesResourceSchema(string content, string resourceType, JsonResourceCollection resources, out ValidationError[] schemaErrors)
+        {
+            List<ValidationError> errors = new List<Error.ValidationError>();
+            var resourceTypeSchema = resources.GetJsonSchema(resourceType, errors, null);
+
+            ValidationError[] validationErrors;
+            if (!resources.ValidateJsonCompilesWithSchema(resourceTypeSchema, new JsonExample(content) { Annotation = new CodeBlockAnnotation { TruncatedResult = true } }, out validationErrors))
+            {
+                errors.AddRange(validationErrors);
+            }
+
+            schemaErrors = errors.ToArray();
+            return errors.WereErrors();
         }
 
 
@@ -390,7 +489,7 @@ namespace ApiDocs.Validation
             List<ValidationError> detectedErrors = new List<ValidationError>();
 
             // Verify the request is valid (headers, etc)
-            this.VerifyHttpRequest(detectedErrors);
+            this.VerifyRequestFormat(detectedErrors);
 
             // Verify that the expected response headers match the actual response headers
             ValidationError[] httpErrors;

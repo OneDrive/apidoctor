@@ -103,13 +103,13 @@ namespace ApiDocs.ConsoleApp
 
 
 
-        public Dictionary<string,object> PageParameterDict {
+        public Dictionary<string, string> PageParameterDict {
             get
             {
                 if (string.IsNullOrEmpty(AdditionalPageParameters))
                     return null;
 
-                var data = new Dictionary<string, object>();
+                var data = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
                 var parameters = Validation.Http.HttpParser.ParseQueryString(AdditionalPageParameters);
                 foreach (var key in parameters.AllKeys)
@@ -290,7 +290,7 @@ namespace ApiDocs.ConsoleApp
                 account.BaseUrl = this.ServiceRootUrl;
                 return account;
             }
-            catch (InvalidOperationException ex)
+            catch (OAuthAccountException ex)
             {
                 Console.WriteLine("Exception while getting account: {0}", ex.Message);
                 return null;

@@ -61,7 +61,7 @@ namespace ApiDocs.Validation.Writers
         /// <summary>
         /// URL encoded string that contains additional parameters that can be used by the rendering engine
         /// </summary>
-        Dictionary<string,object> PageParameterDict { get; }
+        Dictionary<string, string> PageParameterDict { get; }
 
 
         /// <summary>
@@ -86,7 +86,7 @@ namespace ApiDocs.Validation.Writers
         public string OutputExtension { get; set; }
 
         // Added set to make AppVeyor happy
-        public Dictionary<string,object> PageParameterDict { get; set; }
+        public Dictionary<string, string> PageParameterDict { get; set; }
 
         public string TableOfContentsOutputRelativePath { get; set; }
 

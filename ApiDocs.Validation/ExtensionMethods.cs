@@ -109,30 +109,40 @@ namespace ApiDocs.Validation
             }
         }
 
-        public static bool TryGetPropertyValue<T>(this JContainer container, string propertyName, out T value )
+        public static bool TryGetPropertyValue<T>(this JContainer container, string propertyName, out T value ) where T : class
         {
-            try
+            JProperty prop;
+            if (TryGetProperty(container, propertyName, out prop))
             {
-                JValue storedValue = (JValue)container[propertyName];
-                if (storedValue == null)
-                {
-                    value = default(T);
-                    return false;
-                }
-                else
-                {
-                    value = (T)storedValue.Value;
-                    return true;
-                }
+                value = prop.Value as T;
+                if (prop.Value != null) Debug.Assert(value != null);
+                return true;
             }
-            catch 
-            {
-                value = default(T);
-                return false;
-            }
+
+            value = default(T);
+            return false;
         }
 
-        public static T PropertyValue<T>(this JContainer container, string propertyName, T defaultValue)
+        public static bool TryGetProperty(this JContainer container, string propertyName, out JProperty value)
+        {
+            foreach (var entity in container)
+            {
+                JProperty prop = entity as JProperty;
+                if (null != prop)
+                {
+                    if (prop.Name == propertyName)
+                    {
+                        value = prop;
+                        return true;
+                    }
+                }
+            }
+
+            value = null;
+            return false;
+        }
+
+        public static T PropertyValue<T>(this JContainer container, string propertyName, T defaultValue) where T : class
         {
             T storedValue;
             if (container.TryGetPropertyValue(propertyName, out storedValue))
@@ -395,6 +405,8 @@ namespace ApiDocs.Validation
         /// <returns></returns>
         public static string TextBetweenCharacters(this string source, char first, char second)
         {
+            if (source == null)
+                return null;
             int startIndex = source.IndexOf(first);
             if (startIndex == -1)
                 return source;
@@ -404,6 +416,11 @@ namespace ApiDocs.Validation
                 return source.Substring(startIndex+1);
             else
                 return source.Substring(startIndex+1, endIndex - startIndex - 1);
+        }
+
+        public static string TextBetweenCharacters(this string source, char character)
+        {
+            return TextBetweenCharacters(source, character, character);
         }
 
         /// <summary>

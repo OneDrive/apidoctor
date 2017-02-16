@@ -23,35 +23,28 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-namespace ApiDocs.Validation.Error
+namespace ApiDocs.Validation.UnitTests
 {
-    public class ValidationWarning : ValidationError
+    using NUnit.Framework;
+    using MultipartMime;
+
+    [TestFixture]
+    public class MultipartMimeTests
     {
-
-        public ValidationWarning(ValidationErrorCode code, string source, string format, params object[] formatParams)
-            : base(code, source, format, formatParams)
+        [Test]
+        public void RoundtripTest()
         {
+            MultipartMime.MultipartMimeContent message = new MultipartMime.MultipartMimeContent();
+            message.Parts.Add(new MultipartMime.MessagePart { Id = "<metadata>", ContentType = new MimeContentType("application/json"), Body = "{\"foo\": \"bar\"}" });
+            message.Parts.Add(new MultipartMime.MessagePart { Id = "<content", ContentType = new MimeContentType("text/plain"), Body = "This is test message content" });
 
+            string body1 = message.ToString();
+
+            MultipartMime.MultipartMimeContent message2 = new MultipartMime.MultipartMimeContent(message.ContentType, body1);
+            string body2 = message2.ToString();
+
+            Assert.AreEqual(body1.Length, body2.Length, "Body length changed between roundtrips.");
+            Assert.AreEqual(body1, body2, "Body text was different between roundtrips.");
         }
-
-        public override bool IsWarning { get { return true; } }
-
-        public override bool IsError { get { return false; } }
-    }
-
-
-    public class UndocumentedPropertyWarning : ValidationWarning
-    {
-        public UndocumentedPropertyWarning(string source, string propertyName, ParameterDataType propertyType, string resourceName)
-            : base(ValidationErrorCode.AdditionalPropertyDetected, source, "Undocumented property '{0}' [{1}] was not expected on resource {2}.", propertyName, propertyType, resourceName)
-        {
-            this.PropertyName = propertyName;
-            this.PropertyType = propertyType;
-            this.ResourceName = resourceName;
-        }
-
-        public string PropertyName { get; private set; }
-        public ParameterDataType PropertyType { get; private set; }
-        public string ResourceName { get; private set; }
     }
 }

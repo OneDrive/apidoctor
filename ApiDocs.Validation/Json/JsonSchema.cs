@@ -483,10 +483,9 @@ namespace ApiDocs.Validation.Json
                     return PropertyValidationOutcome.Ok;
                 }
 
-                // This property isn't legit
-                detectedErrors.Add(new ValidationWarning(ValidationErrorCode.AdditionalPropertyDetected, null, "Undocumented property '{0}' [{1}] was not expected on resource {2}.", inputProperty.Name, inputProperty.Type, this.ResourceName));
+                // This property isn't documented
+                detectedErrors.Add(new UndocumentedPropertyWarning(null, inputProperty.Name, inputProperty.Type, ResourceName));
                 return PropertyValidationOutcome.MissingFromSchema;
-
             }
         }
 
@@ -586,7 +585,7 @@ namespace ApiDocs.Validation.Json
             {
                 actualArray = (JArray)JsonConvert.DeserializeObject(actualProperty.OriginalValue);
             }
-            catch (InvalidCastException ex)
+            catch (InvalidCastException)
             {
                 throw new InvalidCastException($"Property {actualProperty.Name} expected to be an array, but failed to cast value to an array: {actualProperty.OriginalValue}");
             }

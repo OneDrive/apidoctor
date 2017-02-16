@@ -249,6 +249,11 @@ namespace ApiDocs.Validation.Http
             return !errors.Any(x => x.IsError || x.IsWarning);
         }
 
+        public bool IsMatchingContentType(string expectedContentType)
+        {
+            return HttpRequest.ContentTypeMatchesValue(expectedContentType, this.ContentType);
+        }
+
         class HeaderNameComparer : IEqualityComparer<string>
         {
             public bool Equals(string x, string y)

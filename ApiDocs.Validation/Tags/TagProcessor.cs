@@ -372,37 +372,52 @@ namespace ApiDocs.Validation.Tags
         }
     }
 
-    public static class TagProcessorExtensions
-    {
-        public static T ValueForKey<T>(this Dictionary<string, object> source, string key, StringComparison comparison)
-        {
-            object value;
-            if (source.TryGetValueForKey(key, comparison, out value))
-                return (T)value;
+    //public static class TagProcessorExtensions
+    //{
+    //    public static T ValueForKey<T>(this Dictionary<string, T> source, string key, StringComparison comparison)
+    //    {
+    //        T value;
+    //        if (source.TryGetValueForKey(key, comparison, out value))
+    //            return (T)value;
 
-            return default(T);
-        }
+    //        return default(T);
+    //    }
 
-        public static bool TryGetValueForKey<T>(this Dictionary<string, object> source, string key, StringComparison comparison, out T value)
-        {
-            if (source != null)
-            {
-                string keyName = source.Keys.Where(x => x.Equals(key, comparison)).FirstOrDefault();
-                if (null != keyName)
-                {
-                    value = (T)source[keyName];
-                    return true;
-                }
-            }
+    //    public static bool TryGetValueForKey<T>(this Dictionary<string, T> source, string key, StringComparison comparison, out T value)
+    //    {
+    //        if (source != null)
+    //        {
+    //            string keyName = source.Keys.Where(x => x.Equals(key, comparison)).FirstOrDefault();
+    //            if (null != keyName)
+    //            {
+    //                value = (T)source[keyName];
+    //                return true;
+    //            }
+    //        }
 
-            value = default(T);
-            return false;
-        }
+    //        value = default(T);
+    //        return false;
+    //    }
 
-        public static bool TryGetValueForKey(this Dictionary<string, object> source, string key, StringComparison comparison, out object value)
-        {
-            return source.TryGetValueForKey<object>(key, comparison, out value);
-        }
+    //    public static bool TryGetValueForKey(this Dictionary<string, object> source, string key, StringComparison comparison, out object value)
+    //    {
+    //        return source.TryGetValueForKey<object>(key, comparison, out value);
+    //    }
+
+    //    public static void SetValueForKey<T>(this Dictionary<string, T> source, string key, StringComparison comparison, T value)
+    //    {
+    //        if (source == null)
+    //            throw new ArgumentNullException("source");
+    //        string keyName = source.Keys.Where(x => x.Equals(key, comparison)).FirstOrDefault();
+    //        if (null != keyName)
+    //        {
+    //            source[keyName] = value;
+    //        }
+    //        else
+    //        {
+    //            source[key] = value;
+    //        }
+    //    }
             
-    }
+    //}
 }

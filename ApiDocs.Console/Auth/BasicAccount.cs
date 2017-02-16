@@ -25,12 +25,16 @@
 
 namespace ApiDocs.ConsoleApp.Auth
 {
-    using System;
     using System.Threading.Tasks;
+    using System.Collections.Generic;
     using ApiDocs.Validation;
 
     public class BasicAccount : IServiceAccount
     {
+        public BasicAccount()
+        {
+        }
+
         public string BaseUrl { get; set; }
         public bool Enabled { get; set; }
         public string Name { get; set; }
@@ -38,6 +42,7 @@ namespace ApiDocs.ConsoleApp.Auth
         public string Username { get; set; }
         public string Password { get; set; }
         public string[] Scopes { get; set; }
+        public AccountTransforms Transformations { get; }
 
         public Task PrepareForRequestAsync()
         {

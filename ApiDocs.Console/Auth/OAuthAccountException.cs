@@ -1,5 +1,5 @@
 ﻿/*
- * Markdown Scanner
+ * Markdown File Handler - Sample Code
  * Copyright (c) Microsoft Corporation
  * All rights reserved. 
  * 
@@ -23,35 +23,28 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-namespace ApiDocs.Validation.Error
+namespace ApiDocs.ConsoleApp.Auth
 {
-    public class ValidationWarning : ValidationError
+    using System;
+    using System.Runtime.Serialization;
+
+    [Serializable]
+    internal class OAuthAccountException : Exception
     {
-
-        public ValidationWarning(ValidationErrorCode code, string source, string format, params object[] formatParams)
-            : base(code, source, format, formatParams)
+        public OAuthAccountException()
         {
-
         }
 
-        public override bool IsWarning { get { return true; } }
-
-        public override bool IsError { get { return false; } }
-    }
-
-
-    public class UndocumentedPropertyWarning : ValidationWarning
-    {
-        public UndocumentedPropertyWarning(string source, string propertyName, ParameterDataType propertyType, string resourceName)
-            : base(ValidationErrorCode.AdditionalPropertyDetected, source, "Undocumented property '{0}' [{1}] was not expected on resource {2}.", propertyName, propertyType, resourceName)
+        public OAuthAccountException(string message) : base(message)
         {
-            this.PropertyName = propertyName;
-            this.PropertyType = propertyType;
-            this.ResourceName = resourceName;
         }
 
-        public string PropertyName { get; private set; }
-        public ParameterDataType PropertyType { get; private set; }
-        public string ResourceName { get; private set; }
+        public OAuthAccountException(string message, Exception innerException) : base(message, innerException)
+        {
+        }
+
+        protected OAuthAccountException(SerializationInfo info, StreamingContext context) : base(info, context)
+        {
+        }
     }
 }

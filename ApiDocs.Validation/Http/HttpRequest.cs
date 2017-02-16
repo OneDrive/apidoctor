@@ -32,6 +32,7 @@ namespace ApiDocs.Validation.Http
     using System.Threading.Tasks;
     using System.Linq;
     using System.Collections.Generic;
+    using Params;
 
     public class HttpRequest
     {
@@ -54,14 +55,8 @@ namespace ApiDocs.Validation.Http
 
         public string Accept
         {
-            get
-            {
-                return this.Headers["Accept"];
-            }
-            set
-            {
-                this.Headers["Accept"] = value;
-            }
+            get { return this.Headers["Accept"]; }
+            set { this.Headers["Accept"] = value; }
         }
 
         public string Authorization
@@ -78,13 +73,20 @@ namespace ApiDocs.Validation.Http
 
         public ICredentials Credentials { get; set; }
 
-        public bool IsMatchingContentType(string expectedContentType)
+        public static bool ContentTypeMatchesValue(string expected, string headerValue)
         {
-            if (string.IsNullOrEmpty(this.ContentType))
+            if (string.IsNullOrEmpty(expected))
+                return false;
+            if (string.IsNullOrEmpty(headerValue))
                 return false;
 
-            string[] contentTypeParts = this.ContentType.Split(';');
-            return contentTypeParts.Length > 0 && contentTypeParts[0].Equals(expectedContentType, StringComparison.OrdinalIgnoreCase);
+            string[] contentTypeParts = headerValue.Split(';');
+            return contentTypeParts.Length > 0 && contentTypeParts[0].Equals(expected, StringComparison.OrdinalIgnoreCase);
+        }
+
+        public bool IsMatchingContentType(string expectedContentType)
+        {
+            return ContentTypeMatchesValue(expectedContentType, this.ContentType);
         }
 
         public WebHeaderCollection Headers { get; private set; }
@@ -321,13 +323,18 @@ namespace ApiDocs.Validation.Http
         }
 
 
-        public async Task<HttpResponse> GetResponseAsync(string baseUrl, int retryCount = 0)
+        public async Task<HttpResponse> GetResponseAsync(IServiceAccount account, int retryCount = 0)
         {
+            var baseUrl = account.BaseUrl;
+            this.RewriteRequestBodyNamespaces(account);
+
             var webRequest = this.PrepareHttpWebRequest(baseUrl);
             this.StartTime = DateTimeOffset.UtcNow;
 
             HttpResponse response = await HttpResponse.ResponseFromHttpWebResponseAsync(webRequest);
             TimeSpan duration = DateTimeOffset.UtcNow.Subtract(this.StartTime);
+
+            response.RewriteResponseBodyNamespaces(account);
 
             var logger = HttpRequest.HttpLogSession;
             if (null != logger)
@@ -343,7 +350,7 @@ namespace ApiDocs.Validation.Http
                     await BackoffHelper.Default.FullJitterBackoffDelayAsync(retryCount);
 
                     // Try the request again
-                    return await this.GetResponseAsync(baseUrl, retryCount + 1);
+                    return await this.GetResponseAsync(account, retryCount + 1);
                 }
             }
             response.RetryCount = retryCount;

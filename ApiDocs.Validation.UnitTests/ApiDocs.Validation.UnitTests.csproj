@@ -66,6 +66,8 @@
     <Compile Include="BrokenLinkTests.cs" />
     <Compile Include="DocFileForTesting.cs" />
     <Compile Include="ExtensionMethods.cs" />
+    <Compile Include="JsonRewriteTests.cs" />
+    <Compile Include="MultipartMimeTests.cs" />
     <Compile Include="NullableTests.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>

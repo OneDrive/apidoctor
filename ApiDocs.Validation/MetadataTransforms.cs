@@ -1,4 +1,5 @@
-﻿/*
+﻿
+/*
  * Markdown Scanner
  * Copyright (c) Microsoft Corporation
  * All rights reserved. 
@@ -23,35 +24,36 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-namespace ApiDocs.Validation.Error
+namespace ApiDocs.Validation
 {
-    public class ValidationWarning : ValidationError
+    using Newtonsoft.Json;
+    using System.Collections.Generic;
+
+    public class AccountTransforms
     {
+        [JsonProperty("request")]
+        public MetadataTransforms Request { get; set; }
 
-        public ValidationWarning(ValidationErrorCode code, string source, string format, params object[] formatParams)
-            : base(code, source, format, formatParams)
-        {
+        [JsonProperty("response")]
+        public MetadataTransforms Response { get; set; }
 
-        }
-
-        public override bool IsWarning { get { return true; } }
-
-        public override bool IsError { get { return false; } }
     }
 
-
-    public class UndocumentedPropertyWarning : ValidationWarning
+    public class MetadataTransforms
     {
-        public UndocumentedPropertyWarning(string source, string propertyName, ParameterDataType propertyType, string resourceName)
-            : base(ValidationErrorCode.AdditionalPropertyDetected, source, "Undocumented property '{0}' [{1}] was not expected on resource {2}.", propertyName, propertyType, resourceName)
-        {
-            this.PropertyName = propertyName;
-            this.PropertyType = propertyType;
-            this.ResourceName = resourceName;
-        }
+        [JsonProperty("properties")]
+        public Dictionary<string, string> Properties { get; set; }
 
-        public string PropertyName { get; private set; }
-        public ParameterDataType PropertyType { get; private set; }
-        public string ResourceName { get; private set; }
+        [JsonProperty("actions")]
+        public ActionTransforms Actions { get; set; }
+
     }
+
+    public class ActionTransforms
+    {
+        [JsonProperty("prefix")]
+        public string Prefix { get; set; }
+    }
+
+    
 }
