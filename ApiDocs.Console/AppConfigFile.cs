@@ -38,10 +38,22 @@ namespace ApiDocs.ConsoleApp
         [JsonProperty("checkServiceEnabledBranches")]
         public string[] CheckServiceEnabledBranches { get; set; }
 
-
         public override bool IsValid
         {
             get { return null != this.Accounts || null != this.CheckServiceEnabledBranches; }
+        }
+
+        public override void LoadComplete()
+        {
+            AppConfigFile.ReplaceEnvironmentVariablesInAccounts(this.Accounts);
+        }
+
+        private static void ReplaceEnvironmentVariablesInAccounts(OAuthAccount[] accounts)
+        {
+            foreach(var account in accounts)
+            {
+                account.ReplaceEnvironmentVariables();
+            }
         }
     }
 }

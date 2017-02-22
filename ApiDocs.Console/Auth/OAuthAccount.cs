@@ -29,6 +29,9 @@ namespace ApiDocs.ConsoleApp.Auth
     using Validation;
     using Newtonsoft.Json;
     using System.Threading.Tasks;
+    using System.Reflection;
+    using System.Collections.Generic;
+    using System.Linq;
 
     public class OAuthAccount : IServiceAccount
     {
@@ -38,34 +41,34 @@ namespace ApiDocs.ConsoleApp.Auth
         [JsonProperty("enabled")]
         public bool Enabled { get; set; }
 
-        [JsonProperty("oauthType")]
+        [JsonProperty("oauthType"), CanBeEnvironmentVariable]
         public OAuthAccountType Type { get; set; }
 
-        [JsonProperty("clientId")]
+        [JsonProperty("clientId"), CanBeEnvironmentVariable]
         public string ClientId { get; set; }
 
-        [JsonProperty("clientSecret")]
+        [JsonProperty("clientSecret"), CanBeEnvironmentVariable]
         public string ClientSecret { get; set; }
 
-        [JsonProperty("tokenService")]
+        [JsonProperty("tokenService"), CanBeEnvironmentVariable]
         public string TokenService { get; set; }
 
-        [JsonProperty("redirectUri")]
+        [JsonProperty("redirectUri"), CanBeEnvironmentVariable]
         public string RedirectUri { get; set; }
 
-        [JsonProperty("refreshToken")]
+        [JsonProperty("refreshToken"), CanBeEnvironmentVariable]
         public string RefreshToken { get; set; }
 
-        [JsonProperty("serviceUrl")]
+        [JsonProperty("serviceUrl"), CanBeEnvironmentVariable]
         public string BaseUrl { get; set; }
 
-        [JsonProperty("resource")]
+        [JsonProperty("resource"), CanBeEnvironmentVariable]
         public string Resource { get; set; }
 
-        [JsonProperty("username")]
+        [JsonProperty("username"), CanBeEnvironmentVariable]
         public string Username { get; set; }
 
-        [JsonProperty("password")]
+        [JsonProperty("password"), CanBeEnvironmentVariable]
         public string Password { get; set; }
 
         [JsonProperty("additionalHeaders")]
@@ -79,6 +82,51 @@ namespace ApiDocs.ConsoleApp.Auth
 
         [JsonIgnore]
         public string AccessToken { get; set; }
+
+        /// <summary>
+        /// Use reflection to replace the value in any string properties with a JsonProperty attribute
+        /// based on the value of an environment variable, if one exists.
+        /// </summary>
+        internal void ReplaceEnvironmentVariables()
+        {
+            const string ENV_MARKER = "$env:";
+            List<string> missingVariables = new List<string>();
+            Type t = this.GetType();
+            var properties = t.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+            foreach(var prop in properties)
+            {
+                if (prop.PropertyType != typeof(string))
+                    continue;
+                var attribute = prop.GetCustomAttribute(typeof(CanBeEnvironmentVariableAttribute));
+                if (null == attribute)
+                    continue;
+
+                string value = prop.GetValue(this, null) as string;
+                if (null != value && value.StartsWith(ENV_MARKER)) 
+                {
+                    // Replace with the approriate environment variable
+                    var variable = value.Substring(ENV_MARKER.Length);
+                    try
+                    {
+                        var newValue = OAuthAccount.ReadVariable(variable);
+                        if (newValue != null)
+                        {
+                            prop.SetValue(this, newValue, null);
+                        }
+                    }
+                    catch (OAuthAccountException)
+                    {
+                        missingVariables.Add(variable);
+                    }
+                }
+            }
+
+            if (missingVariables.Any())
+            {
+                this.Enabled = false;
+                Console.WriteLine($"Unable to find $env values in account {Name}: {missingVariables.ComponentsJoinedByString(", ")}");
+            }
+        }
 
         /// <summary>
         /// Read command environmental variables to build an account
@@ -176,8 +224,9 @@ namespace ApiDocs.ConsoleApp.Auth
         UserPassword
     }
 
+    public class CanBeEnvironmentVariableAttribute : Attribute
+    {
 
-    
-
+    }
 
 }

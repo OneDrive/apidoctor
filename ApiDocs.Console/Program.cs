@@ -933,7 +933,7 @@ namespace ApiDocs.ConsoleApp
                 ValidationConfig.ODataMetadataLevel = options.ODataMetadataLevel;
             }
 
-            if (options.FoundAccounts == null || !options.FoundAccounts.Any())
+            if (options.FoundAccounts == null || !options.FoundAccounts.Any(x=>x.Enabled))
             {
                 RecordError("No account was found. Cannot connect to the service.");
                 return false;

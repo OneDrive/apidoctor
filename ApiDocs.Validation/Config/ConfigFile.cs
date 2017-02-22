@@ -29,6 +29,13 @@ namespace ApiDocs.Validation.Config
     {
         public abstract bool IsValid { get; }
         public string SourcePath {get;set;}
+
+        /// <summary>
+        /// Provide oppertunity to post-process a valid configuration after the file is loaded.
+        /// </summary>
+        public virtual void LoadComplete() {
+
+        }
     }
 }
 

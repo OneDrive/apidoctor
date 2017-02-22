@@ -191,6 +191,7 @@ namespace ApiDocs.Validation
                         var config = JsonConvert.DeserializeObject<T>(reader.ReadToEnd());
                         if (null != config && config.IsValid)
                         {
+                            config.LoadComplete();
                             validConfigurationFiles.Add(config);
                             config.SourcePath = file.FullName;
                         }
