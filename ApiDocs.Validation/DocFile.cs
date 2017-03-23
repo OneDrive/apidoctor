@@ -143,12 +143,15 @@ namespace ApiDocs.Validation
             Markdown md = new Markdown
             {
                 SafeMode = false,
-                ExtraMode = true
+                ExtraMode = true,
+                AutoHeadingIDs = true,
+                NewWindowForExternalLinks = true
             };
 
             this.HtmlContent = md.Transform(inputMarkdown);
             this.OriginalMarkdownBlocks = md.Blocks;
             this.MarkdownLinks = new List<ILinkInfo>(md.FoundLinks);
+            this.bookmarks.AddRange(md.HeaderIdsInDocument);
         }
 
         protected virtual string GetContentsOfFile(string tags)
@@ -284,7 +287,6 @@ namespace ApiDocs.Validation
                 // Capture GitHub Flavored Markdown Bookmarks
                 if (IsHeaderBlock(block, 6))
                 {
-                    this.AddBookmarkForHeader(block.Content);
                     this.AddHeaderToHierarchy(headerStack, block);
                 }
 
@@ -573,26 +575,6 @@ namespace ApiDocs.Validation
             [','] = "",
             [':'] = ""
         };
-
-        private void AddBookmarkForHeader(string headerText)
-        {
-            System.Text.StringBuilder sb = new System.Text.StringBuilder(headerText.ToLowerInvariant());
-            for(int i=0; i<sb.Length; )
-            {
-                string replacement;
-                if (BookmarkReplacmentMap.TryGetValue(sb[i], out replacement))
-                {
-                    sb.Remove(i, 1);
-                    sb.Insert(i, replacement);
-                    i += replacement.Length;
-                }
-                else
-                {
-                    ++i;
-                }
-            }
-            this.bookmarks.Add(sb.ToString());
-        }
 
         /// <summary>
         /// Run post processing on the collection of elements found inside this doc file.
