@@ -47,6 +47,8 @@ namespace ApiDocs.ConsoleApp
         public const string VerbAbout = "about";
         public const string VerbCheckAll = "check-all";
         public const string VerbPublishMetadata = "publish-edmx";
+
+        public const string VerbGenerateDocs = "generate-docs";
         
         [VerbOption(VerbPrint, HelpText="Print files, resources, and methods discovered in the documentation.")]
         public PrintOptions PrintVerbOptions { get; set; }
@@ -71,6 +73,9 @@ namespace ApiDocs.ConsoleApp
 
         [VerbOption(VerbMetadata, HelpText="Check service CSDL metadata against documentation.")]
         public CheckMetadataOptions CheckMetadataVerb { get; set; }
+
+        [VerbOption(VerbGenerateDocs, HelpText="Generate documentation from an CSDL model")]
+        public GenerateDocsOptions GenerateDocsVerb { get; set; }
 
         [VerbOption(VerbAbout, HelpText="Print about information for this application.")]
         public BaseOptions AboutVerb { get; set; }
@@ -537,5 +542,9 @@ namespace ApiDocs.ConsoleApp
             Mustache,
             JsonToc
         }
+    }
+
+    class GenerateDocsOptions : CheckMetadataOptions
+    {
     }
 }

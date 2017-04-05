@@ -200,6 +200,9 @@ namespace ApiDocs.ConsoleApp
                 case CommandLineOptions.VerbMetadata:
                     await CheckServiceMetadataAsync((CheckMetadataOptions)options);
                     break;
+                case CommandLineOptions.VerbGenerateDocs:
+                    returnSuccess = await GenerateDocsAsync((GenerateDocsOptions)options);
+                    break;
                 case CommandLineOptions.VerbAbout:
                     PrintAboutMessage();
                     Exit(failure: false);
@@ -1480,6 +1483,17 @@ namespace ApiDocs.ConsoleApp
 
             results.PrintToConsole();
             return !results.WereFailures;
+        }
+
+        private static async Task<bool> GenerateDocsAsync(GenerateDocsOptions options)
+        {
+            List<Schema> schemas = await TryGetMetadataSchemasAsync(options);
+            if (null == schemas)
+                return false;
+
+            FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, "  found {0} schema definitions: {1}", schemas.Count, (from s in schemas select s.Namespace).ComponentsJoinedByString(", "));
+
+            return true;
         }
     }
 
