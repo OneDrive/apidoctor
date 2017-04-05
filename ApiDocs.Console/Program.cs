@@ -1377,7 +1377,7 @@ namespace ApiDocs.ConsoleApp
             try
             {
                 Uri metadataUrl;
-                if (Uri.TryCreate(options.ServiceMetadataLocation, UriKind.Absolute, out metadataUrl))
+                if (Uri.IsWellFormedUriString(options.ServiceMetadataLocation, UriKind.Absolute) && Uri.TryCreate(options.ServiceMetadataLocation, UriKind.Absolute, out metadataUrl))
                 {
                     edmx = await ODataParser.ParseEntityFrameworkFromUrlAsync(metadataUrl);
                 }
@@ -1492,6 +1492,13 @@ namespace ApiDocs.ConsoleApp
                 return false;
 
             FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, "  found {0} schema definitions: {1}", schemas.Count, (from s in schemas select s.Namespace).ComponentsJoinedByString(", "));
+
+            foreach (Schema schema in schemas)
+            {
+                FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, "Generating documentation for schema {0}", schema.Namespace);
+                DocumentationGeneration.DocumentationGenerator.GenerateDocumentationFromSchemas(schema, options.DocumentationSetPath);
+            }
+
 
             return true;
         }
