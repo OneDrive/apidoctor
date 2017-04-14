@@ -77,10 +77,9 @@ namespace ApiDocs.Validation.UnitTests
         }
 
         [Test]
-        [ExpectedException(ExpectedException=typeof(JsonPathException))]
         public void JsonPathInvalidPath()
         {
-            JsonPath.ValueFromJsonPath(this.GetJson(), "$.nothing.foo");
+            Assert.Throws<JsonPathException>(() => JsonPath.ValueFromJsonPath(this.GetJson(), "$.nothing.foo"));
         }
 
         [Test]

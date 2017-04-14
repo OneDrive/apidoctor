@@ -145,19 +145,17 @@ namespace ApiDocs.Validation.UnitTests
         }
 
         [Test]
-        [ExpectedException(ExpectedException=typeof(SchemaBuildException))]
         public void InvalidJsonMissingCommaSchema()
         {
             string badJson = "{ \"prop\": \"value\" \"prop2\": \"value\" }";
-            new JsonSchema(badJson, null);
+            Assert.Throws<SchemaBuildException>(() => new JsonSchema(badJson, null));
         }
 
         [Test]
-        [ExpectedException(ExpectedException = typeof(SchemaBuildException))]
         public void InvalidJsonMissingBraceSchema()
         {
             string badJson = "{ \"prop\": \"value\", \"prop2\": \"value\" ";
-            new JsonSchema(badJson, null);
+            Assert.Throws<SchemaBuildException>(() => new JsonSchema(badJson, null));
         }
 
 
