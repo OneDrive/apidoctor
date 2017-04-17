@@ -30,8 +30,20 @@ namespace ApiDocs.Validation.OData
     using System.Xml.Serialization;
     using Transformation;
 
-    public class EnumType : XmlBackedObject, Transformation.ITransformable
+	[XmlRoot("EnumType", Namespace = ODataParser.EdmNamespace)]
+    public class EnumType : XmlBackedObject, Transformation.ITransformable, IOdataAnnotatable, IODataNavigable
     {
+        public EnumType()
+        {
+            this.Annotations = new List<Annotation>();
+        }
+
+        [XmlElement("Member", Namespace = ODataParser.EdmNamespace)]
+        public List<EnumMember> Members { get; set; }
+
+        [XmlElement("Annotation", Namespace = ODataParser.EdmNamespace)]
+        public List<Annotation> Annotations { get; set; }
+
         [XmlAttribute("Name"), SortBy]
         public string Name { get; set; }
 
@@ -48,9 +60,28 @@ namespace ApiDocs.Validation.OData
         {
             TransformationHelper.ApplyTransformation(this, mods, edmx, versions);
         }
+		
+		public string TypeIdentifier
+        {
+            get
+            {
+                return this.Name;
+            }
+        }
 
         [XmlIgnore]
         public string ElementIdentifier { get { return this.Name; } set { this.Name = value; } }
+		
+		public IODataNavigable NavigateByEntityTypeKey(EntityFramework edmx)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IODataNavigable NavigateByUriComponent(string component, EntityFramework edmx)
+        {
+            throw new NotImplementedException();
+        }
+
 
     }
 

@@ -34,11 +34,12 @@ namespace ApiDocs.Validation.OData
     using Transformation;
 
     [XmlRoot("ComplexType", Namespace = ODataParser.EdmNamespace)]
-    public class ComplexType : XmlBackedObject, IODataNavigable, Transformation.ITransformable
+    public class ComplexType : XmlBackedObject, IODataNavigable, Transformation.ITransformable, IOdataAnnotatable
     {
         public ComplexType()
         {
             this.Properties = new List<Property>();
+            this.Annotations = new List<Annotation>();
         }
 
         [XmlAttribute("Name"), SortBy]
@@ -52,6 +53,9 @@ namespace ApiDocs.Validation.OData
 
         [XmlElement("Property", Namespace = ODataParser.EdmNamespace), Sortable]
         public List<Property> Properties { get; set; }
+
+        [XmlElement("Annotation", Namespace = ODataParser.EdmNamespace)]
+        public List<Annotation> Annotations { get; set; }
 
         [XmlAttribute("WorkloadName", Namespace = ODataParser.AgsNamespace)]
         public string WorkloadName { get; set; }

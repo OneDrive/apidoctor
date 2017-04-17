@@ -32,12 +32,13 @@ namespace ApiDocs.Validation.OData
     using Transformation;
 
     [XmlRoot("Property", Namespace = ODataParser.EdmNamespace)]
-    public class Property : XmlBackedObject, ITransformable
+    public class Property : XmlBackedObject, ITransformable, IOdataAnnotatable
     {
         public Property()
         {
             Unicode = true;
             Nullable = true;
+            this.Annotations = new List<Annotation>();
         }
 
         [XmlAttribute("Name"), SortBy]
@@ -53,7 +54,7 @@ namespace ApiDocs.Validation.OData
         public bool Unicode { get; set; }
 
         [XmlElement("Annotation", Namespace = ODataParser.EdmNamespace), Sortable]
-        public List<Annotation> Annotation { get; set; }
+        public List<Annotation> Annotations { get; set; }
 
         [XmlAttribute("CreateVirtualNavigationProperty", Namespace = ODataParser.AgsNamespace)]
         public bool ValueOfCreateVirtualNavigationProperty { get; set; }
