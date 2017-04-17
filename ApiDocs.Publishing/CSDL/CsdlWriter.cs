@@ -512,8 +512,8 @@ namespace ApiDocs.Publishing.CSDL
             // Add description annotation
             if (!string.IsNullOrEmpty(param.Description))
             {
-                prop.Annotation = new List<Annotation>();
-                prop.Annotation.Add(
+                prop.Annotations = new List<Annotation>();
+                prop.Annotations.Add(
                     new Annotation()
                     {
                         Term = Term.DescriptionTerm,
