@@ -69,10 +69,52 @@ namespace ApiDocs.Validation.OData
             using (StringReader reader = new StringReader(metadataContent))
             {
                 EntityFramework result = (EntityFramework)ser.Deserialize(reader);
+				
+				// Post-process the schema to merge in inherited properties from base types;
+	            foreach (Schema schema in result.DataServices.Schemas)
+	            {
+	                foreach (ComplexType complexType in schema.ComplexTypes)
+	                {         
+	                    if (complexType.BaseType != null)
+	                    {
+	                        MergeInheritedProperties(result, complexType);
+	                    }
+	                }
+	                foreach (EntityType entityType in schema.Entities)
+	                {
+	                    if (entityType.BaseType != null)
+	                    {
+	                        MergeInheritedProperties(result, entityType);
+	                    }
+	                }
+	            }
+				
                 return result;
             }
         }
 
+		private static void MergeInheritedProperties(EntityFramework dataServices, ComplexType complexType)
+        {
+            ComplexType baseComplexType = dataServices.ResourceWithIdentifier<ComplexType>(complexType.BaseType);
+            while (baseComplexType != null)
+            {
+                for (int i = baseComplexType.Properties.Count - 1; i >= 0; i--)
+                {
+                    if (!complexType.Properties.Contains(baseComplexType.Properties[i]))
+                    {
+                        complexType.Properties.Insert(0, baseComplexType.Properties[i]);
+                    }
+                }
+                if (baseComplexType.BaseType != null)
+                {
+                    baseComplexType = dataServices.ResourceWithIdentifier<ComplexType>(baseComplexType.BaseType);
+                }
+                else
+                {
+                    break;
+                }
+            }
+        }
         public static T Deserialize<T>(Stream stream) where T: class
         {
             XmlSerializer ser = new XmlSerializer(typeof(T));
