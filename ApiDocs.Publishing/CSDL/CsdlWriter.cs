@@ -761,7 +761,7 @@ namespace ApiDocs.Publishing.CSDL
             {
                 if (targetProperty.Annotation == null)
                 {
-                    targetProperty.Annotation = new List<Annotation>();
+                	targetProperty.Annotation = new List<Annotation>();
                 }
 
                 // Check to see if there already is a term with Description
@@ -772,7 +772,7 @@ namespace ApiDocs.Publishing.CSDL
                 }
                 else
                 {
-                    targetProperty.Annotation.Add(
+                	targetProperty.Annotation.Add(
                     new Annotation()
                     {
                         Term = termForDescription,
