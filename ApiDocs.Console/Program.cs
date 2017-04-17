@@ -32,6 +32,7 @@ namespace ApiDocs.ConsoleApp
     using System.Threading.Tasks;
     using ApiDocs.ConsoleApp.AppVeyor;
     using ApiDocs.ConsoleApp.Auth;
+    using ApiDocs.DocumentationGeneration;
     using ApiDocs.Publishing.Html;
     using ApiDocs.Publishing.Swagger;
     using ApiDocs.Validation;
@@ -1310,7 +1311,7 @@ namespace ApiDocs.ConsoleApp
         }
 
 
-        private static async Task<List<Schema>> TryGetMetadataSchemasAsync(CheckMetadataOptions options)
+        private static async Task<EntityFramework> TryGetMetadataEntityFrameworkAsync(CheckMetadataOptions options)
         {
             if (string.IsNullOrEmpty(options.ServiceMetadataLocation))
             {
@@ -1338,6 +1339,13 @@ namespace ApiDocs.ConsoleApp
                 RecordError("Error parsing service metadata: {0}", ex.Message);
                 return null;
             }
+
+            return edmx;
+        }
+
+        private static async Task<List<Schema>> TryGetMetadataSchemasAsync(CheckMetadataOptions options)
+        {
+            EntityFramework edmx = await TryGetMetadataEntityFrameworkAsync(options);
 
             return edmx.DataServices.Schemas;
         }
@@ -1434,18 +1442,14 @@ namespace ApiDocs.ConsoleApp
 
         private static async Task<bool> GenerateDocsAsync(GenerateDocsOptions options)
         {
-            List<Schema> schemas = await TryGetMetadataSchemasAsync(options);
-            if (null == schemas)
+            EntityFramework ef = await TryGetMetadataEntityFrameworkAsync(options);
+            if (null == ef)
                 return false;
 
-            FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, "  found {0} schema definitions: {1}", schemas.Count, (from s in schemas select s.Namespace).ComponentsJoinedByString(", "));
+            FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, "  found {0} schema definitions: {1}", ef.DataServices.Schemas.Count, (from s in ef.DataServices.Schemas select s.Namespace).ComponentsJoinedByString(", "));
 
-            foreach (Schema schema in schemas)
-            {
-                FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, "Generating documentation for schema {0}", schema.Namespace);
-                DocumentationGeneration.DocumentationGenerator.GenerateDocumentationFromSchemas(schema, options.DocumentationSetPath);
-            }
-
+            DocumentationGenerator docGenerator = new DocumentationGenerator();
+            docGenerator.GenerateDocumentationFromEntityFrameworkAsync(ef, options.DocumentationSetPath);
 
             return true;
         }

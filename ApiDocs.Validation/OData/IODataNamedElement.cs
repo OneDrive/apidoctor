@@ -25,43 +25,11 @@
 
 namespace ApiDocs.Validation.OData
 {
-    using System.Collections.Generic;
-    using System.ComponentModel;
-    using System.Xml.Serialization;
-
-    [XmlRoot("Property", Namespace = ODataParser.EdmNamespace)]
-    public class Property : IOdataAnnotatable
+    /// <summary>
+    /// Interface for name OData elements
+    /// </summary>
+    public interface IODataNamedElement
     {
-        public Property()
-        {
-            this.Annotations = new List<Annotation>();
-        }
-
-        [XmlAttribute("Name")]
-        public string Name { get; set; }
-
-        [XmlAttribute("Type")]
-        public string Type { get; set; }
-
-        [XmlAttribute("Nullable"), DefaultValue(false)]
-        public bool Nullable { get; set; }
-
-        [XmlElement("Annotation", Namespace = ODataParser.EdmNamespace)]
-        public List<Annotation> Annotations { get; set; }
-
-
-        /// <summary>
-        /// Indicates that this property can be used in a $select query parameter
-        /// </summary>
-        [XmlIgnore]
-        public bool Selectable { get; set; }
-
-        /// <summary>
-        /// Indicates this property can be used in a $filter query parameter
-        /// </summary>
-        [XmlIgnore]
-        public bool Filterable { get; set; }
-
-
+        string Name { get; set; }
     }
 }

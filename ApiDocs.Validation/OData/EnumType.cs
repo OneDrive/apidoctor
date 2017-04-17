@@ -25,50 +25,43 @@
 
 namespace ApiDocs.Validation.OData
 {
+    using System;
     using System.Collections.Generic;
     using System.Xml.Serialization;
 
-    [XmlRoot("NavigationProperty", Namespace = ODataParser.EdmNamespace)]
-    public class NavigationProperty : Property
+    [XmlRoot("EnumType", Namespace = ODataParser.EdmNamespace)]
+    public class EnumType : IOdataAnnotatable, IODataNavigable
     {
-        public NavigationProperty()
+        public EnumType()
         {
-            ContainsTarget = true;
             this.Annotations = new List<Annotation>();
         }
 
-        [XmlAttribute("ContainsTarget")]
-        public bool ContainsTarget { get; set; }
+        [XmlElement("Member", Namespace = ODataParser.EdmNamespace)]
+        public List<EnumMember> Members { get; set; }
 
+        [XmlElement("Annotation", Namespace = ODataParser.EdmNamespace)]
+        public List<Annotation> Annotations { get; set; }
 
-        /// <summary>
-        /// Indicates that this property can be included in a $expand query
-        /// </summary>
-        [XmlIgnore]
-        public bool Expandable { get; set; }
+        [XmlAttribute("Name")]
+        public string Name { get; set; }
 
-        /// <summary>
-        /// Indicates that the target of this property can be enumerated (e.g. GET /items)
-        /// </summary>
-        public bool Enumerable { get; set; }
+        public string TypeIdentifier
+        {
+            get
+            {
+                return this.Name;
+            }
+        }
 
-        /// <summary>
-        /// Indicates how this property can be navigated via the URL.
-        /// </summary>
-        [XmlIgnore]
-        public Navigability Navigation { get; set; }
+        public IODataNavigable NavigateByEntityTypeKey(EntityFramework edmx)
+        {
+            throw new NotImplementedException();
+        }
 
-        /// <summary>
-        /// Indicates that change tracking can be used on this target.
-        /// </summary>
-        [XmlIgnore]
-        public bool ChangeTracking { get; set; }
-    }
-
-    public enum Navigability
-    {
-        Recursive,
-        Single,
-        None
+        public IODataNavigable NavigateByUriComponent(string component, EntityFramework edmx)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

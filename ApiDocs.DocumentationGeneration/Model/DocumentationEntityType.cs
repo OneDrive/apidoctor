@@ -23,52 +23,25 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-namespace ApiDocs.Validation.OData
+namespace ApiDocs.DocumentationGeneration.Model
 {
     using System.Collections.Generic;
-    using System.Xml.Serialization;
+    using System.Linq;
 
-    [XmlRoot("NavigationProperty", Namespace = ODataParser.EdmNamespace)]
-    public class NavigationProperty : Property
+    using ApiDocs.DocumentationGeneration.Extensions;
+    using ApiDocs.Validation.OData;
+
+    public class DocumentationEntityType : DocumentationComplexType
     {
-        public NavigationProperty()
+        public DocumentationEntityType(EntityFramework entityFramework, EntityType entity)
+            : base(entityFramework, entity)
         {
-            ContainsTarget = true;
-            this.Annotations = new List<Annotation>();
+            this.IsEntity = true;
+            this.NavigationProperties = entity.NavigationProperties.Select(p => p.ToDocumentationNavigationProperty(entityFramework, entity)).ToList().AsReadOnly();
         }
 
-        [XmlAttribute("ContainsTarget")]
-        public bool ContainsTarget { get; set; }
+        public bool IsEntity { get; private set; }
 
-
-        /// <summary>
-        /// Indicates that this property can be included in a $expand query
-        /// </summary>
-        [XmlIgnore]
-        public bool Expandable { get; set; }
-
-        /// <summary>
-        /// Indicates that the target of this property can be enumerated (e.g. GET /items)
-        /// </summary>
-        public bool Enumerable { get; set; }
-
-        /// <summary>
-        /// Indicates how this property can be navigated via the URL.
-        /// </summary>
-        [XmlIgnore]
-        public Navigability Navigation { get; set; }
-
-        /// <summary>
-        /// Indicates that change tracking can be used on this target.
-        /// </summary>
-        [XmlIgnore]
-        public bool ChangeTracking { get; set; }
-    }
-
-    public enum Navigability
-    {
-        Recursive,
-        Single,
-        None
+        public IReadOnlyCollection<DocumentationProperty> NavigationProperties { get; private set; }
     }
 }

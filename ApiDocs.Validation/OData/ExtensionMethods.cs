@@ -44,7 +44,9 @@ namespace ApiDocs.Validation.OData
             { "Edm.Guid", SimpleDataType.Guid },
             { "Edm.TimeSpan", SimpleDataType.TimeSpan },
             { "Edm.Stream", SimpleDataType.Stream },
-            { "Edm.Object", SimpleDataType.Object }
+            { "Edm.Object", SimpleDataType.Object },
+            { "Edm.Single", SimpleDataType.Single },
+            { "Edm.Binary", SimpleDataType.Binary }
         };
 
         internal static bool ToBoolean(this string source)
@@ -73,7 +75,7 @@ namespace ApiDocs.Validation.OData
         /// <param name="schemas"></param>
         /// <param name="identifier"></param>
         /// <returns></returns>
-        internal static object FindTypeWithIdentifier(this IEnumerable<Schema> schemas, string identifier)
+        public static object FindTypeWithIdentifier(this IEnumerable<Schema> schemas, string identifier)
         {
             // onedrive.item
             int splitIndex = identifier.LastIndexOf('.');
@@ -116,6 +118,11 @@ namespace ApiDocs.Validation.OData
             if (matchingFunctions.Any())
                 return matchingFunctions.First();
 
+            // Look up enums
+            var matchingEnums = (from et in schema.EnumTypes where et.Name == typeName select et);
+            if (matchingEnums.Any())
+                return matchingEnums.First();
+
             return null;
         }
 
@@ -140,6 +147,22 @@ namespace ApiDocs.Validation.OData
         public static T ResourceWithIdentifier<T>(this EntityFramework edmx, string identifier)
         {
             return edmx.DataServices.Schemas.ResourceWithIdentifier<T>(identifier);
+        }
+
+
+        public static IODataNavigable LookupNavigableType(this List<Schema> schemas, string identifier)
+        {
+            var foundType = schemas.FindTypeWithIdentifier(identifier);
+            if (null != foundType)
+            {
+                return (IODataNavigable)foundType;
+            }
+
+            SimpleDataType simpleType = identifier.ToODataSimpleType();
+            if (simpleType != SimpleDataType.Object)
+                return new ODataSimpleType(simpleType);
+
+            throw new InvalidOperationException("Could not resolve type identifier: " + identifier);
         }
 
         internal static IODataNavigable LookupNavigableType(this EntityFramework edmx, string identifier)

@@ -22,53 +22,27 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-
-namespace ApiDocs.Validation.OData
+ 
+ namespace ApiDocs.Validation.OData
 {
     using System.Collections.Generic;
     using System.Xml.Serialization;
 
-    [XmlRoot("NavigationProperty", Namespace = ODataParser.EdmNamespace)]
-    public class NavigationProperty : Property
+    [XmlRoot("EnumMember", Namespace = ODataParser.EdmNamespace)]
+    public class EnumMember : IOdataAnnotatable
     {
-        public NavigationProperty()
+        public EnumMember()
         {
-            ContainsTarget = true;
             this.Annotations = new List<Annotation>();
         }
 
-        [XmlAttribute("ContainsTarget")]
-        public bool ContainsTarget { get; set; }
+        [XmlAttribute("Name")]
+        public string Name { get; set; }
 
+        [XmlAttribute("Value")]
+        public int Value { get; set; }
 
-        /// <summary>
-        /// Indicates that this property can be included in a $expand query
-        /// </summary>
-        [XmlIgnore]
-        public bool Expandable { get; set; }
-
-        /// <summary>
-        /// Indicates that the target of this property can be enumerated (e.g. GET /items)
-        /// </summary>
-        public bool Enumerable { get; set; }
-
-        /// <summary>
-        /// Indicates how this property can be navigated via the URL.
-        /// </summary>
-        [XmlIgnore]
-        public Navigability Navigation { get; set; }
-
-        /// <summary>
-        /// Indicates that change tracking can be used on this target.
-        /// </summary>
-        [XmlIgnore]
-        public bool ChangeTracking { get; set; }
-    }
-
-    public enum Navigability
-    {
-        Recursive,
-        Single,
-        None
+        [XmlElement("Annotation", Namespace = ODataParser.EdmNamespace)]
+        public List<Annotation> Annotations { get; set; }
     }
 }

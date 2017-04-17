@@ -359,7 +359,10 @@ namespace ApiDocs.Validation
         /// <summary>
         /// Specifies that the value is an undefined resource (generic object)
         /// </summary>
-        Object
+        Object,
 
+        Single,
+
+        Binary
     }
 }

@@ -53,7 +53,10 @@ namespace ApiDocs.Validation.OData
         public List<Term> Terms { get; set; }
 
         [XmlElement("Annotations", Namespace = ODataParser.EdmNamespace)]
-        public Annotations Annotations { get; set; }
+        public List<Annotations> Annotations { get; set; }
+
+        [XmlElement("EnumType", Namespace = ODataParser.EdmNamespace)]
+        public List<EnumType> EnumTypes { get; set; }
 
         public Schema()
         {
@@ -63,6 +66,8 @@ namespace ApiDocs.Validation.OData
             this.Functions = new List<Function>();
             this.Actions = new List<Action>();
             this.Terms = new List<Term>();
+            this.Annotations = new List<Annotations>();
+            this.EnumTypes = new List<EnumType>();
         }
      
     }

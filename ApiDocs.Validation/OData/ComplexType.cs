@@ -33,11 +33,12 @@ namespace ApiDocs.Validation.OData
     using System.Xml.Serialization;
 
     [XmlRoot("ComplexType", Namespace = ODataParser.EdmNamespace)]
-    public class ComplexType : IODataNavigable
+    public class ComplexType : IODataNavigable, IOdataAnnotatable
     {
         public ComplexType()
         {
             this.Properties = new List<Property>();
+            this.Annotations = new List<Annotation>();
         }
 
         [XmlAttribute("Name")]
@@ -50,6 +51,9 @@ namespace ApiDocs.Validation.OData
 
         [XmlElement("Property", Namespace = ODataParser.EdmNamespace)]
         public List<Property> Properties { get; set; }
+
+        [XmlElement("Annotation", Namespace = ODataParser.EdmNamespace)]
+        public List<Annotation> Annotations { get; set; }
 
         [XmlAttribute("BaseType")]
         public string BaseType { get; set; }
