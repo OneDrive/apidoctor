@@ -51,6 +51,9 @@ namespace ApiDocs.Validation.OData
         [XmlElement("Property", Namespace = ODataParser.EdmNamespace)]
         public List<Property> Properties { get; set; }
 
+        [XmlAttribute("BaseType")]
+        public string BaseType { get; set; }
+
 
         public virtual IODataNavigable NavigateByEntityTypeKey(EntityFramework edmx)
         {
