@@ -28,8 +28,10 @@ namespace ApiDocs.Validation.OData
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Xml;
     using System.Xml.Linq;
     using System.Xml.Serialization;
+    using Transformation;
 
     /// <summary>
     /// Action in OData is allowed to modify data on the 
@@ -42,17 +44,20 @@ namespace ApiDocs.Validation.OData
         public Action() : base()
         {
         }
+
+        [XmlAttribute("EntitySetPath")]
+        public string EntitySetPath { get; set; }
     }
 
-    public class ActionOrFunctionBase
+    public class ActionOrFunctionBase : XmlBackedObject, ITransformable
     {
-        [XmlAttribute("Name")]
+        [XmlAttribute("Name"), SortBy]
         public string Name { get; set; }
 
         [XmlAttribute("IsBound")]
         public bool IsBound { get; set; }
 
-        [XmlElement("Parameter")]
+        [XmlElement("Parameter"), Sortable]
         public List<Parameter> Parameters { get; set; }
 
         [XmlElement("ReturnType")]
@@ -62,5 +67,62 @@ namespace ApiDocs.Validation.OData
         {
             this.Parameters = new List<Parameter>();
         }
+
+        #region ITransformable
+        public virtual void ApplyTransformation(Transformation.BaseModifications mods, EntityFramework edmx, string version)
+        {
+            TransformationHelper.ApplyTransformation(this, mods, edmx, version);
+        }
+
+        [XmlIgnore]
+        public string ElementIdentifier
+        {
+            get
+            {
+                return $"{Name}@{BindingParameterType}({ParameterNames})";
+            }
+            set
+            {
+                string[] parts = value.Split('@');
+                this.Name = parts[0];
+                if (parts.Length > 1)
+                {
+                    string[] parameters = parts[1].Split(new char[] { '(', ')' }, StringSplitOptions.RemoveEmptyEntries);
+                    this.BindingParameterType = parameters[0];
+                    for(int i=1; i<parameters.Length; i++)
+                    {
+                        Parameter p = new Parameter() { Name = parameters[i] };
+                        this.Parameters.Add(p);
+                    }
+                }
+            }
+        }
+
+        private string BindingParameterType {
+            get
+            {
+                return (from p in Parameters where p.Name == "bindingParameter" || p.Name == "this" select p.Type).FirstOrDefault();
+            }
+            set
+            {
+                if (this.BindingParameterType == null)
+                {
+                    Parameter bindingParam = new Parameter() { Name = "bindingParameter", Type = value };
+                    this.Parameters.Add(bindingParam);
+                }
+            }
+        }
+
+        private string ParameterNames
+        {
+            get
+            {
+                var names = (from p in Parameters where p.Name != "bindingParameter" && p.Name != "this" select p.Name);
+                if (names.Any())
+                    return names.ComponentsJoinedByString(",");
+                return string.Empty;
+            }
+        }
+        #endregion
     }
 }

@@ -172,9 +172,12 @@ namespace ApiDocs.Validation
             return errors.Any(x => x.IsError || x.IsWarning);
         }
 
+        static MarkdownDeep.Markdown converter = new Markdown() { ActiveRenderer = new MarkdownDeep.Formats.RenderToPlainText(), ExtraMode = true };
 
-        public static string ValueForColumn(this string[] rowValues, IMarkdownTable table, params string[] possibleHeaderNames)
+
+        public static string ValueForColumn(this string[] rowValues, IMarkdownTable table, string[] possibleHeaderNames, bool removeMarkdownSyntax = true)
         {
+            
             var headers = table.ColumnHeaders;
 
             foreach (var headerName in possibleHeaderNames)
@@ -184,10 +187,13 @@ namespace ApiDocs.Validation
                 {
                     // Check to see if we need to clean up / remove any formatting marks
                     string tableCellContents = rowValues[index];
-                    if (null != tableCellContents)
-                        return tableCellContents.Trim(' ', '`', '*', '_');
-                    else
-                        return null;
+
+                    if (removeMarkdownSyntax && !string.IsNullOrEmpty(tableCellContents))
+                    {
+                        tableCellContents = converter.Transform(tableCellContents).TrimEnd();
+                        //Debug.Assert(!string.IsNullOrEmpty(tableCellContents));
+                    }
+                    return tableCellContents;
                 }
             }
 
@@ -269,6 +275,10 @@ namespace ApiDocs.Validation
 
         public static SimpleDataType ParseSimpleTypeString(string lowercaseString)
         {
+            if (lowercaseString.StartsWith("edm."))
+            {
+                lowercaseString = lowercaseString.Substring(4);
+            }
             SimpleDataType simpleType = SimpleDataType.None;
             switch (lowercaseString)
             {
@@ -282,6 +292,9 @@ namespace ApiDocs.Validation
                     break;
                 case "int32":
                     simpleType = SimpleDataType.Int32;
+                    break;
+                case "int16":
+                    simpleType = SimpleDataType.Int16;
                     break;
                 case "double":
                     simpleType = SimpleDataType.Double;

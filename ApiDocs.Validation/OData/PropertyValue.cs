@@ -28,20 +28,15 @@ namespace ApiDocs.Validation.OData
     using System.Xml.Serialization;
 
     [XmlRoot("PropertyValue", Namespace = ODataParser.EdmNamespace)]
-    public class PropertyValue
+    public class PropertyValue : XmlBackedObject
     {
         [XmlAttribute("Property")]
         public string Property { get; set; }
 
         [XmlElement("EnumMember", Namespace = ODataParser.EdmNamespace), DefaultValue(null)]
         public string EnumMember { get; set; }
-    }
-
-    public class BoolPropertyValue : PropertyValue
-    {
 
         [XmlAttribute("Bool")]
         public bool Bool { get; set; }
-
     }
 }

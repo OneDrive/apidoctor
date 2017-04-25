@@ -225,6 +225,9 @@ namespace ApiDocs.Validation.Writers
 			var subfolders = directory.GetDirectories();
 			foreach (var folder in subfolders)
 			{
+                if (folder.FullName == destinationRoot.FullName)
+                    continue;
+
 				if (this.IsInternalPath(folder))
 				{
 				    this.LogMessage(new ValidationMessage(folder.Name, "Source file was on the internal path list, skipped."));

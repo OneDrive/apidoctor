@@ -25,19 +25,20 @@
 
 namespace ApiDocs.Validation.OData
 {
+    using System.ComponentModel;
     using System.Xml.Serialization;
+    using Transformation;
 
     [XmlRoot("NavigationProperty", Namespace = ODataParser.EdmNamespace)]
     public class NavigationProperty : Property
     {
         public NavigationProperty()
         {
-            ContainsTarget = true;
+            ContainsTarget = false;
         }
 
-        [XmlAttribute("ContainsTarget")]
+        [XmlAttribute("ContainsTarget"), DefaultValue(false)]
         public bool ContainsTarget { get; set; }
-
 
         /// <summary>
         /// Indicates that this property can be included in a $expand query
@@ -48,6 +49,7 @@ namespace ApiDocs.Validation.OData
         /// <summary>
         /// Indicates that the target of this property can be enumerated (e.g. GET /items)
         /// </summary>
+        [XmlIgnore]
         public bool Enumerable { get; set; }
 
         /// <summary>
@@ -61,6 +63,17 @@ namespace ApiDocs.Validation.OData
         /// </summary>
         [XmlIgnore]
         public bool ChangeTracking { get; set; }
+
+        //public override void ApplyTransformation(BaseModifications transform, EntityFramework edmx, string version)
+        //{
+        //    Transformation.PropertyModification value = (Transformation.PropertyModification)transform;
+        //    if (value.ContainsTarget.HasValue)
+        //    {
+        //        ContainsTarget = value.ContainsTarget.Value;
+        //    }
+
+        //    base.ApplyTransformation(transform, edmx, version);
+        //}
     }
 
     public enum Navigability

@@ -29,10 +29,11 @@ namespace ApiDocs.Validation.OData
     using System.Xml.Serialization;
 
     [XmlRoot("DataServices", Namespace = ODataParser.EdmNamespace)]
-    public class DataServices
+    public class DataServices : XmlBackedObject
     {
         [XmlElement("Schema", Namespace = ODataParser.EdmNamespace)]
+        [Sortable]
         public List<Schema> Schemas { get; set; }
-      
+
     }
 }

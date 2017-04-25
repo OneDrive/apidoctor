@@ -64,11 +64,45 @@ namespace ApiDocs.Validation.OData
         public static EntityFramework DeserializeEntityFramework(string metadataContent)
         {
             XmlSerializer ser = new XmlSerializer(typeof(EntityFramework));
+            ser.UnknownElement += Ser_UnknownElement;
+            ser.UnknownAttribute += Ser_UnknownAttribute;
+            using (StringReader reader = new StringReader(metadataContent))
+            {
+                EntityFramework result = (EntityFramework)ser.Deserialize(reader);
+                return result;
+            }
+        }
 
-            StringReader reader = new StringReader(metadataContent);
-            EntityFramework result = (EntityFramework)ser.Deserialize(reader);
-
+        public static T Deserialize<T>(Stream stream) where T: class
+        {
+            XmlSerializer ser = new XmlSerializer(typeof(T));
+            ser.UnknownElement += Ser_UnknownElement;
+            ser.UnknownAttribute += Ser_UnknownAttribute;
+            T result = (T)ser.Deserialize(stream);
             return result;
+        }
+
+        public static Schema DeserializeSchema(string xmlContent)
+        {
+            XmlSerializer ser = new XmlSerializer(typeof(Schema));
+            ser.UnknownElement += Ser_UnknownElement;
+            ser.UnknownAttribute += Ser_UnknownAttribute;
+
+            using (StringReader reader = new StringReader(xmlContent))
+            {
+                Schema result = (Schema)ser.Deserialize(reader);
+                return result;
+            }
+        }
+
+        private static void Ser_UnknownAttribute(object sender, XmlAttributeEventArgs e)
+        {
+            Console.WriteLine($"UnknownAttribute encountered [{e.LineNumber}:{e.LinePosition}]: {e.Attr.Name} in object {e.ObjectBeingDeserialized.GetType().Name}");
+        }
+
+        private static void Ser_UnknownElement(object sender, XmlElementEventArgs e)
+        {
+            Console.WriteLine($"UnknownElement encountered [{e.LineNumber}:{e.LinePosition}]: {e.Element.Name} in namespace {e.Element.NamespaceURI} for object {e.ObjectBeingDeserialized.GetType().Name}");
         }
 
         public static async Task<EntityFramework> ParseEntityFrameworkFromUrlAsync(Uri remoteUrl)
@@ -123,7 +157,7 @@ namespace ApiDocs.Validation.OData
             List<ResourceDefinition> resources = new List<ResourceDefinition>();
 
             resources.AddRange(from ct in schema.ComplexTypes select ResourceDefinitionFromType(schema, otherSchema, ct));
-            resources.AddRange(from et in schema.Entities select ResourceDefinitionFromType(schema, otherSchema, et));
+            resources.AddRange(from et in schema.EntityTypes select ResourceDefinitionFromType(schema, otherSchema, et));
 
             return resources;
         }
@@ -194,28 +228,32 @@ namespace ApiDocs.Validation.OData
 
         public const string EdmxNamespace = "http://docs.oasis-open.org/odata/ns/edmx";
         public const string EdmNamespace = "http://docs.oasis-open.org/odata/ns/edm";
+        public const string AgsNamespace = "http://aggregator.microsoft.com/internal";
 
         /// <summary>
         /// Generates an entity framework XML file for a given input
         /// </summary>
         /// <param name="input"></param>
         /// <returns></returns>
-        public static string GenerateEdmx(EntityFramework input)
+        public static string Serialize<T>(T input, bool newLineOnAttributes = false)
         {
-            StringBuilder sb = new StringBuilder();
-            StringWriter stringWriter = new StringWriter(sb);
+            MemoryStream ms = new MemoryStream();
+            StreamWriter sw = new StreamWriter(ms, new UTF8Encoding(false));
             XmlWriter writer = XmlWriter.Create(
-                stringWriter,
-                new XmlWriterSettings { Encoding = new UTF8Encoding(false), OmitXmlDeclaration = true, Indent = true });
+                sw,
+                new XmlWriterSettings { Encoding = new UTF8Encoding(false), OmitXmlDeclaration = false, Indent = true, NewLineOnAttributes = newLineOnAttributes });
 
             XmlSerializerNamespaces ns = new XmlSerializerNamespaces();
             ns.Add("edmx", ODataParser.EdmxNamespace);
+            ns.Add("ags", ODataParser.AgsNamespace);
 
-            XmlSerializer ser = new XmlSerializer(typeof(EntityFramework));
+            XmlSerializer ser = new XmlSerializer(typeof(T));
             ser.Serialize(writer, input, ns);
             writer.Flush();
 
-            return sb.ToString();
+            sw.Flush();
+
+            return System.Text.Encoding.UTF8.GetString(ms.GetBuffer(), 0, (int)ms.Length);
         }
         #endregion
 

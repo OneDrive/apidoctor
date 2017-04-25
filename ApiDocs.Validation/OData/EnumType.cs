@@ -27,56 +27,48 @@ namespace ApiDocs.Validation.OData
 {
     using System;
     using System.Collections.Generic;
-    using System.ComponentModel;
     using System.Xml.Serialization;
     using Transformation;
 
-    [XmlRoot("Annotation", Namespace = ODataParser.EdmNamespace)]
-    public class Annotation : XmlBackedObject, Transformation.ITransformable
+    public class EnumType : XmlBackedObject, Transformation.ITransformable
     {
-        [XmlAttribute("Term"), SortBy]
-        public string Term { get; set; }
+        [XmlAttribute("Name"), SortBy]
+        public string Name { get; set; }
 
-        [XmlAttribute("String"), DefaultValue(null)]
-        public string String { get; set; }
+        [XmlAttribute("UnderlyingType"), ContainsType]
+        public string UnderlyingType { get; set; }
 
-        
-        public bool? Bool { get; set; }
+        [XmlAttribute("IsFlags")]
+        public bool IsFlags { get; set; }
 
-        [XmlIgnore]
-        public bool BoolSpecified {
-            get
-            {
-                return Bool.HasValue;
-            }
-        }
+        [XmlElement("Member"), Sortable]
+        public List<EnumMember> Members { get; set; }
 
-        [XmlIgnore]
-        public bool BoolAttributeValue
-        {
-            get
-            {
-                if (Bool.HasValue) return Bool.Value;
-                return false;
-            }
-            set
-            {
-                Bool = value;
-            }
-        }
-
-        [XmlElement("Record", Namespace = ODataParser.EdmNamespace), DefaultValue(null), Sortable]
-        public List<Record> Records { get; set; }
-
-        #region ITransformable
-        public void ApplyTransformation(Transformation.BaseModifications mods, EntityFramework edmx, string version)
+        public void ApplyTransformation(BaseModifications mods, EntityFramework edmx, string version)
         {
             TransformationHelper.ApplyTransformation(this, mods, edmx, version);
         }
 
         [XmlIgnore]
-        public string ElementIdentifier { get { return this.Term; } set { this.Term = value; } }
-        #endregion
+        public string ElementIdentifier { get { return this.Name; } set { this.Name = value; } }
+
+    }
+
+    public class EnumMember : XmlBackedObject, ITransformable
+    {
+        [XmlAttribute("Name"), SortBy]
+        public string Name { get; set; }
+
+        [XmlAttribute("Value")]
+        public string Value { get; set; }
+
+        public void ApplyTransformation(BaseModifications value, EntityFramework edmx, string version)
+        {
+            TransformationHelper.ApplyTransformation(this, value, edmx, version);
+        }
+
+        [XmlIgnore]
+        public string ElementIdentifier { get { return this.Name; } set { this.Name = value; } }
 
     }
 }

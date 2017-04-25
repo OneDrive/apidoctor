@@ -24,13 +24,14 @@
 
 namespace ApiDocs.Validation.OData
 {
+    using System.Collections.Generic;
     using System.ComponentModel;
     using System.Xml.Serialization;
 
     [XmlRoot("Record", Namespace = ODataParser.EdmNamespace)]
-    public class Record
+    public class Record : XmlBackedObject
     {
-        [XmlElement("PropertyValue", ElementName = ODataParser.EdmNamespace), DefaultValue(null)]
+        [XmlElement("PropertyValue", Namespace = ODataParser.EdmNamespace), DefaultValue(null), SortBy]
         public PropertyValue PropertyValue { get; set; }
     }
 }

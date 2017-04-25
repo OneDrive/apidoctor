@@ -25,16 +25,56 @@
 
 namespace ApiDocs.Validation.OData
 {
+    using Newtonsoft.Json;
+    using System.Collections.Generic;
     using System.Xml.Serialization;
+    using Transformation;
+    using System;
 
     [XmlRoot("EntitySet", Namespace = ODataParser.EdmNamespace)]
-    public class EntitySet
+    public class EntitySet : XmlBackedObject, Transformation.ITransformable
     {
-        [XmlAttribute("Name")]
+        public EntitySet()
+        {
+            this.NavigationPropertyBinding = new List<OData.NavigationPropertyBinding>();
+        }
+
+        [XmlAttribute("Name"), SortBy]
         public string Name { get; set; }
 
-        [XmlAttribute("EntityType")]
+        [XmlAttribute("EntityType"), ContainsType]
         public string EntityType { get; set; }
 
+        [XmlElement("NavigationPropertyBinding"), Sortable]
+        public List<NavigationPropertyBinding> NavigationPropertyBinding { get; set; }
+
+        public void ApplyTransformation(Transformation.BaseModifications mods, EntityFramework edmx, string version)
+        {
+            TransformationHelper.ApplyTransformation(this, mods, edmx, version);
+        }
+
+        [XmlIgnore]
+        public string ElementIdentifier { get { return this.Name; } set { this.Name = value; } }
+
+    }
+
+    public class NavigationPropertyBinding: ITransformable
+    {
+        [XmlAttribute("Path"), SortBy]
+        public string Path { get; set; }
+        [XmlAttribute("Target"), ContainsType]
+        public string Target { get; set; }
+
+        [XmlIgnore]
+        public string ElementIdentifier
+        {
+            get { return this.Path; }
+            set { this.Path = value; }
+        }
+
+        public void ApplyTransformation(BaseModifications mods, EntityFramework edmx, string version)
+        {
+            TransformationHelper.ApplyTransformation(this, mods, edmx, version);
+        }
     }
 }

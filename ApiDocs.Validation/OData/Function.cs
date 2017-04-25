@@ -38,5 +38,8 @@ namespace ApiDocs.Validation.OData
         public Function() : base()
         {
         }
+
+        [XmlAttribute("IsComposable")]
+        public bool IsComposable { get; set; }
     }
 }

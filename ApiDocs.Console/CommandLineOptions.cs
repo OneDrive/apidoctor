@@ -33,6 +33,7 @@ namespace ApiDocs.ConsoleApp
     using ApiDocs.Validation.Writers;
     using CommandLine;
     using CommandLine.Text;
+    using Publishing.CSDL;
 
     class CommandLineOptions
     {
@@ -45,6 +46,7 @@ namespace ApiDocs.ConsoleApp
         public const string VerbMetadata = "check-metadata";
         public const string VerbAbout = "about";
         public const string VerbCheckAll = "check-all";
+        public const string VerbPublishMetadata = "publish-edmx";
         
         [VerbOption(VerbPrint, HelpText="Print files, resources, and methods discovered in the documentation.")]
         public PrintOptions PrintVerbOptions { get; set; }
@@ -63,6 +65,9 @@ namespace ApiDocs.ConsoleApp
 
         [VerbOption(VerbPublish, HelpText="Publish a version of the documentation, optionally converting it into other formats.")]
         public PublishOptions PublishVerb { get; set; }
+
+        [VerbOption(VerbPublishMetadata, HelpText="Publish or update metadata based on information in the docset.")]
+        public PublishMetadataOptions EdmxPublishVerb { get; set; }
 
         [VerbOption(VerbMetadata, HelpText="Check service CSDL metadata against documentation.")]
         public CheckMetadataOptions CheckMetadataVerb { get; set; }
@@ -182,13 +187,15 @@ namespace ApiDocs.ConsoleApp
         [Option("methods", HelpText="Print the methods discovered in the documentation.")]
         public bool PrintMethods { get; set; }
 
+        [Option("accounts", HelpText="Print the list of accounts discovered in the documentation.")]
+        public bool PrintAccounts { get; set; }
+
         public override bool HasRequiredProperties(out string[] missingArguments)
         {
             if (!base.HasRequiredProperties(out missingArguments))
                 return false;
 
-
-            if (!this.PrintFiles && !this.PrintResources && !this.PrintMethods)
+            if (!this.PrintFiles && !this.PrintResources && !this.PrintMethods && !this.PrintAccounts)
             {
                 missingArguments = new string[] { "One or more arguments to specify what to display are required." };
             }
@@ -220,6 +227,8 @@ namespace ApiDocs.ConsoleApp
         [Option("git-path", HelpText="Path to the git executable. Required for changes-since-branch-only.")]
         public string GitExecutablePath { get; set; }
 
+        [Option("link-case-match", HelpText = "Require the CaSe of relative links within the content to match the filenames.")]
+        public bool RequireFilenameCaseMatch { get; set; }
     }
 
     class CheckServiceOptions : BasicCheckOptions
@@ -370,6 +379,64 @@ namespace ApiDocs.ConsoleApp
 
     }
 
+    class PublishMetadataOptions : DocSetOptions
+    {
+        [Option("output", Required = true, HelpText = "Folder for the output metadata file.")]
+        public string OutputDirectory { get; set; }
+
+        [Option("source", HelpText="Source metadata input file.")]
+        public string SourceMetadataPath { get; set; }
+
+        [Option("format", DefaultValue=MetadataFormat.Default, HelpText="Specify the input and output formats for metadata.")]
+        public MetadataFormat DataFormat { get; set; }
+
+        [Option("namespaces", HelpText = "Specify the namespaces that are included when publishing Edmx. Semicolon separated values.")]
+        public string Namespaces { get; set; }
+
+        [Option("sort", HelpText = "Sort the output. This is supported for EDMX publishing currently.")]
+        public bool SortOutput { get; set; }
+
+        [Option("base-url", HelpText = "Specify the base service URL included in method examples to be removed when generating metadata")]
+        public string BaseUrl { get; set; }
+
+        [Option("transform", HelpText="Apply a named publishSchemaChanges transformation to the output file.")]
+        public string TransformOutput { get; set; }
+
+        [Option("version", HelpText = "Specify a version to generate the output file for. By default elements from all versions are included in the output.")]
+        public string Version { get; set; }
+
+        [Option("skip-generation", HelpText = "Skip generating new elements in the metadata, and only augment elements in the metadata. Can only be used with the --source parameter.")]
+        public bool SkipMetadataGeneration { get; set; }
+
+        [Option("validate", HelpText = "Perform validation on the resulting schema to check for errors.")]
+        public bool ValidateSchema { get; set; }
+
+        [Option("new-line-attributes", HelpText = "Put XML attributes on a new line")]
+        public bool AttributesOnNewLines { get; set; }
+
+        public CsdlWriterOptions GetOptions()
+        {
+            return new CsdlWriterOptions
+            {
+                BaseUrl = BaseUrl,
+                Formats = DataFormat,
+                Sort = SortOutput,
+                OutputDirectoryPath = OutputDirectory,
+                SourceMetadataPath = SourceMetadataPath,
+                Namespaces = Namespaces?.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries),
+                TransformOutput = TransformOutput,
+                DocumentationSetPath = DocumentationSetPath,
+                Version = Version,
+                SkipMetadataGeneration = SkipMetadataGeneration,
+                ValidateSchema = ValidateSchema,
+                AttributesOnNewLines = AttributesOnNewLines
+            };
+        }
+
+        
+
+    }
+
     class PublishOptions : DocSetOptions, IPublishOptions
     {
         [Option("output", Required=true, HelpText="Output directory for sanitized documentation.")]
@@ -394,9 +461,6 @@ namespace ApiDocs.ConsoleApp
 
         [Option("files", HelpText = "Specify a particular source file that should be published, semicolon separated.")]
         public string SourceFiles { get; set; }
-
-        [Option("namespaces", HelpText="Specify the namespaces that are included when publishing Edmx. Semicolon separated values.")]
-        public string Namespaces { get; set; }
 
         [Option("toc", HelpText="Specify the relative path to the output folder where the TOC should be written.")]
         public string TableOfContentsOutputRelativePath
@@ -428,6 +492,10 @@ namespace ApiDocs.ConsoleApp
 
         [Option("base-url", HelpText = "Specify the base service URL included in method examples to be removed when generating metadata")]
         public string BaseUrl { get; set; }
+
+        [Option("template-format", HelpText = "For EDMX publishing, only publish a single schema in CSDL format instead of the full EDMX.", DefaultValue = MetadataFormat.Default)]
+        public MetadataFormat TemplateFormat { get; set; }
+
 
         #endregion
 
@@ -467,7 +535,6 @@ namespace ApiDocs.ConsoleApp
             Swagger2,
             Outline,
             Mustache,
-            Edmx,
             JsonToc
         }
     }

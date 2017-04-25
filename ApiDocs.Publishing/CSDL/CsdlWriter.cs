@@ -33,33 +33,85 @@ namespace ApiDocs.Publishing.CSDL
     using System.Text;
     using System.Threading.Tasks;
     using ApiDocs.Validation.OData;
+    using Validation.Config;
+    using Validation.OData.Transformation;
 
     public class CsdlWriter : DocumentPublisher
     {
-        private readonly string[] validNamespaces;
-        private readonly string baseUrl;
+        private readonly CsdlWriterOptions options;
 
-        public CsdlWriter(DocSet docs, string[] namespacesToExport, string baseUrl)
+        public CsdlWriter(DocSet docs, string[] namespacesToExport, string baseUrl, string preexistingEdmxFile, MetadataFormat format = MetadataFormat.Default, bool sortOutput = false)
             : base(docs)
         {
-            this.validNamespaces = namespacesToExport;
-            this.baseUrl = baseUrl;
+            this.options = new CsdlWriterOptions()
+            {
+                Namespaces = namespacesToExport,
+                BaseUrl = baseUrl,
+                SourceMetadataPath = preexistingEdmxFile,
+                Formats = format,
+                Sort = sortOutput
+            };
+        }
+
+        public CsdlWriter(DocSet docs, CsdlWriterOptions options)
+            : base(docs)
+        {
+            this.options = options;
         }
 
         public override async Task PublishToFolderAsync(string outputFolder)
         {
-            // Step 1: Generate an EntityFramework OM from the documentation
-            EntityFramework framework = CreateEntityFrameworkFromDocs(this.baseUrl);
+            string outputFilenameSuffix = null;
+
+            // Step 1: Generate an EntityFramework OM from the documentation and/or template file
+            EntityFramework framework = CreateEntityFrameworkFromDocs();
+            if (null == framework)
+                return;
+
+            // Step 1a: Apply an transformations that may be defined in the documentation
+            if (!string.IsNullOrEmpty(options.TransformOutput))
+            {
+                PublishSchemaChangesConfigFile transformations = DocSet.TryLoadConfigurationFiles<PublishSchemaChangesConfigFile>(options.DocumentationSetPath).Where(x => x.SchemaChanges.TransformationName == options.TransformOutput).FirstOrDefault();
+                if (null == transformations)
+                {
+                    throw new KeyNotFoundException($"Unable to locate a transformation set named {options.TransformOutput}. Aborting.");
+                }
+
+                framework.ApplyTransformation(transformations.SchemaChanges, options.Version);
+                if (!string.IsNullOrEmpty(options.Version))
+                {
+                    outputFilenameSuffix = $"-{options.Version}";
+                }
+            }
+
+            if (options.Sort)
+            {
+                // Sorts the objects in collections, so that we have consistent output regardless of input
+                framework.SortObjectGraph();
+            }
+
+            if (options.ValidateSchema)
+            {
+                framework.ValidateSchemaTypes();
+            }
 
             // Step 2: Generate XML representation of EDMX
-            var xmlData = ODataParser.GenerateEdmx(framework);
+            string xmlData = null;
+            if (options.Formats.HasFlag(MetadataFormat.EdmxOutput))
+            {
+                xmlData = ODataParser.Serialize<EntityFramework>(framework, options.AttributesOnNewLines);
+            }
+            else if (options.Formats.HasFlag(MetadataFormat.SchemaOutput))
+            {
+                xmlData = ODataParser.Serialize<Schema>(framework.DataServices.Schemas.First(), options.AttributesOnNewLines);
+            }
 
             // Step 3: Write the XML to disk
-            var outputDir = new System.IO.DirectoryInfo(outputFolder);
-            outputDir.Create();
 
-            var outputFilename = System.IO.Path.Combine(outputFolder, "metadata.edmx");
-            using (var writer = System.IO.File.CreateText(outputFilename))
+            var outputFullName = GenerateOutputFileFullName(options.SourceMetadataPath, outputFolder, outputFilenameSuffix);
+            Console.WriteLine($"Publishing metadata to {outputFullName}");
+
+            using (var writer = System.IO.File.CreateText(outputFullName))
             {
                 await writer.WriteAsync(xmlData);
                 await writer.FlushAsync();
@@ -67,25 +119,99 @@ namespace ApiDocs.Publishing.CSDL
             }
         }
 
-        private EntityFramework CreateEntityFrameworkFromDocs(string baseUrlToRemove)
+        private string GenerateOutputFileFullName(string templateFilename, string outputFolderPath, string filenameSuffix)
         {
-            var edmx = new EntityFramework();
-            
-            // Add resources
-            foreach (var resource in Documents.Resources)
+            var outputDir = new System.IO.DirectoryInfo(outputFolderPath);
+            outputDir.Create();
+
+            filenameSuffix = filenameSuffix ?? "";
+
+            string filename = null;
+            if (!string.IsNullOrEmpty(templateFilename))
             {
-                var targetSchema = FindOrCreateSchemaForNamespace(resource.Name.NamespaceOnly(), edmx);
-                if (targetSchema != null)
+                filename = $"{System.IO.Path.GetFileNameWithoutExtension(templateFilename)}{filenameSuffix}{System.IO.Path.GetExtension(templateFilename)}";
+            }
+            else
+            {
+                filename = $"metadata{filenameSuffix}.xml";
+            }
+
+            var outputFullName = System.IO.Path.Combine(outputDir.FullName, filename);
+            return outputFullName;
+        }
+
+        private EntityFramework CreateEntityFrameworkFromDocs()
+        {
+            EntityFramework edmx = new EntityFramework();
+            if (!string.IsNullOrEmpty(options.SourceMetadataPath))
+            {
+                try
                 {
-                    AddResourceToSchema(targetSchema, resource, edmx);
+                    if (!System.IO.File.Exists(options.SourceMetadataPath))
+                    {
+                        throw new System.IO.FileNotFoundException($"Unable to locate source file: {options.SourceMetadataPath}");
+                    }
+
+                    using (System.IO.FileStream stream = new System.IO.FileStream(options.SourceMetadataPath, System.IO.FileMode.Open, System.IO.FileAccess.Read))
+                    {
+                        if (options.Formats.HasFlag(MetadataFormat.EdmxInput))
+                        {
+                            edmx = ODataParser.Deserialize<EntityFramework>(stream);
+                        }
+                        else if (options.Formats.HasFlag(MetadataFormat.SchemaInput))
+                        {
+                            var schema = ODataParser.Deserialize<Schema>(stream);
+                            edmx = new EntityFramework();
+                            edmx.DataServices.Schemas.Add(schema);
+                        }
+                        else
+                        {
+                            throw new InvalidOperationException("Source file was specified but no format for source file was provided.");
+                        }
+                    }
+                    if (options.Namespaces != null && options.Namespaces.Any())
+                    {
+                        var schemas = edmx.DataServices.Schemas.ToArray();
+                        foreach(var s in schemas)
+                        {
+                            if (!options.Namespaces.Contains(s.Namespace))
+                            {
+                                edmx.DataServices.Schemas.Remove(s);
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Unable to deserialize source template file: {ex.Message}");
+                    if (ex.InnerException != null)
+                    {
+                        Console.WriteLine($"{ex.InnerException.Message}");
+                    }
+                    return null;
                 }
             }
 
-            // Figure out the EntityCollection
-            this.BuildEntityCollection(edmx, baseUrlToRemove);
+            bool generateNewElements = !options.SkipMetadataGeneration;
 
-            // Add actions to the collection
-            this.ProcessRestRequestPaths(edmx, baseUrlToRemove);
+            // Add resources
+            if (Documents.Files.Any())
+            {
+                foreach (var resource in Documents.Resources)
+                {
+                    var targetSchema = FindOrCreateSchemaForNamespace(resource.Name.NamespaceOnly(), edmx, generateNewElements: generateNewElements);
+                    if (targetSchema != null)
+                    {
+                        AddResourceToSchema(targetSchema, resource, edmx, generateNewElements: generateNewElements);
+                    }
+                }
+
+                // Figure out the EntityCollection
+                this.BuildEntityContainer(edmx, options.BaseUrl);
+
+                // Add actions to the collection
+                this.ProcessRestRequestPaths(edmx, options.BaseUrl);
+            }
 
             return edmx;
         }
@@ -106,6 +232,8 @@ namespace ApiDocs.Publishing.CSDL
                 ODataTargetInfo requestTarget = null;
                 try
                 {
+                    // TODO: If we have an input Edmx, we may already know what this so we don't need to infer anything.
+                    // if that is the case, we should just update it with anything else we know from the documentation.
                     requestTarget = ParseRequestTargetType(path, methodCollection, edmx);
                     if (requestTarget.Classification == ODataTargetClassification.Unknown &&
                         !string.IsNullOrEmpty(requestTarget.Name) &&
@@ -337,8 +465,15 @@ namespace ApiDocs.Publishing.CSDL
         /// entity sets / singletons in the largest namespace.
         /// </summary>
         /// <param name="edmx"></param>
-        private void BuildEntityCollection(EntityFramework edmx, string baseUrlToRemove)
+        private void BuildEntityContainer(EntityFramework edmx, string baseUrlToRemove)
         {
+            // Check to see if an entitycontainer already exists
+            foreach (var s in edmx.DataServices.Schemas)
+            {
+                if (s.EntityContainers.Any())
+                    return;
+            }
+
             Dictionary<string, MethodCollection> uniqueRequestPaths = GetUniqueRequestPaths(baseUrlToRemove);
             var resourcePaths = uniqueRequestPaths.Keys.OrderBy(x => x).ToArray();
 
@@ -367,7 +502,7 @@ namespace ApiDocs.Publishing.CSDL
 
             // TODO: Allow the default schema name to be specified instead of inferred
             var largestSchema = (from x in edmx.DataServices.Schemas
-                                 orderby x.Entities.Count descending
+                                 orderby x.EntityTypes.Count descending
                                  select x).First();
             container.Name = largestSchema.Namespace;
             largestSchema.EntityContainers.Add(container);
@@ -421,10 +556,10 @@ namespace ApiDocs.Publishing.CSDL
         /// <param name="ns"></param>
         /// <param name="edmx"></param>
         /// <returns></returns>
-        private Schema FindOrCreateSchemaForNamespace(string ns, EntityFramework edmx, bool overrideNamespaceFilter = false)
+        private Schema FindOrCreateSchemaForNamespace(string ns, EntityFramework edmx, bool overrideNamespaceFilter = false, bool generateNewElements = true)
         {
             // Check to see if this is a namespace that should be exported.
-            if (!overrideNamespaceFilter && validNamespaces != null && !validNamespaces.Contains(ns))
+            if (!overrideNamespaceFilter && options.Namespaces != null && !options.Namespaces.Contains(ns))
             {
                 return null;
             }
@@ -441,43 +576,148 @@ namespace ApiDocs.Publishing.CSDL
             if (null != matchingSchema)
                 return matchingSchema;
 
-            var newSchema = new Schema() { Namespace = ns };
-            edmx.DataServices.Schemas.Add(newSchema);
-            return newSchema;
+            if (generateNewElements)
+            {
+                var newSchema = new Schema() { Namespace = ns };
+                edmx.DataServices.Schemas.Add(newSchema);
+                return newSchema;
+            }
+
+            return null;
         }
 
 
-        private void AddResourceToSchema(Schema schema, ResourceDefinition resource, EntityFramework edmx)
+        private void AddResourceToSchema(Schema schema, ResourceDefinition resource, EntityFramework edmx, bool generateNewElements = true)
+        {
+            ComplexType type = null;
+            var typeName = resource.Name.TypeOnly();
+
+            // First check to see if there is an existing resource that matches this resource in the framework already
+            var existingEntity = (from e in schema.EntityTypes where e.Name == typeName select e).SingleOrDefault();
+            if (existingEntity != null)
+            {
+                type = existingEntity;    
+            }
+
+            // If that didn't work, look for a complex type that matches
+            if (type == null)
+            {
+                var existingComplexType = (from e in schema.ComplexTypes where e.Name == typeName select e).SingleOrDefault();
+                if (existingComplexType != null)
+                {
+                    type = existingComplexType;
+                }
+            }
+
+            // Finally go ahead and create a new resource in the schema if we didn't find a matching one
+            if (null == type && generateNewElements)
+            {
+                type = CreateResourceInSchema(schema, resource);
+            }
+            else if (null == type)
+            {
+                Console.WriteLine($"Type {resource.Name} was in the documentation but not found in the schema.");
+            }
+
+            if (null != type)
+            {
+                LogIfDifferent(type.Name, resource.Name.TypeOnly(), $"Schema type {type.Name} is different than the documentation name {resource.Name.TypeOnly()}.");
+                LogIfDifferent(type.OpenType, resource.OriginalMetadata.IsOpenType, $"Schema type {type.Name} has a different OpenType value {type.OpenType} than the documentation {resource.OriginalMetadata.IsOpenType}.");
+                LogIfDifferent(type.BaseType, resource.OriginalMetadata.BaseType, $"Schema type {type.Name} has a different BaseType value {type.BaseType} than the documentation {resource.OriginalMetadata.BaseType}.");
+
+                AddDocPropertiesToSchemaResource(type, resource, edmx, generateNewElements);
+            }
+        }
+
+        private void AddDocPropertiesToSchemaResource(ComplexType schemaType, ResourceDefinition docResource, EntityFramework edmx, bool generateNewElements)
+        {
+            var docProps = (from p in docResource.Parameters
+                            where !p.IsNavigatable && !p.Name.StartsWith("@")
+                            select p).ToList();
+            MergePropertiesIntoSchema(schemaType.Name, schemaType.Properties, docProps, edmx, generateNewElements);
+
+            var schemaEntity = schemaType as EntityType;
+            if (null != schemaEntity)
+            {
+                var docNavigationProps = (from p in docResource.Parameters where p.IsNavigatable && !p.Name.StartsWith("@") select p);
+                MergePropertiesIntoSchema(schemaEntity.Name, schemaEntity.NavigationProperties, docNavigationProps, edmx, generateNewElements);
+            }
+
+            var docInstanceAnnotations = (from p in docResource.Parameters where p.Name != null && p.Name.StartsWith("@") select p);
+            MergeInstanceAnnotationsAndRecordTerms(schemaType.Name, docInstanceAnnotations, docResource, edmx, generateNewElements);
+        }
+
+        private static void MergePropertiesIntoSchema<TProp>(string typeName, List<TProp> schemaProps, IEnumerable<ParameterDefinition> docProps, EntityFramework edmx, bool generateNewElements)
+            where TProp : Property, new()
+        {
+            var documentedProperties = docProps.ToDictionary(x => x.Name, x => x);
+            foreach(var schemaProp in schemaProps)
+            {
+                ParameterDefinition documentedVersion = null;
+                if (documentedProperties.TryGetValue(schemaProp.Name, out documentedVersion))
+                {
+                    // Compare / update schema with data from documentation
+                    var docProp = ConvertParameterToProperty<Property>(typeName, documentedVersion);
+                    LogIfDifferent(schemaProp.Nullable, docProp.Nullable, $"Type {typeName}: Property {docProp.Name} has a different nullable value than documentation.");
+                    LogIfDifferent(schemaProp.TargetEntityType, docProp.TargetEntityType, $"Type {typeName}: Property {docProp.Name} has a different target entity type than documentation.");
+                    LogIfDifferent(schemaProp.Type, docProp.Type, $"Type {typeName}: Property {docProp.Name} has a different Type value than documentation ({schemaProp.Type},{docProp.Type}).");
+                    LogIfDifferent(schemaProp.Unicode, docProp.Unicode, $"Type {typeName}: Property {docProp.Name} has a different unicode value than documentation ({schemaProp.Unicode},{docProp.Unicode}).");
+                    documentedProperties.Remove(documentedVersion.Name);
+
+                    AddDescriptionAnnotation(typeName, schemaProp, documentedVersion);
+                }
+                else
+                {
+                    // Log out that this property wasn't in the documentation
+                    Console.WriteLine($"UndocumentedProperty: {typeName} defines {schemaProp.Name} in the schema but has no matching documentation.");
+                }
+            }
+
+            if (generateNewElements)
+            {
+                foreach(var newPropDef in documentedProperties.Values)
+                {
+                    // Create new properties based on the documentation
+                    var newProp = ConvertParameterToProperty<TProp>(typeName, newPropDef);
+                    schemaProps.Add(newProp);
+                }
+            }
+        }
+
+        private static void LogIfDifferent(object schemaValue, object documentationValue, string errorString)
+        {
+            if ( (schemaValue == null && documentationValue != null) || 
+                 (schemaValue != null && documentationValue == null) ||
+                 (schemaValue != null && documentationValue != null && !schemaValue.Equals(documentationValue)))
+            {
+                Console.WriteLine(errorString);
+            }
+        }
+
+        private static ComplexType CreateResourceInSchema(Schema schema, ResourceDefinition resource)
         {
             ComplexType type;
+            // Create a new entity or complex type for this resource
             if (!string.IsNullOrEmpty(resource.KeyPropertyName))
             {
                 var entity = new EntityType();
                 entity.Key = new Key { PropertyRef = new PropertyRef { Name = resource.KeyPropertyName } };
                 entity.NavigationProperties = (from p in resource.Parameters
                                                where p.IsNavigatable
-                                               select ConvertParameterToProperty<NavigationProperty>(p)).ToList();
-                schema.Entities.Add(entity);
+                                               select ConvertParameterToProperty<NavigationProperty>(entity.Name, p)).ToList();
+                schema.EntityTypes.Add(entity);
                 type = entity;
             }
             else
             {
                 type = new ComplexType();
-                
                 schema.ComplexTypes.Add(type);
             }
-            type.Name = resource.Name.TypeOnly();
-            type.OpenType = resource.OriginalMetadata.IsOpenType;
-            type.Properties = (from p in resource.Parameters
-                               where !p.IsNavigatable && !p.Name.StartsWith("@")
-                               select ConvertParameterToProperty<Property>(p) ).ToList();
 
-            var annotations = (from p in resource.Parameters where p.Name != null && p.Name.StartsWith("@") select p);
-            ParseInstanceAnnotations(annotations, resource, edmx);
+            return type;
         }
 
-
-        private void ParseInstanceAnnotations(IEnumerable<ParameterDefinition> annotations, ResourceDefinition containedResource, EntityFramework edmx)
+        private void MergeInstanceAnnotationsAndRecordTerms(string typeName, IEnumerable<ParameterDefinition> annotations, ResourceDefinition containedResource, EntityFramework edmx, bool generateNewElements)
         {
             foreach (var prop in annotations)
             {
@@ -491,7 +731,7 @@ namespace ApiDocs.Publishing.CSDL
                     term.Annotations.Add(new Annotation { Term = Term.LongDescriptionTerm, String = prop.Description });
                 }
 
-                var targetSchema = FindOrCreateSchemaForNamespace(ns, edmx, overrideNamespaceFilter: true);
+                var targetSchema = FindOrCreateSchemaForNamespace(ns, edmx, overrideNamespaceFilter: true, generateNewElements: generateNewElements);
                 if (null != targetSchema)
                 {
                     targetSchema.Terms.Add(term);
@@ -500,7 +740,7 @@ namespace ApiDocs.Publishing.CSDL
         }
 
 
-        private static T ConvertParameterToProperty<T>(ParameterDefinition param) where T : Property, new()
+        private static T ConvertParameterToProperty<T>(string typeName, ParameterDefinition param) where T : Property, new()
         {
             var prop = new T()
             {
@@ -510,18 +750,66 @@ namespace ApiDocs.Publishing.CSDL
             };
 
             // Add description annotation
-            if (!string.IsNullOrEmpty(param.Description))
+            AddDescriptionAnnotation(typeName, prop, param);
+            return prop;
+        }
+
+        private static void AddDescriptionAnnotation<T>(string typeName, T targetProperty, ParameterDefinition sourceParameter, string termForDescription = Term.LongDescriptionTerm) where T: Property
+        {
+            if (!string.IsNullOrEmpty(sourceParameter.Description))
             {
-                prop.Annotation = new List<Annotation>();
-                prop.Annotation.Add(
+                if (targetProperty.Annotation == null)
+                {
+                    targetProperty.Annotation = new List<Annotation>();
+                }
+
+                // Check to see if there already is a term with Description
+                var descriptionTerm = targetProperty.Annotation.Where(t => t.Term == termForDescription).FirstOrDefault();
+                if (descriptionTerm != null)
+                {
+                    LogIfDifferent(descriptionTerm.String, sourceParameter.Description, $"Type {typeName} has a different value for term '{termForDescription}' than the documentation.");
+                }
+                else
+                {
+                    targetProperty.Annotation.Add(
                     new Annotation()
                     {
-                        Term = Term.DescriptionTerm,
-                        String = param.Description
+                        Term = termForDescription,
+                        String = sourceParameter.Description
                     });
+                }
             }
-            return prop;
+            else
+            {
+                Console.WriteLine($"Description was null for property: {typeName}.{sourceParameter.Name}.");
+            }
         }
     }
 
+
+    public class CsdlWriterOptions
+    {
+        public string OutputDirectoryPath { get; set; }
+        public string SourceMetadataPath { get; set; }
+        public MetadataFormat Formats { get; set; }
+        public string[] Namespaces { get; set; }
+        public bool Sort { get; set; }
+        public string BaseUrl { get; set; }
+        public string TransformOutput { get; set; }
+        public string DocumentationSetPath { get; set; }
+        public string Version { get; set; }
+        public bool SkipMetadataGeneration { get; set; }
+        public bool ValidateSchema { get; set; }
+        public bool AttributesOnNewLines { get; set; }
+    }
+
+    [Flags]
+    public enum MetadataFormat
+    {
+        Default      = EdmxInput | EdmxOutput,
+        EdmxInput    = 1 << 0,
+        EdmxOutput   = 1 << 1,
+        SchemaInput  = 1 << 2,
+        SchemaOutput = 1 << 3
+    }
 }

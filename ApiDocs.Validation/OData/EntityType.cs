@@ -27,11 +27,13 @@ namespace ApiDocs.Validation.OData
 {
     using System;
     using System.Collections.Generic;
+    using System.ComponentModel;
     using System.Linq;
     using System.Xml.Serialization;
+    using Transformation;
 
     [XmlRoot("EntityType", Namespace = ODataParser.EdmNamespace)]
-    public class EntityType : ComplexType, IODataNavigable
+    public class EntityType : ComplexType, IODataNavigable, ITransformable
     {
         public EntityType()
         {
@@ -42,9 +44,53 @@ namespace ApiDocs.Validation.OData
         [XmlElement("Key", Namespace = ODataParser.EdmNamespace)]
         public Key Key { get; set; }
 
-        [XmlElement("NavigationProperty", Namespace = ODataParser.EdmNamespace)]
+        [XmlAttribute("Abstract"), DefaultValue(false)]
+        public bool Abstract { get; set; }
+
+        [XmlAttribute("HasStream"), DefaultValue(false)]
+        public bool HasStream { get; set; }
+
+        [XmlElement("NavigationProperty", Namespace = ODataParser.EdmNamespace), Sortable]
         public List<NavigationProperty> NavigationProperties { get; set; }
 
+        [XmlAttribute("IsMaster", Namespace = ODataParser.AgsNamespace), DefaultValue(false)]
+        public bool GraphIsMaster { get; set; }
+
+        [XmlAttribute("AddressUrl", Namespace = ODataParser.AgsNamespace)]
+        public string GraphAddressUrl { get; set; }
+
+        [XmlAttribute("AddressUrlMSA", Namespace = ODataParser.AgsNamespace)]
+        public string GraphAddressUrlMsa { get; set; }
+
+        [XmlAttribute("AddressContainsEntitySetSegment", Namespace = ODataParser.AgsNamespace)]
+        public bool GraphAddressContainsEntitySetSegmentSerializedValue
+        {
+            get {  if (this.GraphAddressContainsEntitySetSegment.HasValue)
+                {
+                    return this.GraphAddressContainsEntitySetSegment.Value;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            set { this.GraphAddressContainsEntitySetSegment = value; }
+        }
+
+        [XmlIgnore]
+        public bool GraphAddressContainsEntitySetSegmentSerializedValueSpecified
+        {
+            get
+            {
+                return this.GraphAddressContainsEntitySetSegment.HasValue;
+            }
+        }
+
+        [XmlIgnore]
+        public bool? GraphAddressContainsEntitySetSegment { get; set; }
+
+        [XmlAttribute("InstantOnUrl", Namespace = ODataParser.AgsNamespace)]
+        public string GraphInstantOnUrl { get; set; }
 
         public override IODataNavigable NavigateByUriComponent(string component, EntityFramework edmx)
         {

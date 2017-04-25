@@ -131,6 +131,9 @@ namespace ApiDocs.Validation
         [JsonProperty("scopes", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public string Scopes { get; set; }
 
+        [JsonProperty("baseType", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public string BaseType { get; set; }
+
         public string[] RequiredScopes
         {
             get

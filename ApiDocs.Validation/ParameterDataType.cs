@@ -137,7 +137,7 @@ namespace ApiDocs.Validation
         /// <summary>
         /// If Type or CollectionResourceType are Collection or Object, this property holds the name of the custom type.
         /// </summary>
-        public string CustomTypeName { get; private set; }
+        public string CustomTypeName { get; set; }
 
         public bool IsObject
         {

@@ -25,25 +25,78 @@
 
 namespace ApiDocs.Validation.OData
 {
+    using System;
     using System.Collections.Generic;
     using System.ComponentModel;
     using System.Xml.Serialization;
+    using Transformation;
 
     [XmlRoot("Property", Namespace = ODataParser.EdmNamespace)]
-    public class Property
+    public class Property : XmlBackedObject, ITransformable
     {
-        [XmlAttribute("Name")]
+        public Property()
+        {
+            Unicode = true;
+            Nullable = true;
+        }
+
+        [XmlAttribute("Name"), SortBy]
         public string Name { get; set; }
 
-        [XmlAttribute("Type")]
+        [XmlAttribute("Type"), ContainsType]
         public string Type { get; set; }
 
-        [XmlAttribute("Nullable"), DefaultValue(false)]
+        [XmlAttribute("Nullable"), DefaultValue(true)]
         public bool Nullable { get; set; }
 
-        [XmlElement("Annotation", Namespace = ODataParser.EdmNamespace)]
+        [XmlAttribute("Unicode"), DefaultValue(true)]
+        public bool Unicode { get; set; }
+
+        [XmlElement("Annotation", Namespace = ODataParser.EdmNamespace), Sortable]
         public List<Annotation> Annotation { get; set; }
 
+        [XmlAttribute("CreateVirtualNavigationProperty", Namespace = ODataParser.AgsNamespace)]
+        public bool ValueOfCreateVirtualNavigationProperty { get; set; }
+
+        [XmlIgnore]
+        public bool ValueOfCreateVirtualNavigationPropertySpecified { get; set; }
+
+        [XmlIgnore]
+        public bool? CreateVirtualNavigationProperty
+        {
+            get
+            {
+                if (ValueOfCreateVirtualNavigationPropertySpecified)
+                {
+                    return ValueOfCreateVirtualNavigationProperty;
+                }
+                return null;
+            }
+            set
+            {
+                if (!value.HasValue)
+                {
+                    ValueOfCreateVirtualNavigationPropertySpecified = false;
+                }
+                else
+                {
+                    ValueOfCreateVirtualNavigationPropertySpecified = true;
+                    ValueOfCreateVirtualNavigationProperty = value.Value;
+                }
+            }
+        }
+
+        [XmlAttribute("VirtualNavigationPropertyName", Namespace = ODataParser.AgsNamespace)]
+        public string VirtualNavigationPropertyName { get; set; }
+
+        [XmlAttribute("TargetEntityType", Namespace = ODataParser.AgsNamespace), ContainsType]
+        public string TargetEntityType { get; set; }
+
+        [XmlAttribute("KeyPropertyPath", Namespace = ODataParser.AgsNamespace)]
+        public string KeyPropertyPath { get; set; }
+
+        [XmlAttribute("WorkloadName", Namespace = ODataParser.AgsNamespace)]
+        public string WorkloadName { get; set; }
 
         /// <summary>
         /// Indicates that this property can be used in a $select query parameter
@@ -57,6 +110,21 @@ namespace ApiDocs.Validation.OData
         [XmlIgnore]
         public bool Filterable { get; set; }
 
+        public virtual void ApplyTransformation(BaseModifications mods, EntityFramework edmx, string version)
+        {
+            TransformationHelper.ApplyTransformation(this, mods, edmx, version, (key, value) =>
+            {
+                if (key == "GraphPropertyName")
+                {
+                    this.WorkloadName = this.Name;
+                    this.Name = (string)value;
+                    return true;
+                }
+                return false;
+            });
+        }
 
+        [XmlIgnore]
+        public string ElementIdentifier { get { return this.Name; } set { this.Name = value; } }
     }
 }

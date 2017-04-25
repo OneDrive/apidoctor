@@ -100,7 +100,7 @@ namespace ApiDocs.Validation.OData
                 return matchingComplexType.First();
 
             // Look for a matching entity type
-            var matchingEntityType = from et in schema.Entities
+            var matchingEntityType = from et in schema.EntityTypes
                                       where et.Name == typeName
                                       select et;
             if (matchingEntityType.Any())
@@ -178,7 +178,7 @@ namespace ApiDocs.Validation.OData
             {
                 if (type is EntityType)
                 {
-                    foreach (var et in schema.Entities)
+                    foreach (var et in schema.EntityTypes)
                     {
                         if (et == type)
                             return schema.Namespace + "." + et.Name;

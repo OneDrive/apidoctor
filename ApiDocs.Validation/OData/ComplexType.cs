@@ -31,26 +31,30 @@ namespace ApiDocs.Validation.OData
     using System.Linq;
     using System.Xml.Linq;
     using System.Xml.Serialization;
+    using Transformation;
 
     [XmlRoot("ComplexType", Namespace = ODataParser.EdmNamespace)]
-    public class ComplexType : IODataNavigable
+    public class ComplexType : XmlBackedObject, IODataNavigable, Transformation.ITransformable
     {
         public ComplexType()
         {
             this.Properties = new List<Property>();
         }
 
-        [XmlAttribute("Name")]
+        [XmlAttribute("Name"), SortBy]
         public string Name { get; set; }
 
         [XmlAttribute("OpenType"), DefaultValue(false)]
         public bool OpenType { get; set; }
 
+        [XmlAttribute("BaseType"), ContainsType]
+        public string BaseType { get; set; }
 
-
-        [XmlElement("Property", Namespace = ODataParser.EdmNamespace)]
+        [XmlElement("Property", Namespace = ODataParser.EdmNamespace), Sortable]
         public List<Property> Properties { get; set; }
 
+        [XmlAttribute("WorkloadName", Namespace = ODataParser.AgsNamespace)]
+        public string WorkloadName { get; set; }
 
         public virtual IODataNavigable NavigateByEntityTypeKey(EntityFramework edmx)
         {
@@ -84,5 +88,25 @@ namespace ApiDocs.Validation.OData
         {
             get { return Name; }
         }
+
+        public virtual void ApplyTransformation(BaseModifications mods, EntityFramework edmx, string version)
+        {
+            TransformationHelper.ApplyTransformation(this, mods, edmx, version, (name, modPropValue) =>
+            {
+                if (name == "GraphEntityTypeName")
+                {
+                    WorkloadName = this.Name;
+                    this.Name = (string)modPropValue;
+                    // Need to rename the references to this entity type through the EntityFramework   
+                    edmx.RenameEntityType(this);
+                    return true;
+                }
+                return false;
+            });
+        }
+
+        [XmlIgnore]
+        public string ElementIdentifier { get { return this.Name; } set { this.Name = value; } }
+
     }
 }

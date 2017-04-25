@@ -52,7 +52,7 @@ namespace ApiDocs.Validation.UnitTests
             Assert.IsTrue(file.Scan(string.Empty, out errors));
             Assert.IsEmpty(errors.WarningsOrErrorsOnly());
 
-            Assert.IsTrue(file.ValidateNoBrokenLinks(false, out errors));
+            Assert.IsTrue(file.ValidateNoBrokenLinks(false, out errors, true));
             Assert.IsEmpty(errors.WarningsOrErrorsOnly());
         }
 
@@ -79,7 +79,7 @@ This link goes [up one level](../anotherfile.md)
             var realErrors = from e in errors where e.IsWarning || e.IsError select e;
             Assert.IsEmpty(realErrors);
 
-            Assert.IsFalse(file.ValidateNoBrokenLinks(false, out errors));
+            Assert.IsFalse(file.ValidateNoBrokenLinks(false, out errors, false));
             realErrors = from e in errors where e.IsWarning || e.IsError select e;
             Assert.AreEqual(1, realErrors.Count());
             Assert.IsTrue(realErrors.First().Code == ValidationErrorCode.MissingLinkSourceId);
@@ -118,7 +118,7 @@ This link goes [up one level](../anotherfile.md)
             Assert.IsTrue(file.Scan(string.Empty, out errors));
             Assert.IsEmpty(errors.WarningsOrErrorsOnly());
 
-            Assert.IsFalse(file.ValidateNoBrokenLinks(false, out errors));
+            Assert.IsFalse(file.ValidateNoBrokenLinks(false, out errors, false));
             Assert.AreEqual(1, errors.WarningsOrErrorsOnly().Count());
             Assert.IsTrue(errors.First().Code == ValidationErrorCode.LinkDestinationNotFound);
         }
@@ -145,7 +145,7 @@ This link goes [up one level](../anotherfile.md)
             Assert.IsTrue(file.Scan(string.Empty, out errors));
             Assert.IsEmpty(errors.WarningsOrErrorsOnly());
 
-            Assert.IsFalse(file.ValidateNoBrokenLinks(false, out errors));
+            Assert.IsFalse(file.ValidateNoBrokenLinks(false, out errors, false));
             Assert.AreEqual(2, errors.WarningsOrErrorsOnly().Count());
             Assert.IsTrue(errors[0].Code == ValidationErrorCode.MissingLinkSourceId);
             Assert.IsTrue(errors[1].Code == ValidationErrorCode.LinkDestinationNotFound);
@@ -174,7 +174,7 @@ This link goes [up one level](../anotherfile.md)
         public Func<string, bool> IsLinkValid { get; set; }
 
 
-        protected override LinkValidationResult VerifyRelativeLink(FileInfo sourceFile, string linkUrl, string docSetBasePath, out string relativeFileName)
+        protected override LinkValidationResult VerifyRelativeLink(FileInfo sourceFile, string linkUrl, string docSetBasePath, out string relativeFileName, bool requireFilenameCaseMatch)
         {
             relativeFileName = null;
             if (null != this.IsLinkValid)

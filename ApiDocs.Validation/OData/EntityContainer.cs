@@ -30,24 +30,24 @@ namespace ApiDocs.Validation.OData
     using System.Xml.Linq;
     using System.Collections.Generic;
     using System.Xml.Serialization;
+    using Transformation;
 
     [XmlRoot("EntityContainer", Namespace = ODataParser.EdmNamespace)]
-    public class EntityContainer : IODataNavigable
+    public class EntityContainer : XmlBackedObject, IODataNavigable, Transformation.ITransformable
     {
-
         public EntityContainer()
         {
             this.EntitySets = new List<EntitySet>();
             this.Singletons = new List<Singleton>();
         }
         
-        [XmlAttribute("Name")]
+        [XmlAttribute("Name"), SortBy]
         public string Name { get; set; }
 
-        [XmlElement("EntitySet")]
+        [XmlElement("EntitySet"), Sortable]
         public List<EntitySet> EntitySets { get; set; }
 
-        [XmlElement("Singleton")]
+        [XmlElement("Singleton"), Sortable]
         public List<Singleton> Singletons { get; set; }
 
 
@@ -99,5 +99,12 @@ namespace ApiDocs.Validation.OData
             get { return Name; }
         }
 
+        public void ApplyTransformation(Transformation.BaseModifications mods, EntityFramework edmx, string version)
+        {
+            TransformationHelper.ApplyTransformation(this, mods, edmx, version);
+        }
+
+        [XmlIgnore]
+        public string ElementIdentifier { get { return this.Name; } set { this.Name = value; } }
     }
 }

@@ -25,16 +25,38 @@
 
 namespace ApiDocs.Validation.OData
 {
+    using System;
+    using System.Collections.Generic;
     using System.Xml.Serialization;
+    using Transformation;
 
     [XmlRoot("Singleton", Namespace = ODataParser.EdmNamespace)]
-    public class Singleton
+    public class Singleton : XmlBackedObject, ITransformable
     {
-        [XmlAttribute("Name")]
+        public Singleton()
+        {
+            this.NavigationPropertyBinding = new List<OData.NavigationPropertyBinding>();
+        }
+        
+        [XmlAttribute("Name"), SortBy]
         public string Name { get; set; }
 
-        [XmlAttribute("Type")]
+        [XmlAttribute("Type"), ContainsType]
         public string Type { get; set; }
 
+        [XmlElement("NavigationPropertyBinding"), Sortable]
+        public List<NavigationPropertyBinding> NavigationPropertyBinding { get; set; }
+
+        public void ApplyTransformation(BaseModifications mods, EntityFramework edmx, string version)
+        {
+            TransformationHelper.ApplyTransformation(this, mods, edmx, version);
+        }
+
+        [XmlIgnore]
+        public string ElementIdentifier
+        {
+            get { return this.Name; }
+            set { this.Name = value; }
+        }
     }
 }

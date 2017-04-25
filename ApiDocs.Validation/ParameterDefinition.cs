@@ -110,12 +110,17 @@ namespace ApiDocs.Validation
             }
 
             if (string.IsNullOrEmpty(this.Title))
+            {
                 this.Title = param.Title;
+            }
             if (string.IsNullOrEmpty(this.Description))
+            {
                 this.Description = param.Description;
-
+            }
             if (param.EnumeratedValues != null)
+            {
                 this.EnumeratedValues.AddRange(param.EnumeratedValues);
+            }
         }
     }
     

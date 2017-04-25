@@ -25,8 +25,10 @@
 
 namespace ApiDocs.Validation.OData
 {
+    using System;
     using System.Collections.Generic;
     using System.Xml.Serialization;
+    using Transformation;
 
     /*
        <Term Name="sourceUrl" Type="Edm.String" AppliesTo="oneDrive.item">
@@ -34,18 +36,21 @@ namespace ApiDocs.Validation.OData
        </Term>
      */
     [XmlRoot("Term", Namespace = ODataParser.EdmNamespace)]
-    public class Term
+    public class Term : XmlBackedObject, ITransformable
     {
-        [XmlAttribute("Name")]
+        [XmlAttribute("Name"), SortBy]
         public string Name { get; set; }
 
-        [XmlAttribute("Type")]
+        [XmlAttribute("Type"), ContainsType]
         public string Type { get; set; }
 
-        [XmlAttribute("AppliesTo")]
+        [XmlAttribute("AppliesTo"), ContainsType]
         public string AppliesTo { get; set; }
 
-        [XmlElement("Annotation", Namespace = ODataParser.EdmNamespace)]
+        [XmlAttribute("WorkloadTermNamespace", Namespace = ODataParser.AgsNamespace)]
+        public string GraphWorkloadTermNamespace { get; set; }
+
+        [XmlElement("Annotation", Namespace = ODataParser.EdmNamespace), Sortable]
         public List<Annotation> Annotations { get; set; }
 
         public Term()
@@ -60,5 +65,12 @@ namespace ApiDocs.Validation.OData
         public const string ChangeTrackingTerm = "Org.OData.Capabilities.V1.ChangeTracking";
         public const string NavigationRestrictionsTerm = "Org.OData.Capabilities.V1.NavigationRestrictions";
 
+        public void ApplyTransformation(Transformation.BaseModifications mods, EntityFramework edmx, string version)
+        {
+            TransformationHelper.ApplyTransformation(this, mods, edmx, version);
+        }
+
+        [XmlIgnore]
+        public string ElementIdentifier { get { return this.Name; } set { this.Name = value; } }
     }
 }

@@ -71,6 +71,9 @@ namespace ApiDocs.ConsoleApp.Auth
             await writer.WriteAsync(content);
             await writer.FlushAsync();
 
+
+            // TODO: Expect to encounter a 401 here, and handle the response: {"error":"invalid_client","error_description":"AADSTS70002: Error validating credentials. AADSTS50012: Invalid client secret is provided.\r\nTrace ID: b416d386-2d5e-40b9-889a-6b2286b30100\r\nCorrelation ID: 2a021806-2134-4610-8bd4-760727cb4465\r\nTimestamp: 2017-04-20 17:47:22Z","error_codes":[70002,50012],"timestamp":"2017-04-20 17:47:22Z","trace_id":"b416d386-2d5e-40b9-889a-6b2286b30100","correlation_id":"2a021806-2134-4610-8bd4-760727cb4465"}
+
             var response = await request.GetResponseAsync() as HttpWebResponse;
             if (null != response && response.StatusCode == HttpStatusCode.OK)
             {

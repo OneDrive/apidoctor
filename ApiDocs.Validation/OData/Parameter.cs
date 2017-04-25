@@ -25,19 +25,39 @@
 
 namespace ApiDocs.Validation.OData
 {
+    using System;
+    using System.ComponentModel;
     using System.Xml.Serialization;
+    using Transformation;
 
     [XmlRoot("Parameter", Namespace = ODataParser.EdmNamespace)]
-    public class Parameter
+    public class Parameter : XmlBackedObject, ITransformable
     {
-        [XmlAttribute("Name")]
+        public Parameter()
+        {
+            Unicode = true;
+            Nullable = false;
+        }
+
+        [XmlAttribute("Name"), SortBy]
         public string Name { get; set; }
 
-        [XmlAttribute("Type")]
+        [XmlAttribute("Type"), ContainsType]
         public string Type { get; set; }
 
-        [XmlAttribute("Nullable")]
+        [XmlAttribute("Nullable"), DefaultValue(false)]
         public bool Nullable { get; set; }
-        
+
+        [XmlAttribute("Unicode"), DefaultValue(true)]
+        public bool Unicode { get; set; }
+
+        public void ApplyTransformation(BaseModifications value, EntityFramework edmx, string version)
+        {
+            TransformationHelper.ApplyTransformation(this, value, edmx, version);
+        }
+
+        [XmlIgnore]
+        public string ElementIdentifier { get { return this.Name; } set { this.Name = value; } }
+
     }
 }

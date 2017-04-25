@@ -30,21 +30,19 @@ namespace ApiDocs.ConsoleApp
     using System.Diagnostics;
     using System.Linq;
     using System.Threading.Tasks;
-    using ApiDocs.ConsoleApp.AppVeyor;
-    using ApiDocs.ConsoleApp.Auth;
-    using ApiDocs.Publishing.Html;
-    using ApiDocs.Publishing.Swagger;
-    using ApiDocs.Validation;
-    using ApiDocs.Validation.Error;
-    using ApiDocs.Validation.Http;
-    using ApiDocs.Validation.Json;
-    using ApiDocs.Validation.OData;
-    using ApiDocs.Validation.Params;
-    using ApiDocs.Validation.Writers;
-    using ApiDocs.Validation.Tags;
+    using AppVeyor;
+    using Publishing.Html;
+    using Publishing.Swagger;
+    using Validation;
+    using Validation.Error;
+    using Validation.Http;
+    using Validation.Json;
+    using Validation.OData;
+    using Validation.Params;
+    using Validation.Writers;
     using CommandLine;
     using Newtonsoft.Json;
-    
+
 
     class Program
     {
@@ -196,6 +194,9 @@ namespace ApiDocs.ConsoleApp
                 case CommandLineOptions.VerbPublish:
                     returnSuccess = await PublishDocumentationAsync((PublishOptions)options);
                     break;
+                case CommandLineOptions.VerbPublishMetadata:
+                    returnSuccess = await PublishMetadataAsync((PublishMetadataOptions)options);
+                    break;
                 case CommandLineOptions.VerbMetadata:
                     await CheckServiceMetadataAsync((CheckMetadataOptions)options);
                     break;
@@ -268,9 +269,17 @@ namespace ApiDocs.ConsoleApp
                 tagsToInclude = String.Empty;
             }
 
-            if (!set.ScanDocumentation(tagsToInclude, out loadErrors))
+            DateTimeOffset start = DateTimeOffset.Now;
+            set.ScanDocumentation(tagsToInclude, out loadErrors);
+            DateTimeOffset end = DateTimeOffset.Now;
+            TimeSpan duration = end.Subtract(start);
+
+            FancyConsole.WriteLine($"Took {duration.TotalSeconds} to parse {set.Files.Length} source files.");
+
+            if (loadErrors.Any())
             {
-                FancyConsole.WriteLine("Errors detected while parsing documentation set:");
+                FancyConsole.WriteLine();
+                FancyConsole.WriteLine("Errors detected while parsing documentation:");
                 WriteMessages(loadErrors, false, "  ", false);
             }
 
@@ -317,9 +326,13 @@ namespace ApiDocs.ConsoleApp
             {
                 await PrintMethodsAsync(options, docset);
             }
+            if (options.PrintAccounts)
+            {
+                await PrintAccountsAsync(options, docset);
+            }
         }
 
-#region Print verb commands
+        #region Print verb commands
         /// <summary>
         /// Prints a list of the documentation files in a docset to the console.
         /// </summary>
@@ -432,7 +445,17 @@ namespace ApiDocs.ConsoleApp
             }
         }
 
-#endregion
+        private static async Task PrintAccountsAsync(PrintOptions options, DocSet docset)
+        {
+            var accounts = Program.CurrentConfiguration.Accounts;
+            foreach(var account in accounts)
+            {
+                FancyConsole.WriteLine($"{account.Name} = {account.BaseUrl}");
+            }
+        }
+
+
+        #endregion
 
 
         /// <summary>
@@ -460,7 +483,7 @@ namespace ApiDocs.ConsoleApp
             TestReport.StartTest(testName);
             
             ValidationError[] errors;
-            docset.ValidateLinks(options.EnableVerboseOutput, interestingFiles, out errors);
+            docset.ValidateLinks(options.EnableVerboseOutput, interestingFiles, out errors, options.RequireFilenameCaseMatch);
 
             foreach (var error in errors)
             {
@@ -984,12 +1007,15 @@ namespace ApiDocs.ConsoleApp
             foreach (var props in DiscoveredUndocumentedProperties)
             {
                 HashSet<string> foundPropertiesOnResource;
-                if (!undocumentedProperties.TryGetValue(props.ResourceName, out foundPropertiesOnResource))
+                if (props.ResourceName != null)
                 {
-                    foundPropertiesOnResource = new HashSet<string>();
-                    undocumentedProperties.Add(props.ResourceName, foundPropertiesOnResource);
+                    if (!undocumentedProperties.TryGetValue(props.ResourceName, out foundPropertiesOnResource))
+                    {
+                        foundPropertiesOnResource = new HashSet<string>();
+                        undocumentedProperties.Add(props.ResourceName, foundPropertiesOnResource);
+                    }
+                    foundPropertiesOnResource.Add(props.PropertyName);
                 }
-                foundPropertiesOnResource.Add(props.PropertyName);
             }
 
             string seperator = ", ";
@@ -1216,7 +1242,38 @@ namespace ApiDocs.ConsoleApp
             }
         }
 
-      
+        public static async Task<bool> PublishMetadataAsync(PublishMetadataOptions options)
+        {
+            DocSet docs = await GetDocSetAsync(options);
+            if (null == docs)
+                return false;
+
+            var publisher = new Publishing.CSDL.CsdlWriter(docs, options.GetOptions());
+            FancyConsole.WriteLine();
+
+            FancyConsole.WriteLine("Publishing metadata...");
+            publisher.NewMessage += publisher_NewMessage;
+
+            try
+            {
+                var outputPath = options.OutputDirectory;
+                await publisher.PublishToFolderAsync(outputPath);
+                FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, "Finished publishing metadata.");
+            }
+            catch (Exception ex)
+            {
+                FancyConsole.WriteLine(
+                    FancyConsole.ConsoleErrorColor,
+                    "An error occured while publishing: {0}",
+                    ex.Message);
+                FancyConsole.VerboseWriteLine(ex.ToString());
+                Exit(failure: true, customExitCode: 99);
+                return false;
+            }
+
+            return true;
+
+        }
 
         private static async Task<bool> PublishDocumentationAsync(PublishOptions options)
         {
@@ -1253,15 +1310,6 @@ namespace ApiDocs.ConsoleApp
                     break;
                 case PublishOptions.PublishFormat.Outline:
                     publisher = new OutlinePublisher(docs);
-                    break;
-                case PublishOptions.PublishFormat.Edmx:
-
-                    string[] namespaces = null;
-                    if (!string.IsNullOrEmpty(options.Namespaces))
-                    {
-                        namespaces = options.Namespaces.Split(';');
-                    }
-                    publisher = new Publishing.CSDL.CsdlWriter(docs, namespaces, options.BaseUrl);
                     break;
                 default:
                     FancyConsole.WriteLine(

@@ -32,12 +32,13 @@ namespace ApiDocs.Validation.OData
     using System.Threading.Tasks;
     using System.Xml.Linq;
     using System.Xml.Serialization;
+    using Transformation;
 
     /// <summary>
     /// Holds a representation of an entity framework model (EDMX)
     /// </summary>
     [XmlRoot("Edmx", Namespace = ODataParser.EdmxNamespace)]
-    public class EntityFramework
+    public class EntityFramework : XmlBackedObject
     {
         [XmlAttribute("Version")]
         public string Version { get; set; }
@@ -59,5 +60,24 @@ namespace ApiDocs.Validation.OData
             this.Version = "4.0";
         }
 
+        /// <summary>
+        /// Apply schema / publishing changes to the EntityFramework
+        /// </summary>
+        /// <param name="schemaChanges"></param>
+        public void ApplyTransformation(PublishSchemaChanges changes, string version)
+        {
+            if (changes.NamespacesToPublish.Any())
+            {
+                DataServices.Schemas.RemoveAll(x => !changes.NamespacesToPublish.Contains(x.Namespace));
+            }
+
+            TransformationHelper.ApplyTransformationToCollection(changes.Schemas, DataServices.Schemas, this, version);
+        }
+
+        internal void RenameEntityType(ComplexType renamedType)
+        {
+            // renamedType could be ComplexType or EntityType
+            this.RenameTypeInObjectGraph(renamedType.WorkloadName, renamedType.Name);
+        }
     }
 }

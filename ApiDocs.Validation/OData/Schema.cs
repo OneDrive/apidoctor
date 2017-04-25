@@ -25,45 +25,67 @@
 
 namespace ApiDocs.Validation.OData
 {
+    using System;
     using System.Collections.Generic;
+    using System.Linq;
     using System.Xml.Serialization;
+    using Transformation;
 
-    [XmlRoot("Schemas", Namespace = ODataParser.EdmNamespace)]
-    public class Schema
+    [XmlRoot("Schema", Namespace = ODataParser.EdmNamespace)]
+    public class Schema : XmlBackedObject, ITransformable
     {
-        [XmlAttribute("Namespace", Namespace = ODataParser.EdmNamespace)]
+        [XmlAttribute("Namespace", Namespace = ODataParser.EdmNamespace),
+            SortBy]
         public string Namespace { get; set; }
 
-        [XmlElement("EntityType", Namespace = ODataParser.EdmNamespace)]
-        public List<EntityType> Entities { get; set; }
+        [XmlElement("EnumType", Namespace = ODataParser.EdmNamespace),
+            Sortable]
+        public List<EnumType> Enumerations { get; set; }
 
-        [XmlElement("ComplexType", Namespace = ODataParser.EdmNamespace)]
+        [XmlElement("EntityType", Namespace = ODataParser.EdmNamespace),
+            Sortable]
+        public List<EntityType> EntityTypes { get; set; }
+
+        [XmlElement("ComplexType", Namespace = ODataParser.EdmNamespace),
+            Sortable]
         public List<ComplexType> ComplexTypes { get; set; }
 
-        [XmlElement("EntityContainer", Namespace = ODataParser.EdmNamespace)]
+        [XmlElement("EntityContainer", Namespace = ODataParser.EdmNamespace),
+            Sortable]
         public List<EntityContainer> EntityContainers { get; set; }
 
-        [XmlElement("Function", Namespace = ODataParser.EdmNamespace)]
+        [XmlElement("Function", Namespace = ODataParser.EdmNamespace),
+            Sortable]
         public List<Function> Functions { get; set; }
 
-        [XmlElement("Action", Namespace = ODataParser.EdmNamespace)]
+        [XmlElement("Action", Namespace = ODataParser.EdmNamespace),
+            Sortable]
         public List<Action> Actions { get; set; }
 
-        [XmlElement("Term", Namespace = ODataParser.EdmNamespace)]
+        [XmlElement("Term", Namespace = ODataParser.EdmNamespace),
+            Sortable]
         public List<Term> Terms { get; set; }
 
-        [XmlElement("Annotations", Namespace = ODataParser.EdmNamespace)]
-        public Annotations Annotations { get; set; }
+        [XmlElement("Annotations", Namespace = ODataParser.EdmNamespace),
+            Sortable]
+        public List<Annotations> Annotations { get; set; }
 
         public Schema()
         {
-            this.Entities = new List<EntityType>();
+            this.EntityTypes = new List<EntityType>();
             this.ComplexTypes = new List<ComplexType>();
             this.EntityContainers = new List<EntityContainer>();
             this.Functions = new List<Function>();
             this.Actions = new List<Action>();
             this.Terms = new List<Term>();
         }
-     
+        
+        public void ApplyTransformation(BaseModifications value, EntityFramework edmx, string version)
+        {
+            TransformationHelper.ApplyTransformation(this, value, edmx, version);
+        }
+
+        [XmlIgnore]
+        public string ElementIdentifier { get { return this.Namespace; } set { this.Namespace = value; } }
     }
 }
