@@ -173,7 +173,9 @@ namespace ApiDocs.Validation
             
             try
             {
-                this.TransformMarkdownIntoBlocksAndLinks(this.GetContentsOfFile(tags));
+				string fileContents = this.GetContentsOfFile(tags);
+				fileContents = this.ParseAndRemoveYamlFrontMatter(fileContents);
+				this.TransformMarkdownIntoBlocksAndLinks(fileContents);
             }
             catch (IOException ioex)
             {
@@ -190,6 +192,83 @@ namespace ApiDocs.Validation
 
             return this.ParseMarkdownBlocks(out errors);
         }
+
+		/// <summary>
+		/// Parses the file contents and removes yaml front matter from the markdown.
+		/// </summary>
+		/// <param name="contents">Contents.</param>
+		private string ParseAndRemoveYamlFrontMatter(string contents)
+		{
+			const string YamlFrontMatterHeader = "---";
+			using (StringReader reader = new StringReader(contents))
+			{
+				string currentLine = reader.ReadLine();
+				System.Text.StringBuilder frontMatter = new System.Text.StringBuilder();
+				YamlFrontMatterDetectionState currentState = YamlFrontMatterDetectionState.NotDetected;
+				while (currentLine != null && currentState != YamlFrontMatterDetectionState.SecondTokenFound)
+				{
+					string trimmedCurrentLine = currentLine.Trim();
+					switch (currentState)
+					{
+						case YamlFrontMatterDetectionState.NotDetected:
+							if (!string.IsNullOrWhiteSpace(trimmedCurrentLine) && trimmedCurrentLine != YamlFrontMatterHeader)
+							{
+								// This file doesn't have YAML front matter, so we just return the full contents of the file
+								return contents;
+							}
+							else if (trimmedCurrentLine == YamlFrontMatterHeader)
+							{
+								currentState = YamlFrontMatterDetectionState.FirstTokenFound;
+							}
+							break;
+						case YamlFrontMatterDetectionState.FirstTokenFound:
+							if (trimmedCurrentLine == YamlFrontMatterHeader)
+							{
+								// Found the end of the YAML front matter, so move to the final state
+								currentState = YamlFrontMatterDetectionState.SecondTokenFound;
+							}
+							else
+							{
+								// Store the YAML data into our header
+								frontMatter.AppendLine(currentLine);
+							}
+							break;
+
+						case YamlFrontMatterDetectionState.SecondTokenFound:
+							break;
+					}
+
+					if (currentState != YamlFrontMatterDetectionState.SecondTokenFound)
+					{
+						currentLine = reader.ReadLine();
+					}
+				}
+
+				if (currentState == YamlFrontMatterDetectionState.SecondTokenFound)
+				{
+					// Parse YAML metadata
+					ParseYamlMetadata(frontMatter.ToString());
+					return reader.ReadToEnd();
+				}
+				else
+				{
+					// Something went wrong along the way, so we just return the full file
+					return contents;
+				}
+			}
+		}
+
+		private void ParseYamlMetadata(string yamlMetadata)
+		{
+			// TODO: Implement YAML parsing
+		}
+
+		private enum YamlFrontMatterDetectionState
+		{
+			NotDetected,
+			FirstTokenFound,
+			SecondTokenFound
+		}
 
         private static bool IsHeaderBlock(Block block, int maxDepth = 2)
         {
