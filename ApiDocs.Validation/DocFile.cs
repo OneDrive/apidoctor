@@ -158,8 +158,9 @@ namespace ApiDocs.Validation
 
         protected virtual string PostProcessHtmlTags(string inputHtml, string tags)
         {
-            TagProcessor tagProcessor = new TagProcessor(tags, this.Parent.SourceFolderPath);
-            return tagProcessor.PostProcess(inputHtml, new FileInfo(this.FullPath), null);
+            TagProcessor tagProcessor = new TagProcessor(tags, this.Parent?.SourceFolderPath);
+            var fileInfo = new FileInfo(this.FullPath);
+            return tagProcessor.PostProcess(inputHtml, fileInfo, null);
         }
 
         protected virtual string GetContentsOfFile(string tags)

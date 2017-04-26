@@ -156,7 +156,7 @@ namespace ApiDocs.Validation.UnitTests
         public void TruncatedExampleWithRequiredPropertiesTest()
         {
             DocSet docSet = new DocSet();
-            DocFile testFile = new DocFileForTesting(Resources.ExampleValidateResponse, "\test\test.md", "test.md", docSet);
+            DocFile testFile = new DocFileForTesting(Resources.ExampleValidateResponse, "test.md", "test.md", docSet);
 
             ValidationError[] detectedErrors;
             testFile.Scan(string.Empty, out detectedErrors);
@@ -182,7 +182,7 @@ namespace ApiDocs.Validation.UnitTests
         public void TruncatedExampleSelectStatementOnChildren()
         {
             DocSet docSet = new DocSet();
-            DocFile testFile = new DocFileForTesting(Resources.ExampleValidationSelectStatement, "\test\test.md", "test.md", docSet);
+            DocFile testFile = new DocFileForTesting(Resources.ExampleValidationSelectStatement, "test.md", "test.md", docSet);
 
             ValidationError[] detectedErrors;
             testFile.Scan(string.Empty, out detectedErrors);
@@ -206,7 +206,7 @@ namespace ApiDocs.Validation.UnitTests
         public void TruncatedExampleSelectStatementOnChildrenExpectFailure()
         {
             DocSet docSet = new DocSet();
-            DocFile testFile = new DocFileForTesting(Resources.ExampleValidationSelectStatementFailure, "\test\test.md", "test.md", docSet);
+            DocFile testFile = new DocFileForTesting(Resources.ExampleValidationSelectStatementFailure, "test.md", "test.md", docSet);
 
             ValidationError[] detectedErrors;
             testFile.Scan(string.Empty, out detectedErrors);

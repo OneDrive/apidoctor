@@ -38,7 +38,7 @@ namespace ApiDocs.Validation.UnitTests
         static DocFile GetDocFile()
         {
             DocSet docSet = new DocSet();
-            DocFile testFile = new DocFileForTesting(Resources.ExampleResources, "\resources.md", "\resources.md", docSet);
+            DocFile testFile = new DocFileForTesting(Resources.ExampleResources, "resources.md", "resources.md", docSet);
 
             ValidationError[] detectedErrors;
             testFile.Scan(string.Empty, out detectedErrors);
