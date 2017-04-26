@@ -206,7 +206,7 @@ namespace ApiDocs.Validation.Tags
         /// <param name="sourceDirectory">The original Markdown file.</param>
         /// <param name="converter">The Markdown object to use for converting include files.</param>
         /// <returns>The postprocessed HTML content.</returns>
-        public async Task<string> PostProcess(string html, FileInfo sourceFile, Markdown converter)
+        public string PostProcess(string html, FileInfo sourceFile, Markdown converter)
         {
             StringWriter writer = new StringWriter();
             StringReader reader = new StringReader(html);
@@ -215,24 +215,24 @@ namespace ApiDocs.Validation.Tags
             // so not repeating them here
 
             string nextLine;
-            while ((nextLine = await reader.ReadLineAsync()) != null)
+            while ((nextLine = reader.ReadLine()) != null)
             {
                 // Replace with <div class="content-<tag>">
                 if (IsConvertedTagLine(nextLine))
                 {
                     string[] tags = GetTags(nextLine);
-                    await writer.WriteLineAsync(GetDivMarker(tags));
+                    writer.WriteLine(GetDivMarker(tags));
                     continue;
                 }
 
                 // Replace with </div>
                 if (IsConvertedEndLine(nextLine))
                 {
-                    await writer.WriteLineAsync(GetEndDivMarker());
+                    writer.WriteLine(GetEndDivMarker());
                     continue;
                 }
 
-                await writer.WriteLineAsync(nextLine);
+                writer.WriteLine(nextLine);
             }
 
             return writer.ToString();

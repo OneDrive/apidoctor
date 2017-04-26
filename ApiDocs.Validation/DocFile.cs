@@ -35,6 +35,7 @@ namespace ApiDocs.Validation
     using Tags;
     using MarkdownDeep;
     using Newtonsoft.Json;
+    using System.Threading.Tasks;
 
     /// <summary>
     /// A documentation file that may contain one more resources or API methods
@@ -104,7 +105,7 @@ namespace ApiDocs.Validation
         /// <summary>
         /// Raw Markdown parsed blocks
         /// </summary>
-        protected Block[] OriginalMarkdownBlocks { get; set; }
+        public Block[] OriginalMarkdownBlocks { get; set; }
 
         protected List<ILinkInfo> MarkdownLinks {get;set;}
 
@@ -138,7 +139,7 @@ namespace ApiDocs.Validation
         /// Populate this object based on input markdown data
         /// </summary>
         /// <param name="inputMarkdown"></param>
-        protected void TransformMarkdownIntoBlocksAndLinks(string inputMarkdown)
+        protected void TransformMarkdownIntoBlocksAndLinks(string inputMarkdown, string tags)
         {
             Markdown md = new Markdown
             {
@@ -148,10 +149,17 @@ namespace ApiDocs.Validation
                 NewWindowForExternalLinks = true
             };
 
-            this.HtmlContent = md.Transform(inputMarkdown);
+            var htmlContent = md.Transform(inputMarkdown);
+            this.HtmlContent = PostProcessHtmlTags(htmlContent, tags);
             this.OriginalMarkdownBlocks = md.Blocks;
             this.MarkdownLinks = new List<ILinkInfo>(md.FoundLinks);
             this.bookmarks.AddRange(md.HeaderIdsInDocument);
+        }
+
+        protected virtual string PostProcessHtmlTags(string inputHtml, string tags)
+        {
+            TagProcessor tagProcessor = new TagProcessor(tags, this.Parent.SourceFolderPath);
+            return tagProcessor.PostProcess(inputHtml, new FileInfo(this.FullPath), null);
         }
 
         protected virtual string GetContentsOfFile(string tags)
@@ -175,7 +183,7 @@ namespace ApiDocs.Validation
             {
 				string fileContents = this.GetContentsOfFile(tags);
 				fileContents = this.ParseAndRemoveYamlFrontMatter(fileContents);
-				this.TransformMarkdownIntoBlocksAndLinks(fileContents);
+				this.TransformMarkdownIntoBlocksAndLinks(fileContents, tags);
             }
             catch (IOException ioex)
             {

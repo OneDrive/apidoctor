@@ -167,7 +167,7 @@ This link goes [up one level](../anotherfile.md)
         public override bool Scan(string tags, out ValidationError[] errors)
         {
             this.HasScanRun = true;
-            this.TransformMarkdownIntoBlocksAndLinks(this.Markdown);
+            this.TransformMarkdownIntoBlocksAndLinks(this.Markdown, tags);
             return this.ParseMarkdownBlocks(out errors);
         }
 

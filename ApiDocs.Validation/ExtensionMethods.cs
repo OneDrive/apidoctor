@@ -177,7 +177,6 @@ namespace ApiDocs.Validation
 
         public static string ValueForColumn(this string[] rowValues, IMarkdownTable table, string[] possibleHeaderNames, bool removeMarkdownSyntax = true)
         {
-            
             var headers = table.ColumnHeaders;
 
             foreach (var headerName in possibleHeaderNames)
@@ -191,7 +190,6 @@ namespace ApiDocs.Validation
                     if (removeMarkdownSyntax && !string.IsNullOrEmpty(tableCellContents))
                     {
                         tableCellContents = converter.Transform(tableCellContents).TrimEnd();
-                        //Debug.Assert(!string.IsNullOrEmpty(tableCellContents));
                     }
                     return tableCellContents;
                 }
