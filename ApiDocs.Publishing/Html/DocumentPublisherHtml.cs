@@ -229,7 +229,22 @@ namespace ApiDocs.Publishing.Html
             this.LogMessage(new ValidationMessage(sourceFile.Name, "Publishing file to HTML"));
 
             var destinationPath = this.GetPublishedFilePath(sourceFile, destinationRoot, HtmlOutputExtension);
-            var html = page.HtmlContent;
+            
+            // Create a tag processor
+            string tagsInput;
+            if (null == PageParameters || !PageParameters.TryGetValue("tags", out tagsInput))
+            {
+                tagsInput = string.Empty;
+            }
+            var markdownSource = page.ReadAndPreprocessFileContents(tagsInput);
+
+            var converter = this.GetMarkdownConverter();
+            var html = converter.Transform(markdownSource);
+
+            // Post-process the resulting HTML for any remaining tags
+            TagProcessor tagProcessor = new TagProcessor(tagsInput,
+                page.Parent.SourceFolderPath, LogMessage);
+            html = tagProcessor.PostProcess(html, sourceFile, converter);
 
             var pageData = page.Annotation ?? new PageAnnotation();
             if (string.IsNullOrEmpty(pageData.Title))

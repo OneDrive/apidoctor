@@ -66,10 +66,10 @@ namespace ApiDocs.Validation
         /// </summary>
         public string FullPath { get; protected set; }
 
-        /// <summary>
-        /// HTML-rendered version of the markdown source (for displaying)
-        /// </summary>
-        public string HtmlContent { get; protected set; }
+        ///// <summary>
+        ///// HTML-rendered version of the markdown source (for displaying). This content is not suitable for publishing.
+        ///// </summary>
+        //public string HtmlContent { get; protected set; }
 
         /// <summary>
         /// Contains information on the headers and content blocks found in this document.
@@ -150,7 +150,7 @@ namespace ApiDocs.Validation
             };
 
             var htmlContent = md.Transform(inputMarkdown);
-            this.HtmlContent = PostProcessHtmlTags(htmlContent, tags);
+            //this.HtmlContent = PostProcessHtmlTags(htmlContent, tags);
             this.OriginalMarkdownBlocks = md.Blocks;
             this.MarkdownLinks = new List<ILinkInfo>(md.FoundLinks);
             this.bookmarks.AddRange(md.HeaderIdsInDocument);
@@ -182,8 +182,7 @@ namespace ApiDocs.Validation
             
             try
             {
-				string fileContents = this.GetContentsOfFile(tags);
-				fileContents = this.ParseAndRemoveYamlFrontMatter(fileContents);
+                string fileContents = this.ReadAndPreprocessFileContents(tags);
 				this.TransformMarkdownIntoBlocksAndLinks(fileContents, tags);
             }
             catch (IOException ioex)
@@ -202,11 +201,31 @@ namespace ApiDocs.Validation
             return this.ParseMarkdownBlocks(out errors);
         }
 
-		/// <summary>
-		/// Parses the file contents and removes yaml front matter from the markdown.
-		/// </summary>
-		/// <param name="contents">Contents.</param>
-		private string ParseAndRemoveYamlFrontMatter(string contents)
+        /// <summary>
+        /// Read the contents of the file and perform all preprocessing activities that transform the input into the final markdown-only data.
+        /// </summary>
+        /// <param name="tags"></param>
+        /// <returns></returns>
+        public string ReadAndPreprocessFileContents(string tags)
+        {
+            try
+            {
+                string fileContents = this.GetContentsOfFile(tags);
+                fileContents = this.ParseAndRemoveYamlFrontMatter(fileContents);
+                return fileContents;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"An error occuring reading and processing the contents of this file: {this.FullPath}. {ex.Message}.");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Parses the file contents and removes yaml front matter from the markdown.
+        /// </summary>
+        /// <param name="contents">Contents.</param>
+        private string ParseAndRemoveYamlFrontMatter(string contents)
 		{
 			const string YamlFrontMatterHeader = "---";
 			using (StringReader reader = new StringReader(contents))
