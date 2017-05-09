@@ -35,9 +35,9 @@ namespace ApiDocs.Validation.OData
         [XmlAttribute("Name")]
         public string Name { get; set; }
 
-        public void ApplyTransformation(Transformation.BaseModifications mods, EntityFramework edmx, string version)
+        public void ApplyTransformation(Transformation.BaseModifications mods, EntityFramework edmx, string[] versions)
         {
-            TransformationHelper.ApplyTransformation(this, mods, edmx, version);
+            TransformationHelper.ApplyTransformation(this, mods, edmx, versions);
         }
 
         [XmlIgnore]

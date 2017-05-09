@@ -89,9 +89,9 @@ namespace ApiDocs.Validation.OData
             get { return Name; }
         }
 
-        public virtual void ApplyTransformation(BaseModifications mods, EntityFramework edmx, string version)
+        public virtual void ApplyTransformation(BaseModifications mods, EntityFramework edmx, string[] versions)
         {
-            TransformationHelper.ApplyTransformation(this, mods, edmx, version, (name, modPropValue) =>
+            TransformationHelper.ApplyTransformation(this, mods, edmx, versions, (name, modPropValue) =>
             {
                 if (name == "GraphEntityTypeName")
                 {

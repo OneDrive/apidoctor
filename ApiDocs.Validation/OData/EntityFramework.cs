@@ -64,14 +64,14 @@ namespace ApiDocs.Validation.OData
         /// Apply schema / publishing changes to the EntityFramework
         /// </summary>
         /// <param name="schemaChanges"></param>
-        public void ApplyTransformation(PublishSchemaChanges changes, string version)
+        public void ApplyTransformation(PublishSchemaChanges changes, string[] versions)
         {
             if (changes.NamespacesToPublish.Any())
             {
                 DataServices.Schemas.RemoveAll(x => !changes.NamespacesToPublish.Contains(x.Namespace));
             }
 
-            TransformationHelper.ApplyTransformationToCollection(changes.Schemas, DataServices.Schemas, this, version);
+            TransformationHelper.ApplyTransformationToCollection(changes.Schemas, DataServices.Schemas, this, versions);
         }
 
         internal void RenameEntityType(ComplexType renamedType)

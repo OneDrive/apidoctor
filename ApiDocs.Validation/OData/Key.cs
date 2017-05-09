@@ -38,9 +38,9 @@ namespace ApiDocs.Validation.OData
         [XmlElement("PropertyRef", Namespace = ODataParser.EdmNamespace)]
         public PropertyRef PropertyRef { get; set; }
 
-        public void ApplyTransformation(BaseModifications value, EntityFramework edmx, string version)
+        public void ApplyTransformation(BaseModifications value, EntityFramework edmx, string[] versions)
         {
-            TransformationHelper.ApplyTransformation(this, value, edmx, version);
+            TransformationHelper.ApplyTransformation(this, value, edmx, versions);
         }
     }
 

@@ -80,9 +80,9 @@ namespace ApiDocs.Validation.OData
             this.Terms = new List<Term>();
         }
         
-        public void ApplyTransformation(BaseModifications value, EntityFramework edmx, string version)
+        public void ApplyTransformation(BaseModifications value, EntityFramework edmx, string[] versions)
         {
-            TransformationHelper.ApplyTransformation(this, value, edmx, version);
+            TransformationHelper.ApplyTransformation(this, value, edmx, versions);
         }
 
         [XmlIgnore]

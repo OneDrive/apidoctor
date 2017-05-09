@@ -47,9 +47,9 @@ namespace ApiDocs.Validation.OData
         [XmlElement("NavigationPropertyBinding"), Sortable]
         public List<NavigationPropertyBinding> NavigationPropertyBinding { get; set; }
 
-        public void ApplyTransformation(BaseModifications mods, EntityFramework edmx, string version)
+        public void ApplyTransformation(BaseModifications mods, EntityFramework edmx, string[] versions)
         {
-            TransformationHelper.ApplyTransformation(this, mods, edmx, version);
+            TransformationHelper.ApplyTransformation(this, mods, edmx, versions);
         }
 
         [XmlIgnore]

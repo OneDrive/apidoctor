@@ -60,9 +60,9 @@ namespace ApiDocs.Validation.OData
             }
         }
 
-        public void ApplyTransformation(BaseModifications value, EntityFramework edmx, string version)
+        public void ApplyTransformation(BaseModifications value, EntityFramework edmx, string[] versions)
         {
-            TransformationHelper.ApplyTransformation(this, value, edmx, version);
+            TransformationHelper.ApplyTransformation(this, value, edmx, versions);
         }
     }
 }

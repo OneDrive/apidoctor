@@ -968,6 +968,11 @@ namespace ApiDocs.ConsoleApp
                         ? x.Enabled
                         : options.AccountName.Equals(x.Name));
 
+            if (!accountsToProcess.Any())
+            {
+                Console.WriteLine("No accounts were selected.");
+            }
+
             var methods = FindTestMethods(options, docset);
 
             Dictionary<string, CheckResults> results = new Dictionary<string, CheckResults>();

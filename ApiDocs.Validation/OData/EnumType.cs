@@ -44,9 +44,9 @@ namespace ApiDocs.Validation.OData
         [XmlElement("Member"), Sortable]
         public List<EnumMember> Members { get; set; }
 
-        public void ApplyTransformation(BaseModifications mods, EntityFramework edmx, string version)
+        public void ApplyTransformation(BaseModifications mods, EntityFramework edmx, string[] versions)
         {
-            TransformationHelper.ApplyTransformation(this, mods, edmx, version);
+            TransformationHelper.ApplyTransformation(this, mods, edmx, versions);
         }
 
         [XmlIgnore]
@@ -62,9 +62,9 @@ namespace ApiDocs.Validation.OData
         [XmlAttribute("Value")]
         public string Value { get; set; }
 
-        public void ApplyTransformation(BaseModifications value, EntityFramework edmx, string version)
+        public void ApplyTransformation(BaseModifications value, EntityFramework edmx, string[] versions)
         {
-            TransformationHelper.ApplyTransformation(this, value, edmx, version);
+            TransformationHelper.ApplyTransformation(this, value, edmx, versions);
         }
 
         [XmlIgnore]

@@ -119,23 +119,33 @@ namespace ApiDocs.Validation.Json
             bool expectErrorObject = (jsonInput.Annotation != null) && jsonInput.Annotation.ExpectError;
 
             // Check for an error response
-            dynamic errorObject = obj["error"];
-            if (null != errorObject && !expectErrorObject)
+            try
             {
-                string code = errorObject.code;
-                string message = errorObject.message;
+                dynamic errorObject = obj["error"];
+                if (null != errorObject && !expectErrorObject)
+                {
+                    string code = errorObject.code;
+                    string message = errorObject.message;
 
-                detectedErrors.Clear();
-                detectedErrors.Add(new ValidationError(ValidationErrorCode.JsonErrorObject, null, "Error response received. Code: {0}, Message: {1}", code, message));
-                errors = detectedErrors.ToArray();
-                return false;
+                    detectedErrors.Clear();
+                    detectedErrors.Add(new ValidationError(ValidationErrorCode.JsonErrorObject, null, "Error response received. Code: {0}, Message: {1}", code, message));
+                    errors = detectedErrors.ToArray();
+                    return false;
+                }
+                else if (expectErrorObject && null == errorObject)
+                {
+                    detectedErrors.Clear();
+                    detectedErrors.Add(new ValidationError(ValidationErrorCode.JsonErrorObjectExpected, null, "Expected an error object response, but didn't receive one."));
+                    errors = detectedErrors.ToArray();
+                    return false;
+                }
             }
-            else if (expectErrorObject && null == errorObject)
+            catch (Exception ex)
             {
-                detectedErrors.Clear();
-                detectedErrors.Add(new ValidationError(ValidationErrorCode.JsonErrorObjectExpected, null, "Expected an error object response, but didn't receive one."));
-                errors = detectedErrors.ToArray();
-                return false;
+                if (annotation.ExpectError)
+                {
+                    detectedErrors.Add(new ValidationError(ValidationErrorCode.JsonErrorObjectExpected, null, $"Expected an error object, but it doesn't look like we got one: {ex.Message}"));
+                }
             }
 
             // Check to see if this is a "collection" instance
@@ -163,15 +173,31 @@ namespace ApiDocs.Validation.Json
         private void ValidateCollectionObject(JContainer obj, CodeBlockAnnotation annotation, Dictionary<string, JsonSchema> otherSchemas, string collectionPropertyName, List<ValidationError> detectedErrors, ValidationOptions options)
         {
             // TODO: also validate additional properties on the collection, like nextDataLink
-            var collection = obj[collectionPropertyName];
+            JToken collection = null;
+            if (obj is JArray)
+            {
+                collection = obj;
+            }
+            else
+            {
+                try
+                {
+                    collection = obj[collectionPropertyName];
+                }
+                catch (Exception ex)
+                {
+                    detectedErrors.Add(new ValidationError(ValidationErrorCode.JsonErrorObjectExpected, null, $"Unable to find collection parameter or array to validate: {ex.Message}"));
+                    return;
+                }
+            }
+
             if (null == collection)
             {
                 detectedErrors.Add(new ValidationError(ValidationErrorCode.MissingCollectionProperty, null, "Failed to locate collection property '{0}' in response.", collectionPropertyName));
             }
             else
             {
-                var collectionMembers = obj[collectionPropertyName];
-                if (!collectionMembers.Any())
+                if (!collection.Any())
                 {
                     if (!annotation.IsEmpty)
                     {
@@ -193,9 +219,8 @@ namespace ApiDocs.Validation.Json
                             collectionPropertyName));
                 }
 
-                foreach (var jToken in collectionMembers)
+                foreach (var jToken in collection)
                 {
-                    
                     var container = jToken as JContainer;
                     if (null != container)
                     {

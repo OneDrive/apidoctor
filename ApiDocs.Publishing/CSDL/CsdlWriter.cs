@@ -77,7 +77,8 @@ namespace ApiDocs.Publishing.CSDL
                     throw new KeyNotFoundException($"Unable to locate a transformation set named {options.TransformOutput}. Aborting.");
                 }
 
-                framework.ApplyTransformation(transformations.SchemaChanges, options.Version);
+                string[] versionsToPublish = options.Version?.Split(new char[] { ',', ' '});
+                framework.ApplyTransformation(transformations.SchemaChanges, versionsToPublish);
                 if (!string.IsNullOrEmpty(options.Version))
                 {
                     outputFilenameSuffix = $"-{options.Version}";

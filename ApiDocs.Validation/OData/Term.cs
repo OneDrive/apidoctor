@@ -65,9 +65,9 @@ namespace ApiDocs.Validation.OData
         public const string ChangeTrackingTerm = "Org.OData.Capabilities.V1.ChangeTracking";
         public const string NavigationRestrictionsTerm = "Org.OData.Capabilities.V1.NavigationRestrictions";
 
-        public void ApplyTransformation(Transformation.BaseModifications mods, EntityFramework edmx, string version)
+        public void ApplyTransformation(Transformation.BaseModifications mods, EntityFramework edmx, string[] versions)
         {
-            TransformationHelper.ApplyTransformation(this, mods, edmx, version);
+            TransformationHelper.ApplyTransformation(this, mods, edmx, versions);
         }
 
         [XmlIgnore]

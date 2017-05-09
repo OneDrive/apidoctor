@@ -110,9 +110,9 @@ namespace ApiDocs.Validation.OData
         [XmlIgnore]
         public bool Filterable { get; set; }
 
-        public virtual void ApplyTransformation(BaseModifications mods, EntityFramework edmx, string version)
+        public virtual void ApplyTransformation(BaseModifications mods, EntityFramework edmx, string[] versions)
         {
-            TransformationHelper.ApplyTransformation(this, mods, edmx, version, (key, value) =>
+            TransformationHelper.ApplyTransformation(this, mods, edmx, versions, (key, value) =>
             {
                 if (key == "GraphPropertyName")
                 {

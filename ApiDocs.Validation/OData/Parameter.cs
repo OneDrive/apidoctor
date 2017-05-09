@@ -51,9 +51,9 @@ namespace ApiDocs.Validation.OData
         [XmlAttribute("Unicode"), DefaultValue(true)]
         public bool Unicode { get; set; }
 
-        public void ApplyTransformation(BaseModifications value, EntityFramework edmx, string version)
+        public void ApplyTransformation(BaseModifications value, EntityFramework edmx, string[] versions)
         {
-            TransformationHelper.ApplyTransformation(this, value, edmx, version);
+            TransformationHelper.ApplyTransformation(this, value, edmx, versions);
         }
 
         [XmlIgnore]

@@ -19,7 +19,7 @@ namespace ApiDocs.Validation.OData.Transformation
 
         
 
-        public static void ApplyTransformation(ITransformable target, BaseModifications modifications, EntityFramework edmx, string version, HandlePropertyModification alternativeHandler = null)
+        public static void ApplyTransformation(ITransformable target, BaseModifications modifications, EntityFramework edmx, string[] versions, HandlePropertyModification alternativeHandler = null)
         {
             // For eacn property on the modifications instance, if there is a matching property on target
             // then we copy the value from modification to target, if the modification value is not null
@@ -47,7 +47,7 @@ namespace ApiDocs.Validation.OData.Transformation
                     if (targetProperties.TryGetValue(modsProp.Name, out targetProp))
                     {
                         var targetValue = targetProp.GetValue(target);
-                        InvokeApplyTransformationToCollection((IDictionary)modsValue, (IList)targetValue, edmx, version);
+                        InvokeApplyTransformationToCollection((IDictionary)modsValue, (IList)targetValue, edmx, versions);
                     }
                     else
                     {
@@ -84,7 +84,7 @@ namespace ApiDocs.Validation.OData.Transformation
                         ITransformable transformableTargetProperty = targetPropertyValue as ITransformable;
                         if (null != transformableTargetProperty)
                         {
-                            transformableTargetProperty.ApplyTransformation((BaseModifications)modsValue, edmx, version);
+                            transformableTargetProperty.ApplyTransformation((BaseModifications)modsValue, edmx, versions);
                             continue;
                         }
                     }
@@ -153,17 +153,28 @@ namespace ApiDocs.Validation.OData.Transformation
         //    }
         //}
 
-        private static void InvokeApplyTransformationToCollection(IDictionary mods, IList target, EntityFramework edmx, string version)
+        private static void InvokeApplyTransformationToCollection(IDictionary mods, IList target, EntityFramework edmx, string[] versions)
         {
             Type T_mod = mods.GetType().GetGenericArguments()[1];    // Get the type used for the value
             Type T_target = target.GetType().GetGenericArguments()[0];   // Get the type used by the list
 
             var method = typeof(TransformationHelper).GetMethod("ApplyTransformationToCollection", BindingFlags.Static | BindingFlags.Public);
             method = method.MakeGenericMethod(T_mod, T_target);
-            method.Invoke(null, new object[] { mods, target, edmx, version });
+            method.Invoke(null, new object[] { mods, target, edmx, versions });
         }
 
-        public static void ApplyTransformationToCollection<T_mod, T_target>(Dictionary<string, T_mod> modifications, List<T_target> targets, EntityFramework edmx, string version)
+        private static bool IsVersionMatch(string[] versionsToPublish, string[] versionsAvailable)
+        {
+            if (versionsToPublish == null || versionsAvailable == null)
+            {
+                return true;
+            }
+
+            var intersection = versionsToPublish.Intersect(versionsAvailable);
+            return intersection.Any();
+        }
+
+        public static void ApplyTransformationToCollection<T_mod, T_target>(Dictionary<string, T_mod> modifications, List<T_target> targets, EntityFramework edmx, string[] versions)
             where T_target : ITransformable, new()
             where T_mod : BaseModifications
         {
@@ -178,22 +189,22 @@ namespace ApiDocs.Validation.OData.Transformation
                         {
                             targets.Remove(target);
                         }
-                        else if (version != null && mod.Value.AvailableInVersions != null && !mod.Value.AvailableInVersions.Contains(version))
+                        else if (versions != null && mod.Value.AvailableInVersions != null && !IsVersionMatch(versions, mod.Value.AvailableInVersions))
                         {
                             targets.Remove(target);
                         }
                         else
                         {
-                            target.ApplyTransformation(mod.Value, edmx, version);
+                            target.ApplyTransformation(mod.Value, edmx, versions);
                         }
                     }
                 }
-                else if (!mod.Value.Remove && (version == null || mod.Value.AvailableInVersions == null || mod.Value.AvailableInVersions.Contains(version)))
+                else if (!mod.Value.Remove && (versions == null || mod.Value.AvailableInVersions == null || IsVersionMatch(versions, mod.Value.AvailableInVersions)))
                 {
                     // Create the target and apply properties
                     var target = new T_target();
                     target.ElementIdentifier = mod.Key;
-                    target.ApplyTransformation(mod.Value, edmx, version);
+                    target.ApplyTransformation(mod.Value, edmx, versions);
                     targets.Add(target);
                 }
                 else

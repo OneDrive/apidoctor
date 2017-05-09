@@ -10,7 +10,7 @@ namespace ApiDocs.Validation.OData.Transformation
     {
         string ElementIdentifier { get; set; }
 
-        void ApplyTransformation(BaseModifications value, EntityFramework edmx, string version);
+        void ApplyTransformation(BaseModifications value, EntityFramework edmx, string[] versions);
     }
 
     [AttributeUsage(AttributeTargets.Property)]

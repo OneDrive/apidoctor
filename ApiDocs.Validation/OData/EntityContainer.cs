@@ -99,9 +99,9 @@ namespace ApiDocs.Validation.OData
             get { return Name; }
         }
 
-        public void ApplyTransformation(Transformation.BaseModifications mods, EntityFramework edmx, string version)
+        public void ApplyTransformation(Transformation.BaseModifications mods, EntityFramework edmx, string[] versions)
         {
-            TransformationHelper.ApplyTransformation(this, mods, edmx, version);
+            TransformationHelper.ApplyTransformation(this, mods, edmx, versions);
         }
 
         [XmlIgnore]
