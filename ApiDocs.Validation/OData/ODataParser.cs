@@ -80,7 +80,7 @@ namespace ApiDocs.Validation.OData
 	                        MergeInheritedProperties(result, complexType);
 	                    }
 	                }
-	                foreach (EntityType entityType in schema.Entities)
+	                foreach (EntityType entityType in schema.EntityTypes)
 	                {
 	                    if (entityType.BaseType != null)
 	                    {

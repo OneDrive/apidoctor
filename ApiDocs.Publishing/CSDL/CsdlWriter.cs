@@ -755,7 +755,7 @@ namespace ApiDocs.Publishing.CSDL
             return prop;
         }
 
-        private static void AddDescriptionAnnotation<T>(string typeName, T targetProperty, ParameterDefinition sourceParameter, string termForDescription = Term.LongDescriptionTerm) where T: Property
+        private static void AddDescriptionAnnotation<T>(string typeName, T targetProperty, ParameterDefinition sourceParameter, string termForDescription = Term.LongDescriptionTerm) where T: Property, IOdataAnnotatable
         {
             if (!string.IsNullOrEmpty(sourceParameter.Description))
             {

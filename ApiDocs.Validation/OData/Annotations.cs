@@ -14,8 +14,9 @@ namespace ApiDocs.Validation.OData
         [XmlAttribute("Target"), SortBy]
         public string Target { get; set; }
 
+        public string ElementIdentifier { get; set; }
+
         public void ApplyTransformation(Transformation.BaseModifications mods, EntityFramework edmx, string[] versions)
-        {
         {
             this.AnnotationList = new List<Annotation>();
         }

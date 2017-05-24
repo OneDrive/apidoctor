@@ -40,7 +40,7 @@ namespace ApiDocs.DocumentationGeneration.Extensions
 
         public static string GetDescription(this Property property, EntityFramework entityFramework, ComplexType complexType)
         {
-            var inlineAnnotation = property.Annotations.FirstOrDefault(a => a.Term == Term.DescriptionTerm);
+            var inlineAnnotation = property.Annotation.FirstOrDefault(a => a.Term == Term.DescriptionTerm);
             if (inlineAnnotation != null)
             {
                 return inlineAnnotation.String;
@@ -59,7 +59,7 @@ namespace ApiDocs.DocumentationGeneration.Extensions
 
         public static string GetDescription(this ComplexType complexType, EntityFramework entityFramework)
         {
-            var inlineAnnotation = complexType.Annotations.FirstOrDefault(a => a.Term == Term.DescriptionTerm);
+            var inlineAnnotation = complexType.Annotation.FirstOrDefault(a => a.Term == Term.DescriptionTerm);
             if (inlineAnnotation != null)
             {
                 return inlineAnnotation.String;

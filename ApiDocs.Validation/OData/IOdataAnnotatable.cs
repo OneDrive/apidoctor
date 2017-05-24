@@ -32,6 +32,6 @@ namespace ApiDocs.Validation.OData
     /// </summary>
     public interface IOdataAnnotatable : IODataNamedElement
     {
-        List<Annotation> Annotations { get; set; }
+        List<Annotation> Annotation { get; set; }
     }
 }

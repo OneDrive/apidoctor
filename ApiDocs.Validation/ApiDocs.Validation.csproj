@@ -74,7 +74,6 @@
     <Compile Include="OData\Annotations.cs" />
     <Compile Include="OData\DataServices.cs" />
     <Compile Include="OData\EntityFramework.cs" />
-    <Compile Include="OData\EnumMember.cs" />
     <Compile Include="OData\EnumType.cs" />
     <Compile Include="OData\IOdataAnnotatable.cs" />
     <Compile Include="OData\IODataNamedElement.cs" />

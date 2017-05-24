@@ -36,7 +36,7 @@ namespace ApiDocs.Validation.OData
         public NavigationProperty()
         {
             ContainsTarget = false;
-            this.Annotations = new List<Annotation>();
+            this.Annotation = new List<Annotation>();
         }
 
         [XmlAttribute("ContainsTarget"), DefaultValue(false)]

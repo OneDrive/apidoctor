@@ -38,7 +38,7 @@ namespace ApiDocs.Validation.OData
         {
             Unicode = true;
             Nullable = true;
-            this.Annotations = new List<Annotation>();
+            this.Annotation = new List<Annotation>();
         }
 
         [XmlAttribute("Name"), SortBy]
@@ -54,7 +54,7 @@ namespace ApiDocs.Validation.OData
         public bool Unicode { get; set; }
 
         [XmlElement("Annotation", Namespace = ODataParser.EdmNamespace), Sortable]
-        public List<Annotation> Annotations { get; set; }
+        public List<Annotation> Annotation { get; set; }
 
         [XmlAttribute("CreateVirtualNavigationProperty", Namespace = ODataParser.AgsNamespace)]
         public bool ValueOfCreateVirtualNavigationProperty { get; set; }

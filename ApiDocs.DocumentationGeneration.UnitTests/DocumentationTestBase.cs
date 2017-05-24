@@ -59,7 +59,7 @@ namespace ApiDocs.DocumentationGeneration.Tests
 
             if (inlineDescription != null)
             {
-                p.Annotations.Add(this.GetDescriptionAnnotation(inlineDescription));
+                p.Annotation.Add(this.GetDescriptionAnnotation(inlineDescription));
             }
 
             if (schemaDescription != null)
@@ -78,7 +78,7 @@ namespace ApiDocs.DocumentationGeneration.Tests
 
             if (inlineDescription != null)
             {
-                p.Annotations.Add(this.GetDescriptionAnnotation(inlineDescription));
+                p.Annotation.Add(this.GetDescriptionAnnotation(inlineDescription));
             }
 
             if (schemaDescription != null)
@@ -96,7 +96,7 @@ namespace ApiDocs.DocumentationGeneration.Tests
             ComplexType ct = new ComplexType { Name = name };
             if (inlineDescription != null)
             {
-                ct.Annotations.Add(this.GetDescriptionAnnotation(inlineDescription));
+                ct.Annotation.Add(this.GetDescriptionAnnotation(inlineDescription));
             }
 
             if (schemaDescription != null)
@@ -120,7 +120,7 @@ namespace ApiDocs.DocumentationGeneration.Tests
             EntityType et = new EntityType { Name = name };
             if (inlineDescription != null)
             {
-                et.Annotations.Add(this.GetDescriptionAnnotation(inlineDescription));
+                et.Annotation.Add(this.GetDescriptionAnnotation(inlineDescription));
             }
 
             if (schemaDescription != null)
@@ -130,7 +130,7 @@ namespace ApiDocs.DocumentationGeneration.Tests
                 schema.Annotations.Add(typeAnnotations);
             }
 
-            schema.Entities.Add(et);
+            schema.EntityTypes.Add(et);
             return et;
         }
 

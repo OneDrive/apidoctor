@@ -39,7 +39,7 @@ namespace ApiDocs.Validation.OData
         public ComplexType()
         {
             this.Properties = new List<Property>();
-            this.Annotations = new List<Annotation>();
+            this.Annotation = new List<Annotation>();
         }
 
         [XmlAttribute("Name"), SortBy]
@@ -55,7 +55,7 @@ namespace ApiDocs.Validation.OData
         public List<Property> Properties { get; set; }
 
         [XmlElement("Annotation", Namespace = ODataParser.EdmNamespace)]
-        public List<Annotation> Annotations { get; set; }
+        public List<Annotation> Annotation { get; set; }
 
         [XmlAttribute("WorkloadName", Namespace = ODataParser.AgsNamespace)]
         public string WorkloadName { get; set; }

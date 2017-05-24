@@ -35,14 +35,11 @@ namespace ApiDocs.Validation.OData
     {
         public EnumType()
         {
-            this.Annotations = new List<Annotation>();
+            this.Annotation = new List<Annotation>();
         }
 
-        [XmlElement("Member", Namespace = ODataParser.EdmNamespace)]
-        public List<EnumMember> Members { get; set; }
-
         [XmlElement("Annotation", Namespace = ODataParser.EdmNamespace)]
-        public List<Annotation> Annotations { get; set; }
+        public List<Annotation> Annotation { get; set; }
 
         [XmlAttribute("Name"), SortBy]
         public string Name { get; set; }

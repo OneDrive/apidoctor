@@ -85,7 +85,7 @@ namespace ApiDocs.DocumentationGeneration
                     File.WriteAllText(Path.Combine(resourceFolder, $"{complexType.Name}.md"), output);
                 }
 
-                foreach (var entity in schema.Entities)
+                foreach (var entity in schema.EntityTypes)
                 {
                     Console.WriteLine("Creating file for entity {0}", entity.Name);
                     string output = GetMarkDownForType(entityFramework, entity);
