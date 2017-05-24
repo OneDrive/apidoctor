@@ -119,7 +119,7 @@ namespace ApiDocs.Validation.OData
                 return matchingFunctions.First();
 
             // Look up enums
-            var matchingEnums = (from et in schema.EnumTypes where et.Name == typeName select et);
+            var matchingEnums = (from et in schema.Enumerations where et.Name == typeName select et);
             if (matchingEnums.Any())
                 return matchingEnums.First();
 

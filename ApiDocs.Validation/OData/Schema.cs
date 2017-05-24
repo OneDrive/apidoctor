@@ -70,8 +70,6 @@ namespace ApiDocs.Validation.OData
             Sortable]
         public List<Annotations> Annotations { get; set; }
 
-        [XmlElement("EnumType", Namespace = ODataParser.EdmNamespace)]
-        public List<EnumType> EnumTypes { get; set; }
 
         public Schema()
         {
@@ -82,7 +80,7 @@ namespace ApiDocs.Validation.OData
             this.Actions = new List<Action>();
             this.Terms = new List<Term>();
             this.Annotations = new List<Annotations>();
-            this.EnumTypes = new List<EnumType>();
+            this.Enumerations = new List<EnumType>();
         }
         
         public void ApplyTransformation(BaseModifications value, EntityFramework edmx, string[] versions)
