@@ -16,12 +16,10 @@ namespace ApiDocs.Validation.OData
 
         public void ApplyTransformation(Transformation.BaseModifications mods, EntityFramework edmx, string[] versions)
         {
-            TransformationHelper.ApplyTransformation(this, mods, edmx, versions);
+        {
+            this.AnnotationList = new List<Annotation>();
         }
 
-		[XmlIgnore]
-        public string ElementIdentifier { get { return this.Target; } set { this.Target = value; } }
-		
         [XmlElement("Annotation", Namespace = ODataParser.EdmNamespace)]
         public List<Annotation> AnnotationList { get; set; }
     }
