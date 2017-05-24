@@ -101,7 +101,7 @@ namespace ApiDocs.DocumentationGeneration.UnitTests
             DocFile testFile = new DocFileForTesting(markDown, @"\resources.md", @"\resources.md", docSet);
             ValidationError[] errors = null;
             testFile.Scan(string.Empty, out errors);
-            Assert.IsFalse(errors.WereWarningsOrErrors(), "Expected no validation warnings/errors: {0}", errors.ErrorsToString());
+            Assert.IsFalse(errors.WereWarningsOrErrors(), "Expected no validation warnings/errors: {0}", errors.Where(e => e.IsWarningOrError).ErrorsToString());
             return testFile;
         }
 

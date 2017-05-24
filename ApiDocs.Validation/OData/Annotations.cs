@@ -11,6 +11,11 @@ namespace ApiDocs.Validation.OData
     [XmlRoot("Annotations", Namespace = ODataParser.EdmNamespace)]
     public class Annotations : XmlBackedObject, Transformation.ITransformable
     {
+        public Annotations()
+        {
+            this.AnnotationList = new List<Annotation>();
+        }
+
         [XmlAttribute("Target"), SortBy]
         public string Target { get; set; }
 
