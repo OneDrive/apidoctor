@@ -63,17 +63,6 @@ namespace ApiDocs.Validation.OData
         /// </summary>
         [XmlIgnore]
         public bool ChangeTracking { get; set; }
-
-        //public override void ApplyTransformation(BaseModifications transform, EntityFramework edmx, string version)
-        //{
-        //    Transformation.PropertyModification value = (Transformation.PropertyModification)transform;
-        //    if (value.ContainsTarget.HasValue)
-        //    {
-        //        ContainsTarget = value.ContainsTarget.Value;
-        //    }
-
-        //    base.ApplyTransformation(transform, edmx, version);
-        //}
     }
 
     public enum Navigability

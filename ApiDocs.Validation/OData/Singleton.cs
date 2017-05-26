@@ -31,7 +31,7 @@ namespace ApiDocs.Validation.OData
     using Transformation;
 
     [XmlRoot("Singleton", Namespace = ODataParser.EdmNamespace)]
-    public class Singleton : XmlBackedObject, ITransformable
+    public class Singleton : XmlBackedTransformableObject
     {
         public Singleton()
         {
@@ -47,13 +47,8 @@ namespace ApiDocs.Validation.OData
         [XmlElement("NavigationPropertyBinding"), Sortable]
         public List<NavigationPropertyBinding> NavigationPropertyBinding { get; set; }
 
-        public void ApplyTransformation(BaseModifications mods, EntityFramework edmx, string[] versions)
-        {
-            TransformationHelper.ApplyTransformation(this, mods, edmx, versions);
-        }
-
         [XmlIgnore]
-        public string ElementIdentifier
+        public override string ElementIdentifier
         {
             get { return this.Name; }
             set { this.Name = value; }

@@ -49,7 +49,7 @@ namespace ApiDocs.Validation.OData
         public string EntitySetPath { get; set; }
     }
 
-    public class ActionOrFunctionBase : XmlBackedObject, ITransformable
+    public class ActionOrFunctionBase : XmlBackedTransformableObject
     {
         [XmlAttribute("Name"), SortBy]
         public string Name { get; set; }
@@ -69,13 +69,8 @@ namespace ApiDocs.Validation.OData
         }
 
         #region ITransformable
-        public virtual void ApplyTransformation(Transformation.BaseModifications mods, EntityFramework edmx, string[] versions)
-        {
-            TransformationHelper.ApplyTransformation(this, mods, edmx, versions);
-        }
-
         [XmlIgnore]
-        public string ElementIdentifier
+        public override string ElementIdentifier
         {
             get
             {
@@ -117,7 +112,10 @@ namespace ApiDocs.Validation.OData
         {
             get
             {
-                var names = (from p in Parameters where p.Name != "bindingParameter" && p.Name != "this" select p.Name);
+                var names = from p in Parameters
+                             where p.Name != "bindingParameter" && p.Name != "this"
+                             orderby p.Name
+                             select p.Name;
                 if (names.Any())
                     return names.ComponentsJoinedByString(",");
                 return string.Empty;
