@@ -476,6 +476,9 @@ namespace ApiDocs.ConsoleApp
         [Option("allow-unsafe-html", HelpText="Allows HTML tags in the markdown source to be passed through to the output markdown.")]
         public bool AllowUnsafeHtmlContentInMarkdown { get; set; }
 
+        [Option("respect-ordered-lists", HelpText="Respect the start values of ordered lists when converting to HTML. By default OL's start at 1 always.")]
+        public bool RespectOrderedListValues { get; set; }
+
         #region Swagger2 output controls
 
         [Option("swagger-title", DefaultValue=null, HelpText="Title to include in the published documentation")]

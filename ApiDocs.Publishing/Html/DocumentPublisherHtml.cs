@@ -52,6 +52,8 @@ namespace ApiDocs.Publishing.Html
         /// </summary>
         public bool EnableHtmlTagPassThrough { get; set; }
 
+        public bool RespectOrderedListValues { get; set; }
+
         public DocumentPublisherHtml(DocSet docs, IPublishOptions options) 
             : base(docs, options)
         {
@@ -59,6 +61,7 @@ namespace ApiDocs.Publishing.Html
             HtmlOutputExtension = options.OutputExtension ?? ".htm";
             EnableHtmlTagPassThrough = options.AllowUnsafeHtmlContentInMarkdown;
             PageParameters = options.PageParameterDict;
+            RespectOrderedListValues = options.RespectOrderedListValues;
         }
 
         /// <summary>
@@ -195,7 +198,8 @@ namespace ApiDocs.Publishing.Html
                 NewWindowForExternalLinks = true,
                 SafeMode = this.EnableHtmlTagPassThrough,
                 AutoHeadingIDs = true,
-                QualifyUrl = this.QualifyUrl
+                QualifyUrl = this.QualifyUrl,
+                RespectOrderedListStartValues = this.RespectOrderedListValues
             };
             return converter;
         }
