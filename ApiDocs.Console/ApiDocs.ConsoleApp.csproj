@@ -92,6 +92,10 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\ApiDocs.DocumentationGeneration\ApiDocs.DocumentationGeneration.csproj">
+      <Project>{cd27998c-4021-4299-970b-91be877fd01b}</Project>
+      <Name>ApiDocs.DocumentationGeneration</Name>
+    </ProjectReference>
     <ProjectReference Include="..\ApiDocs.Publishing\ApiDocs.Publishing.csproj">
       <Project>{B675CF73-AA42-4A54-B5E7-FF5F155DA4A7}</Project>
       <Name>ApiDocs.Publishing</Name>

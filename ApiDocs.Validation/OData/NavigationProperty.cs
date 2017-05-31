@@ -25,6 +25,7 @@
 
 namespace ApiDocs.Validation.OData
 {
+	using System.Collections.Generic;
     using System.ComponentModel;
     using System.Xml.Serialization;
     using Transformation;
@@ -35,6 +36,7 @@ namespace ApiDocs.Validation.OData
         public NavigationProperty()
         {
             ContainsTarget = false;
+            this.Annotation = new List<Annotation>();
         }
 
         [XmlAttribute("ContainsTarget"), DefaultValue(false)]

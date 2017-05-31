@@ -35,6 +35,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiDocs.Validation.UnitTest
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiDocs.Publishing", "ApiDocs.Publishing\ApiDocs.Publishing.csproj", "{B675CF73-AA42-4A54-B5E7-FF5F155DA4A7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiDocs.DocumentationGeneration", "ApiDocs.DocumentationGeneration\ApiDocs.DocumentationGeneration.csproj", "{CD27998C-4021-4299-970B-91BE877FD01B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiDocs.DocumentationGeneration.UnitTests", "ApiDocs.DocumentationGeneration.UnitTests\ApiDocs.DocumentationGeneration.UnitTests.csproj", "{32323786-6B69-4A7A-A5DA-DBBBF1148387}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -97,6 +101,30 @@ Global
 		{B675CF73-AA42-4A54-B5E7-FF5F155DA4A7}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{B675CF73-AA42-4A54-B5E7-FF5F155DA4A7}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{B675CF73-AA42-4A54-B5E7-FF5F155DA4A7}.Release|x86.ActiveCfg = Release|Any CPU
+		{CD27998C-4021-4299-970B-91BE877FD01B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CD27998C-4021-4299-970B-91BE877FD01B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CD27998C-4021-4299-970B-91BE877FD01B}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{CD27998C-4021-4299-970B-91BE877FD01B}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{CD27998C-4021-4299-970B-91BE877FD01B}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{CD27998C-4021-4299-970B-91BE877FD01B}.Debug|x86.Build.0 = Debug|Any CPU
+		{CD27998C-4021-4299-970B-91BE877FD01B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CD27998C-4021-4299-970B-91BE877FD01B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CD27998C-4021-4299-970B-91BE877FD01B}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{CD27998C-4021-4299-970B-91BE877FD01B}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{CD27998C-4021-4299-970B-91BE877FD01B}.Release|x86.ActiveCfg = Release|Any CPU
+		{CD27998C-4021-4299-970B-91BE877FD01B}.Release|x86.Build.0 = Release|Any CPU
+		{32323786-6B69-4A7A-A5DA-DBBBF1148387}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{32323786-6B69-4A7A-A5DA-DBBBF1148387}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{32323786-6B69-4A7A-A5DA-DBBBF1148387}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{32323786-6B69-4A7A-A5DA-DBBBF1148387}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{32323786-6B69-4A7A-A5DA-DBBBF1148387}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{32323786-6B69-4A7A-A5DA-DBBBF1148387}.Debug|x86.Build.0 = Debug|Any CPU
+		{32323786-6B69-4A7A-A5DA-DBBBF1148387}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{32323786-6B69-4A7A-A5DA-DBBBF1148387}.Release|Any CPU.Build.0 = Release|Any CPU
+		{32323786-6B69-4A7A-A5DA-DBBBF1148387}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{32323786-6B69-4A7A-A5DA-DBBBF1148387}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{32323786-6B69-4A7A-A5DA-DBBBF1148387}.Release|x86.ActiveCfg = Release|Any CPU
+		{32323786-6B69-4A7A-A5DA-DBBBF1148387}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -107,6 +135,8 @@ Global
 		{A6F3993F-59C6-4985-ACF1-4D837D61E98F} = {7C7E72AE-EC3D-4EB9-B919-165F794C4902}
 		{EE3453F1-FD69-406C-9BD7-0643D6E999F3} = {7C7E72AE-EC3D-4EB9-B919-165F794C4902}
 		{B675CF73-AA42-4A54-B5E7-FF5F155DA4A7} = {7C7E72AE-EC3D-4EB9-B919-165F794C4902}
+		{CD27998C-4021-4299-970B-91BE877FD01B} = {7C7E72AE-EC3D-4EB9-B919-165F794C4902}
+		{32323786-6B69-4A7A-A5DA-DBBBF1148387} = {7C7E72AE-EC3D-4EB9-B919-165F794C4902}
 	EndGlobalSection
 	GlobalSection(MonoDevelopProperties) = preSolution
 		StartupItem = OneDrive.ApiDocumentation.CommandLine\OneDrive.ApiDocumentation.Console.csproj
