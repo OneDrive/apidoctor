@@ -51,7 +51,7 @@ namespace ApiDocs.Validation.OData.Transformation
                     }
                     else
                     {
-                        Console.WriteLine($"Failed to locate a target property named {modsProp.Name} on {target.GetType().Name}.");
+                        Console.WriteLine($"Failed to locate a target property named '{modsProp.Name}' on '{target.GetType().Name}'.");
                     }
                 }
                 else if (modsProp.IsSimpleType())
@@ -63,7 +63,7 @@ namespace ApiDocs.Validation.OData.Transformation
                     }
                     else
                     {
-                        Console.WriteLine($"Failed to locate a target property named {modsProp.Name} on {target.GetType().Name}.");
+                        Console.WriteLine($"Failed to locate a target property named '{modsProp.Name}' on '{target.GetType().Name}'.");
                     }
                 }
                 else
@@ -91,67 +91,13 @@ namespace ApiDocs.Validation.OData.Transformation
                     //Unsupported
                     throw new NotSupportedException();
                 }
-
             }
-
         }
 
         private static object CreateNewInstanceOfType(Type t)
         {
             return Activator.CreateInstance(t);
         }
-
-        //public static void ApplyTransformation(ITransformable target, BaseModifications modifications, EntityFramework edmx, string version)
-        //{
-        //    // For eacn property on the modifications instance, if there is a matching property on target
-        //    // then we copy the value from modification to target, if the modification value is not null
-        //    var modificationProperties = modifications.GetType().GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
-        //        .Where(x => x.DeclaringType != typeof(BaseModifications));
-        //    var targetProperties = target.GetType().GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance).ToDictionary(x=> x.Name, x => x);
-
-        //    foreach (var modsProp in modificationProperties)
-        //    {
-        //        Type modificationType;
-        //        if (modsProp.IsModificationDictionary(out modificationType))
-        //        {
-        //            var modsValue = modsProp.GetValue(modifications);
-        //            if (modsValue != null)
-        //            {
-        //                PropertyInfo targetProp;
-        //                if (targetProperties.TryGetValue(modsProp.Name, out targetProp))
-        //                {
-        //                    var targetValue = targetProp.GetValue(target);
-        //                    InvokeApplyTransformationToCollection((IDictionary)modsValue, (IList)targetValue, edmx, version);
-        //                }
-        //                else
-        //                {
-        //                    Console.WriteLine($"Failed to locate a target property named {modsProp.Name} on {target.GetType().Name}.");
-        //                }
-        //            }
-        //        }
-        //        else if (modsProp.IsSimpleType())
-        //        {
-        //            var value = modsProp.GetValue(modifications);
-        //            if (null != value)
-        //            {
-        //                PropertyInfo targetProp;
-        //                if (targetProperties.TryGetValue(modsProp.Name, out targetProp))
-        //                {
-        //                    targetProp.SetValue(target, value);
-        //                }
-        //                else
-        //                {
-        //                    Console.WriteLine($"Failed to locate a target property named {modsProp.Name} on {target.GetType().Name}.");
-        //                }
-        //            }
-        //        }
-        //        else
-        //        {
-        //            //Unsupported
-        //            throw new NotSupportedException();
-        //        }
-        //    }
-        //}
 
         private static void InvokeApplyTransformationToCollection(IDictionary mods, IList target, EntityFramework edmx, string[] versions)
         {

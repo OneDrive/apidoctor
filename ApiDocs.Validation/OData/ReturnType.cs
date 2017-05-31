@@ -31,7 +31,7 @@ namespace ApiDocs.Validation.OData
     using Transformation;
 
     [XmlRoot("ReturnType", Namespace = ODataParser.EdmNamespace)]
-    public class ReturnType : XmlBackedObject, ITransformable
+    public class ReturnType : XmlBackedTransformableObject
     {
         public ReturnType()
         {
@@ -47,7 +47,7 @@ namespace ApiDocs.Validation.OData
         [XmlAttribute("Unicode"), DefaultValue(true)]
         public bool Unicode { get; set; }
 
-        public string ElementIdentifier
+        public override string ElementIdentifier
         {
             get
             {
@@ -60,9 +60,5 @@ namespace ApiDocs.Validation.OData
             }
         }
 
-        public void ApplyTransformation(BaseModifications value, EntityFramework edmx, string[] versions)
-        {
-            TransformationHelper.ApplyTransformation(this, value, edmx, versions);
-        }
     }
 }

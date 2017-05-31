@@ -127,6 +127,10 @@ namespace ApiDocs.Validation.OData.Transformation
 
         [JsonProperty("unicode")]
         public bool? Unicode { get; set; }
+
+        [JsonProperty("order")]
+        public int? ParameterIndex { get; set; }
+
     }
 
     public class EntityContainerModification : BaseModifications

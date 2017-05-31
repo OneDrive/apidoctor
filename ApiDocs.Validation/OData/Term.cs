@@ -36,7 +36,7 @@ namespace ApiDocs.Validation.OData
        </Term>
      */
     [XmlRoot("Term", Namespace = ODataParser.EdmNamespace)]
-    public class Term : XmlBackedObject, ITransformable
+    public class Term : XmlBackedTransformableObject
     {
         [XmlAttribute("Name"), SortBy]
         public string Name { get; set; }
@@ -65,12 +65,8 @@ namespace ApiDocs.Validation.OData
         public const string ChangeTrackingTerm = "Org.OData.Capabilities.V1.ChangeTracking";
         public const string NavigationRestrictionsTerm = "Org.OData.Capabilities.V1.NavigationRestrictions";
 
-        public void ApplyTransformation(Transformation.BaseModifications mods, EntityFramework edmx, string[] versions)
-        {
-            TransformationHelper.ApplyTransformation(this, mods, edmx, versions);
-        }
 
         [XmlIgnore]
-        public string ElementIdentifier { get { return this.Name; } set { this.Name = value; } }
+        public override string ElementIdentifier { get { return this.Name; } set { this.Name = value; } }
     }
 }

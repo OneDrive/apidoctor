@@ -32,7 +32,7 @@ namespace ApiDocs.Validation.OData
     using System;
 
     [XmlRoot("EntitySet", Namespace = ODataParser.EdmNamespace)]
-    public class EntitySet : XmlBackedObject, Transformation.ITransformable
+    public class EntitySet : XmlBackedTransformableObject
     {
         public EntitySet()
         {
@@ -48,13 +48,8 @@ namespace ApiDocs.Validation.OData
         [XmlElement("NavigationPropertyBinding"), Sortable]
         public List<NavigationPropertyBinding> NavigationPropertyBinding { get; set; }
 
-        public void ApplyTransformation(Transformation.BaseModifications mods, EntityFramework edmx, string[] versions)
-        {
-            TransformationHelper.ApplyTransformation(this, mods, edmx, versions);
-        }
-
         [XmlIgnore]
-        public string ElementIdentifier { get { return this.Name; } set { this.Name = value; } }
+        public override string ElementIdentifier { get { return this.Name; } set { this.Name = value; } }
 
     }
 

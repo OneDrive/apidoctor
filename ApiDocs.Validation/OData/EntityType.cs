@@ -33,7 +33,7 @@ namespace ApiDocs.Validation.OData
     using Transformation;
 
     [XmlRoot("EntityType", Namespace = ODataParser.EdmNamespace)]
-    public class EntityType : ComplexType, IODataNavigable, ITransformable
+    public class EntityType : ComplexType, IODataNavigable
     {
         public EntityType()
         {

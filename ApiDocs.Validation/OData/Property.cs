@@ -32,7 +32,7 @@ namespace ApiDocs.Validation.OData
     using Transformation;
 
     [XmlRoot("Property", Namespace = ODataParser.EdmNamespace)]
-    public class Property : XmlBackedObject, ITransformable, IOdataAnnotatable
+    public class Property : XmlBackedTransformableObject, IOdataAnnotatable
     {
         public Property()
         {
@@ -111,7 +111,7 @@ namespace ApiDocs.Validation.OData
         [XmlIgnore]
         public bool Filterable { get; set; }
 
-        public virtual void ApplyTransformation(BaseModifications mods, EntityFramework edmx, string[] versions)
+        public override void ApplyTransformation(BaseModifications mods, EntityFramework edmx, string[] versions)
         {
             TransformationHelper.ApplyTransformation(this, mods, edmx, versions, (key, value) =>
             {
@@ -126,6 +126,6 @@ namespace ApiDocs.Validation.OData
         }
 
         [XmlIgnore]
-        public string ElementIdentifier { get { return this.Name; } set { this.Name = value; } }
+        public override string ElementIdentifier { get { return this.Name; } set { this.Name = value; } }
     }
 }

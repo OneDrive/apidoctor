@@ -9,24 +9,21 @@ using System.Xml.Serialization;
 namespace ApiDocs.Validation.OData
 {
     [XmlRoot("Annotations", Namespace = ODataParser.EdmNamespace)]
-    public class Annotations : XmlBackedObject, Transformation.ITransformable
+    public class Annotations : XmlBackedTransformableObject
     {
         public Annotations()
         {
-            this.AnnotationList = new List<Annotation>();
+            this.Annotation = new List<Annotation>();
         }
+    
+        [XmlElement("Annotation")]
+        public List<Annotation> Annotation { get; set; }
 
         [XmlAttribute("Target"), SortBy]
         public string Target { get; set; }
 
-        public string ElementIdentifier { get; set; }
+        [XmlIgnore]
+        public override string ElementIdentifier { get { return this.Target; } set { this.Target = value; } }
 
-        public void ApplyTransformation(Transformation.BaseModifications mods, EntityFramework edmx, string[] versions)
-        {
-            this.AnnotationList = new List<Annotation>();
-        }
-
-        [XmlElement("Annotation", Namespace = ODataParser.EdmNamespace)]
-        public List<Annotation> AnnotationList { get; set; }
     }
 }
