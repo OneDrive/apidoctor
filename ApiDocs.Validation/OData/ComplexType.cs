@@ -34,7 +34,7 @@ namespace ApiDocs.Validation.OData
     using Transformation;
 
     [XmlRoot("ComplexType", Namespace = ODataParser.EdmNamespace)]
-    public class ComplexType : XmlBackedObject, IODataNavigable, Transformation.ITransformable
+    public class ComplexType : XmlBackedTransformableObject, IODataNavigable
     {
         public ComplexType()
         {
@@ -89,7 +89,7 @@ namespace ApiDocs.Validation.OData
             get { return Name; }
         }
 
-        public virtual void ApplyTransformation(BaseModifications mods, EntityFramework edmx, string[] versions)
+        public override void ApplyTransformation(BaseModifications mods, EntityFramework edmx, string[] versions)
         {
             TransformationHelper.ApplyTransformation(this, mods, edmx, versions, (name, modPropValue) =>
             {
@@ -106,7 +106,7 @@ namespace ApiDocs.Validation.OData
         }
 
         [XmlIgnore]
-        public string ElementIdentifier { get { return this.Name; } set { this.Name = value; } }
+        public override string ElementIdentifier { get { return this.Name; } set { this.Name = value; } }
 
     }
 }

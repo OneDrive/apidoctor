@@ -33,7 +33,7 @@ namespace ApiDocs.Validation.OData
     using Transformation;
 
     [XmlRoot("EntityContainer", Namespace = ODataParser.EdmNamespace)]
-    public class EntityContainer : XmlBackedObject, IODataNavigable, Transformation.ITransformable
+    public class EntityContainer : XmlBackedTransformableObject, IODataNavigable
     {
         public EntityContainer()
         {
@@ -99,12 +99,7 @@ namespace ApiDocs.Validation.OData
             get { return Name; }
         }
 
-        public void ApplyTransformation(Transformation.BaseModifications mods, EntityFramework edmx, string[] versions)
-        {
-            TransformationHelper.ApplyTransformation(this, mods, edmx, versions);
-        }
-
         [XmlIgnore]
-        public string ElementIdentifier { get { return this.Name; } set { this.Name = value; } }
+        public override string ElementIdentifier { get { return this.Name; } set { this.Name = value; } }
     }
 }

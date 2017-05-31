@@ -35,6 +35,8 @@ namespace ApiDocs.Validation.OData
                 Type type = prop.PropertyType;
                 Type[] genericTypes = type.GenericTypeArguments;
 
+                if (genericTypes.Contains(typeof(Parameter))) { Console.WriteLine("Sorting parameters..."); }
+
                 list.SortMembersByProperties(GetSortByProperties(genericTypes.First()));
                 foreach (object o in list)
                 {
@@ -149,8 +151,8 @@ namespace ApiDocs.Validation.OData
             {
                 foreach(var prop in Properties)
                 {
-                    string x_value = (string)prop.GetValue(x);
-                    string y_value = (string)prop.GetValue(y);
+                    IComparable x_value = (IComparable)prop.GetValue(x);
+                    IComparable y_value = (IComparable)prop.GetValue(y);
 
                     if (x_value == null && y_value != null)
                     {
@@ -177,6 +179,11 @@ namespace ApiDocs.Validation.OData
             }
         }
 
+        /// <summary>
+        /// Return a collection of properties attributed with the SortByAttribute and ordered based on SortOrderIndex
+        /// </summary>
+        /// <param name="t"></param>
+        /// <returns></returns>
         private static PropertyInfo[] GetSortByProperties(Type t)
         {
             PropertyInfo[] output;
@@ -186,26 +193,47 @@ namespace ApiDocs.Validation.OData
             }
 
             var sortByProperties = t.GetProperties(BindingFlags.Instance | BindingFlags.Public).Where(p => p.GetCustomAttributes<SortByAttribute>(true).Any()).ToArray();
-
             if (!sortByProperties.Any())
             {
                 Console.WriteLine($"No sortBy properties were defined for {t.Name}.");
             }
 
-            SortByPropertiesPerClass[t] = sortByProperties;
+            // Sort the sortable properties based on the sortOrderIndex,  so we consider them in the proper order.
+            SortByPropertiesPerClass[t] = sortByProperties.OrderBy(x => x.GetCustomAttribute<SortByAttribute>(true).SortOrderIndex).ToArray();
             return sortByProperties;
         }
     }
 
+    /// <summary>
+    /// Apply this attribute to properties which contains collections or objects that contain collection
+    /// to indicate that the sort logic should walk down into this object graph.
+    /// </summary>
     [AttributeUsage(AttributeTargets.Property)]
     public class SortableAttribute : Attribute
     {
 
     }
 
+    /// <summary>
+    /// indicates that this field should be included in the set of properties to sort by
+    /// </summary>
     [AttributeUsage(AttributeTargets.Property)]
     public class SortByAttribute : Attribute
     {
+        /// <summary>
+        /// Setting SortOrderIndex allows you to control how multiple properties 
+        /// tagged SortBy are considered when sorting a collection of objects.
+        /// </summary>
+        public int SortOrderIndex { get; set; }
 
+        public SortByAttribute()
+        {
+            this.SortOrderIndex = Int32.MaxValue;
+        }
+
+        public SortByAttribute(int sortOrderIndex)
+        {
+            this.SortOrderIndex = sortOrderIndex;
+        }
     }
 }

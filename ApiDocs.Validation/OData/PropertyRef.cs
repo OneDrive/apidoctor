@@ -30,18 +30,13 @@ namespace ApiDocs.Validation.OData
     using Transformation;
 
     [XmlRoot("PropertyRef", Namespace = ODataParser.EdmNamespace)]
-    public class PropertyRef : XmlBackedObject, ITransformable
+    public class PropertyRef : XmlBackedTransformableObject
     {
         [XmlAttribute("Name")]
         public string Name { get; set; }
 
-        public void ApplyTransformation(Transformation.BaseModifications mods, EntityFramework edmx, string[] versions)
-        {
-            TransformationHelper.ApplyTransformation(this, mods, edmx, versions);
-        }
-
         [XmlIgnore]
-        public string ElementIdentifier { get { return this.Name; } set { this.Name = value; } }
+        public override string ElementIdentifier { get { return this.Name; } set { this.Name = value; } }
 
     }
 }
