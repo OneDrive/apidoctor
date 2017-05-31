@@ -13,11 +13,11 @@ namespace ApiDocs.Validation.OData
     {
         public Annotations()
         {
-            this.Annotation = new List<Annotation>();
+            this.AnnotationList = new List<Annotation>();
         }
     
         [XmlElement("Annotation")]
-        public List<Annotation> Annotation { get; set; }
+        public List<Annotation> AnnotationList { get; set; }
 
         [XmlAttribute("Target"), SortBy]
         public string Target { get; set; }

@@ -57,6 +57,9 @@ namespace ApiDocs.Validation.OData
         [XmlIgnore]
         public override string ElementIdentifier { get { return this.Name; } set { this.Name = value; } }
 
+        [XmlIgnore]
+        public string TypeIdentifier { get { return Name; } }
+
         public IODataNavigable NavigateByEntityTypeKey(EntityFramework edmx)
         {
             throw new NotImplementedException();
