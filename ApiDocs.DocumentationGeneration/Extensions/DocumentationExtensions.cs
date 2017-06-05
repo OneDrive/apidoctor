@@ -91,7 +91,7 @@ namespace ApiDocs.DocumentationGeneration.Extensions
             return new List<Annotation>();
         }
 
-        public static List<Annotation> GetAnnotationsForTarget<T>(this T target, EntityFramework entityFramework) where T: IODataNavigable, IOdataAnnotatable
+        public static List<Annotation> GetAnnotationsForTarget<T>(this T target, EntityFramework entityFramework) where T: IODataNavigable, IODataAnnotatable
         {
             string targetType = entityFramework.LookupIdentifierForType(target);
             var targetNamespace = targetType.NamespaceOnly();

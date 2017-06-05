@@ -29,6 +29,8 @@ namespace ApiDocs.Validation
     using System.Collections.Generic;
     using System.Linq;
 
+    using ApiDocs.Validation.OData;
+
     public class ParameterDataType
     {
         #region Constructors
@@ -207,6 +209,39 @@ namespace ApiDocs.Validation
                     return "Collection(" + this.CustomTypeName + ")";
             }
 
+            return this.Type.ToString();
+        }
+
+        /// <summary>
+        /// Get's the MarkDown for a type
+        /// </summary>
+        /// <returns></returns>
+        public string GetMarkDown()
+        {
+            if (this.IsObject)
+            {
+                string typeName = CustomTypeName.TypeOnly();
+                return $"[{typeName}]({typeName}.md)";
+            }
+            if (this.IsCollection)
+            {
+                if (!string.IsNullOrEmpty(this.CustomTypeName))
+                {
+                    string typeName = CustomTypeName.TypeOnly();
+                    return $"[{typeName}]({typeName}.md) collection";
+                }
+                if (CollectionResourceType == SimpleDataType.Object)
+                {
+                    string typeName = CollectionResourceType.ODataResourceName().TypeOnly();
+                    return $"[{typeName}]({typeName}.md) collection";
+                }
+                else
+                {
+                    return $"{CollectionResourceType} collection";
+                }
+            }
+
+            // Primitive type
             return this.Type.ToString();
         }
 

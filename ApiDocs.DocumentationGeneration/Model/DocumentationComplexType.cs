@@ -39,9 +39,9 @@ namespace ApiDocs.DocumentationGeneration.Model
         {
             this.Name = complexType.Name;
             this.Description = complexType.GetDescription(entityFramework);
-            this.Namespace = entityFramework.LookupIdentifierForType(complexType).NamespaceOnly();
+            this.Namespace = complexType.Namespace;
             this.Properties = complexType.Properties.Select(p => p.ToDocumentationProperty(entityFramework, complexType)).ToList();
-            this.Json = SampleJsonGenerator.GetSampleJson(entityFramework, complexType).ToString(Formatting.Indented);
+            this.Json = ODataParser.BuildJsonExample(complexType, entityFramework.DataServices.Schemas);//SampleJsonGenerator.GetSampleJson(entityFramework, complexType).ToString(Formatting.Indented);
                    
 
             if (complexType.BaseType != null)

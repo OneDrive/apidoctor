@@ -51,6 +51,23 @@ namespace ApiDocs.DocumentationGeneration.UnitTests
         }
 
         [Test]
+        public void PropertyTableEntryIsCorrectlyFormattedForComplexTypeCollection()
+        {
+            string propertyType = "propertyComplexType";
+            ComplexType ct = this.GetComplexType(this.schema, "test");
+            ComplexType ct2 = this.GetComplexType(this.schema, "propertyComplexType");
+            string description = "Inline property description";
+            string propertyName = "ComplexProperty";
+            this.AddProperty(ct, propertyName, type: $"Collection({this.schema.Namespace}.{propertyType})", inlineDescription: description);
+
+            string expected = $"|{propertyName}|[{propertyType}]({propertyType}.md) collection|{description}|";
+
+            string markDown = this.documentationGenerator.GetMarkDownForType(this.entityFramework, ct);
+
+            Assert.IsTrue(markDown.Contains(expected), "Generated markdown should contain '{0}' Actual:\n{1}", expected, markDown);
+        }
+
+        [Test]
         public void PropertyTableEntryIsCorrectlyFormattedForPrimitiveType()
         {
             string description = "Inline property description";
@@ -59,6 +76,20 @@ namespace ApiDocs.DocumentationGeneration.UnitTests
             string expected = $"|{propertyName}|{propertyType}|{description}|";
             ComplexType ct = this.GetComplexType(this.schema, "Test");
             this.AddProperty(ct, propertyName, type: $"Edm.{propertyType}", inlineDescription: description);
+            string markDown = this.documentationGenerator.GetMarkDownForType(this.entityFramework, ct);
+
+            Assert.IsTrue(markDown.Contains(expected), "Generated markdown should contain '{0}' Actual:\n{1}", expected, markDown);
+        }
+
+        [Test]
+        public void PropertyTableEntryIsCorrectlyFormattedForPrimitiveTypeCollection()
+        {
+            string description = "Inline property description";
+            string propertyType = "Boolean";
+            string propertyName = "PrimitiveProperty";
+            string expected = $"|{propertyName}|{propertyType} collection|{description}|";
+            ComplexType ct = this.GetComplexType(this.schema, "Test");
+            this.AddProperty(ct, propertyName, type: $"Collection(Edm.{propertyType})", inlineDescription: description);
             string markDown = this.documentationGenerator.GetMarkDownForType(this.entityFramework, ct);
 
             Assert.IsTrue(markDown.Contains(expected), "Generated markdown should contain '{0}' Actual:\n{1}", expected, markDown);

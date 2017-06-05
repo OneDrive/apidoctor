@@ -23,6 +23,8 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+using ApiDocs.Validation;
+
 namespace ApiDocs.DocumentationGeneration.Model
 {
     using System.Collections.Generic;
@@ -35,7 +37,24 @@ namespace ApiDocs.DocumentationGeneration.Model
         public DocumentationProperty(EntityFramework entityFramework, ComplexType complexType, Property property)
         {
             this.Name = property.Name;
-            this.Type = property.GetTypeNameMarkdown(entityFramework);
+
+            string typeName = property.Type;
+            bool isCollection = property.Type.IsCollection();
+            if (isCollection)
+            {
+                typeName = property.Type.ElementName();
+            }
+
+            var simpleType = typeName.ToODataSimpleType();
+            if (simpleType != SimpleDataType.None)
+            {
+                this.Type = new ParameterDataType(simpleType, isCollection);
+            }
+            else
+            {
+                this.Type = new ParameterDataType(typeName, isCollection);
+            }
+            this.TypeMarkDown = this.Type.GetMarkDown();
             this.Description = property.GetDescription(entityFramework, complexType);
         }
 
@@ -43,6 +62,8 @@ namespace ApiDocs.DocumentationGeneration.Model
 
         public string Name { get; private set; }
 
-        public string Type { get; private set; }
+        public ParameterDataType Type { get; private set; }
+
+        public string TypeMarkDown { get; private set; }
     }
 }

@@ -1501,7 +1501,7 @@ namespace ApiDocs.ConsoleApp
 
             FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, "  found {0} schema definitions: {1}", ef.DataServices.Schemas.Count, (from s in ef.DataServices.Schemas select s.Namespace).ComponentsJoinedByString(", "));
 
-            DocumentationGenerator docGenerator = new DocumentationGenerator();
+            DocumentationGenerator docGenerator = new DocumentationGenerator(options.ResourceTemplateFile);
             docGenerator.GenerateDocumentationFromEntityFrameworkAsync(ef, options.DocumentationSetPath);
 
             return true;

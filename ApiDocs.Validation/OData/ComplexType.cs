@@ -34,7 +34,7 @@ namespace ApiDocs.Validation.OData
     using Transformation;
 
     [XmlRoot("ComplexType", Namespace = ODataParser.EdmNamespace)]
-    public class ComplexType : XmlBackedTransformableObject, IODataNavigable, IOdataAnnotatable
+    public class ComplexType : XmlBackedTransformableObject, IODataNavigable, IODataAnnotatable
     {
         public ComplexType()
         {
@@ -111,6 +111,9 @@ namespace ApiDocs.Validation.OData
 
         [XmlIgnore]
         public override string ElementIdentifier { get { return this.Name; } set { this.Name = value; } }
+
+        [XmlIgnore]
+        public string Namespace { get; set; }
 
     }
 }

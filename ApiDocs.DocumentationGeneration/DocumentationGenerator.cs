@@ -42,13 +42,29 @@ namespace ApiDocs.DocumentationGeneration
     {
         private readonly Generator resourceMarkDownGenerator;
 
-        public DocumentationGenerator()
+        public DocumentationGenerator() : this(null)
+        {
+        }
+
+        public DocumentationGenerator(string resourceTemplateFile)
         {
             string template = null;
-            using (var ms = new MemoryStream(Templates.resource))
-            using (var reader = new StreamReader(ms))
+
+            if (string.IsNullOrWhiteSpace(resourceTemplateFile))
             {
-                template = reader.ReadToEnd();
+                using (var ms = new MemoryStream(Templates.resourceMarkDown))
+                using (var reader = new StreamReader(ms))
+                {
+                    template = reader.ReadToEnd();
+                }
+            }
+            else
+            {
+                if (!File.Exists(resourceTemplateFile))
+                {
+                    throw new FileNotFoundException($"Resource MarkDown template not found", resourceTemplateFile);
+                }
+                template = File.ReadAllText(resourceTemplateFile);
             }
 
             if (string.IsNullOrWhiteSpace(template))

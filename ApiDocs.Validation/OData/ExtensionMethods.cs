@@ -23,6 +23,8 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+using System.ComponentModel;
+
 namespace ApiDocs.Validation.OData
 {
     using System;
@@ -311,6 +313,21 @@ namespace ApiDocs.Validation.OData
                 return dataType.Value;
 
             return SimpleDataType.Object;
+        }
+
+        public static bool IsCollection(this string typeName)
+        {
+            return typeName.StartsWith($"{ODataParser.CollectionPrefix}", StringComparison.Ordinal) && typeName.EndsWith(")", StringComparison.Ordinal);
+        }
+
+        public static string ElementName(this string collection)
+        {
+            if (!collection.IsCollection())
+            {
+                throw new ArgumentOutOfRangeException(nameof(collection), $"'{collection}' is not a collction.");
+            }
+
+            return collection.Substring(ODataParser.CollectionPrefix.Length, collection.Length - ODataParser.CollectionPrefix.Length -1);
         }
 
     }

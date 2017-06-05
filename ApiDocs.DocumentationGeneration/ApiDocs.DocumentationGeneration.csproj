@@ -61,7 +61,6 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Templates.resx</DependentUpon>
     </Compile>
-    <Compile Include="SampleJsonGenerator.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config">

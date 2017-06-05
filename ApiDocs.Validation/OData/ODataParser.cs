@@ -74,7 +74,8 @@ namespace ApiDocs.Validation.OData
 	            foreach (Schema schema in result.DataServices.Schemas)
 	            {
 	                foreach (ComplexType complexType in schema.ComplexTypes)
-	                {         
+	                {
+	                    complexType.Namespace = schema.Namespace;
 	                    if (complexType.BaseType != null)
 	                    {
 	                        MergeInheritedProperties(result, complexType);
@@ -82,6 +83,7 @@ namespace ApiDocs.Validation.OData
 	                }
 	                foreach (EntityType entityType in schema.EntityTypes)
 	                {
+	                    entityType.Namespace = schema.Namespace;
 	                    if (entityType.BaseType != null)
 	                    {
 	                        MergeInheritedProperties(result, entityType);
@@ -212,18 +214,31 @@ namespace ApiDocs.Validation.OData
             return rd;
         }
 
-        private static string BuildJsonExample(ComplexType ct, IEnumerable<Schema> otherSchema)
+        public static string BuildJsonExample(ComplexType ct, IEnumerable<Schema> otherSchema)
         {
             Dictionary<string, object> dict = BuildDictionaryExample(ct, otherSchema);
-            return JsonConvert.SerializeObject(dict);
+            return JsonConvert.SerializeObject(dict, Newtonsoft.Json.Formatting.Indented);
         }
 
         private static Dictionary<string, object> BuildDictionaryExample(ComplexType ct, IEnumerable<Schema> otherSchema)
         {
-            return ct.Properties.Where(prop => prop.Type != "Edm.Stream").ToDictionary(prop => prop.Name, prop => ExampleOfType(prop.Type, otherSchema));
+            Dictionary<string, object> propertyExamples = new Dictionary<string, object>();
+
+            if (!string.IsNullOrWhiteSpace(ct.Namespace))
+            {
+                propertyExamples.Add("@odata.type", $"{ct.Namespace}.{ct.TypeIdentifier}");
+            }
+
+            foreach (var property in ct.Properties.Where(prop => prop.Type != "Edm.Stream"))
+            {
+                propertyExamples.Add(property.Name, ExampleOfType(property.Type, otherSchema));
+            }
+
+            return propertyExamples;
         }
 
-        private static readonly string CollectionPrefix = "Collection(";
+        public static readonly string CollectionPrefix = "Collection(";
+		
         private static object ExampleOfType(string typeIdentifier, IEnumerable<Schema> otherSchemas)
         {
             if (typeIdentifier.StartsWith(CollectionPrefix) && typeIdentifier.EndsWith(")"))
@@ -249,6 +264,7 @@ namespace ApiDocs.Validation.OData
             try
             {
                 matchingType = otherSchemas.ResourceWithIdentifier<ComplexType>(typeIdentifier);
+                matchingType.Namespace = typeIdentifier.NamespaceOnly();
             }
             catch (Exception ex)
             {

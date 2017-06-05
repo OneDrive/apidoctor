@@ -31,7 +31,7 @@ namespace ApiDocs.Validation.OData
     using Transformation;
 
 	[XmlRoot("EnumType", Namespace = ODataParser.EdmNamespace)]
-    public class EnumType : XmlBackedTransformableObject, IOdataAnnotatable, IODataNavigable
+    public class EnumType : XmlBackedTransformableObject, IODataAnnotatable, IODataNavigable
     {
         public EnumType()
         {

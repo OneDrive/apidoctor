@@ -549,5 +549,7 @@ namespace ApiDocs.ConsoleApp
 
     class GenerateDocsOptions : CheckMetadataOptions
     {
+        [Option("resource-template", HelpText = "Specifies the path to a mustache template file to use for generating documentation for resources (complex and entity types)", Required = false)]
+        public string ResourceTemplateFile { get; set; }
     }
 }

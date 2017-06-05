@@ -63,9 +63,9 @@ namespace ApiDocs.DocumentationGeneration.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
-        internal static byte[] resource {
+        internal static byte[] resourceMarkDown {
             get {
-                object obj = ResourceManager.GetObject("resource", resourceCulture);
+                object obj = ResourceManager.GetObject("resourceMarkDown", resourceCulture);
                 return ((byte[])(obj));
             }
         }

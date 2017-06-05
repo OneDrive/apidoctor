@@ -93,7 +93,7 @@ namespace ApiDocs.DocumentationGeneration.Tests
 
         protected ComplexType GetComplexType(Schema schema, string name, string inlineDescription = null, string schemaDescription = null)
         {
-            ComplexType ct = new ComplexType { Name = name };
+            ComplexType ct = new ComplexType { Name = name, Namespace = schema.Namespace};
             if (inlineDescription != null)
             {
                 ct.Annotation.Add(this.GetDescriptionAnnotation(inlineDescription));
@@ -117,7 +117,7 @@ namespace ApiDocs.DocumentationGeneration.Tests
 
         protected EntityType GetEntityType(Schema schema, string name, string inlineDescription = null, string schemaDescription = null)
         {
-            EntityType et = new EntityType { Name = name };
+            EntityType et = new EntityType { Name = name, Namespace = schema.Namespace};
             if (inlineDescription != null)
             {
                 et.Annotation.Add(this.GetDescriptionAnnotation(inlineDescription));
