@@ -31,6 +31,7 @@ namespace ApiDocs.ConsoleApp
     using System.Linq;
     using System.Threading.Tasks;
     using AppVeyor;
+    using ApiDocs.DocumentationGeneration;
     using Publishing.Html;
     using Publishing.Swagger;
     using Validation;
@@ -199,6 +200,9 @@ namespace ApiDocs.ConsoleApp
                     break;
                 case CommandLineOptions.VerbMetadata:
                     await CheckServiceMetadataAsync((CheckMetadataOptions)options);
+                    break;
+                case CommandLineOptions.VerbGenerateDocs:
+                    returnSuccess = await GenerateDocsAsync((GenerateDocsOptions)options);
                     break;
                 case CommandLineOptions.VerbAbout:
                     PrintAboutMessage();
@@ -1360,7 +1364,7 @@ namespace ApiDocs.ConsoleApp
         }
 
 
-        private static async Task<List<Schema>> TryGetMetadataSchemasAsync(CheckMetadataOptions options)
+        private static async Task<EntityFramework> TryGetMetadataEntityFrameworkAsync(CheckMetadataOptions options)
         {
             if (string.IsNullOrEmpty(options.ServiceMetadataLocation))
             {
@@ -1374,7 +1378,7 @@ namespace ApiDocs.ConsoleApp
             try
             {
                 Uri metadataUrl;
-                if (Uri.TryCreate(options.ServiceMetadataLocation, UriKind.Absolute, out metadataUrl))
+                if (Uri.IsWellFormedUriString(options.ServiceMetadataLocation, UriKind.Absolute) && Uri.TryCreate(options.ServiceMetadataLocation, UriKind.Absolute, out metadataUrl))
                 {
                     edmx = await ODataParser.ParseEntityFrameworkFromUrlAsync(metadataUrl);
                 }
@@ -1388,6 +1392,13 @@ namespace ApiDocs.ConsoleApp
                 RecordError("Error parsing service metadata: {0}", ex.Message);
                 return null;
             }
+
+            return edmx;
+        }
+
+        private static async Task<List<Schema>> TryGetMetadataSchemasAsync(CheckMetadataOptions options)
+        {
+            EntityFramework edmx = await TryGetMetadataEntityFrameworkAsync(options);
 
             return edmx.DataServices.Schemas;
         }
@@ -1480,6 +1491,20 @@ namespace ApiDocs.ConsoleApp
 
             results.PrintToConsole();
             return !results.WereFailures;
+        }
+
+        private static async Task<bool> GenerateDocsAsync(GenerateDocsOptions options)
+        {
+            EntityFramework ef = await TryGetMetadataEntityFrameworkAsync(options);
+            if (null == ef)
+                return false;
+
+            FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, "  found {0} schema definitions: {1}", ef.DataServices.Schemas.Count, (from s in ef.DataServices.Schemas select s.Namespace).ComponentsJoinedByString(", "));
+
+            DocumentationGenerator docGenerator = new DocumentationGenerator(options.ResourceTemplateFile);
+            docGenerator.GenerateDocumentationFromEntityFrameworkAsync(ef, options.DocumentationSetPath);
+
+            return true;
         }
     }
 

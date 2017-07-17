@@ -70,6 +70,7 @@ namespace ApiDocs.Validation.OData
             Sortable]
         public List<Annotations> Annotations { get; set; }
 
+
         public Schema()
         {
             this.EntityTypes = new List<EntityType>();
@@ -78,6 +79,8 @@ namespace ApiDocs.Validation.OData
             this.Functions = new List<Function>();
             this.Actions = new List<Action>();
             this.Terms = new List<Term>();
+            this.Annotations = new List<Annotations>();
+            this.Enumerations = new List<EnumType>();
         }
         
         [XmlIgnore]

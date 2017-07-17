@@ -75,6 +75,8 @@
     <Compile Include="OData\DataServices.cs" />
     <Compile Include="OData\EntityFramework.cs" />
     <Compile Include="OData\EnumType.cs" />
+    <Compile Include="OData\IOdataAnnotatable.cs" />
+    <Compile Include="OData\IODataNamedElement.cs" />
     <Compile Include="OData\IODataNavigable.cs" />
     <Compile Include="OData\SchemaValidation.cs" />
     <Compile Include="OData\SortCollectionsHelper.cs" />

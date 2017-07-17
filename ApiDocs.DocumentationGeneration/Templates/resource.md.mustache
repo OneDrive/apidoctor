@@ -1,0 +1,29 @@
+﻿# {{Name}} resource type
+
+{{Description}}{{#if BaseType}} Inherits from [{{BaseType}}]({{BaseType}}.md).{{/if}}
+{{#if Methods}}
+## Methods
+
+| Method | Return Type| Description |
+|:---|:---|:---|
+{{#each Methods}}|{{Name}}|{{ReturnType}}|{{Description}}|
+{{/each}}{{/if}}{{#if Properties}}
+## Properties
+
+| Name | Type | Description |
+|:---|:---|:---|
+{{#each Properties}}|{{Name}}|{{TypeMarkDown}}|{{Description}}|
+{{/each}}{{/if}}{{#if NavigationProperties}}
+## Relationships
+
+| Name | Type | Description |
+|:---|:---|:---|
+{{#each NavigationProperties}}|{{Name}}|{{TypeMarkDown}}|{{Description}}|
+{{/each}}{{/if}}
+## JSON representation
+
+Here is a JSON representation of the resource.
+<!-- { "blockType": "resource", "@odata.type": "{{Namespace}}.{{Name}}"{{#if IsEntity}}, "keyProperty": "id"{{/if}} } -->
+```json
+{{Json}}
+```

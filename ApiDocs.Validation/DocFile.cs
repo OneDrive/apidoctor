@@ -792,13 +792,20 @@ namespace ApiDocs.Validation
                 }
                 else if (addMissingParameters)
                 {
-                    Console.WriteLine($"Found property '{param.Name}' in markdown table that wasn't defined in '{resourceName}': {this.DisplayName}");
-                    detectedErrors.Add(new ValidationWarning(ValidationErrorCode.AdditionalPropertyDetected, this.DisplayName, $"Property '{param.Name}' found in markdown table but not in resource definition for '{resourceName}'."));
-
+                    // Navigation propeties may not appear in the example text, so don't report and error
+                    if (!param.IsNavigatable)
+                    {
+                        Console.WriteLine($"Found property '{param.Name}' in markdown table that wasn't defined in '{resourceName}': {this.DisplayName}");
+                        detectedErrors.Add(new ValidationWarning(ValidationErrorCode.AdditionalPropertyDetected, this.DisplayName, $"Property '{param.Name}' found in markdown table but not in resource definition for '{resourceName}'."));
+                    }
+                    else
+                    {
+                        detectedErrors.Add(new ValidationMessage(this.DisplayName, $"Navigation property '{param.Name}' found in markdown table but not in resource definition for '{resourceName}'."));
+                    }
                     // The parameter didn't exist in the collection, so let's add it.
                     collection.Add(param);
                 }
-                else
+                else if (!param.IsNavigatable)
                 {
                     // Oops, we didn't find the property in the resource definition
                     Console.WriteLine($"Found property '{param.Name}' in markdown table that wasn't defined in '{resourceName}': {this.DisplayName}");

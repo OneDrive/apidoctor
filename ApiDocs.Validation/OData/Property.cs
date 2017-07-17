@@ -32,12 +32,13 @@ namespace ApiDocs.Validation.OData
     using Transformation;
 
     [XmlRoot("Property", Namespace = ODataParser.EdmNamespace)]
-    public class Property : XmlBackedTransformableObject
+    public class Property : XmlBackedTransformableObject, IODataAnnotatable
     {
         public Property()
         {
             Unicode = true;
             Nullable = true;
+            this.Annotation = new List<Annotation>();
         }
 
         [XmlAttribute("Name"), SortBy]
