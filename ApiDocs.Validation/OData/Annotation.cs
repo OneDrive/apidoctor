@@ -25,6 +25,7 @@
 
 namespace ApiDocs.Validation.OData
 {
+    using Utility;
     using System;
     using System.Collections.Generic;
     using System.ComponentModel;
@@ -32,15 +33,17 @@ namespace ApiDocs.Validation.OData
     using Transformation;
 
     [XmlRoot("Annotation", Namespace = ODataParser.EdmNamespace)]
+    [Mergable(CollectionIdentifier = "Term")]
     public class Annotation : XmlBackedTransformableObject
     {
         [XmlAttribute("Term"), SortBy]
         public string Term { get; set; }
 
-        [XmlAttribute("String"), DefaultValue(null)]
+        [XmlAttribute("String"), DefaultValue(null), MergePolicy(MergePolicy.PreferGreaterValue)]
         public string String { get; set; }
 
         
+        [MergePolicy(MergePolicy.EqualOrNull)]
         public bool? Bool { get; set; }
 
         [XmlIgnore]
@@ -51,7 +54,7 @@ namespace ApiDocs.Validation.OData
             }
         }
 
-        [XmlIgnore]
+        [XmlIgnore, MergePolicy(MergePolicy.Ignore)]
         public bool BoolAttributeValue
         {
             get
@@ -70,7 +73,7 @@ namespace ApiDocs.Validation.OData
 
         #region ITransformable
 
-        [XmlIgnore]
+        [XmlIgnore, MergePolicy(MergePolicy.Ignore)]
         public override string ElementIdentifier { get { return this.Term; } set { this.Term = value; } }
         #endregion
 

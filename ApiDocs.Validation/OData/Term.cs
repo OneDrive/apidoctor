@@ -25,6 +25,7 @@
 
 namespace ApiDocs.Validation.OData
 {
+    using Utility;
     using System;
     using System.Collections.Generic;
     using System.Xml.Serialization;
@@ -36,15 +37,16 @@ namespace ApiDocs.Validation.OData
        </Term>
      */
     [XmlRoot("Term", Namespace = ODataParser.EdmNamespace)]
+    [Mergable(CollectionIdentifier = "ElementIdentifier")]
     public class Term : XmlBackedTransformableObject
     {
-        [XmlAttribute("Name"), SortBy]
+        [XmlAttribute("Name"), SortBy, MergePolicy(MergePolicy.EqualOrNull)]
         public string Name { get; set; }
 
-        [XmlAttribute("Type"), ContainsType]
+        [XmlAttribute("Type"), ContainsType, MergePolicy(MergePolicy.EqualOrNull)]
         public string Type { get; set; }
 
-        [XmlAttribute("AppliesTo"), ContainsType]
+        [XmlAttribute("AppliesTo"), ContainsType, MergePolicy(MergePolicy.EqualOrNull)]
         public string AppliesTo { get; set; }
 
         [XmlAttribute("WorkloadTermNamespace", Namespace = ODataParser.AgsNamespace)]
@@ -66,7 +68,38 @@ namespace ApiDocs.Validation.OData
         public const string NavigationRestrictionsTerm = "Org.OData.Capabilities.V1.NavigationRestrictions";
 
 
-        [XmlIgnore]
-        public override string ElementIdentifier { get { return this.Name; } set { this.Name = value; } }
+        [XmlIgnore, MergePolicy(MergePolicy.Ignore)]
+        public override string ElementIdentifier
+        {
+            get
+            {
+                return $"{this.AppliesTo}@{this.Name}";
+            }
+            set
+            {
+                if (string.IsNullOrEmpty(value))
+                {
+                    this.AppliesTo = null;
+                    this.Name = null;
+                }
+                else
+                {
+                    var parts = value.Split('@');
+                    if (parts.Length == 1)
+                    {
+                        this.Name = parts[0];
+                    }
+                    else if (parts.Length == 2)
+                    {
+                        this.AppliesTo = parts[0];
+                        this.Name = parts[1];
+                    }
+                    else
+                    {
+                        throw new ArgumentException("Unexpected number of @ characters in value");
+                    }
+                }
+            }
+        }
     }
 }

@@ -29,8 +29,9 @@ namespace ApiDocs.Validation.OData
     using System.ComponentModel;
     using System.Xml.Serialization;
     using Transformation;
+    using Utility;
 
-    [XmlRoot("ReturnType", Namespace = ODataParser.EdmNamespace)]
+    [XmlRoot("ReturnType", Namespace = ODataParser.EdmNamespace), Mergable]
     public class ReturnType : XmlBackedTransformableObject
     {
         public ReturnType()

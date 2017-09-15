@@ -61,12 +61,19 @@ namespace ApiDocs.Publishing.CSDL
 
         public override async Task PublishToFolderAsync(string outputFolder)
         {
-            string outputFilenameSuffix = null;
+            string outputFilenameSuffix = "";
 
             // Step 1: Generate an EntityFramework OM from the documentation and/or template file
             EntityFramework framework = CreateEntityFrameworkFromDocs();
             if (null == framework)
                 return;
+
+            if (!string.IsNullOrEmpty(options.MergeWithMetadataPath))
+            {
+                EntityFramework secondFramework = CreateEntityFrameworkFromDocs(options.MergeWithMetadataPath, generateFromDocs: false);
+                framework = framework.MergeWith(secondFramework);
+                outputFilenameSuffix += "-merged";
+            }
 
             // Step 1a: Apply an transformations that may be defined in the documentation
             if (!string.IsNullOrEmpty(options.TransformOutput))
@@ -81,7 +88,7 @@ namespace ApiDocs.Publishing.CSDL
                 framework.ApplyTransformation(transformations.SchemaChanges, versionsToPublish);
                 if (!string.IsNullOrEmpty(options.Version))
                 {
-                    outputFilenameSuffix = $"-{options.Version}";
+                    outputFilenameSuffix += $"-{options.Version}";
                 }
             }
 
@@ -141,19 +148,21 @@ namespace ApiDocs.Publishing.CSDL
             return outputFullName;
         }
 
-        private EntityFramework CreateEntityFrameworkFromDocs()
+        private EntityFramework CreateEntityFrameworkFromDocs(string sourcePath = null, bool? generateFromDocs = null)
         {
+            sourcePath = sourcePath ?? options.SourceMetadataPath;
+
             EntityFramework edmx = new EntityFramework();
-            if (!string.IsNullOrEmpty(options.SourceMetadataPath))
+            if (!string.IsNullOrEmpty(sourcePath))
             {
                 try
                 {
-                    if (!System.IO.File.Exists(options.SourceMetadataPath))
+                    if (!System.IO.File.Exists(sourcePath))
                     {
-                        throw new System.IO.FileNotFoundException($"Unable to locate source file: {options.SourceMetadataPath}");
+                        throw new System.IO.FileNotFoundException($"Unable to locate source file: {sourcePath}");
                     }
 
-                    using (System.IO.FileStream stream = new System.IO.FileStream(options.SourceMetadataPath, System.IO.FileMode.Open, System.IO.FileAccess.Read))
+                    using (System.IO.FileStream stream = new System.IO.FileStream(sourcePath, System.IO.FileMode.Open, System.IO.FileAccess.Read))
                     {
                         if (options.Formats.HasFlag(MetadataFormat.EdmxInput))
                         {
@@ -193,10 +202,10 @@ namespace ApiDocs.Publishing.CSDL
                 }
             }
 
-            bool generateNewElements = !options.SkipMetadataGeneration;
+            bool generateNewElements = (generateFromDocs == null && !options.SkipMetadataGeneration) || (generateFromDocs.HasValue && generateFromDocs.Value) ;
 
             // Add resources
-            if (Documents.Files.Any())
+            if (generateNewElements && Documents.Files.Any())
             {
                 foreach (var resource in Documents.Resources)
                 {
@@ -523,7 +532,7 @@ namespace ApiDocs.Publishing.CSDL
                 Dictionary<string, MethodCollection> uniqueRequestPaths = new Dictionary<string, MethodCollection>();
                 foreach (var m in Documents.Methods)
                 {
-                    if (m.ExpectedResponseMetadata.ExpectError)
+                    if (m.ExpectedResponseMetadata != null && m.ExpectedResponseMetadata.ExpectError)
                     {
                         // Ignore thigns that are expected to error
                         continue;
@@ -544,7 +553,7 @@ namespace ApiDocs.Publishing.CSDL
                     }
                     uniqueRequestPaths[path].Add(m);
 
-                    Console.WriteLine("{0} :: {1} --> {2}", path, m.RequestMetadata.ResourceType, m.ExpectedResponseMetadata.ResourceType);
+                    Console.WriteLine("{0} :: {1} --> {2}", path, m.RequestMetadata.ResourceType, m.ExpectedResponseMetadata?.ResourceType);
                 }
                 cachedUniqueRequestPaths = uniqueRequestPaths;
             }
@@ -792,6 +801,7 @@ namespace ApiDocs.Publishing.CSDL
     {
         public string OutputDirectoryPath { get; set; }
         public string SourceMetadataPath { get; set; }
+        public string MergeWithMetadataPath { get; set; }
         public MetadataFormat Formats { get; set; }
         public string[] Namespaces { get; set; }
         public bool Sort { get; set; }

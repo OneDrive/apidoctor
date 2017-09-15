@@ -25,6 +25,7 @@
 
 namespace ApiDocs.Validation.OData
 {
+    using Utility;
     using System;
     using System.Collections.Generic;
     using System.ComponentModel;
@@ -34,6 +35,7 @@ namespace ApiDocs.Validation.OData
     using Transformation;
 
     [XmlRoot("ComplexType", Namespace = ODataParser.EdmNamespace)]
+    [Mergable(CollectionIdentifier = "Name")]
     public class ComplexType : XmlBackedTransformableObject, IODataNavigable, IODataAnnotatable
     {
         public ComplexType()
@@ -45,19 +47,19 @@ namespace ApiDocs.Validation.OData
         [XmlAttribute("Name"), SortBy]
         public string Name { get; set; }
 
-        [XmlAttribute("OpenType"), DefaultValue(false)]
+        [XmlAttribute("OpenType"), DefaultValue(false), MergePolicy(MergePolicy.PreferGreaterValue)]
         public bool OpenType { get; set; }
 
-        [XmlAttribute("BaseType"), ContainsType]
+        [XmlAttribute("BaseType"), ContainsType, MergePolicy(MergePolicy.EqualOrNull)]
         public string BaseType { get; set; }
 
         [XmlElement("Property", Namespace = ODataParser.EdmNamespace), Sortable]
         public List<Property> Properties { get; set; }
 
-        [XmlElement("Annotation", Namespace = ODataParser.EdmNamespace)]
+        [XmlElement("Annotation", Namespace = ODataParser.EdmNamespace), MergePolicy(MergePolicy.EqualOrNull)]
         public List<Annotation> Annotation { get; set; }
-
-        [XmlAttribute("WorkloadName", Namespace = ODataParser.AgsNamespace)]
+        
+        [XmlAttribute("WorkloadName", Namespace = ODataParser.AgsNamespace), MergePolicy(MergePolicy.EqualOrNull)]
         public string WorkloadName { get; set; }
 
         public virtual IODataNavigable NavigateByEntityTypeKey(EntityFramework edmx)
@@ -109,7 +111,7 @@ namespace ApiDocs.Validation.OData
             });
         }
 
-        [XmlIgnore]
+        [XmlIgnore, MergePolicy(MergePolicy.Ignore)]
         public override string ElementIdentifier { get { return this.Name; } set { this.Name = value; } }
 
         [XmlIgnore]

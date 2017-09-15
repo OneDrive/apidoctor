@@ -30,6 +30,7 @@ namespace ApiDocs.Validation
     using MarkdownDeep;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Converters;
+    using System.Collections.Generic;
 
     public class CodeBlockAnnotation
     {
@@ -87,7 +88,8 @@ namespace ApiDocs.Validation
         /// The name of the request / response method.
         /// </summary>
         [JsonProperty("name", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        public string MethodName { get; set; }
+        [JsonConverter(typeof(SingleOrArrayConverter<string>))]
+        public List<string> MethodName { get; set; }
 
         /// <summary>
         /// Indicates that the response is expected to be an error response.
@@ -153,6 +155,20 @@ namespace ApiDocs.Validation
         public static CodeBlockAnnotation ParseMetadata(string json, MarkdownDeep.Block codeBlock = null)
         {
             var response = JsonConvert.DeserializeObject<CodeBlockAnnotation>(json);
+
+            // Check for Collection() syntax
+            if (!string.IsNullOrEmpty(response.ResourceType))
+            {
+                const string collectionPrefix = "collection(";
+                const string collectionSuffix = ")";
+                if (response.ResourceType.StartsWith(collectionPrefix, StringComparison.OrdinalIgnoreCase) && response.ResourceType.EndsWith(collectionSuffix, StringComparison.OrdinalIgnoreCase))
+                {
+                    response.IsCollection = true;
+                    var newResourceType = response.ResourceType.Substring(collectionPrefix.Length);
+                    newResourceType = newResourceType.Substring(0, newResourceType.Length - collectionSuffix.Length);
+                    response.ResourceType = newResourceType;
+                }
+            }
 
             if (codeBlock != null)
             {

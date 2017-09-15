@@ -29,8 +29,9 @@ namespace ApiDocs.Validation.OData
     using System.ComponentModel;
     using System.Xml.Serialization;
     using Transformation;
+    using Utility;
 
-    [XmlRoot("NavigationProperty", Namespace = ODataParser.EdmNamespace)]
+    [XmlRoot("NavigationProperty", Namespace = ODataParser.EdmNamespace), Mergable(CollectionIdentifier = "Name")]
     public class NavigationProperty : Property
     {
         public NavigationProperty()

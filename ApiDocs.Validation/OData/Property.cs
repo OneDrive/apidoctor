@@ -30,8 +30,9 @@ namespace ApiDocs.Validation.OData
     using System.ComponentModel;
     using System.Xml.Serialization;
     using Transformation;
+    using Utility;
 
-    [XmlRoot("Property", Namespace = ODataParser.EdmNamespace)]
+    [XmlRoot("Property", Namespace = ODataParser.EdmNamespace), Mergable(CollectionIdentifier = "Name")]
     public class Property : XmlBackedTransformableObject, IODataAnnotatable
     {
         public Property()
@@ -44,13 +45,13 @@ namespace ApiDocs.Validation.OData
         [XmlAttribute("Name"), SortBy]
         public string Name { get; set; }
 
-        [XmlAttribute("Type"), ContainsType]
+        [XmlAttribute("Type"), ContainsType, MergePolicy(MergePolicy.PreferLesserValue)]
         public string Type { get; set; }
 
-        [XmlAttribute("Nullable"), DefaultValue(true)]
+        [XmlAttribute("Nullable"), DefaultValue(true), MergePolicy(MergePolicy.PreferTrueValue)]
         public bool Nullable { get; set; }
 
-        [XmlAttribute("Unicode"), DefaultValue(true)]
+        [XmlAttribute("Unicode"), DefaultValue(true), MergePolicy(MergePolicy.PreferFalseValue)]
         public bool Unicode { get; set; }
 
         [XmlElement("Annotation", Namespace = ODataParser.EdmNamespace), Sortable]

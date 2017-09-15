@@ -24,19 +24,21 @@
 
 namespace ApiDocs.Validation.OData
 {
+    using Utility;
     using System.ComponentModel;
     using System.Xml.Serialization;
 
     [XmlRoot("PropertyValue", Namespace = ODataParser.EdmNamespace)]
+    [Mergable(CollectionIdentifier = "Property")]
     public class PropertyValue : XmlBackedObject
     {
-        [XmlAttribute("Property")]
+        [XmlAttribute("Property"), MergePolicy(MergePolicy.EqualOrNull)]
         public string Property { get; set; }
 
-        [XmlElement("EnumMember", Namespace = ODataParser.EdmNamespace), DefaultValue(null)]
+        [XmlElement("EnumMember", Namespace = ODataParser.EdmNamespace), DefaultValue(null), MergePolicy(MergePolicy.EqualOrNull)]
         public string EnumMember { get; set; }
 
-        [XmlAttribute("Bool")]
+        [XmlAttribute("Bool"), MergePolicy(MergePolicy.EqualOrNull)]
         public bool Bool { get; set; }
     }
 }

@@ -97,7 +97,7 @@ namespace ApiDocs.Validation
             get
             {
                 var query = from p in this.MarkdownLinks
-                    select p.Definition.url;
+                            select p.Definition.url;
                 return query.ToArray();
             }
         }
@@ -107,7 +107,7 @@ namespace ApiDocs.Validation
         /// </summary>
         public Block[] OriginalMarkdownBlocks { get; set; }
 
-        protected List<ILinkInfo> MarkdownLinks {get;set;}
+        protected List<ILinkInfo> MarkdownLinks { get; set; }
 
         public DocSet Parent { get; protected set; }
 
@@ -121,7 +121,7 @@ namespace ApiDocs.Validation
             this.DocumentHeaders = new List<Config.DocumentHeader>();
         }
 
-        public DocFile(string basePath, string relativePath, DocSet parent) 
+        public DocFile(string basePath, string relativePath, DocSet parent)
             : this()
         {
             this.BasePath = basePath;
@@ -179,11 +179,11 @@ namespace ApiDocs.Validation
         {
             this.HasScanRun = true;
             List<ValidationError> detectedErrors = new List<ValidationError>();
-            
+
             try
             {
                 string fileContents = this.ReadAndPreprocessFileContents(tags);
-				this.TransformMarkdownIntoBlocksAndLinks(fileContents, tags);
+                this.TransformMarkdownIntoBlocksAndLinks(fileContents, tags);
             }
             catch (IOException ioex)
             {
@@ -226,77 +226,77 @@ namespace ApiDocs.Validation
         /// </summary>
         /// <param name="contents">Contents.</param>
         private string ParseAndRemoveYamlFrontMatter(string contents)
-		{
-			const string YamlFrontMatterHeader = "---";
-			using (StringReader reader = new StringReader(contents))
-			{
-				string currentLine = reader.ReadLine();
-				System.Text.StringBuilder frontMatter = new System.Text.StringBuilder();
-				YamlFrontMatterDetectionState currentState = YamlFrontMatterDetectionState.NotDetected;
-				while (currentLine != null && currentState != YamlFrontMatterDetectionState.SecondTokenFound)
-				{
-					string trimmedCurrentLine = currentLine.Trim();
-					switch (currentState)
-					{
-						case YamlFrontMatterDetectionState.NotDetected:
-							if (!string.IsNullOrWhiteSpace(trimmedCurrentLine) && trimmedCurrentLine != YamlFrontMatterHeader)
-							{
-								// This file doesn't have YAML front matter, so we just return the full contents of the file
-								return contents;
-							}
-							else if (trimmedCurrentLine == YamlFrontMatterHeader)
-							{
-								currentState = YamlFrontMatterDetectionState.FirstTokenFound;
-							}
-							break;
-						case YamlFrontMatterDetectionState.FirstTokenFound:
-							if (trimmedCurrentLine == YamlFrontMatterHeader)
-							{
-								// Found the end of the YAML front matter, so move to the final state
-								currentState = YamlFrontMatterDetectionState.SecondTokenFound;
-							}
-							else
-							{
-								// Store the YAML data into our header
-								frontMatter.AppendLine(currentLine);
-							}
-							break;
+        {
+            const string YamlFrontMatterHeader = "---";
+            using (StringReader reader = new StringReader(contents))
+            {
+                string currentLine = reader.ReadLine();
+                System.Text.StringBuilder frontMatter = new System.Text.StringBuilder();
+                YamlFrontMatterDetectionState currentState = YamlFrontMatterDetectionState.NotDetected;
+                while (currentLine != null && currentState != YamlFrontMatterDetectionState.SecondTokenFound)
+                {
+                    string trimmedCurrentLine = currentLine.Trim();
+                    switch (currentState)
+                    {
+                        case YamlFrontMatterDetectionState.NotDetected:
+                            if (!string.IsNullOrWhiteSpace(trimmedCurrentLine) && trimmedCurrentLine != YamlFrontMatterHeader)
+                            {
+                                // This file doesn't have YAML front matter, so we just return the full contents of the file
+                                return contents;
+                            }
+                            else if (trimmedCurrentLine == YamlFrontMatterHeader)
+                            {
+                                currentState = YamlFrontMatterDetectionState.FirstTokenFound;
+                            }
+                            break;
+                        case YamlFrontMatterDetectionState.FirstTokenFound:
+                            if (trimmedCurrentLine == YamlFrontMatterHeader)
+                            {
+                                // Found the end of the YAML front matter, so move to the final state
+                                currentState = YamlFrontMatterDetectionState.SecondTokenFound;
+                            }
+                            else
+                            {
+                                // Store the YAML data into our header
+                                frontMatter.AppendLine(currentLine);
+                            }
+                            break;
 
-						case YamlFrontMatterDetectionState.SecondTokenFound:
-							break;
-					}
+                        case YamlFrontMatterDetectionState.SecondTokenFound:
+                            break;
+                    }
 
-					if (currentState != YamlFrontMatterDetectionState.SecondTokenFound)
-					{
-						currentLine = reader.ReadLine();
-					}
-				}
+                    if (currentState != YamlFrontMatterDetectionState.SecondTokenFound)
+                    {
+                        currentLine = reader.ReadLine();
+                    }
+                }
 
-				if (currentState == YamlFrontMatterDetectionState.SecondTokenFound)
-				{
-					// Parse YAML metadata
-					ParseYamlMetadata(frontMatter.ToString());
-					return reader.ReadToEnd();
-				}
-				else
-				{
-					// Something went wrong along the way, so we just return the full file
-					return contents;
-				}
-			}
-		}
+                if (currentState == YamlFrontMatterDetectionState.SecondTokenFound)
+                {
+                    // Parse YAML metadata
+                    ParseYamlMetadata(frontMatter.ToString());
+                    return reader.ReadToEnd();
+                }
+                else
+                {
+                    // Something went wrong along the way, so we just return the full file
+                    return contents;
+                }
+            }
+        }
 
-		private void ParseYamlMetadata(string yamlMetadata)
-		{
-			// TODO: Implement YAML parsing
-		}
+        private void ParseYamlMetadata(string yamlMetadata)
+        {
+            // TODO: Implement YAML parsing
+        }
 
-		private enum YamlFrontMatterDetectionState
-		{
-			NotDetected,
-			FirstTokenFound,
-			SecondTokenFound
-		}
+        private enum YamlFrontMatterDetectionState
+        {
+            NotDetected,
+            FirstTokenFound,
+            SecondTokenFound
+        }
 
         private static bool IsHeaderBlock(Block block, int maxDepth = 2)
         {
@@ -306,7 +306,7 @@ namespace ApiDocs.Validation
             }
 
             var blockType = block.BlockType;
-            if (maxDepth >= 1 && blockType == BlockType.h1) 
+            if (maxDepth >= 1 && blockType == BlockType.h1)
                 return true;
             if (maxDepth >= 2 && blockType == BlockType.h2)
                 return true;
@@ -318,7 +318,7 @@ namespace ApiDocs.Validation
                 return true;
             if (maxDepth >= 6 && blockType == BlockType.h6)
                 return true;
-                    
+
             return false;
         }
 
@@ -426,26 +426,27 @@ namespace ApiDocs.Validation
                     }
                     if (null != nextBlock && nextBlock.BlockType == BlockType.codeblock)
                     {
-                        // html + codeblock = likely request or response!
-                        ItemDefinition definition = null;
-                        try
+                        // html + codeblock = likely request or response or resource
+
+                        ValidationError[] foundErrors = null;
+                        List<ItemDefinition> definitions = this.ParseCodeBlock(block, nextBlock, out foundErrors);
+                        if (foundErrors != null)
                         {
-                            definition = this.ParseCodeBlock(block, nextBlock);
-                        }
-                        catch (Exception ex)
-                        {
-                            detectedErrors.Add(new ValidationError(ValidationErrorCode.MarkdownParserError, this.DisplayName, "{0}", ex.Message));
+                            detectedErrors.AddRange(foundErrors);
                         }
 
-                        if (null != definition)
+                        if (definitions != null && definitions.Any())
                         {
-                            detectedErrors.Add(new ValidationMessage(null, "Found code block: {0} [{1}]", definition.Title, definition.GetType().Name));
-                            definition.Title = methodTitle;
-                            definition.Description = methodDescription;
-
-                            if (!foundElements.Contains(definition))
+                            foreach (var definition in definitions)
                             {
-                                foundElements.Add(definition);
+                                detectedErrors.Add(new ValidationMessage(null, "Found code block: {0} [{1}]", definition.Title, definition.GetType().Name));
+                                definition.Title = methodTitle;
+                                definition.Description = methodDescription;
+
+                                if (!foundElements.Contains(definition))
+                                {
+                                    foundElements.Add(definition);
+                                }
                             }
                         }
                     }
@@ -501,7 +502,7 @@ namespace ApiDocs.Validation
             ValidationError[] postProcessingErrors;
             this.PostProcessFoundElements(foundElements, out postProcessingErrors);
             detectedErrors.AddRange(postProcessingErrors);
-          
+
             errors = detectedErrors.ToArray();
             return !detectedErrors.Any(x => x.IsError);
         }
@@ -720,8 +721,8 @@ namespace ApiDocs.Validation
                                  select (ResourceDefinition)s;
 
             var foundTables = from s in elementsFoundInDocument
-                                   where s is TableDefinition
-                                   select (TableDefinition)s;
+                              where s is TableDefinition
+                              select (TableDefinition)s;
 
             this.PostProcessAuthScopes(elementsFoundInDocument);
             PostProcessResources(foundResources, foundTables, detectedErrors);
@@ -758,7 +759,7 @@ namespace ApiDocs.Validation
                             // Merge information found in the resource property description table with the existing resources
                             MergeParametersIntoCollection(
                                 onlyResource.Parameters,
-                                table.Rows.Cast<ParameterDefinition>(), 
+                                table.Rows.Cast<ParameterDefinition>(),
                                 onlyResource.Name,
                                 detectedErrors,
                                 table.Type == TableBlockType.ResourceNavigationPropertyDescriptions);
@@ -840,9 +841,9 @@ namespace ApiDocs.Validation
                     var unmappedContentsError = new ValidationWarning(ValidationErrorCode.UnmappedDocumentElements, this.DisplayName, "Unable to map some markdown elements into schema.");
 
                     List<ValidationError> innerErrors = new List<ValidationError>();
-                    var unmappedMethods = (from m in foundMethods select m.RequestMetadata.MethodName).ComponentsJoinedByString(", ");
+                    var unmappedMethods = (from m in foundMethods select m.RequestMetadata.MethodName?.FirstOrDefault()).ComponentsJoinedByString(", ");
                     if (!string.IsNullOrEmpty(unmappedMethods))
-                    { 
+                    {
                         innerErrors.Add(new ValidationMessage("Unmapped methods", unmappedMethods));
                     }
 
@@ -868,7 +869,7 @@ namespace ApiDocs.Validation
                         break;
                     case TableBlockType.EnumerationValues:
                         // TODO: Support enumeration values
-                        detectedErrors.Add(new ValidationWarning(ValidationErrorCode.Unknown, this.DisplayName, $"Table '{table.Title}' for method '{onlyMethod.RequestMetadata.MethodName}' included enum values that weren't parsed."));
+                        detectedErrors.Add(new ValidationWarning(ValidationErrorCode.Unknown, this.DisplayName, $"Table '{table.Title}' for method '{onlyMethod.RequestMetadata.MethodName?.FirstOrDefault()}' included enum values that weren't parsed."));
                         break;
                     case TableBlockType.ErrorCodes:
                         onlyMethod.Errors = table.Rows.Cast<ErrorDefinition>().ToList();
@@ -883,10 +884,10 @@ namespace ApiDocs.Validation
                         break;
                     case TableBlockType.ResourcePropertyDescriptions:
                     case TableBlockType.ResponseObjectProperties:
-                        detectedErrors.Add(new ValidationWarning(ValidationErrorCode.Unknown, this.DisplayName, $"Table '{table.Title}' for method '{onlyMethod.RequestMetadata.MethodName}' included response properties that were ignored."));
+                        detectedErrors.Add(new ValidationWarning(ValidationErrorCode.Unknown, this.DisplayName, $"Table '{table.Title}' for method '{onlyMethod.RequestMetadata.MethodName?.FirstOrDefault()}' included response properties that were ignored."));
                         break;
                     default:
-                        detectedErrors.Add(new ValidationWarning(ValidationErrorCode.Unknown, this.DisplayName, $"Table '{table.Title}' ({table.Type}) for method '{onlyMethod.RequestMetadata.MethodName}' was unsupported and ignored."));
+                        detectedErrors.Add(new ValidationWarning(ValidationErrorCode.Unknown, this.DisplayName, $"Table '{table.Title}' ({table.Type}) for method '{onlyMethod.RequestMetadata.MethodName?.FirstOrDefault()}' was unsupported and ignored."));
                         break;
                 }
             }
@@ -936,17 +937,37 @@ namespace ApiDocs.Validation
         /// </summary>
         /// <param name="metadata"></param>
         /// <param name="code"></param>
-        public ItemDefinition ParseCodeBlock(Block metadata, Block code)
+        public List<ItemDefinition> ParseCodeBlock(Block metadata, Block code, out ValidationError[] errors)
         {
+            List<ValidationError> detectedErrors = new List<ValidationError>();
+
             if (metadata.BlockType != BlockType.html)
-                throw new ArgumentException("metadata block does not appear to be metadata");
+            {
+                detectedErrors.Add(new ValidationError(ValidationErrorCode.MarkdownParserError, this.DisplayName, "metadata block does not appear to be metadata"));
+                errors = detectedErrors.ToArray();
+                return null;
+            }
 
             if (code.BlockType != BlockType.codeblock)
-                throw new ArgumentException("code block does not appear to be code");
+            {
+                detectedErrors.Add(new ValidationError(ValidationErrorCode.MarkdownParserError, this.DisplayName, "code block does not appear to be code"));
+                errors = detectedErrors.ToArray();
+                return null;
+            }
 
-            
             var metadataJsonString = StripHtmlCommentTags(metadata.Content);
-            CodeBlockAnnotation annotation = CodeBlockAnnotation.ParseMetadata(metadataJsonString, code);
+
+            CodeBlockAnnotation annotation = null;
+            try
+            {
+                annotation = CodeBlockAnnotation.ParseMetadata(metadataJsonString, code);
+            }
+            catch (Exception ex)
+            {
+                detectedErrors.Add(new ValidationError(ValidationErrorCode.MarkdownParserError, this.DisplayName, "Unable to parse code block metadata: {0}", ex.Message));
+                errors = detectedErrors.ToArray();
+                return null;
+            }
 
             switch (annotation.BlockType)
             {
@@ -955,79 +976,124 @@ namespace ApiDocs.Validation
                         ResourceDefinition resource;
                         if (code.CodeLanguage.Equals("json", StringComparison.OrdinalIgnoreCase))
                         {
-                            resource = new JsonResourceDefinition(annotation, code.Content, this);
+                            try
+                            {
+                                resource = new JsonResourceDefinition(annotation, code.Content, this);
+                            }
+                            catch (Exception ex)
+                            {
+                                detectedErrors.Add(new ValidationError(ValidationErrorCode.MarkdownParserError, this.DisplayName, "Unable to parse resource metadata [{1}]: {0}", ex.Message, annotation.ResourceType));
+                                errors = detectedErrors.ToArray();
+                                return null;
+                            }
                         }
-                        //else if (code.CodeLanguage.Equals("xml", StringComparison.OrdinalIgnoreCase))
-                        //{
-                        //
-                        //}
                         else
                         {
-                            throw new NotSupportedException("Unsupported resource definition language: " + code.CodeLanguage);
+                            detectedErrors.Add(new ValidationError(ValidationErrorCode.MarkdownParserError, this.DisplayName, $"Unsupported resource definition language: {code.CodeLanguage}"));
+                            errors = detectedErrors.ToArray();
+                            return null;
                         }
 
                         if (string.IsNullOrEmpty(resource.Name))
                         {
-                            throw new InvalidDataException("Resource definition is missing a name");
+                            detectedErrors.Add(new ValidationError(ValidationErrorCode.MarkdownParserError, this.DisplayName, "Resource definition is missing a name."));
+                            errors = detectedErrors.ToArray();
+                            return null;
                         }
 
                         this.resources.Add(resource);
-                        return resource;
+                        errors = detectedErrors.ToArray();
+                        return new List<ItemDefinition>(new ItemDefinition[] { resource });
                     }
                 case CodeBlockType.Request:
                     {
                         var method = MethodDefinition.FromRequest(code.Content, annotation, this);
                         if (string.IsNullOrEmpty(method.Identifier))
+                        {
                             method.Identifier = string.Format("{0} #{1}", this.DisplayName, this.requests.Count);
+                        }
                         this.requests.Add(method);
-                        return method;
+                        errors = detectedErrors.ToArray();
+                        return new List<ItemDefinition>(new ItemDefinition[] { method });
                     }
 
                 case CodeBlockType.Response:
                     {
-                        MethodDefinition pairedRequest = null;
-                        if (!string.IsNullOrEmpty(annotation.MethodName))
+                        var responses = new List<ItemDefinition>();
+                        if (null != annotation.MethodName)
                         {
-                            // Look up paired request by name
-                            pairedRequest = (from m in this.requests where m.Identifier == annotation.MethodName select m).FirstOrDefault();
+                            // Look up all the requests mentioned and pair them up
+                            foreach (var requestMethodName in annotation.MethodName)
+                            {
+                                // Look up paired request by name
+                                MethodDefinition pairedRequest = (from m in this.requests where m.Identifier == requestMethodName select m).FirstOrDefault();
+                                if (pairedRequest != null)
+                                {
+                                    pairedRequest.AddExpectedResponse(code.Content, annotation);
+                                    responses.Add(pairedRequest);
+                                }
+                                else
+                                {
+                                    detectedErrors.Add(new ValidationError(ValidationErrorCode.MarkdownParserError, this.DisplayName, "Unable to locate the corresponding request for response block: {0}. Requests must be defined before a response.", annotation.MethodName));
+                                }
+                            }
                         }
                         else if (this.requests.Any())
                         {
-                            pairedRequest = Enumerable.Last(this.requests);
+                            // Try to match with a previous request on the page. Will throw if the previous request on the page is already paired
+                            MethodDefinition pairedRequest = Enumerable.Last(this.requests);
+                            if (pairedRequest != null)
+                            {
+                                try
+                                {
+                                    pairedRequest.AddExpectedResponse(code.Content, annotation);
+                                    responses.Add(pairedRequest);
+                                }
+                                catch (Exception ex)
+                                {
+                                    detectedErrors.Add(new ValidationError(ValidationErrorCode.MarkdownParserError, this.DisplayName, "Unable to pair response with request {0}: {1}.", annotation.MethodName, ex.Message));
+                                }
+                                
+                            }
+                            else
+                            {
+                                throw new InvalidOperationException(string.Format("Unable to locate the corresponding request for response block: {0}. Requests must be defined before a response.", annotation.MethodName));
+                            }
                         }
-
-                        if (null == pairedRequest)
-                        {
-                            throw new InvalidOperationException(string.Format("Unable to locate the corresponding request for response block: {0}. Requests must be defined before a response.", annotation.MethodName));
-                        }
-
-                        pairedRequest.AddExpectedResponse(code.Content, annotation);
-                        return pairedRequest;
+                        errors = detectedErrors.ToArray();
+                        return responses;
                     }
                 case CodeBlockType.Example:
                     {
                         var example = new ExampleDefinition(annotation, code.Content, this, code.CodeLanguage);
                         this.examples.Add(example);
-                        return example;
+                        errors = detectedErrors.ToArray();
+                        return new List<ItemDefinition>(new ItemDefinition[] { example });
                     }
                 case CodeBlockType.Ignored:
-                    return null;
+                    {
+                        errors = detectedErrors.ToArray();
+                        return null;
+                    }
                 case CodeBlockType.SimulatedResponse:
                     {
                         var method = Enumerable.Last(this.requests);
                         method.AddSimulatedResponse(code.Content, annotation);
-                        return method;
+                        errors = detectedErrors.ToArray();
+                        return new List<ItemDefinition>(new ItemDefinition[] { method });
                     }
                 case CodeBlockType.TestParams:
                     {
                         var method = Enumerable.Last(this.requests);
                         method.AddTestParams(code.Content);
-                        return method;
+                        errors = detectedErrors.ToArray();
+                        return new List<ItemDefinition>(new ItemDefinition[] { method });
                     }
                 default:
                     {
-                    	var errorMessage = string.Format("Unable to parse metadata block or unsupported block type. Line {1}. Content: {0}", metadata.Content, metadata.LineStart);
-                        throw new NotSupportedException(errorMessage);
+                        var errorMessage = string.Format("Unable to parse metadata block or unsupported block type. Line {1}. Content: {0}", metadata.Content, metadata.LineStart);
+                        errors = detectedErrors.ToArray();
+                        return null;
                     }
             }
         }

@@ -886,7 +886,7 @@ namespace ApiDocs.Validation.Json
         {
             get
             {
-                return new JsonSchema("{ }", new CodeBlockAnnotation { BlockType = CodeBlockType.Response, IsCollection = false, MethodName = "EmptyResponse" });
+                return new JsonSchema("{ }", new CodeBlockAnnotation { BlockType = CodeBlockType.Response, IsCollection = false, MethodName = new List<string>(new string[] { "EmptyResponse" }) });
             }
         }
     }

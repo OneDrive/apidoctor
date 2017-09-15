@@ -181,13 +181,13 @@ namespace ApiDocs.ConsoleApp
                     await PrintDocInformationAsync((PrintOptions)options);
                     break;
                 case CommandLineOptions.VerbCheckLinks:
-                    returnSuccess = await CheckLinksAsync((BasicCheckOptions)options);
+                    returnSuccess = await CheckLinksAsync((CheckLinkOptions)options);
                     break;
                 case CommandLineOptions.VerbDocs:
                     returnSuccess = await CheckDocsAsync((BasicCheckOptions)options);
                     break;
                 case CommandLineOptions.VerbCheckAll:
-                    returnSuccess = await CheckDocsAllAsync((BasicCheckOptions)options);
+                    returnSuccess = await CheckDocsAllAsync((CheckLinkOptions)options);
                     break;
                 case CommandLineOptions.VerbService:
                     returnSuccess = await CheckServiceAsync((CheckServiceOptions)options);
@@ -220,7 +220,7 @@ namespace ApiDocs.ConsoleApp
         /// </summary>
         /// <param name="options"></param>
         /// <returns></returns>
-        private static async Task<bool> CheckDocsAllAsync(BasicCheckOptions options)
+        private static async Task<bool> CheckDocsAllAsync(CheckLinkOptions options)
         {
             var docset = await GetDocSetAsync(options);
 
@@ -468,7 +468,7 @@ namespace ApiDocs.ConsoleApp
         /// </summary>
         /// <param name="options"></param>
         /// <param name="docs"></param>
-        private static async Task<bool> CheckLinksAsync(BasicCheckOptions options, DocSet docs = null)
+        private static async Task<bool> CheckLinksAsync(CheckLinkOptions options, DocSet docs = null)
         {
             const string testName = "Check-links";
             var docset = docs ?? await GetDocSetAsync(options);
@@ -487,7 +487,7 @@ namespace ApiDocs.ConsoleApp
             TestReport.StartTest(testName);
             
             ValidationError[] errors;
-            docset.ValidateLinks(options.EnableVerboseOutput, interestingFiles, out errors, options.RequireFilenameCaseMatch);
+            docset.ValidateLinks(options.EnableVerboseOutput, interestingFiles, out errors, options.RequireFilenameCaseMatch, options.IncludeOrphanPageWarning);
 
             foreach (var error in errors)
             {
@@ -616,7 +616,7 @@ namespace ApiDocs.ConsoleApp
                     if (example.Language != CodeLanguage.Json)
                         continue;
 
-                    var testName = string.Format("check-example: {0}", example.Metadata.MethodName, example.Metadata.ResourceType);
+                    var testName = string.Format("check-example: {0}", example.Metadata.MethodName?.FirstOrDefault(), example.Metadata.ResourceType);
                     TestReport.StartTest(testName, doc.DisplayName);
 
                     ValidationError[] errors;
@@ -650,7 +650,7 @@ namespace ApiDocs.ConsoleApp
 
                 if (string.IsNullOrEmpty(method.ExpectedResponse))
                 {
-                    await TestReport.FinishTestAsync(testName, TestOutcome.Failed, "Null response where one was expected.", printFailuresOnly: options.PrintFailuresOnly);
+                    await TestReport.FinishTestAsync(testName, TestOutcome.Failed, "No response was paired with this request.", printFailuresOnly: options.PrintFailuresOnly);
                     results.FailureCount++;
                     continue;
                 }

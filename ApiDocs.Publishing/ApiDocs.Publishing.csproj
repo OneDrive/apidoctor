@@ -49,6 +49,7 @@
   <ItemGroup>
     <Compile Include="CSDL\CsdlExtensionMethods.cs" />
     <Compile Include="CSDL\CsdlWriter.cs" />
+    <Compile Include="CSDL\ObjectGraphMerger.cs" />
     <Compile Include="CSDL\MethodCollection.cs" />
     <Compile Include="Html\ApiDocsConditionalTag.cs" />
     <Compile Include="Html\DocumentPublisherHtml.cs" />

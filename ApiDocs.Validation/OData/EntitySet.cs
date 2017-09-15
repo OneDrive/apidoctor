@@ -30,8 +30,10 @@ namespace ApiDocs.Validation.OData
     using System.Xml.Serialization;
     using Transformation;
     using System;
+    using Utility;
 
     [XmlRoot("EntitySet", Namespace = ODataParser.EdmNamespace)]
+    [Mergable(CollectionIdentifier = "Name")]
     public class EntitySet : XmlBackedTransformableObject
     {
         public EntitySet()
@@ -42,22 +44,24 @@ namespace ApiDocs.Validation.OData
         [XmlAttribute("Name"), SortBy]
         public string Name { get; set; }
 
-        [XmlAttribute("EntityType"), ContainsType]
+        [XmlAttribute("EntityType"), ContainsType, MergePolicy(MergePolicy.EqualOrNull)]
         public string EntityType { get; set; }
 
         [XmlElement("NavigationPropertyBinding"), Sortable]
         public List<NavigationPropertyBinding> NavigationPropertyBinding { get; set; }
 
-        [XmlIgnore]
+        [XmlIgnore, MergePolicy(MergePolicy.Ignore)]
         public override string ElementIdentifier { get { return this.Name; } set { this.Name = value; } }
 
     }
 
+    [Mergable(CollectionIdentifier = "Path")]
     public class NavigationPropertyBinding: ITransformable
     {
         [XmlAttribute("Path"), SortBy]
         public string Path { get; set; }
-        [XmlAttribute("Target"), ContainsType]
+
+        [XmlAttribute("Target"), ContainsType, MergePolicy(MergePolicy.EqualOrNull)]
         public string Target { get; set; }
 
         [XmlIgnore]

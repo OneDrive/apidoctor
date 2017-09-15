@@ -25,6 +25,7 @@
 
 namespace ApiDocs.Validation.OData
 {
+    using Utility;
     using System;
     using System.Collections.Generic;
     using System.Linq;
@@ -45,16 +46,17 @@ namespace ApiDocs.Validation.OData
         {
         }
 
-        [XmlAttribute("EntitySetPath")]
+        [XmlAttribute("EntitySetPath"), MergePolicy(MergePolicy.EqualOrNull)]
         public string EntitySetPath { get; set; }
     }
 
+    [Mergable(CollectionIdentifier = "ElementIdentifier", CollapseSingleItemMatchingProperty = "Name")]
     public class ActionOrFunctionBase : XmlBackedTransformableObject
     {
-        [XmlAttribute("Name"), SortBy]
+        [XmlAttribute("Name"), SortBy, MergePolicy(MergePolicy.EqualOrNull)]
         public string Name { get; set; }
 
-        [XmlAttribute("IsBound")]
+        [XmlAttribute("IsBound"), MergePolicy(MergePolicy.PreferGreaterValue)]
         public bool IsBound { get; set; }
 
         [XmlElement("Parameter"), Sortable]
@@ -68,8 +70,9 @@ namespace ApiDocs.Validation.OData
             this.Parameters = new List<Parameter>();
         }
 
+
         #region ITransformable
-        [XmlIgnore]
+        [XmlIgnore, MergePolicy(MergePolicy.Ignore)]
         public override string ElementIdentifier
         {
             get

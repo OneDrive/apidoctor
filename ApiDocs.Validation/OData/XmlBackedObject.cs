@@ -1,4 +1,5 @@
 ﻿using ApiDocs.Validation.OData.Transformation;
+using ApiDocs.Validation.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,10 +12,10 @@ namespace ApiDocs.Validation.OData
 {
     public abstract class XmlBackedObject
     {
-        [XmlAnyElement]
+        [XmlAnyElement, MergePolicy(MergePolicy.MustBeNull)]
         public List<XmlNode> ExtraElements { get; set; }
 
-        [XmlAnyAttribute]
+        [XmlAnyAttribute, MergePolicy(MergePolicy.MustBeNull)]
         public List<XmlNode> ExtraAttributes { get; set; }
 
         public bool HasUnknownMembers { get { return (null != ExtraElements && ExtraElements.Any()) || 

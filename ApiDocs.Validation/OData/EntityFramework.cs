@@ -25,6 +25,7 @@
 
 namespace ApiDocs.Validation.OData
 {
+    using Utility;
     using System;
     using System.Collections.Generic;
     using System.Linq;
@@ -38,9 +39,11 @@ namespace ApiDocs.Validation.OData
     /// Holds a representation of an entity framework model (EDMX)
     /// </summary>
     [XmlRoot("Edmx", Namespace = ODataParser.EdmxNamespace)]
+    [Mergable]
     public class EntityFramework : XmlBackedObject
     {
         [XmlAttribute("Version")]
+        [MergePolicy(Policy = MergePolicy.EqualOrNull)]
         public string Version { get; set; }
 
         [XmlElement("DataServices")]
@@ -66,7 +69,7 @@ namespace ApiDocs.Validation.OData
         /// <param name="schemaChanges"></param>
         public void ApplyTransformation(PublishSchemaChanges changes, string[] versions)
         {
-            if (changes.NamespacesToPublish.Any())
+            if (changes.NamespacesToPublish != null && changes.NamespacesToPublish.Any())
             {
                 DataServices.Schemas.RemoveAll(x => !changes.NamespacesToPublish.Contains(x.Namespace));
             }

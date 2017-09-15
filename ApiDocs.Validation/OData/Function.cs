@@ -25,6 +25,7 @@
 
 namespace ApiDocs.Validation.OData
 {
+    using Utility;
     using System.Xml.Serialization;
 
     /// <summary>
@@ -39,7 +40,7 @@ namespace ApiDocs.Validation.OData
         {
         }
 
-        [XmlAttribute("IsComposable")]
+        [XmlAttribute("IsComposable"), MergePolicy(MergePolicy.PreferLesserValue)]
         public bool IsComposable { get; set; }
     }
 }

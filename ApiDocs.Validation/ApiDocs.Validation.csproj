@@ -71,6 +71,8 @@
     <Compile Include="MethodValidationExtensionMethods.cs" />
     <Compile Include="MultipartMime\MimeContentType.cs" />
     <Compile Include="MultipartMime\MultipartMimeContent.cs" />
+    <Compile Include="ObjectGraph\ExtensionMethods.cs" />
+    <Compile Include="ObjectGraph\ObjectGraphMerger.cs" />
     <Compile Include="OData\Annotations.cs" />
     <Compile Include="OData\DataServices.cs" />
     <Compile Include="OData\EntityFramework.cs" />
@@ -101,6 +103,7 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="ScenarioExtensionMethods.cs" />
+    <Compile Include="SingleOrArrayConverter.cs" />
     <Compile Include="TableSpec\TableDefinition.cs" />
     <Compile Include="TableSpec\TableParserConfig.cs" />
     <Compile Include="Tags\TagProcessor.cs" />

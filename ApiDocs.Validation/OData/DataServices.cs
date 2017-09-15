@@ -25,10 +25,12 @@
 
 namespace ApiDocs.Validation.OData
 {
+    using Utility;
     using System.Collections.Generic;
     using System.Xml.Serialization;
 
     [XmlRoot("DataServices", Namespace = ODataParser.EdmNamespace)]
+    [Mergable]
     public class DataServices : XmlBackedObject
     {
         [XmlElement("Schema", Namespace = ODataParser.EdmNamespace)]

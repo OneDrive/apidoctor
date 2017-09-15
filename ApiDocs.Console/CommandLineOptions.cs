@@ -49,12 +49,12 @@ namespace ApiDocs.ConsoleApp
         public const string VerbPublishMetadata = "publish-edmx";
 
         public const string VerbGenerateDocs = "generate-docs";
-        
-        [VerbOption(VerbPrint, HelpText="Print files, resources, and methods discovered in the documentation.")]
+
+        [VerbOption(VerbPrint, HelpText = "Print files, resources, and methods discovered in the documentation.")]
         public PrintOptions PrintVerbOptions { get; set; }
 
         [VerbOption(VerbCheckLinks, HelpText = "Verify links in the documentation aren't broken.")]
-        public BasicCheckOptions CheckLinksVerb { get; set; }
+        public CheckLinkOptions CheckLinksVerb { get; set; }
 
         [VerbOption(VerbDocs, HelpText = "Check for errors in the documentation (resources + examples).")]
         public BasicCheckOptions CheckDocsVerb { get; set; }
@@ -65,19 +65,19 @@ namespace ApiDocs.ConsoleApp
         [VerbOption(VerbService, HelpText = "Check for errors between the documentation and service.")]
         public CheckServiceOptions CheckServiceVerb { get; set; }
 
-        [VerbOption(VerbPublish, HelpText="Publish a version of the documentation, optionally converting it into other formats.")]
+        [VerbOption(VerbPublish, HelpText = "Publish a version of the documentation, optionally converting it into other formats.")]
         public PublishOptions PublishVerb { get; set; }
 
-        [VerbOption(VerbPublishMetadata, HelpText="Publish or update metadata based on information in the docset.")]
+        [VerbOption(VerbPublishMetadata, HelpText = "Publish or update metadata based on information in the docset.")]
         public PublishMetadataOptions EdmxPublishVerb { get; set; }
 
-        [VerbOption(VerbMetadata, HelpText="Check service CSDL metadata against documentation.")]
+        [VerbOption(VerbMetadata, HelpText = "Check service CSDL metadata against documentation.")]
         public CheckMetadataOptions CheckMetadataVerb { get; set; }
 
-        [VerbOption(VerbGenerateDocs, HelpText="Generate documentation from an CSDL model")]
+        [VerbOption(VerbGenerateDocs, HelpText = "Generate documentation from an CSDL model")]
         public GenerateDocsOptions GenerateDocsVerb { get; set; }
 
-        [VerbOption(VerbAbout, HelpText="Print about information for this application.")]
+        [VerbOption(VerbAbout, HelpText = "Print about information for this application.")]
         public BaseOptions AboutVerb { get; set; }
 
         [HelpVerbOption]
@@ -90,7 +90,7 @@ namespace ApiDocs.ConsoleApp
     class BaseOptions
     {
 
-        [Option("log", HelpText="Write the console output to file.")]
+        [Option("log", HelpText = "Write the console output to file.")]
         public string LogFile { get; set; }
 
         [Option("ignore-warnings", HelpText = "Ignore warnings as errors for pass rate.")]
@@ -99,10 +99,10 @@ namespace ApiDocs.ConsoleApp
         [Option("silence-warnings", HelpText = "Don't print warnings to the screen or consider them errors")]
         public bool SilenceWarnings { get; set; }
 
-        [Option("appveyor-url", HelpText="Specify the AppVeyor Build Worker API URL for output integration")]
+        [Option("appveyor-url", HelpText = "Specify the AppVeyor Build Worker API URL for output integration")]
         public string AppVeyorServiceUrl { get; set; }
 
-        [Option("ignore-errors", HelpText="Prevent errors from generating a non-zero return code.")]
+        [Option("ignore-errors", HelpText = "Prevent errors from generating a non-zero return code.")]
         public bool IgnoreErrors { get; set; }
 
         [Option("parameters", HelpText = "Specify additional page variables that are used by the publishing engine. URL encoded: key=value&key2=value2.")]
@@ -131,7 +131,7 @@ namespace ApiDocs.ConsoleApp
         }
 
 #if DEBUG
-        [Option("debug", HelpText="Launch the debugger before doing anything interesting")]
+        [Option("debug", HelpText = "Launch the debugger before doing anything interesting")]
         public bool AttachDebugger { get; set; }
 #endif
 
@@ -183,16 +183,16 @@ namespace ApiDocs.ConsoleApp
 
     class PrintOptions : DocSetOptions
     {
-        [Option("files", HelpText="Print the files discovered as part of the documentation")]
+        [Option("files", HelpText = "Print the files discovered as part of the documentation")]
         public bool PrintFiles { get; set; }
-        
-        [Option("resources", HelpText="Print the resources discovered in the documentation")]
+
+        [Option("resources", HelpText = "Print the resources discovered in the documentation")]
         public bool PrintResources { get; set; }
-        
-        [Option("methods", HelpText="Print the methods discovered in the documentation.")]
+
+        [Option("methods", HelpText = "Print the methods discovered in the documentation.")]
         public bool PrintMethods { get; set; }
 
-        [Option("accounts", HelpText="Print the list of accounts discovered in the documentation.")]
+        [Option("accounts", HelpText = "Print the list of accounts discovered in the documentation.")]
         public bool PrintAccounts { get; set; }
 
         public override bool HasRequiredProperties(out string[] missingArguments)
@@ -210,6 +210,11 @@ namespace ApiDocs.ConsoleApp
             }
             return missingArguments.Length == 0;
         }
+    }
+
+    class CheckLinkOptions : BasicCheckOptions {
+        [Option("orphan-page-warning", HelpText="Print a warning for each page without any incoming links.")]
+        public bool IncludeOrphanPageWarning { get; set; }
     }
 
     class BasicCheckOptions : DocSetOptions
@@ -392,6 +397,9 @@ namespace ApiDocs.ConsoleApp
         [Option("source", HelpText="Source metadata input file.")]
         public string SourceMetadataPath { get; set; }
 
+        [Option("merge-with", HelpText= "Specify a second metadata input file to merge with the first.")]
+        public string SecondSourceMetadataPath { get; set; }
+
         [Option("format", DefaultValue=MetadataFormat.Default, HelpText="Specify the input and output formats for metadata.")]
         public MetadataFormat DataFormat { get; set; }
 
@@ -428,6 +436,7 @@ namespace ApiDocs.ConsoleApp
                 Sort = SortOutput,
                 OutputDirectoryPath = OutputDirectory,
                 SourceMetadataPath = SourceMetadataPath,
+                MergeWithMetadataPath = SecondSourceMetadataPath,
                 Namespaces = Namespaces?.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries),
                 TransformOutput = TransformOutput,
                 DocumentationSetPath = DocumentationSetPath,

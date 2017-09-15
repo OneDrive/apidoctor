@@ -28,11 +28,13 @@ namespace ApiDocs.Validation.OData
     using System;
     using System.Xml.Serialization;
     using Transformation;
+    using Utility;
 
     [XmlRoot("Key", Namespace = ODataParser.EdmNamespace)]
+    [Mergable]
     public class Key : XmlBackedTransformableObject
     {
-        [XmlIgnore]
+        [XmlIgnore, MergePolicy(MergePolicy.Ignore)]
         public override string ElementIdentifier { get { return null; } set { } }
 
         [XmlElement("PropertyRef", Namespace = ODataParser.EdmNamespace)]

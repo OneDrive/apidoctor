@@ -25,12 +25,14 @@
 
 namespace ApiDocs.Validation.OData
 {
+    using Utility;
     using System;
     using System.Collections.Generic;
     using System.Xml.Serialization;
     using Transformation;
 
     [XmlRoot("Singleton", Namespace = ODataParser.EdmNamespace)]
+    [Mergable(CollectionIdentifier = "Name")]
     public class Singleton : XmlBackedTransformableObject
     {
         public Singleton()
@@ -41,7 +43,7 @@ namespace ApiDocs.Validation.OData
         [XmlAttribute("Name"), SortBy]
         public string Name { get; set; }
 
-        [XmlAttribute("Type"), ContainsType]
+        [XmlAttribute("Type"), ContainsType, MergePolicy(MergePolicy.EqualOrNull)]
         public string Type { get; set; }
 
         [XmlElement("NavigationPropertyBinding"), Sortable]

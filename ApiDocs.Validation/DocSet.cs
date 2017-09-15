@@ -398,7 +398,7 @@ namespace ApiDocs.Validation
         /// <param name="includeWarnings"></param>
         /// <param name="errors"></param>
         /// <returns></returns>
-        public bool ValidateLinks(bool includeWarnings, string[] relativePathForFiles, out ValidationError[] errors, bool requireFilenameCaseMatch)
+        public bool ValidateLinks(bool includeWarnings, string[] relativePathForFiles, out ValidationError[] errors, bool requireFilenameCaseMatch, bool printOrphanedFiles)
         {
             List<ValidationError> foundErrors = new List<ValidationError>();
 
@@ -439,7 +439,7 @@ namespace ApiDocs.Validation
                 }
             }
 
-            if (relativePathForFiles == null)
+            if (relativePathForFiles == null && printOrphanedFiles)
             {
                 // We only report orphan pages when scanning the whole docset.
                 foundErrors.AddRange(from o in orphanedPageIndex

@@ -25,6 +25,7 @@
 
 namespace ApiDocs.Validation.OData
 {
+    using Utility;
     using System;
     using System.Collections.Generic;
     using System.Linq;
@@ -32,6 +33,7 @@ namespace ApiDocs.Validation.OData
     using Transformation;
 
     [XmlRoot("Schema", Namespace = ODataParser.EdmNamespace)]
+    [Mergable(CollectionIdentifier = "Namespace")]
     public class Schema : XmlBackedTransformableObject
     {
         [XmlAttribute("Namespace", Namespace = ODataParser.EdmNamespace),

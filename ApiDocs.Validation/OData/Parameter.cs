@@ -29,8 +29,9 @@ namespace ApiDocs.Validation.OData
     using System.ComponentModel;
     using System.Xml.Serialization;
     using Transformation;
+    using Utility;
 
-    [XmlRoot("Parameter", Namespace = ODataParser.EdmNamespace)]
+    [XmlRoot("Parameter", Namespace = ODataParser.EdmNamespace), Mergable(CollectionIdentifier = "Name")]
     public class Parameter : XmlBackedTransformableObject
     {
         public Parameter()
@@ -39,20 +40,20 @@ namespace ApiDocs.Validation.OData
             //Nullable = false;
         }
 
-        [XmlAttribute("Name"), SortBy]
+        [XmlAttribute("Name"), SortBy, MergePolicy(EquivalentValues = "this=bindingParameter")]
         public string Name { get; set; }
 
         [XmlAttribute("Type"), ContainsType]
         public string Type { get; set; }
 
 
-        [XmlAttribute("Nullable")]
+        [XmlAttribute("Nullable"), MergePolicy(MergePolicy.Ignore)]
         public bool ValueOfNullableProperty { get; set; }
 
-        [XmlIgnore]
+        [XmlIgnore, MergePolicy(MergePolicy.Ignore)]
         public bool ValueOfNullablePropertySpecified { get; set; }
 
-        [XmlIgnore]
+        [XmlIgnore, MergePolicy(MergePolicy.PreferFalseValue)]
         public bool? Nullable
         {
             get
@@ -78,13 +79,13 @@ namespace ApiDocs.Validation.OData
             }
         }
 
-        [XmlAttribute("Unicode")]
+        [XmlAttribute("Unicode"), MergePolicy(MergePolicy.Ignore)]
         public bool UnicodePropertyValue { get; set; }
 
         [XmlIgnore]
         public bool UnicodePropertyValueSpecified { get; set; }
 
-        [XmlIgnore]
+        [XmlIgnore, MergePolicy(MergePolicy.PreferFalseValue)]
         public bool? Unicode
         {
             get
@@ -109,15 +110,8 @@ namespace ApiDocs.Validation.OData
             }
         }
 
-        [XmlIgnore]
+        [XmlIgnore, MergePolicy(MergePolicy.Ignore)]
         public override string ElementIdentifier { get { return this.Name; } set { this.Name = value; } }
-
-        /// <summary>
-        /// Specify a parameter index so that parameter order can be maintained even if we sort the collections.
-        /// This would come from a transform rule and not from CSDL
-        /// </summary>
-        [XmlIgnore, SortBy(0)]
-        public int? ParameterIndex { get; set; }
 
         public override void ApplyTransformation(BaseModifications value, EntityFramework edmx, string[] versions)
         {

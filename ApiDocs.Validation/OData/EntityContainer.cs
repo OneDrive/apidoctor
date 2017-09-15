@@ -31,8 +31,10 @@ namespace ApiDocs.Validation.OData
     using System.Collections.Generic;
     using System.Xml.Serialization;
     using Transformation;
+    using Utility;
 
     [XmlRoot("EntityContainer", Namespace = ODataParser.EdmNamespace)]
+    [Mergable(CollectionIdentifier = "Name")]
     public class EntityContainer : XmlBackedTransformableObject, IODataNavigable
     {
         public EntityContainer()
@@ -99,7 +101,7 @@ namespace ApiDocs.Validation.OData
             get { return Name; }
         }
 
-        [XmlIgnore]
+        [XmlIgnore, MergePolicy(MergePolicy.Ignore)]
         public override string ElementIdentifier { get { return this.Name; } set { this.Name = value; } }
     }
 }

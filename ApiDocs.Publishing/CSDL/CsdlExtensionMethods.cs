@@ -27,7 +27,15 @@ namespace ApiDocs.Publishing.CSDL
 {
     using ApiDocs.Validation;
     using System;
+    using System.Collections.Generic;
+    using System.Reflection;
+    using System.Text;
     using Validation.Http;
+    using Validation.OData;
+    using Validation.OData.Transformation;
+    using Validation.Utility;
+    using System.Linq;
+
     internal static class CsdlExtensionMethods
     {
 
@@ -67,5 +75,43 @@ namespace ApiDocs.Publishing.CSDL
                 sb.Append(text);
             }
         }
+
+        /// <summary>
+        /// Merge two EntityFramework instances together into the first framework
+        /// </summary>
+        /// <param name="framework1"></param>
+        /// <param name="framework2"></param>
+        internal static EntityFramework MergeWith(this EntityFramework framework1, EntityFramework framework2)
+        {
+            ObjectGraphMerger<EntityFramework> merger = new ObjectGraphMerger<EntityFramework>(framework1, framework2);
+            var edmx = merger.Merge();
+
+            // Clean up bindingParameters on actions and methods to be consistently the same
+            foreach(var schema in edmx.DataServices.Schemas)
+            {
+                foreach (var action in schema.Actions)
+                {
+                    foreach(var param in action.Parameters.Where(x => x.Name == "bindingParameter" || x.Name == "this")) {
+                        param.Name = "bindingParameter";
+                        param.Nullable = null;
+                    }
+                }
+                foreach(var func in schema.Functions)
+                {
+                    foreach (var param in func.Parameters.Where(x => x.Name == "bindingParameter" || x.Name == "this")) {
+                        param.Name = "bindingParameter";
+                        param.Nullable = null;
+                    }
+                }
+            }
+
+            return edmx;
+
+
+        }
+
+       
+
+       
     }
 }

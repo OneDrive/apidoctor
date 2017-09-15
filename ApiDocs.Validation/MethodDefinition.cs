@@ -65,7 +65,7 @@ namespace ApiDocs.Validation
             {
                 Request = request,
                 RequestMetadata = annotation,
-                Identifier = annotation.MethodName,
+                Identifier = annotation.MethodName?.FirstOrDefault(),
                 SourceFile = source,
                 RequiredScopes = annotation.RequiredScopes
             };

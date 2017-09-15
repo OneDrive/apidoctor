@@ -25,6 +25,7 @@
 
 namespace ApiDocs.Validation.OData
 {
+    using Utility;
     using System;
     using System.Collections.Generic;
     using System.ComponentModel;
@@ -44,10 +45,10 @@ namespace ApiDocs.Validation.OData
         [XmlElement("Key", Namespace = ODataParser.EdmNamespace)]
         public Key Key { get; set; }
 
-        [XmlAttribute("Abstract"), DefaultValue(false)]
+        [XmlAttribute("Abstract"), DefaultValue(false), MergePolicy(MergePolicy.PreferTrueValue)]
         public bool Abstract { get; set; }
 
-        [XmlAttribute("HasStream"), DefaultValue(false)]
+        [XmlAttribute("HasStream"), DefaultValue(false), MergePolicy(MergePolicy.PreferTrueValue)]
         public bool HasStream { get; set; }
 
         [XmlElement("NavigationProperty", Namespace = ODataParser.EdmNamespace), Sortable]
