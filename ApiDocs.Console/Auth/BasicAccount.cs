@@ -53,5 +53,10 @@ namespace ApiDocs.ConsoleApp.Auth
         {
             return new BasicCredentials { Username = this.Username, Password = this.Password };
         }
+
+        public void OverrideBaseUrl(string newBaseUrl)
+        {
+            this.BaseUrl = newBaseUrl;
+        }
     }
 }

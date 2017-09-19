@@ -216,6 +216,11 @@ namespace ApiDocs.ConsoleApp.Auth
         {
             return OAuthCredentials.CreateAutoCredentials(this.AccessToken);
         }
+
+        public void OverrideBaseUrl(string newBaseUrl)
+        {
+            this.BaseUrl = newBaseUrl;
+        }
     }
 
     public enum OAuthAccountType

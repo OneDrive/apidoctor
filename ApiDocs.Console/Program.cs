@@ -982,6 +982,12 @@ namespace ApiDocs.ConsoleApp
             Dictionary<string, CheckResults> results = new Dictionary<string, CheckResults>();
             foreach (var account in accountsToProcess)
             {
+                // if the service root URL is also provided, override the account URL
+                if (!string.IsNullOrEmpty(options.ServiceRootUrl))
+                {
+                    account.OverrideBaseUrl(options.ServiceRootUrl);
+                }
+
                 var accountResults = await CheckMethodsForAccountAsync(options, account, methods, docset);
                 if (null != accountResults)
                 {
