@@ -60,7 +60,7 @@ namespace ApiDocs.ConsoleApp
         public BasicCheckOptions CheckDocsVerb { get; set; }
 
         [VerbOption(VerbCheckAll, HelpText = "Check for errors in the documentation (links + resources + examples)")]
-        public BasicCheckOptions CheckAllVerbs { get; set; }
+        public CheckLinkOptions CheckAllVerbs { get; set; }
 
         [VerbOption(VerbService, HelpText = "Check for errors between the documentation and service.")]
         public CheckServiceOptions CheckServiceVerb { get; set; }
