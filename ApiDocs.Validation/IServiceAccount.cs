@@ -72,5 +72,11 @@ namespace ApiDocs.Validation
         /// </summary>
         /// <returns></returns>
         AuthenicationCredentials CreateCredentials();
+
+        /// <summary>
+        /// Allow the base url to be overridden if passed in from another source
+        /// </summary>
+        /// <param name="newBaseUrl"></param>
+        void OverrideBaseUrl(string newBaseUrl);
     }
 }
