@@ -50,6 +50,11 @@ namespace ApiDocs.Validation
         /// Scopes supported by this account / authentication
         /// </summary>
         string[] Scopes {get;}
+
+        /// <summary>
+        /// ApiVersions supported by this account / authentication
+        /// </summary>
+        string[] ApiVersions {get;}
         
         /// <summary>
         /// Additional HTTP headers added to all requests for this account

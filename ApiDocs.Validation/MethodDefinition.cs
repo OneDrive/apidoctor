@@ -57,6 +57,7 @@ namespace ApiDocs.Validation
             this.RequestBodyParameters = new List<ParameterDefinition>();
             this.Scenarios = new List<ScenarioDefinition>();
             this.RequiredScopes = new string[0];
+            this.RequiredApiVersions = new string[0];
         }
 
         public static MethodDefinition FromRequest(string request, CodeBlockAnnotation annotation, DocFile source)
@@ -67,7 +68,8 @@ namespace ApiDocs.Validation
                 RequestMetadata = annotation,
                 Identifier = annotation.MethodName?.FirstOrDefault(),
                 SourceFile = source,
-                RequiredScopes = annotation.RequiredScopes
+                RequiredScopes = annotation.RequiredScopes,
+                RequiredApiVersions = annotation.RequiredApiVersions
             };
             method.Title = method.Identifier;
             return method;
@@ -124,6 +126,11 @@ namespace ApiDocs.Validation
         /// Collection of required scopes for this method to be called successfully (Files.ReadWrite, User.Read, etc)
         /// </summary>
         public string[] RequiredScopes { get; set; }
+
+        /// <summary>
+        /// Collection of required api versions for this method to be called successfully
+        /// </summary>
+        public string[] RequiredApiVersions { get; set; }
         #endregion
 
         public void AddExpectedResponse(string rawResponse, CodeBlockAnnotation annotation)

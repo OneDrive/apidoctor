@@ -94,5 +94,27 @@ namespace ApiDocs.Validation
             var intersection = providedScopes.Intersect(requiredScopes).ToArray();
             return (intersection.Length == requiredScopes.Length);
         }
+
+        /// <summary>
+        /// Returns true if the required api version is in the apiVersions array.
+        /// </summary>
+        /// <param name="requiredApiVersions"></param>
+        /// <param name="providedApiVersions"></param>
+        /// <returns></returns>
+        public static bool ProvidesApiVersions(this string[] providedApiVersions, string[] requiredApiVersions)
+        {
+            if (requiredApiVersions == null || requiredApiVersions.Length == 0 || providedApiVersions == null)
+            {
+                return true;
+            }
+
+            if (providedApiVersions.Length == 0)
+            {
+                return false;
+            }
+
+            var intersection = providedApiVersions.Intersect(requiredApiVersions).ToArray();
+            return (intersection.Length == requiredApiVersions.Length);
+        }
     }
 }

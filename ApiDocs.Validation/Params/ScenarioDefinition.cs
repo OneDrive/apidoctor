@@ -55,11 +55,18 @@ namespace ApiDocs.Validation.Params
             get; set;
         }
 
+        [JsonProperty("apiVersions", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public string[] RequiredApiVersions
+        {
+            get; set;
+        }
+
         #endregion
 
         public ScenarioDefinition()
         {
             this.RequiredScopes = new string[0];
+            this.RequiredApiVersions = new string[0];
         }
 
         [JsonIgnore]

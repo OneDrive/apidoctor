@@ -42,6 +42,7 @@ namespace ApiDocs.ConsoleApp.Auth
         public string Username { get; set; }
         public string Password { get; set; }
         public string[] Scopes { get; set; }
+        public string[] ApiVersions { get; set; }
         public AccountTransforms Transformations { get; }
 
         public Task PrepareForRequestAsync()

@@ -133,6 +133,12 @@ namespace ApiDocs.Validation
         [JsonProperty("scopes", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public string Scopes { get; set; }
 
+        /// <summary>
+        /// Space seperated list of api versions required for this method to be invoked.
+        /// </summary>
+        [JsonProperty("apiVersions", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public string ApiVersions { get; set; }
+
         [JsonProperty("baseType", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public string BaseType { get; set; }
 
@@ -144,6 +150,17 @@ namespace ApiDocs.Validation
                     return new string[0];
                 else
                     return this.Scopes.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            }
+        }
+
+        public string[] RequiredApiVersions
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(this.ApiVersions))
+                    return new string[0];
+                else
+                    return this.ApiVersions.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
             }
         }
 

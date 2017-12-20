@@ -67,7 +67,8 @@ namespace ApiDocs.Validation
                         Description = "verbatim",
                         Enabled = true,
                         MethodName = method.Identifier,
-                        RequiredScopes = method.RequiredScopes
+                        RequiredScopes = method.RequiredScopes,
+                        RequiredApiVersions = method.RequiredApiVersions
                     }
                 };
 //                results.AddResult("init", new ValidationMessage(null, "No scenarios were defined for method {0}. Will request verbatim from docs.", method.Identifier), ValidationOutcome.None);
@@ -133,6 +134,19 @@ namespace ApiDocs.Validation
                     new ValidationWarning(ValidationErrorCode.RequiredScopesMissing,
                     null,
                     "Scenario was not run. Scopes required were not available: {0}", missingScopes.ComponentsJoinedByString(",")));
+                return;
+            }
+
+            string[] requiredApiVersions = method.RequiredApiVersions.Union(scenario.RequiredApiVersions).ToArray();
+
+            if (!account.ApiVersions.ProvidesApiVersions(requiredApiVersions))
+            {
+                var missingApiVersions = from apiVersion in requiredApiVersions where !account.ApiVersions.Contains(apiVersion) select apiVersion;
+
+                results.AddResult(actionName,
+                    new ValidationWarning(ValidationErrorCode.RequiredScopesMissing,
+                    null,
+                    "Scenario was not run. Api Versions required were not available: {0}", missingApiVersions.ComponentsJoinedByString(",")));
                 return;
             }
 

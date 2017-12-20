@@ -77,6 +77,9 @@ namespace ApiDocs.ConsoleApp.Auth
         [JsonProperty("scopes")]
         public string[] Scopes { get; set; }
 
+        [JsonProperty("apiVersions")]
+        public string[] ApiVersions { get; set; }
+
         [JsonProperty("transformations")]
         public AccountTransforms Transformations { get; set; }
 
