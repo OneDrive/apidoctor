@@ -188,12 +188,12 @@ namespace ApiDocs.Validation
 
                 if (null != scenario.TestSetupRequests)
                 {
-                    //foreach (var setupRequest in scenario.TestSetupRequests)
                     for (int i = 0; i < scenario.TestSetupRequests.Count; i++)
                     {
                         try
                         {
-                            if (scenario.MethodName.Contains("mountpoint") && i < 3)
+                            // need to clean up in the future, the first 4 setup requests should be done on secondary account
+                            if (scenario.MethodName.Contains("mountpoint") && i < 4)
                             {
                                 var result = await scenario.TestSetupRequests[i].MakeSetupRequestAsync(storedValuesForScenario, documents, scenario, account[1]);
                                 errors.AddRange(result.Messages);
@@ -229,11 +229,11 @@ namespace ApiDocs.Validation
                     {
                         foreach (var key in scenario.RequestParameters.ToArray())
                         {
-                            if (key.Key.Equals("$.remoteItem.parentReference.driveId"))
+                            if (key.Key.Equals("$.remoteItem.parentReference.driveId") || key.Key.Equals("{drive-id}"))
                             {
                                 scenario.RequestParameters[key.Key] = storedValuesForScenario["[drive-id]"];
                             }
-                            else if (key.Key.Equals("$.remoteItem.id"))
+                            else if (key.Key.Equals("$.remoteItem.id") || key.Key.Equals("{item-id}"))
                             {
                                 scenario.RequestParameters[key.Key] = storedValuesForScenario["[item-id]"];
                             }
