@@ -193,7 +193,7 @@ namespace ApiDocs.Validation
                         try
                         {
                             // use secondary account for specific setup requests
-                            if (setupRequest.SecondaryAccount)
+                            if (setupRequest.SecondaryAccount && account.Length > 1)
                             {
                                 var result = await setupRequest.MakeSetupRequestAsync(storedValuesForScenario, documents, scenario, account[1]);
                                 errors.AddRange(result.Messages);
