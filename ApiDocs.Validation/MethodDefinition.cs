@@ -188,7 +188,8 @@ namespace ApiDocs.Validation
 
                 if (null != scenario.TestSetupRequests)
                 {
-                    for (int i = 0; i < scenario.TestSetupRequests.Count; i++)
+                    int numSetupRequests = scenario.TestSetupRequests.Count;
+                    for (int i = 0; i < numSetupRequests; i++)
                     {
                         try
                         {
