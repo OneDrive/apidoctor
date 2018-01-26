@@ -188,15 +188,14 @@ namespace ApiDocs.Validation
 
                 if (null != scenario.TestSetupRequests)
                 {
-                    int numSetupRequests = scenario.TestSetupRequests.Count;
-                    for (int i = 0; i < numSetupRequests; i++)
+                    foreach (var setupRequest in scenario.TestSetupRequests)
                     {
                         try
                         {
-                            // need to clean up in the future, the first 4 setup requests should be done on secondary account
-                            if (scenario.MethodName.Contains("mountpoint") && i < 4)
+                            // use secondary account for specific setup requests
+                            if (setupRequest.SecondaryAccount)
                             {
-                                var result = await scenario.TestSetupRequests[i].MakeSetupRequestAsync(storedValuesForScenario, documents, scenario, account[1]);
+                                var result = await setupRequest.MakeSetupRequestAsync(storedValuesForScenario, documents, scenario, account[1]);
                                 errors.AddRange(result.Messages);
 
                                 if (result.IsWarningOrError)
@@ -207,7 +206,7 @@ namespace ApiDocs.Validation
                             }
                             else
                             {
-                                var result = await scenario.TestSetupRequests[i].MakeSetupRequestAsync(storedValuesForScenario, documents, scenario, account[0]);
+                                var result = await setupRequest.MakeSetupRequestAsync(storedValuesForScenario, documents, scenario, account[0]);
                                 errors.AddRange(result.Messages);
 
                                 if (result.IsWarningOrError)
@@ -226,20 +225,6 @@ namespace ApiDocs.Validation
 
                 try
                 {
-                    if (scenario.MethodName.Contains("mountpoint"))
-                    {
-                        foreach (var key in scenario.RequestParameters.ToArray())
-                        {
-                            if (key.Key.Equals("$.remoteItem.parentReference.driveId") || key.Key.Equals("{drive-id}"))
-                            {
-                                scenario.RequestParameters[key.Key] = storedValuesForScenario["[drive-id]"];
-                            }
-                            else if (key.Key.Equals("$.remoteItem.id") || key.Key.Equals("{item-id}"))
-                            {
-                                scenario.RequestParameters[key.Key] = storedValuesForScenario["[item-id]"];
-                            }
-                        }
-                    }
                     var placeholderValues = scenario.RequestParameters.ToPlaceholderValuesArray(storedValuesForScenario);
                     request.RewriteRequestWithParameters(placeholderValues);
                 }

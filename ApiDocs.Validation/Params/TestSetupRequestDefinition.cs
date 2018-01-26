@@ -44,6 +44,12 @@ namespace ApiDocs.Validation.Params
         [JsonProperty("capture", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public Dictionary<string, string> OutputValues { get; set; }
 
+        /// <summary>
+        /// Specifies whether we are using a secondary account to make this request
+        /// </summary>
+        [JsonProperty("secondary-account", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public bool SecondaryAccount { get; set; }
+
         public override ValidationError[] CheckForErrors()
         {
             List<ValidationError> errors = new List<ValidationError>();
@@ -121,13 +127,6 @@ namespace ApiDocs.Validation.Params
             }
             MethodDefinition.AddTestHeaderToRequest(scenario, request);
             MethodDefinition.AddAdditionalHeadersToRequest(account, request);            
-
-            // special case for mountpoint tests
-            if (this.RequestParameters != null && this.RequestParameters.ContainsKey("$.remoteItem.parentReference.driveId") && this.RequestParameters.ContainsKey("$.remoteItem.id") && storedValues.ContainsKey("[drive-id]") && storedValues.ContainsKey("[item-id]"))
-            {
-                this.RequestParameters["$.remoteItem.parentReference.driveId"] = storedValues["[drive-id]"];
-                this.RequestParameters["$.remoteItem.id"] = storedValues["[item-id]"];
-            }
 
             // If this is a canned request, we need to merge the parameters / placeholders here
             var placeholderValues = this.RequestParameters.ToPlaceholderValuesArray(storedValues);
