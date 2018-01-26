@@ -110,7 +110,7 @@ namespace ApiDocs.ConsoleApp
             await BuildWorkerApi.AddMessageAsync(message, category, details);
         }
 
-        internal static async Task LogMethodTestResults(Validation.MethodDefinition method, IServiceAccount account, Validation.ValidationResults results)
+        internal static async Task LogMethodTestResults(Validation.MethodDefinition method, IServiceAccount[] account, Validation.ValidationResults results)
         {
             foreach (var scenario in results.Results)
             {
@@ -143,7 +143,7 @@ namespace ApiDocs.ConsoleApp
                     "{0}: {1} [{2}]",
                     method.Identifier,
                     scenario.Name,
-                    account.Name);
+                    account[0].Name);
                 
                 string filename = method.SourceFile.DisplayName;
                 TestOutcome outcome = ToTestOutcome(scenario.Outcome);

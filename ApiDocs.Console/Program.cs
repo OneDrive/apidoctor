@@ -1052,16 +1052,16 @@ namespace ApiDocs.ConsoleApp
         /// <param name="methods"></param>
         /// <param name="docset"></param>
         /// <returns>A CheckResults instance that contains the details of the test run</returns>
-        private static async Task<CheckResults> CheckMethodsForAccountAsync(CheckServiceOptions commandLineOptions, IServiceAccount account, MethodDefinition[] methods, DocSet docset)
+        private static async Task<CheckResults> CheckMethodsForAccountAsync(CheckServiceOptions commandLineOptions, IServiceAccount[] account, MethodDefinition[] methods, DocSet docset)
         {
-            ConfigureAdditionalHeadersForAccount(commandLineOptions, account);
+            ConfigureAdditionalHeadersForAccount(commandLineOptions, account[0]);
 
-            FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, "Testing account: {0}", account.Name);
-            FancyConsole.WriteLine(FancyConsole.ConsoleCodeColor, "Preparing authentication for requests...", account.Name);
+            FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, "Testing account: {0}", account[0].Name);
+            FancyConsole.WriteLine(FancyConsole.ConsoleCodeColor, "Preparing authentication for requests...", account[0].Name);
 
             try
             {
-                await account.PrepareForRequestAsync();
+                await account[0].PrepareForRequestAsync();
             }
             catch (Exception ex)
             {
@@ -1084,14 +1084,14 @@ namespace ApiDocs.ConsoleApp
                 ScenarioDefinition[] scenarios = docset.TestScenarios.ScenariosForMethod(method);
 
                 // Test these scenarios and validate responses
-                ValidationResults results = await method.ValidateServiceResponseAsync(scenarios, account, 
+                ValidationResults results = await method.ValidateServiceResponseAsync(scenarios, account[0], 
                     new ValidationOptions {
                         RelaxedStringValidation = commandLineOptions.RelaxStringTypeValidation,
                         IgnoreRequiredScopes = commandLineOptions.IgnoreRequiredScopes
                     });
 
-                PrintResultsToConsole(method, account, results, commandLineOptions);
-                await TestReport.LogMethodTestResults(method, account, results);
+                PrintResultsToConsole(method, account[0], results, commandLineOptions);
+                await TestReport.LogMethodTestResults(method, account[0], results);
                 docSetResults.RecordResults(results, commandLineOptions);
                 
                 if (concurrentTasks == 1)
@@ -1141,7 +1141,7 @@ namespace ApiDocs.ConsoleApp
         /// <param name="account"></param>
         /// <param name="results"></param>
         /// <param name="options"></param>
-        private static void PrintResultsToConsole(MethodDefinition method, IServiceAccount account, ValidationResults output, CheckServiceOptions options)
+        private static void PrintResultsToConsole(MethodDefinition method, IServiceAccount[] account, ValidationResults output, CheckServiceOptions options)
         {
             // Only allow one thread at a time to write to the console so we don't interleave our results.
             lock (typeof(Program))
@@ -1150,7 +1150,7 @@ namespace ApiDocs.ConsoleApp
                     FancyConsole.ConsoleHeaderColor,
                     "Testing method {0} with account {1}",
                     method.Identifier,
-                    account.Name);
+                    account[0].Name);
 
                 foreach (var scenario in output.Results)
                 {
@@ -1198,12 +1198,12 @@ namespace ApiDocs.ConsoleApp
 
 
 
-        private static void ConfigureAdditionalHeadersForAccount(CheckServiceOptions options, IServiceAccount account)
+        private static void ConfigureAdditionalHeadersForAccount(CheckServiceOptions options, IServiceAccount[] account)
         {
-            if (account.AdditionalHeaders != null && account.AdditionalHeaders.Length > 0)
+            if (account[0].AdditionalHeaders != null && account[0].AdditionalHeaders.Length > 0)
             {
                 // If the account needs additional headers, merge them in.
-                List<string> headers = new List<string>(account.AdditionalHeaders);
+                List<string> headers = new List<string>(account[0].AdditionalHeaders);
                 if (options.AdditionalHeaders != null)
                 {
                     headers.AddRange(options.AdditionalHeaders.Split('|'));

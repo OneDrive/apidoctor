@@ -49,12 +49,12 @@ namespace ApiDocs.Validation
         public static async Task<ValidationResults> ValidateServiceResponseAsync(
             this MethodDefinition method,
             ScenarioDefinition[] scenarios,
-            IServiceAccount account,            
+            IServiceAccount[] account,            
             ValidationOptions options = null)
         {
             if (null == method)
                 throw new ArgumentNullException("method");
-            if (null == account)
+            if (null == account || account.Length == 0)
                 throw new ArgumentNullException("account");
             
             ValidationResults results = new ValidationResults();
@@ -107,7 +107,7 @@ namespace ApiDocs.Validation
         private static async Task ValidateMethodWithScenarioAsync(
             MethodDefinition method,
             ScenarioDefinition scenario,
-            IServiceAccount account,
+            IServiceAccount[] account,
             ValidationResults results,
             ValidationOptions options = null)
         {
@@ -115,7 +115,7 @@ namespace ApiDocs.Validation
                 throw new ArgumentNullException("method");
             if (null == scenario)
                 throw new ArgumentNullException("scenario");
-            if (null == account)
+            if (null == account || account.Length == 0)
                 throw new ArgumentNullException("account");
             if (null == results)
                 throw new ArgumentNullException("results");
@@ -125,10 +125,10 @@ namespace ApiDocs.Validation
             // Check to see if the account + scenario scopes are aligned
 
             string[] requiredScopes = method.RequiredScopes.Union(scenario.RequiredScopes).ToArray();
-
-            if (!account.Scopes.ProvidesScopes(requiredScopes, options.IgnoreRequiredScopes))
+ 
+            if (!account[0].Scopes.ProvidesScopes(requiredScopes, options.IgnoreRequiredScopes))
             {
-                var missingScopes = from scope in requiredScopes where !account.Scopes.Contains(scope) select scope;
+                var missingScopes = from scope in requiredScopes where !account[0].Scopes.Contains(scope) select scope;
 
                 results.AddResult(actionName,
                     new ValidationWarning(ValidationErrorCode.RequiredScopesMissing,
@@ -139,9 +139,9 @@ namespace ApiDocs.Validation
 
             string[] requiredApiVersions = method.RequiredApiVersions.Union(scenario.RequiredApiVersions).ToArray();
 
-            if (!account.ApiVersions.ProvidesApiVersions(requiredApiVersions))
+            if (!account[0].ApiVersions.ProvidesApiVersions(requiredApiVersions))
             {
-                var missingApiVersions = from apiVersion in requiredApiVersions where !account.ApiVersions.Contains(apiVersion) select apiVersion;
+                var missingApiVersions = from apiVersion in requiredApiVersions where !account[0].ApiVersions.Contains(apiVersion) select apiVersion;
 
                 results.AddResult(actionName,
                     new ValidationWarning(ValidationErrorCode.RequiredScopesMissing,
@@ -182,7 +182,7 @@ namespace ApiDocs.Validation
 
             // Execute the actual tested method (the result of the method preview call, which made the test-setup requests)
             startTicks = DateTimeOffset.UtcNow.Ticks;
-            var actualResponse = await requestPreview.GetResponseAsync(account);
+            var actualResponse = await requestPreview.GetResponseAsync(account[0]);
             TimeSpan actualMethodDuration = new TimeSpan(DateTimeOffset.UtcNow.Ticks - startTicks);
 
             var requestResults = results[actionName];

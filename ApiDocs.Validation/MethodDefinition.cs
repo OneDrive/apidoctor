@@ -172,13 +172,13 @@ namespace ApiDocs.Validation
         /// <param name="documents"></param>
         /// <param name="account"></param>
         /// <returns></returns>
-        public async Task<ValidationResult<HttpRequest>> GenerateMethodRequestAsync(ScenarioDefinition scenario, DocSet documents, IServiceAccount account)
+        public async Task<ValidationResult<HttpRequest>> GenerateMethodRequestAsync(ScenarioDefinition scenario, DocSet documents, IServiceAccount[] account)
         {
             var parser = new HttpParser();
             var request = parser.ParseHttpRequest(this.Request);
-            AddAccessTokenToRequest(account.CreateCredentials(), request);
+            AddAccessTokenToRequest(account[0].CreateCredentials(), request);
             AddTestHeaderToRequest(scenario, request);
-            AddAdditionalHeadersToRequest(account, request);
+            AddAdditionalHeadersToRequest(account[0], request);
 
             List<ValidationError> errors = new List<ValidationError>();
 
@@ -188,17 +188,32 @@ namespace ApiDocs.Validation
 
                 if (null != scenario.TestSetupRequests)
                 {
-                    foreach (var setupRequest in scenario.TestSetupRequests)
+                    //foreach (var setupRequest in scenario.TestSetupRequests)
+                    for (int i = 0; i < scenario.TestSetupRequests.Count; i++)
                     {
                         try
                         {
-                            var result = await setupRequest.MakeSetupRequestAsync(storedValuesForScenario, documents, scenario, account);
-                            errors.AddRange(result.Messages);
-
-                            if (result.IsWarningOrError)
+                            if (scenario.MethodName.Contains("mountpoint") && i < 3)
                             {
-                                // If we can an error or warning back from a setup method, we fail the whole request.
-                                return new ValidationResult<HttpRequest>(null, errors);
+                                var result = await scenario.TestSetupRequests[i].MakeSetupRequestAsync(storedValuesForScenario, documents, scenario, account[1]);
+                                errors.AddRange(result.Messages);
+
+                                if (result.IsWarningOrError)
+                                {
+                                    // If we can an error or warning back from a setup method, we fail the whole request.
+                                    return new ValidationResult<HttpRequest>(null, errors);
+                                }
+                            }
+                            else
+                            {
+                                var result = await scenario.TestSetupRequests[i].MakeSetupRequestAsync(storedValuesForScenario, documents, scenario, account[0]);
+                                errors.AddRange(result.Messages);
+
+                                if (result.IsWarningOrError)
+                                {
+                                    // If we can an error or warning back from a setup method, we fail the whole request.
+                                    return new ValidationResult<HttpRequest>(null, errors);
+                                }
                             }
                         }
                         catch (Exception ex)
@@ -210,6 +225,20 @@ namespace ApiDocs.Validation
 
                 try
                 {
+                    if (scenario.MethodName.Contains("mountpoint"))
+                    {
+                        foreach (var key in scenario.RequestParameters.ToArray())
+                        {
+                            if (key.Key.Equals("$.remoteItem.parentReference.driveId"))
+                            {
+                                scenario.RequestParameters[key.Key] = storedValuesForScenario["[drive-id]"];
+                            }
+                            else if (key.Key.Equals("$.remoteItem.id"))
+                            {
+                                scenario.RequestParameters[key.Key] = storedValuesForScenario["[item-id]"];
+                            }
+                        }
+                    }
                     var placeholderValues = scenario.RequestParameters.ToPlaceholderValuesArray(storedValuesForScenario);
                     request.RewriteRequestWithParameters(placeholderValues);
                 }
@@ -244,7 +273,7 @@ namespace ApiDocs.Validation
                 }
             }
 
-            this.ModifyRequestForAccount(request, account);
+            this.ModifyRequestForAccount(request, account[0]);
             return new ValidationResult<HttpRequest>(request, errors);
         }
 
