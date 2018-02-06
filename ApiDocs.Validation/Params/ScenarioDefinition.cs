@@ -61,12 +61,19 @@ namespace ApiDocs.Validation.Params
             get; set;
         }
 
+        [JsonProperty("tags", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public string[] RequiredTags
+        {
+            get; set;
+        }
+
         #endregion
 
         public ScenarioDefinition()
         {
             this.RequiredScopes = new string[0];
             this.RequiredApiVersions = new string[0];
+            this.RequiredTags = new string[0];
         }
 
         [JsonIgnore]

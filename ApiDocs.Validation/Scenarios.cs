@@ -96,7 +96,7 @@ namespace ApiDocs.Validation
         }
 
         /// <summary>
-        /// Returns true if the required api version is in the apiVersions array.
+        /// Returns true if the required api versions are in the provided apiVersions array.
         /// </summary>
         /// <param name="requiredApiVersions"></param>
         /// <param name="providedApiVersions"></param>
@@ -116,5 +116,27 @@ namespace ApiDocs.Validation
             var intersection = providedApiVersions.Intersect(requiredApiVersions).ToArray();
             return (intersection.Length == requiredApiVersions.Length);
         }
+
+        /// <summary>
+        /// Returns true if the required tags are in the provided tags array.
+        /// </summary>
+        /// <param name="requiredTags"></param>
+        /// <param name="providedTags"></param>
+        /// <returns></returns>
+        public static bool ProvidesTags(this string[] providedTags, string[] requiredTags)
+        {
+            if (requiredTags == null || requiredTags.Length == 0 || providedTags == null)
+            {
+                return true;
+            }
+
+            if (providedTags.Length == 0)
+            {
+                return false;
+            }
+
+            var intersection = providedTags.Intersect(requiredTags).ToArray();
+            return (intersection.Length == requiredTags.Length);
+        }        
     }
 }

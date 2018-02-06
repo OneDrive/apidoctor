@@ -43,6 +43,7 @@ namespace ApiDocs.ConsoleApp.Auth
         public string Password { get; set; }
         public string[] Scopes { get; set; }
         public string[] ApiVersions { get; set; }
+        public string[] Tags { get; set; }
         public AccountTransforms Transformations { get; }
 
         public Task PrepareForRequestAsync()

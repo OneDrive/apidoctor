@@ -251,6 +251,7 @@ namespace ApiDocs.ConsoleApp
         private const string IgnoreRequiredScopesArgument = "ignore-scopes";
         private const string ProvidedScopesArgument = "scopes";
         private const string ProvidedApiVersionsArgument = "api-versions";
+        private const string ProvidedTagsArgument = "tags";
 
         public CheckServiceOptions()
         {
@@ -301,8 +302,11 @@ namespace ApiDocs.ConsoleApp
         [Option(ProvidedScopesArgument, HelpText = "Comma separated list of scopes provided for the command line account")]
         public string ProvidedScopes { get; set; }
 
-        [Option(ProvidedApiVersionsArgument, HelpText = "Specifies an API Version to use for account/test")]
+        [Option(ProvidedApiVersionsArgument, HelpText = "Comma separated list of api versions provided for the command line account")]
         public string ProvidedApiVersions { get; set; }
+
+        [Option(ProvidedTagsArgument, HelpText = "Comma separated list of tags provided for the command line account")]
+        public string ProvidedTags { get; set; }
 
         private IServiceAccount GetEnvironmentVariablesAccount()
         {
@@ -347,7 +351,8 @@ namespace ApiDocs.ConsoleApp
                             AccessToken = this.AccessToken,
                             BaseUrl = this.ServiceRootUrl,
                             Scopes = (null != this.ProvidedScopes) ? this.ProvidedScopes.Split(',') : new string[0],
-                            ApiVersions = (null != this.ProvidedApiVersions) ? this.ProvidedApiVersions.Split(',') : new string[0]
+                            ApiVersions = (null != this.ProvidedApiVersions) ? this.ProvidedApiVersions.Split(',') : new string[0],
+                            Tags = (null != this.ProvidedTags) ? this.ProvidedTags.Split(',') : new string[0]
                         });
                 }
             }

@@ -68,7 +68,8 @@ namespace ApiDocs.Validation
                         Enabled = true,
                         MethodName = method.Identifier,
                         RequiredScopes = method.RequiredScopes,
-                        RequiredApiVersions = method.RequiredApiVersions
+                        RequiredApiVersions = method.RequiredApiVersions,
+                        RequiredTags = method.RequiredTags
                     }
                 };
 //                results.AddResult("init", new ValidationMessage(null, "No scenarios were defined for method {0}. Will request verbatim from docs.", method.Identifier), ValidationOutcome.None);
@@ -144,9 +145,22 @@ namespace ApiDocs.Validation
                 var missingApiVersions = from apiVersion in requiredApiVersions where !account[0].ApiVersions.Contains(apiVersion) select apiVersion;
 
                 results.AddResult(actionName,
-                    new ValidationWarning(ValidationErrorCode.RequiredScopesMissing,
+                    new ValidationWarning(ValidationErrorCode.RequiredScopesMissing, // TODO: different warning
                     null,
                     "Scenario was not run. Api Versions required were not available: {0}", missingApiVersions.ComponentsJoinedByString(",")));
+                return;
+            }
+
+            string[] requiredTags = method.RequiredTags.Union(scenario.RequiredTags).ToArray();
+
+            if (!account[0].Tags.ProvidesTags(requiredTags))
+            {
+                var missingTags = from tag in requiredTags where !account[0].Tags.Contains(tag) select tag;
+
+                results.AddResult(actionName,
+                    new ValidationWarning(ValidationErrorCode.RequiredScopesMissing, // TODO: different warning
+                    null,
+                    "Scenario was not run. Tags required were not available: {0}", missingTags.ComponentsJoinedByString(",")));
                 return;
             }
 
