@@ -49,13 +49,14 @@ namespace ApiDocs.Validation
         public static async Task<ValidationResults> ValidateServiceResponseAsync(
             this MethodDefinition method,
             ScenarioDefinition[] scenarios,
-            IServiceAccount[] account,            
+            IServiceAccount primaryAccount,
+            IServiceAccount secondaryAccount,
             ValidationOptions options = null)
         {
             if (null == method)
                 throw new ArgumentNullException("method");
-            if (null == account || account.Length == 0)
-                throw new ArgumentNullException("account");
+            if (null == primaryAccount)
+                throw new ArgumentNullException("primaryAccount");
             
             ValidationResults results = new ValidationResults();
 
@@ -88,7 +89,7 @@ namespace ApiDocs.Validation
             {
                 try
                 {
-                    await ValidateMethodWithScenarioAsync(method, scenario, account, results, options);
+                    await ValidateMethodWithScenarioAsync(method, scenario, primaryAccount, secondaryAccount, results, options);
                 }
                 catch (Exception ex)
                 {
@@ -108,7 +109,8 @@ namespace ApiDocs.Validation
         private static async Task ValidateMethodWithScenarioAsync(
             MethodDefinition method,
             ScenarioDefinition scenario,
-            IServiceAccount[] account,
+            IServiceAccount primaryAccount,
+            IServiceAccount secondaryAccount,
             ValidationResults results,
             ValidationOptions options = null)
         {
@@ -116,8 +118,8 @@ namespace ApiDocs.Validation
                 throw new ArgumentNullException("method");
             if (null == scenario)
                 throw new ArgumentNullException("scenario");
-            if (null == account || account.Length == 0)
-                throw new ArgumentNullException("account");
+            if (null == primaryAccount)
+                throw new ArgumentNullException("primaryAccount");
             if (null == results)
                 throw new ArgumentNullException("results");
 
@@ -127,9 +129,9 @@ namespace ApiDocs.Validation
 
             string[] requiredScopes = method.RequiredScopes.Union(scenario.RequiredScopes).ToArray();
  
-            if (!account[0].Scopes.ProvidesScopes(requiredScopes, options.IgnoreRequiredScopes))
+            if (!primaryAccount.Scopes.ProvidesScopes(requiredScopes, options.IgnoreRequiredScopes))
             {
-                var missingScopes = from scope in requiredScopes where !account[0].Scopes.Contains(scope) select scope;
+                var missingScopes = from scope in requiredScopes where !primaryAccount.Scopes.Contains(scope) select scope;
 
                 results.AddResult(actionName,
                     new ValidationWarning(ValidationErrorCode.RequiredScopesMissing,
@@ -140,12 +142,12 @@ namespace ApiDocs.Validation
 
             string[] requiredApiVersions = method.RequiredApiVersions.Union(scenario.RequiredApiVersions).ToArray();
 
-            if (!account[0].ApiVersions.ProvidesApiVersions(requiredApiVersions))
+            if (!primaryAccount.ApiVersions.ProvidesApiVersions(requiredApiVersions))
             {
-                var missingApiVersions = from apiVersion in requiredApiVersions where !account[0].ApiVersions.Contains(apiVersion) select apiVersion;
+                var missingApiVersions = from apiVersion in requiredApiVersions where !primaryAccount.ApiVersions.Contains(apiVersion) select apiVersion;
 
                 results.AddResult(actionName,
-                    new ValidationWarning(ValidationErrorCode.RequiredScopesMissing, // TODO: different warning
+                    new ValidationWarning(ValidationErrorCode.RequiredApiVersionsMissing,
                     null,
                     "Scenario was not run. Api Versions required were not available: {0}", missingApiVersions.ComponentsJoinedByString(",")));
                 return;
@@ -153,12 +155,12 @@ namespace ApiDocs.Validation
 
             string[] requiredTags = method.RequiredTags.Union(scenario.RequiredTags).ToArray();
 
-            if (!account[0].Tags.ProvidesTags(requiredTags))
+            if (!primaryAccount.Tags.ProvidesTags(requiredTags))
             {
-                var missingTags = from tag in requiredTags where !account[0].Tags.Contains(tag) select tag;
+                var missingTags = from tag in requiredTags where !primaryAccount.Tags.Contains(tag) select tag;
 
                 results.AddResult(actionName,
-                    new ValidationWarning(ValidationErrorCode.RequiredScopesMissing, // TODO: different warning
+                    new ValidationWarning(ValidationErrorCode.RequiredTagsMissing,
                     null,
                     "Scenario was not run. Tags required were not available: {0}", missingTags.ComponentsJoinedByString(",")));
                 return;
@@ -167,7 +169,7 @@ namespace ApiDocs.Validation
             // Generate the tested request by "previewing" the request and executing
             // all test-setup procedures
             long startTicks = DateTimeOffset.UtcNow.Ticks;
-            var requestPreviewResult = await method.GenerateMethodRequestAsync(scenario, method.SourceFile.Parent, account);
+            var requestPreviewResult = await method.GenerateMethodRequestAsync(scenario, method.SourceFile.Parent, primaryAccount, secondaryAccount);
             TimeSpan generateMethodDuration = new TimeSpan(DateTimeOffset.UtcNow.Ticks - startTicks);
             
             // Check to see if an error occured building the request, and abort if so.
@@ -196,7 +198,7 @@ namespace ApiDocs.Validation
 
             // Execute the actual tested method (the result of the method preview call, which made the test-setup requests)
             startTicks = DateTimeOffset.UtcNow.Ticks;
-            var actualResponse = await requestPreview.GetResponseAsync(account[0]);
+            var actualResponse = await requestPreview.GetResponseAsync(primaryAccount);
             TimeSpan actualMethodDuration = new TimeSpan(DateTimeOffset.UtcNow.Ticks - startTicks);
 
             var requestResults = results[actionName];

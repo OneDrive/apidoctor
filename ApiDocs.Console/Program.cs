@@ -1084,7 +1084,7 @@ namespace ApiDocs.ConsoleApp
                 ScenarioDefinition[] scenarios = docset.TestScenarios.ScenariosForMethod(method);
 
                 // Test these scenarios and validate responses
-                ValidationResults results = await method.ValidateServiceResponseAsync(scenarios, new IServiceAccount[] { account }, 
+                ValidationResults results = await method.ValidateServiceResponseAsync(scenarios, account, null, 
                     new ValidationOptions {
                         RelaxedStringValidation = commandLineOptions.RelaxStringTypeValidation,
                         IgnoreRequiredScopes = commandLineOptions.IgnoreRequiredScopes

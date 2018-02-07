@@ -179,13 +179,13 @@ namespace ApiDocs.Validation
         /// <param name="documents"></param>
         /// <param name="account"></param>
         /// <returns></returns>
-        public async Task<ValidationResult<HttpRequest>> GenerateMethodRequestAsync(ScenarioDefinition scenario, DocSet documents, IServiceAccount[] account)
+        public async Task<ValidationResult<HttpRequest>> GenerateMethodRequestAsync(ScenarioDefinition scenario, DocSet documents, IServiceAccount primaryAccount, IServiceAccount secondaryAccount)
         {
             var parser = new HttpParser();
             var request = parser.ParseHttpRequest(this.Request);
-            AddAccessTokenToRequest(account[0].CreateCredentials(), request);
+            AddAccessTokenToRequest(primaryAccount.CreateCredentials(), request);
             AddTestHeaderToRequest(scenario, request);
-            AddAdditionalHeadersToRequest(account[0], request);
+            AddAdditionalHeadersToRequest(primaryAccount, request);
 
             List<ValidationError> errors = new List<ValidationError>();
 
@@ -200,9 +200,9 @@ namespace ApiDocs.Validation
                         try
                         {
                             // use secondary account for specific setup requests
-                            if (setupRequest.SecondaryAccount && account.Length > 1)
+                            if (setupRequest.SecondaryAccount && secondaryAccount != null)
                             {
-                                var result = await setupRequest.MakeSetupRequestAsync(storedValuesForScenario, documents, scenario, account[1]);
+                                var result = await setupRequest.MakeSetupRequestAsync(storedValuesForScenario, documents, scenario, secondaryAccount);
                                 errors.AddRange(result.Messages);
 
                                 if (result.IsWarningOrError)
@@ -213,7 +213,7 @@ namespace ApiDocs.Validation
                             }
                             else
                             {
-                                var result = await setupRequest.MakeSetupRequestAsync(storedValuesForScenario, documents, scenario, account[0]);
+                                var result = await setupRequest.MakeSetupRequestAsync(storedValuesForScenario, documents, scenario, primaryAccount);
                                 errors.AddRange(result.Messages);
 
                                 if (result.IsWarningOrError)
@@ -266,7 +266,7 @@ namespace ApiDocs.Validation
                 }
             }
 
-            this.ModifyRequestForAccount(request, account[0]);
+            this.ModifyRequestForAccount(request, primaryAccount);
             return new ValidationResult<HttpRequest>(request, errors);
         }
 
