@@ -115,6 +115,7 @@ namespace ApiDocs.Validation.Error
         RequiredScopesMissing,
         RequiredApiVersionsMissing,
         RequiredTagsMissing,
+        SecondaryAccountMissing,
         AnnotationParserException,
         DuplicateMethodIdentifier,
         ContentFormatException

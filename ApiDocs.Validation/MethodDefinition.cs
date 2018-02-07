@@ -199,9 +199,21 @@ namespace ApiDocs.Validation
                     {
                         try
                         {
-                            // use secondary account for specific setup requests
-                            if (setupRequest.SecondaryAccount && secondaryAccount != null)
+                            // Use secondary account for specific setup requests
+                            if (setupRequest.SecondaryAccount)
                             {
+                                if (secondaryAccount == null)
+                                {
+                                    // We are expecting a secondary account
+                                    errors.Add(
+                                        new ValidationError(
+                                            ValidationErrorCode.SecondaryAccountMissing,
+                                            "GenerateMethodRequestAsync",
+                                            "Expected secondary account for test scenario"));
+
+                                    return new ValidationResult<HttpRequest>(null, errors);
+                                }
+
                                 var result = await setupRequest.MakeSetupRequestAsync(storedValuesForScenario, documents, scenario, secondaryAccount);
                                 errors.AddRange(result.Messages);
 
