@@ -81,12 +81,12 @@ namespace ApiDocs.Validation
         /// <returns></returns>
         public static bool ProvidesScopes(this string[] providedScopes, string[] requiredScopes, bool ignoreScopes)
         {
-            if (ignoreScopes || requiredScopes == null || requiredScopes.Length == 0 || providedScopes == null)
+            if (ignoreScopes || requiredScopes == null || requiredScopes.Length == 0)
             {
                 return true;
             }
 
-            if (providedScopes.Length == 0)
+            if (providedScopes == null || providedScopes.Length == 0)
             {
                 return false;
             }
@@ -103,12 +103,12 @@ namespace ApiDocs.Validation
         /// <returns></returns>
         public static bool ProvidesApiVersions(this string[] providedApiVersions, string[] requiredApiVersions)
         {
-            if (requiredApiVersions == null || requiredApiVersions.Length == 0 || providedApiVersions == null)
+            if (requiredApiVersions == null || requiredApiVersions.Length == 0)
             {
                 return true;
             }
 
-            if (providedApiVersions.Length == 0)
+            if (providedApiVersions == null || providedApiVersions.Length == 0)
             {
                 return false;
             }
@@ -125,12 +125,12 @@ namespace ApiDocs.Validation
         /// <returns></returns>
         public static bool ProvidesTags(this string[] providedTags, string[] requiredTags)
         {
-            if (requiredTags == null || requiredTags.Length == 0 || providedTags == null)
+            if (requiredTags == null || requiredTags.Length == 0)
             {
                 return true;
             }
 
-            if (providedTags.Length == 0)
+            if (providedTags == null || providedTags.Length == 0)
             {
                 return false;
             }
