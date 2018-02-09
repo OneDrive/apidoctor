@@ -971,7 +971,7 @@ namespace ApiDocs.ConsoleApp
             {
                 var secondaryAccounts = options.FoundAccounts.Where(
                     x => options.SecondaryAccountName.Equals(x.Name));
-                secondaryAccount = secondaryAccounts.Any() ? secondaryAccounts.First() : null;
+                secondaryAccount = secondaryAccounts.FirstOrDefault();
             }
 
             var accountsToProcess =
