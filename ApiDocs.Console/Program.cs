@@ -966,6 +966,14 @@ namespace ApiDocs.ConsoleApp
                 return false;
             }
 
+            IServiceAccount secondaryAccount = null;
+            if (options.SecondaryAccountName != null)
+            {
+                var secondaryAccounts = options.FoundAccounts.Where(
+                    x => options.SecondaryAccountName.Equals(x.Name));
+                secondaryAccount = secondaryAccounts.Any() ? secondaryAccounts.First() : null;
+            }
+
             var accountsToProcess =
                 options.FoundAccounts.Where(
                     x => string.IsNullOrEmpty(options.AccountName)
@@ -988,7 +996,7 @@ namespace ApiDocs.ConsoleApp
                     account.OverrideBaseUrl(options.ServiceRootUrl);
                 }
 
-                var accountResults = await CheckMethodsForAccountAsync(options, account, methods, docset);
+                var accountResults = await CheckMethodsForAccountAsync(options, account, secondaryAccount, methods, docset);
                 if (null != accountResults)
                 {
                     results[account.Name] = accountResults;
@@ -1052,21 +1060,36 @@ namespace ApiDocs.ConsoleApp
         /// <param name="methods"></param>
         /// <param name="docset"></param>
         /// <returns>A CheckResults instance that contains the details of the test run</returns>
-        private static async Task<CheckResults> CheckMethodsForAccountAsync(CheckServiceOptions commandLineOptions, IServiceAccount account, MethodDefinition[] methods, DocSet docset)
+        private static async Task<CheckResults> CheckMethodsForAccountAsync(CheckServiceOptions commandLineOptions, IServiceAccount primaryAccount, IServiceAccount secondaryAccount, MethodDefinition[] methods, DocSet docset)
         {
-            ConfigureAdditionalHeadersForAccount(commandLineOptions, account);
+            ConfigureAdditionalHeadersForAccount(commandLineOptions, primaryAccount);
 
-            FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, "Testing account: {0}", account.Name);
-            FancyConsole.WriteLine(FancyConsole.ConsoleCodeColor, "Preparing authentication for requests...", account.Name);
+            FancyConsole.WriteLine(FancyConsole.ConsoleHeaderColor, "Testing account: {0}", primaryAccount.Name);
+            FancyConsole.WriteLine(FancyConsole.ConsoleCodeColor, "Preparing authentication for requests...", primaryAccount.Name);
 
             try
             {
-                await account.PrepareForRequestAsync();
+                await primaryAccount.PrepareForRequestAsync();
             }
             catch (Exception ex)
             {
                 RecordError(ex.Message);
                 return null;
+            }
+
+            if (secondaryAccount != null)
+            {
+                ConfigureAdditionalHeadersForAccount(commandLineOptions, secondaryAccount);
+
+                try
+                {
+                    await secondaryAccount.PrepareForRequestAsync();
+                }
+                catch (Exception ex)
+                {
+                    RecordError(ex.Message);
+                    return null;
+                }
             }
             
             int concurrentTasks = commandLineOptions.ParallelTests ? ParallelTaskCount : 1;
@@ -1084,14 +1107,14 @@ namespace ApiDocs.ConsoleApp
                 ScenarioDefinition[] scenarios = docset.TestScenarios.ScenariosForMethod(method);
 
                 // Test these scenarios and validate responses
-                ValidationResults results = await method.ValidateServiceResponseAsync(scenarios, account, null, 
+                ValidationResults results = await method.ValidateServiceResponseAsync(scenarios, primaryAccount, secondaryAccount, 
                     new ValidationOptions {
                         RelaxedStringValidation = commandLineOptions.RelaxStringTypeValidation,
                         IgnoreRequiredScopes = commandLineOptions.IgnoreRequiredScopes
                     });
 
-                PrintResultsToConsole(method, account, results, commandLineOptions);
-                await TestReport.LogMethodTestResults(method, account, results);
+                PrintResultsToConsole(method, primaryAccount, results, commandLineOptions);
+                await TestReport.LogMethodTestResults(method, primaryAccount, results);
                 docSetResults.RecordResults(results, commandLineOptions);
                 
                 if (concurrentTasks == 1)

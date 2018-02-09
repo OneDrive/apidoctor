@@ -271,6 +271,9 @@ namespace ApiDocs.ConsoleApp
         [Option("account", HelpText="Specify the name of an account in the account configuration file. If omitted all enabled accounts will be used.")]
         public string AccountName { get; set; }
 
+        [Option("secondary-account", HelpText="Specify the name of a secondary account in the account configuration file.")]
+        public string SecondaryAccountName { get; set; }
+
         [Option("pause", HelpText="Pause between method requests.")]
         public bool PauseBetweenRequests { get; set; }
 
