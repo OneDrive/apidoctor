@@ -113,6 +113,9 @@ namespace ApiDocs.Validation.Error
         DocumentHeaderInWrongPosition,
         SkippedSimilarErrors,
         RequiredScopesMissing,
+        RequiredApiVersionsMissing,
+        RequiredTagsMissing,
+        SecondaryAccountMissing,
         AnnotationParserException,
         DuplicateMethodIdentifier,
         ContentFormatException

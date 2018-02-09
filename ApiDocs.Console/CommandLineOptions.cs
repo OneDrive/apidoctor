@@ -250,6 +250,8 @@ namespace ApiDocs.ConsoleApp
         private const string HttpLoggerArgument = "httplog";
         private const string IgnoreRequiredScopesArgument = "ignore-scopes";
         private const string ProvidedScopesArgument = "scopes";
+        private const string ProvidedApiVersionsArgument = "api-versions";
+        private const string ProvidedTagsArgument = "tags";
 
         public CheckServiceOptions()
         {
@@ -268,6 +270,9 @@ namespace ApiDocs.ConsoleApp
         // 3. Using an accounts file - auto-detected
         [Option("account", HelpText="Specify the name of an account in the account configuration file. If omitted all enabled accounts will be used.")]
         public string AccountName { get; set; }
+
+        [Option("secondary-account", HelpText="Specify the name of a secondary account in the account configuration file.")]
+        public string SecondaryAccountName { get; set; }
 
         [Option("pause", HelpText="Pause between method requests.")]
         public bool PauseBetweenRequests { get; set; }
@@ -299,6 +304,12 @@ namespace ApiDocs.ConsoleApp
 
         [Option(ProvidedScopesArgument, HelpText = "Comma separated list of scopes provided for the command line account")]
         public string ProvidedScopes { get; set; }
+
+        [Option(ProvidedApiVersionsArgument, HelpText = "Comma separated list of api versions provided for the command line account")]
+        public string ProvidedApiVersions { get; set; }
+
+        [Option(ProvidedTagsArgument, HelpText = "Comma separated list of tags provided for the command line account")]
+        public string ProvidedTags { get; set; }
 
         private IServiceAccount GetEnvironmentVariablesAccount()
         {
@@ -342,7 +353,9 @@ namespace ApiDocs.ConsoleApp
                             Enabled = true,
                             AccessToken = this.AccessToken,
                             BaseUrl = this.ServiceRootUrl,
-                            Scopes = (null != this.ProvidedScopes) ? this.ProvidedScopes.Split(',') : new string[0]
+                            Scopes = (null != this.ProvidedScopes) ? this.ProvidedScopes.Split(',') : new string[0],
+                            ApiVersions = (null != this.ProvidedApiVersions) ? this.ProvidedApiVersions.Split(',') : new string[0],
+                            Tags = (null != this.ProvidedTags) ? this.ProvidedTags.Split(',') : new string[0]
                         });
                 }
             }

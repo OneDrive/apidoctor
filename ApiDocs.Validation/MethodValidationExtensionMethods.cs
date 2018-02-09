@@ -49,13 +49,14 @@ namespace ApiDocs.Validation
         public static async Task<ValidationResults> ValidateServiceResponseAsync(
             this MethodDefinition method,
             ScenarioDefinition[] scenarios,
-            IServiceAccount account,            
+            IServiceAccount primaryAccount,
+            IServiceAccount secondaryAccount,
             ValidationOptions options = null)
         {
             if (null == method)
                 throw new ArgumentNullException("method");
-            if (null == account)
-                throw new ArgumentNullException("account");
+            if (null == primaryAccount)
+                throw new ArgumentNullException("primaryAccount");
             
             ValidationResults results = new ValidationResults();
 
@@ -67,7 +68,9 @@ namespace ApiDocs.Validation
                         Description = "verbatim",
                         Enabled = true,
                         MethodName = method.Identifier,
-                        RequiredScopes = method.RequiredScopes
+                        RequiredScopes = method.RequiredScopes,
+                        RequiredApiVersions = method.RequiredApiVersions,
+                        RequiredTags = method.RequiredTags
                     }
                 };
 //                results.AddResult("init", new ValidationMessage(null, "No scenarios were defined for method {0}. Will request verbatim from docs.", method.Identifier), ValidationOutcome.None);
@@ -86,7 +89,7 @@ namespace ApiDocs.Validation
             {
                 try
                 {
-                    await ValidateMethodWithScenarioAsync(method, scenario, account, results, options);
+                    await ValidateMethodWithScenarioAsync(method, scenario, primaryAccount, secondaryAccount, results, options);
                 }
                 catch (Exception ex)
                 {
@@ -106,7 +109,8 @@ namespace ApiDocs.Validation
         private static async Task ValidateMethodWithScenarioAsync(
             MethodDefinition method,
             ScenarioDefinition scenario,
-            IServiceAccount account,
+            IServiceAccount primaryAccount,
+            IServiceAccount secondaryAccount,
             ValidationResults results,
             ValidationOptions options = null)
         {
@@ -114,8 +118,8 @@ namespace ApiDocs.Validation
                 throw new ArgumentNullException("method");
             if (null == scenario)
                 throw new ArgumentNullException("scenario");
-            if (null == account)
-                throw new ArgumentNullException("account");
+            if (null == primaryAccount)
+                throw new ArgumentNullException("primaryAccount");
             if (null == results)
                 throw new ArgumentNullException("results");
 
@@ -124,10 +128,10 @@ namespace ApiDocs.Validation
             // Check to see if the account + scenario scopes are aligned
 
             string[] requiredScopes = method.RequiredScopes.Union(scenario.RequiredScopes).ToArray();
-
-            if (!account.Scopes.ProvidesScopes(requiredScopes, options.IgnoreRequiredScopes))
+ 
+            if (!primaryAccount.Scopes.ProvidesScopes(requiredScopes, options.IgnoreRequiredScopes))
             {
-                var missingScopes = from scope in requiredScopes where !account.Scopes.Contains(scope) select scope;
+                var missingScopes = from scope in requiredScopes where !primaryAccount.Scopes.Contains(scope) select scope;
 
                 results.AddResult(actionName,
                     new ValidationWarning(ValidationErrorCode.RequiredScopesMissing,
@@ -136,10 +140,36 @@ namespace ApiDocs.Validation
                 return;
             }
 
+            string[] requiredApiVersions = method.RequiredApiVersions.Union(scenario.RequiredApiVersions).ToArray();
+
+            if (!primaryAccount.ApiVersions.ProvidesApiVersions(requiredApiVersions))
+            {
+                var missingApiVersions = from apiVersion in requiredApiVersions where !primaryAccount.ApiVersions.Contains(apiVersion) select apiVersion;
+
+                results.AddResult(actionName,
+                    new ValidationWarning(ValidationErrorCode.RequiredApiVersionsMissing,
+                    null,
+                    "Scenario was not run. Api Versions required were not available: {0}", missingApiVersions.ComponentsJoinedByString(",")));
+                return;
+            }
+
+            string[] requiredTags = method.RequiredTags.Union(scenario.RequiredTags).ToArray();
+
+            if (!primaryAccount.Tags.ProvidesTags(requiredTags))
+            {
+                var missingTags = from tag in requiredTags where !primaryAccount.Tags.Contains(tag) select tag;
+
+                results.AddResult(actionName,
+                    new ValidationWarning(ValidationErrorCode.RequiredTagsMissing,
+                    null,
+                    "Scenario was not run. Tags required were not available: {0}", missingTags.ComponentsJoinedByString(",")));
+                return;
+            }
+
             // Generate the tested request by "previewing" the request and executing
             // all test-setup procedures
             long startTicks = DateTimeOffset.UtcNow.Ticks;
-            var requestPreviewResult = await method.GenerateMethodRequestAsync(scenario, method.SourceFile.Parent, account);
+            var requestPreviewResult = await method.GenerateMethodRequestAsync(scenario, method.SourceFile.Parent, primaryAccount, secondaryAccount);
             TimeSpan generateMethodDuration = new TimeSpan(DateTimeOffset.UtcNow.Ticks - startTicks);
             
             // Check to see if an error occured building the request, and abort if so.
@@ -168,7 +198,7 @@ namespace ApiDocs.Validation
 
             // Execute the actual tested method (the result of the method preview call, which made the test-setup requests)
             startTicks = DateTimeOffset.UtcNow.Ticks;
-            var actualResponse = await requestPreview.GetResponseAsync(account);
+            var actualResponse = await requestPreview.GetResponseAsync(primaryAccount);
             TimeSpan actualMethodDuration = new TimeSpan(DateTimeOffset.UtcNow.Ticks - startTicks);
 
             var requestResults = results[actionName];

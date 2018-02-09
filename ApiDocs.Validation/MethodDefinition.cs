@@ -57,6 +57,8 @@ namespace ApiDocs.Validation
             this.RequestBodyParameters = new List<ParameterDefinition>();
             this.Scenarios = new List<ScenarioDefinition>();
             this.RequiredScopes = new string[0];
+            this.RequiredApiVersions = new string[0];
+            this.RequiredTags = new string[0];
         }
 
         public static MethodDefinition FromRequest(string request, CodeBlockAnnotation annotation, DocFile source)
@@ -67,7 +69,9 @@ namespace ApiDocs.Validation
                 RequestMetadata = annotation,
                 Identifier = annotation.MethodName?.FirstOrDefault(),
                 SourceFile = source,
-                RequiredScopes = annotation.RequiredScopes
+                RequiredScopes = annotation.RequiredScopes,
+                RequiredApiVersions = annotation.RequiredApiVersions,
+                RequiredTags = annotation.RequiredTags
             };
             method.Title = method.Identifier;
             return method;
@@ -124,6 +128,16 @@ namespace ApiDocs.Validation
         /// Collection of required scopes for this method to be called successfully (Files.ReadWrite, User.Read, etc)
         /// </summary>
         public string[] RequiredScopes { get; set; }
+
+        /// <summary>
+        /// Collection of required api versions for this method to be called successfully
+        /// </summary>
+        public string[] RequiredApiVersions { get; set; }
+
+        /// <summary>
+        /// Collection of required tags for this method to be called successfully 
+        /// </summary>
+        public string[] RequiredTags { get; set; }
         #endregion
 
         public void AddExpectedResponse(string rawResponse, CodeBlockAnnotation annotation)
@@ -165,13 +179,13 @@ namespace ApiDocs.Validation
         /// <param name="documents"></param>
         /// <param name="account"></param>
         /// <returns></returns>
-        public async Task<ValidationResult<HttpRequest>> GenerateMethodRequestAsync(ScenarioDefinition scenario, DocSet documents, IServiceAccount account)
+        public async Task<ValidationResult<HttpRequest>> GenerateMethodRequestAsync(ScenarioDefinition scenario, DocSet documents, IServiceAccount primaryAccount, IServiceAccount secondaryAccount)
         {
             var parser = new HttpParser();
             var request = parser.ParseHttpRequest(this.Request);
-            AddAccessTokenToRequest(account.CreateCredentials(), request);
+            AddAccessTokenToRequest(primaryAccount.CreateCredentials(), request);
             AddTestHeaderToRequest(scenario, request);
-            AddAdditionalHeadersToRequest(account, request);
+            AddAdditionalHeadersToRequest(primaryAccount, request);
 
             List<ValidationError> errors = new List<ValidationError>();
 
@@ -185,13 +199,40 @@ namespace ApiDocs.Validation
                     {
                         try
                         {
-                            var result = await setupRequest.MakeSetupRequestAsync(storedValuesForScenario, documents, scenario, account);
-                            errors.AddRange(result.Messages);
-
-                            if (result.IsWarningOrError)
+                            // Use secondary account for specific setup requests
+                            if (setupRequest.SecondaryAccount)
                             {
-                                // If we can an error or warning back from a setup method, we fail the whole request.
-                                return new ValidationResult<HttpRequest>(null, errors);
+                                if (secondaryAccount == null)
+                                {
+                                    // We are expecting a secondary account
+                                    errors.Add(
+                                        new ValidationError(
+                                            ValidationErrorCode.SecondaryAccountMissing,
+                                            "GenerateMethodRequestAsync",
+                                            "Expected secondary account for test scenario"));
+
+                                    return new ValidationResult<HttpRequest>(null, errors);
+                                }
+
+                                var result = await setupRequest.MakeSetupRequestAsync(storedValuesForScenario, documents, scenario, secondaryAccount);
+                                errors.AddRange(result.Messages);
+
+                                if (result.IsWarningOrError)
+                                {
+                                    // If we can an error or warning back from a setup method, we fail the whole request.
+                                    return new ValidationResult<HttpRequest>(null, errors);
+                                }
+                            }
+                            else
+                            {
+                                var result = await setupRequest.MakeSetupRequestAsync(storedValuesForScenario, documents, scenario, primaryAccount);
+                                errors.AddRange(result.Messages);
+
+                                if (result.IsWarningOrError)
+                                {
+                                    // If we can an error or warning back from a setup method, we fail the whole request.
+                                    return new ValidationResult<HttpRequest>(null, errors);
+                                }
                             }
                         }
                         catch (Exception ex)
@@ -237,7 +278,7 @@ namespace ApiDocs.Validation
                 }
             }
 
-            this.ModifyRequestForAccount(request, account);
+            this.ModifyRequestForAccount(request, primaryAccount);
             return new ValidationResult<HttpRequest>(request, errors);
         }
 

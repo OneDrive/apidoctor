@@ -122,16 +122,28 @@ namespace ApiDocs.Validation
         public string KeyPropertyName { get; set; }
 
         /// <summary>
-        /// Use this property to delcare that a custom function request is idempotent (has no side-effects).
+        /// Use this property to declare that a custom function request is idempotent (has no side-effects).
         /// </summary>
         [JsonProperty("idempotent", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public bool IsIdempotent { get; set; }
 
         /// <summary>
-        /// Space seperated list of OAuth scopes required for this method to be invoked.
+        /// Space separated list of OAuth scopes required for this method to be invoked.
         /// </summary>
         [JsonProperty("scopes", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public string Scopes { get; set; }
+
+        /// <summary>
+        /// Space separated list of api versions required for this method to be invoked.
+        /// </summary>
+        [JsonProperty("apiVersions", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public string ApiVersions { get; set; }
+
+        /// <summary>
+        /// Space separated list of tags that represent capabilities required for this method to be invoked.
+        /// </summary>
+        [JsonProperty("tags", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public string Tags { get; set; }
 
         [JsonProperty("baseType", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public string BaseType { get; set; }
@@ -146,6 +158,28 @@ namespace ApiDocs.Validation
                     return this.Scopes.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
             }
         }
+
+        public string[] RequiredApiVersions
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(this.ApiVersions))
+                    return new string[0];
+                else
+                    return this.ApiVersions.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            }
+        }
+
+        public string[] RequiredTags
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(this.Tags))
+                    return new string[0];
+                else
+                    return this.Tags.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            }
+        }        
 
         /// <summary>
         /// Convert a JSON string into an instance of this class

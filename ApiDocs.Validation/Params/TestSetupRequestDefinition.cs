@@ -44,6 +44,12 @@ namespace ApiDocs.Validation.Params
         [JsonProperty("capture", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public Dictionary<string, string> OutputValues { get; set; }
 
+        /// <summary>
+        /// Specifies whether we are using a secondary account to make this request
+        /// </summary>
+        [JsonProperty("secondary-account", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public bool SecondaryAccount { get; set; }
+
         public override ValidationError[] CheckForErrors()
         {
             List<ValidationError> errors = new List<ValidationError>();

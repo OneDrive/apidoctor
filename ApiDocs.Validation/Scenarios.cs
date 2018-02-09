@@ -81,12 +81,12 @@ namespace ApiDocs.Validation
         /// <returns></returns>
         public static bool ProvidesScopes(this string[] providedScopes, string[] requiredScopes, bool ignoreScopes)
         {
-            if (ignoreScopes || requiredScopes == null || requiredScopes.Length == 0 || providedScopes == null)
+            if (ignoreScopes || requiredScopes == null || requiredScopes.Length == 0)
             {
                 return true;
             }
 
-            if (providedScopes.Length == 0)
+            if (providedScopes == null || providedScopes.Length == 0)
             {
                 return false;
             }
@@ -94,5 +94,49 @@ namespace ApiDocs.Validation
             var intersection = providedScopes.Intersect(requiredScopes).ToArray();
             return (intersection.Length == requiredScopes.Length);
         }
+
+        /// <summary>
+        /// Returns true if the required api versions are in the provided apiVersions array.
+        /// </summary>
+        /// <param name="requiredApiVersions"></param>
+        /// <param name="providedApiVersions"></param>
+        /// <returns></returns>
+        public static bool ProvidesApiVersions(this string[] providedApiVersions, string[] requiredApiVersions)
+        {
+            if (requiredApiVersions == null || requiredApiVersions.Length == 0)
+            {
+                return true;
+            }
+
+            if (providedApiVersions == null || providedApiVersions.Length == 0)
+            {
+                return false;
+            }
+
+            var intersection = providedApiVersions.Intersect(requiredApiVersions).ToArray();
+            return (intersection.Length == requiredApiVersions.Length);
+        }
+
+        /// <summary>
+        /// Returns true if the required tags are in the provided tags array.
+        /// </summary>
+        /// <param name="requiredTags"></param>
+        /// <param name="providedTags"></param>
+        /// <returns></returns>
+        public static bool ProvidesTags(this string[] providedTags, string[] requiredTags)
+        {
+            if (requiredTags == null || requiredTags.Length == 0)
+            {
+                return true;
+            }
+
+            if (providedTags == null || providedTags.Length == 0)
+            {
+                return false;
+            }
+
+            var intersection = providedTags.Intersect(requiredTags).ToArray();
+            return (intersection.Length == requiredTags.Length);
+        }        
     }
 }
