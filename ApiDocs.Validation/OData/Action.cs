@@ -85,6 +85,16 @@ namespace ApiDocs.Validation.OData
                 this.Name = parts[0];
                 if (parts.Length > 1)
                 {
+                    if (parts[1].StartsWith("Collection("))
+                    {
+                        var collectionClosingParen = parts[1].IndexOf(")", "Collection(".Length);
+                        if (collectionClosingParen > 0)
+                        {
+                            this.BindingParameterType = parts[1].Substring(0, collectionClosingParen+1);
+                            parts[1] = parts[1].Substring(collectionClosingParen + 1);
+                        }
+                    }
+
                     string[] parameters = parts[1].Split(new char[] { '(', ')' }, StringSplitOptions.RemoveEmptyEntries);
                     this.BindingParameterType = parameters[0];
                     for(int i=1; i<parameters.Length; i++)
