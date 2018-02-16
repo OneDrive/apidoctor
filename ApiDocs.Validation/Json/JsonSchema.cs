@@ -39,6 +39,8 @@ namespace ApiDocs.Validation.Json
         #region Properties
         public string ResourceName { get { return this.Metadata?.ResourceType; } }
 
+        public string ResourceNameAka { get { return this.Metadata?.ResourceTypeAka; } }
+
         protected Dictionary<string, ParameterDefinition> ExpectedProperties { get; private set; }
 
         internal CodeBlockAnnotation Metadata { get; private set; }
