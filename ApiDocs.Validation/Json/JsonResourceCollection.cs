@@ -140,7 +140,7 @@ namespace ApiDocs.Validation.Json
                 schema = this.GetJsonSchema(schema.ResourceNameAka, newErrors, expectedResponseJson);
                 if (null == schema)
                 {
-                    newErrors.Add(new ValidationError(ValidationErrorCode.ResourceTypeNotFound, null, "Unable to locate a definition for resource type: {0}", expectedResourceType));
+                    newErrors.Add(new ValidationError(ValidationErrorCode.ResourceTypeNotFound, null, "Unable to locate a definition for resource type: {0}", schema.ResourceNameAka));
                 }
                 else
                 {
