@@ -44,6 +44,7 @@ namespace ApiDocs.Validation
             this.OriginalExampleText = content;
             this.SourceFile = source;
             this.Name = sourceAnnotation.ResourceType;
+            this.NameAka = sourceAnnotation.ResourceTypeAka;
             this.KeyPropertyName = sourceAnnotation.KeyPropertyName;
 
             if (string.IsNullOrEmpty(sourceAnnotation.ResourceType))
@@ -76,6 +77,11 @@ namespace ApiDocs.Validation
         /// The type identifier for the resource defined in this class (@odata.type)
         /// </summary>
         public string Name { get; protected set; }
+
+        /// <summary>
+        /// The oneDrive type for the resource defined in this class (@type.aka)
+        /// </summary>
+        public string NameAka { get; protected set; }
 
         /// <summary>
         /// Parsed and reformatted resource read from the documentation

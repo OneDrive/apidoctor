@@ -74,7 +74,7 @@ namespace ApiDocs.Validation.Json
                 else if (!this.registeredSchema.TryGetValue(resourceType, out schema))
                 {
                     newErrors.Add(new ValidationWarning(ValidationErrorCode.ResponseResourceTypeMissing, null, "Missing required resource: {0}. Validation limited to basics only.", resourceType));
-                    // Create a new schema based on what's avaiable in the json
+                    // Create a new schema based on what's available in the json
                     schema = new JsonSchema(actualResponseBodyJson, new CodeBlockAnnotation { ResourceType = expectedResponseAnnotation.ResourceType });
                 }
 
@@ -134,6 +134,24 @@ namespace ApiDocs.Validation.Json
             }
 
             schemaErrors = newErrors.ToArray();
+
+            if (schemaErrors.WereWarningsOrErrors() && schema.ResourceNameAka != null)
+            {
+                var expectedResourceTypeAka = schema.ResourceNameAka;
+                schema = this.GetJsonSchema(expectedResourceTypeAka, newErrors, expectedResponseJson);
+                if (null == schema)
+                {
+                    newErrors.Add(new ValidationError(ValidationErrorCode.ResourceTypeNotFound, null, "Unable to locate a definition for resource type: {0}", expectedResourceTypeAka));
+                }
+                else
+                {
+                    ValidationError[] validationJsonOutput;
+                    this.ValidateJsonCompilesWithSchema(schema, new JsonExample(actualResponse.Body, method.ExpectedResponseMetadata), out validationJsonOutput, (null != expectedResponseJson) ? new JsonExample(expectedResponseJson) : null, options);
+                    newErrors.AddRange(validationJsonOutput);
+                }
+                schemaErrors = newErrors.ToArray();
+            }
+
             return !schemaErrors.WereWarningsOrErrors();
 
         }

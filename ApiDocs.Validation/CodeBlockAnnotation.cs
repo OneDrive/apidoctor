@@ -47,6 +47,9 @@ namespace ApiDocs.Validation
             set { this.ResourceType = value; }
         }
 
+        [JsonProperty("@type.aka", NullValueHandling=NullValueHandling.Ignore )]
+        public string ResourceTypeAka { get; set; }
+
         /// <summary>
         /// Type of code block
         /// </summary>
