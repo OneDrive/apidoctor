@@ -10,11 +10,11 @@ Thank you for your interest in Markdown Scanner!
 
 You can contribute to Markdown Scanner in these ways:
 
-* Create issues based on bugs you've found when using markdown-scanner.
-* Create issues based on desired but missing functionality for markdown-scanner.
-* Contribute additional unit test cases that increase code coverage and validation of key scenarios for markdown-scanner. Tests should always pass on the latest master codebase.
+* Create issues based on bugs you've found when using API Doctor.
+* Create issues based on desired but missing functionality for API Doctor.
+* Contribute additional unit test cases that increase code coverage and validation of key scenarios for API Doctor. Tests should always pass on the latest master codebase.
 * Contribute bug fixes and unit tests that validate the bug fix.
-* Contribute new functionality and approriate test scenarios.
+* Contribute new functionality and appropriate test scenarios.
 
 ## Before we can accept your pull request
 

@@ -1,8 +1,8 @@
-# API Documentation Test Tool
+# API Doctor tool
 
-[![Build status](https://ci.appveyor.com/api/projects/status/ahf4yakswc3np2qu/branch/master?svg=true)](https://ci.appveyor.com/project/OneDrive/markdown-scanner/branch/master)
+[![Build status](https://ci.appveyor.com/api/projects/status/ahf4yakswc3np2qu/branch/master?svg=true)](https://ci.appveyor.com/project/OneDrive/apidoctor/branch/master)
 
-The API documentation test tool makes it easy to validate that the Markdown-based API
+The API Doctor documentation test tool makes it easy to validate that the Markdown-based API
 documentation matches a REST service implementation.
 
 The toolset includes a command line and GUI application that can be used to
@@ -26,7 +26,7 @@ platform. This tool is compatible with Mono or .NET.
 
 ![Screen shot of the command line tool in action](example-console.png)
 
-`apidocs.exe [command] [options]`
+`apidoc.exe [command] [options]`
 
 Available commands are:
 
@@ -64,7 +64,7 @@ Check for broken links in the documentation.
 No specific options are required. Using `--verbose` will include warnings about
 links that were not verified.
 
-Example: `apidocs.exe check-links --path ~/github/api-docs --method search`
+Example: `apidoc.exe check-links --path ~/github/api-docs --method search`
 
 ### Check-docs Command
 The `check-docs` command ensures that the documentation is internally consistent.
@@ -78,7 +78,7 @@ It verifies that:
 |:-------------------------|:---------------------------------------------------------------------------------------------------|
 | `--method <method_name>` | Optional. Specify the name of a request method to evaluate. If missing, all methods are evaluated. |
 
-Example: `apidocs.exe check-docs --path ~/github/api-docs --method search`
+Example: `apidoc.exe check-docs --path ~/github/api-docs --method search`
 
 ### Check-service Command
 
@@ -104,13 +104,13 @@ automatically be loaded and used by the check-service method.
 
 Example:
 ```
-apidocs check-service --method "search" --access-token "foo" --url https://example.org/v1.0
-apidocs check-service --headers "If-Match: *|Application: apidocs-test-app" --odata-metadata "odata.metadata=none"
+apidoc check-service --method "search" --access-token "foo" --url https://example.org/v1.0
+apidoc check-service --headers "If-Match: *|Application: apidoc-test-app" --odata-metadata "odata.metadata=none"
 ```
 
 #### Account configuration file
 You can specify account information in a configuration file stored inside the
-documentation set. Apidocs will look for any .json file that includes an
+documentation set. Apidoc will look for any .json file that includes an
 `accounts` property include an array of account objects. These accounts will
 be used by the `check-service` command.
 
@@ -140,7 +140,7 @@ token service to retrieve an access token when necessary.
 ### Publish Command
 The `publish` command uses the documentation to generate a new set of outputs.
 
-See the documentation on [publishing using APIDocs](docs/publishing.md) for
+See the documentation on [publishing using API Doctor](docs/publishing.md) for
 more details.
 
 ## Documentation format
@@ -340,6 +340,6 @@ properties defined:
 
 ## Open Source
 
-See [OpenSourceNotes](OpenSourceNotes.md) for more details about open source usage in markdown-scanner.
+See [OpenSourceNotes](OpenSourceNotes.md) for more details about open source usage in API Doctor.
 
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.

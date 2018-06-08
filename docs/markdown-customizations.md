@@ -1,6 +1,6 @@
 # Markdown customizations
 
-Markdown-scanner implements the following additional features on top of the Markdown language.
+API Doctor implements the following additional features on top of the Markdown language.
 
 - [Tagging of content](#tagging-of-content)
 - [Including other Markdown files](#including-other-markdown-files)
@@ -36,7 +36,7 @@ There are some limits to what you can do with this.
 To specify tags at build time, the `--parameters` parameter must include a `TAGS` key, with the value set to a comma-delimited list of tags to include. For example:
 
 ```Shell
-apidocs.exe publish --format html --path .\src --output .\out --parameters "TAGS=OUTLOOK,v2"
+apidoc.exe publish --format html --path .\src --output .\out --parameters "TAGS=OUTLOOK,v2"
 ```
 
 ### Example

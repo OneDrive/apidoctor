@@ -1,6 +1,6 @@
 # Markdown requirements
 
-Markdown-scanner tries to be a very flexible tool to ensure that the format
+API Doctor tries to be a very flexible tool to ensure that the format
 of the documentation does not have strict requirements. This allows the tool
 to be used with the widest range of documentation sources.
 
@@ -61,12 +61,12 @@ The following properties are defined for code block annotations:
 | **isEmpty**            | Boolean          | If true, indicates that the response block should not contain a body. This is useful for API calls that expect to return a 204 No Content.                                   |
 | **truncated**          | Boolean          | If true, indicates that the example of the resource provided does not include all required fields, and that state shouldn't generate errors or warnings.                     |
 | **expectError**        | Boolean          | If true, indicates that the response should be an error response and not the standard resource response expected.                                                            |
-| **nullableProperties** | Array of strings | For a resource, define which properties can return null values. By default Markdown-scanner expects no null properties to be returned.                                       |
-| **scopes**             | String           | A space-seperated value of scopes which are required for this method to be useful. All scopes listed are required to be provided by the account for this method to be run. A warning is generated if the account doesn't have the required scopes.  |
+| **nullableProperties** | Array of strings | For a resource, define which properties can return null values. By default API Doctor expects no null properties to be returned.                                       |
+| **scopes**             | String           | A space-separated value of scopes which are required for this method to be useful. All scopes listed are required to be provided by the account for this method to be run. A warning is generated if the account doesn't have the required scopes.  |
 
 ## Pairing requests and responses
 
-Markdown-scanner assumes that request and response blocks always come in pairs
+API Doctor assumes that request and response blocks always come in pairs
 and that the first response block encountered after a request block should be paired
 with that request.
 

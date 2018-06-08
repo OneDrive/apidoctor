@@ -4,7 +4,7 @@ To publish the markdown documentation into other formats you can use the publish
 command:
 
 ```
-apidocs.exe publish --output C:\html-output --template .\html-template --format mustache
+apidoc.exe publish --output C:\html-output --template .\html-template --format mustache
 ```
 
 ### Parameters
@@ -20,12 +20,12 @@ apidocs.exe publish --output C:\html-output --template .\html-template --format 
 
 ## Publishing Basic HTML
 
-APIDocs has two different HTML output formats. The first format `HTML` provides
+API Doctor has two different HTML output formats. The first format `HTML` provides
 basic HTML document output that can be customized through CSS or editing the HTML
 directly. This format has no options, but can be used as follows:
 
 ```
-apidocs.exe publish --format html --output C:\html-output
+apidoc.exe publish --format html --output C:\html-output
 ```
 
 This method fixes up relative links within the documentation to point to the
@@ -33,12 +33,12 @@ properly named HTML output file.
 
 ## Publishing HTML with Templates
 
-APIDocs can also use a Mustache formatted HTML template to generate HTML output
+API Doctor can also use a Mustache formatted HTML template to generate HTML output
 for your website. Using this format you provide a template directory which
 contains a Mustache template and any other content that should be published
 to the output folder (stylesheets, images, scripts, etc).
 
-APIDocs will read the template and use it to generate an output HTML document
+API Doctor will read the template and use it to generate an output HTML document
 per input markdown file. Output files are written into the same place in the
 folder hierarchy that the input file was located.
 
@@ -84,7 +84,7 @@ inserted into the output document:
 ### Additional Mustache Template Tags
 
 In addition to the standard Mustache template language tags, the following
-tags have been added to APIDocs to enable additional scenarios when publishing
+tags have been added to API Doctor to enable additional scenarios when publishing
 static HTML from Markdown:
 
 | Tag Name | Description | Example |

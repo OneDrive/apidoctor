@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package >
+  <metadata>
+    <id>ApiDoctor</id>
+    <version>$version$</version>
+    <authors>Microsoft</authors>
+    <owners>dspektor@microsoft.com</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Tool for validating API documentation</description>
+    <releaseNotes>Check http://github.com/onedrive/apidoctor for details.</releaseNotes>
+    <copyright>Copyright Microsoft</copyright>
+    <licenseUrl>http://msdn.microsoft.com/en-US/cc300389</licenseUrl>
+    <projectUrl>http://github.com/onedrive/apidoctor</projectUrl>
+    <frameworkAssemblies>
+      <frameworkAssembly assemblyName="System" targetFramework="net45" />
+    </frameworkAssemblies>
+  </metadata>
+  <files>
+    <file src="bin\Release\apidoc.exe" target="tools" />
+    <file src="bin\Release\*.dll" target="tools" />
+  </files>
+</package>

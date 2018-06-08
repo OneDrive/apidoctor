@@ -1,4 +1,4 @@
-Markdown Scanner
+API Doctor
 Copyright (c) Microsoft Corporation
 All rights reserved. 
 
