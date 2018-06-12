@@ -27,6 +27,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Xml.Linq;
 using ApiDoctor.Validation.Error;
 using MarkdownDeep;
@@ -57,9 +58,8 @@ namespace ApiDoctor.Validation
                 var content = this.GetContentsOfFile(tags);
                 var xd = XDocument.Parse(content);
                 this.MarkdownLinks = AllAttribues(xd.Root).
-                    Where(a => LikelyUrlAttributes.Contains(a.Name.ToString())).
-                    Select(urlAttr => urlAttr.Value).
-                    Select(url => new LinkInfo { Definition = new LinkDefinition(url, Fixup(url)), Text = url }).
+                    Where(a => LikelyUrlAttributes.Contains(a.Name.ToString()) && !string.IsNullOrEmpty(a.Value)).
+                    Select(url => new LinkInfo { Definition = new LinkDefinition(url.Value, Fixup(url.Value)), Text = PrintNode(url.Parent) }).
                     Cast<MarkdownDeep.ILinkInfo>().
                     ToList();
                 this.HasScanRun = true;
@@ -108,6 +108,26 @@ namespace ApiDoctor.Validation
             }
 
             return url;
+        }
+
+        private string PrintNode(XElement node)
+        {
+            var sb = new StringBuilder($"{Environment.NewLine}<{node.Name}");
+            foreach (var attribute in node.Attributes())
+            {
+                sb.Append($" {attribute.Name}=\"{attribute.Value}\"");
+            }
+
+            if (node.Elements().Any())
+            {
+                sb.AppendLine(">");
+            }
+            else
+            {
+                sb.AppendLine("/>");
+            }
+ 
+            return sb.ToString();
         }
 
         private class LinkInfo : MarkdownDeep.ILinkInfo

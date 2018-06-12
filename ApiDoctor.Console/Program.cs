@@ -498,11 +498,22 @@ namespace ApiDoctor.ConsoleApp
             {
                 MessageCategory category;
                 if (error.IsWarning)
+                {
                     category = MessageCategory.Warning;
+                }
                 else if (error.IsError)
+                {
                     category = MessageCategory.Error;
+                }
                 else
+                {
+                    if (!FancyConsole.WriteVerboseOutput)
+                    {
+                        continue;
+                    }
+
                     category = MessageCategory.Information;
+                }
 
                 string message = string.Format("{1}: {0}", error.Message.FirstLineOnly(), error.Code);
                 await TestReport.LogMessageAsync(message, category);
@@ -876,6 +887,7 @@ namespace ApiDoctor.ConsoleApp
                     writtenHeader = true;
                     FancyConsole.WriteLine(beforeWriteHeader);
                 }
+
                 WriteValidationError(indent, error);
             }
 
@@ -957,6 +969,7 @@ namespace ApiDoctor.ConsoleApp
             }
 
             FancyConsole.WriteLineIndented(indent, color, error.ErrorText);
+            FancyConsole.WriteLine();
         }
 
         /// <summary>
