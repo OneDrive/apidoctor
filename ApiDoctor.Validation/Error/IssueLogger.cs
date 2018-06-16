@@ -206,8 +206,8 @@ namespace ApiDoctor.Validation.Error
 
         private class SuppressionComparer : IEqualityComparer<string>
         {
-            // matches the variable part of a stack trace: "  at blah blah blah:line 12345"
-            private static Regex stackTracePattern = new Regex("\\sat\\s.*:(line\\s)?\\d+", RegexOptions.Compiled | RegexOptions.Singleline);
+            // matches the variable part of a stack trace: "  at blah blah blah) blah"
+            private static Regex stackTracePattern = new Regex("\\n\\s*at\\s.*\\).*", RegexOptions.Compiled | RegexOptions.Singleline);
 
             // matches the variable part of known paths like: " /blah/blah/resources/someresource.md"
             private static Regex knownPathPattern = new Regex(":\\s(/.*)/((api)|(resources))/.*\\.md", RegexOptions.Compiled | RegexOptions.Singleline);

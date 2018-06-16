@@ -71,7 +71,6 @@ namespace ApiDoctor.Publishing.CSDL
 
             // Normalize variables in the request path
             path = path.ReplaceTextBetweenCharacters('{', '}', "var");
-            path = path.ReplaceTextBetweenCharacters('<', '>', "{var}", true, true);        // Fix Graph docs placeholder
 
             if (method.RequestMetadata.SampleKeys != null)
             {

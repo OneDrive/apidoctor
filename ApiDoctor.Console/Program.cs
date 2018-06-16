@@ -228,6 +228,15 @@ namespace ApiDoctor.ConsoleApp
                 indent: "  ",
                 printUnusedSuppressions: invokedVerb == CommandLineOptions.VerbCheckAll);
 
+            if (returnSuccess)
+            {
+                if (issues.Errors.Any() ||
+                    (issues.Warnings.Any() && !options.IgnoreErrors))
+                {
+                    returnSuccess = false;
+                }
+            }
+
             Exit(failure: !returnSuccess);
         }
 
