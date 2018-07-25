@@ -497,7 +497,6 @@ namespace ApiDoctor.Validation
                     catch (Exception ex)
                     {
                         issues.Error(ValidationErrorCode.MarkdownParserError, $"Failed to parse table.", ex);
-                        throw;
                     }
                 }
 

@@ -175,16 +175,31 @@ namespace ApiDoctor.Validation.TableSpec
 
         private static IEnumerable<ParameterDefinition> ParseParameterTable(IMarkdownTable table, ParameterLocation location, TableDecoder decoder, IssueLogger issues, bool navigationProperties = false)
         {
-            var records = table.RowValues.Select(r => new ParameterDefinition
-            {
-                Name = r.ValueForColumn(table, decoder.ParseRule.ColumnNames["name"]),
-                Type = r.ValueForColumn(table, decoder.ParseRule.ColumnNames["type"]).ParseParameterDataType(defaultValue: ParameterDataType.String),
-                Description = r.ValueForColumn(table, decoder.ParseRule.ColumnNames["description"]),
-                Required = r.ValueForColumn(table, decoder.ParseRule.ColumnNames["description"]).IsRequired(),
-                Optional = r.ValueForColumn(table, decoder.ParseRule.ColumnNames["description"]).IsOptional(),
-                Location = location,
-                IsNavigatable = navigationProperties,
-            }).ToList();
+            // tables sometimes have column spans to delineate different sections of the table. for instance:
+            //
+            // | Name | Type   | Description
+            // |------|--------|--------------
+            // | one  | int    | first number
+            // | two  | int    | second number
+            // | **fancy numbers**
+            // | pi   | double | third number
+            //
+            // our markdown parser captures this as a regular row with all the columns, except with &nbsp; for all the blanks.
+            // we try to infer such rows by looking for a **bold** first cell, followed by nbsp in all the other cells.
+            // see below.
+
+            var records = table.RowValues.
+                Where(r => !r[0].StartsWith("**") || r.Skip(1).Any(c => c != "&nbsp;")). // see comment above
+                Select(r => new ParameterDefinition
+                {
+                    Name = r.ValueForColumn(table, decoder.ParseRule.ColumnNames["name"]),
+                    Type = r.ValueForColumn(table, decoder.ParseRule.ColumnNames["type"]).ParseParameterDataType(defaultValue: ParameterDataType.String),
+                    Description = r.ValueForColumn(table, decoder.ParseRule.ColumnNames["description"]),
+                    Required = r.ValueForColumn(table, decoder.ParseRule.ColumnNames["description"]).IsRequired(),
+                    Optional = r.ValueForColumn(table, decoder.ParseRule.ColumnNames["description"]).IsOptional(),
+                    Location = location,
+                    IsNavigatable = navigationProperties,
+                }).ToList();
 
             var badRows = records.Count(r => string.IsNullOrEmpty(r.Name));
             if (badRows > 0)
