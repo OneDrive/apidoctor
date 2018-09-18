@@ -1,25 +1,25 @@
 ﻿/*
  * API Doctor
  * Copyright (c) Microsoft Corporation
- * All rights reserved. 
- * 
+ * All rights reserved.
+ *
  * MIT License
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of 
- * this software and associated documentation files (the ""Software""), to deal in 
- * the Software without restriction, including without limitation the rights to use, 
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of
+ * this software and associated documentation files (the ""Software""), to deal in
+ * the Software without restriction, including without limitation the rights to use,
  * copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
- * Software, and to permit persons to whom the Software is furnished to do so, 
+ * Software, and to permit persons to whom the Software is furnished to do so,
  * subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in all 
+ *
+ * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED *AS IS*, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
- * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
- * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT 
- * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION 
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
+ *
+ * THE SOFTWARE IS PROVIDED *AS IS*, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
@@ -179,7 +179,7 @@ namespace ApiDoctor.Publishing.CSDL
                     if (options.Namespaces != null && options.Namespaces.Any())
                     {
                         var schemas = edmx.DataServices.Schemas.ToArray();
-                        foreach(var s in schemas)
+                        foreach (var s in schemas)
                         {
                             if (!options.Namespaces.Contains(s.Namespace))
                             {
@@ -195,7 +195,7 @@ namespace ApiDoctor.Publishing.CSDL
                 }
             }
 
-            bool generateNewElements = (generateFromDocs == null && !options.SkipMetadataGeneration) || (generateFromDocs.HasValue && generateFromDocs.Value) ;
+            bool generateNewElements = (generateFromDocs == null && !options.SkipMetadataGeneration) || (generateFromDocs.HasValue && generateFromDocs.Value);
 
             // Add resources
             if (generateNewElements && Documents.Files.Any())
@@ -217,7 +217,7 @@ namespace ApiDoctor.Publishing.CSDL
 
                 // add enums to the default schema
                 var defaultSchema = edmx.DataServices.Schemas.FirstOrDefault(s => s.Namespace == DocSet.SchemaConfig.DefaultNamespace);
-                foreach (var enumDefinition in Documents.Enums.GroupBy(e=>e.TypeName))
+                foreach (var enumDefinition in Documents.Enums.GroupBy(e => e.TypeName))
                 {
                     var enumType = new EnumType
                     {
@@ -233,7 +233,7 @@ namespace ApiDoctor.Publishing.CSDL
 
                     if (enumType.Members[0].Value == null)
                     {
-                        for (int i=0; i<enumType.Members.Count;i++)
+                        for (int i = 0; i < enumType.Members.Count; i++)
                         {
                             if (enumType.Members[i].Value != null)
                             {
@@ -276,7 +276,7 @@ namespace ApiDoctor.Publishing.CSDL
                         }
 
                         Dictionary<string, ODataCapabilities> capabilitiesPerProperty = new Dictionary<string, ODataCapabilities>();
-                        foreach (var annotation in complex.Contributors.Where(c=>c.OriginalMetadata?.OdataAnnotations != null).SelectMany(c => c.OriginalMetadata.OdataAnnotations))
+                        foreach (var annotation in complex.Contributors.Where(c => c.OriginalMetadata?.OdataAnnotations != null).SelectMany(c => c.OriginalMetadata.OdataAnnotations))
                         {
                             if (annotation?.Capabilities != null)
                             {
@@ -309,7 +309,7 @@ namespace ApiDoctor.Publishing.CSDL
                             TryAddAnnotation(property, "SortRestrictions", "Sortable", capabilities.Sortable);
                             TryAddAnnotation(property, "TopSupported", null, capabilities.Toppable);
                             TryAddAnnotation(property, "UpdateRestrictions", "Updatable", capabilities.Updatable);
-                            
+
                             if (capabilities.Navigability != null || capabilities.Referenceable.HasValue)
                             {
                                 var annotation = new Annotation
@@ -423,7 +423,7 @@ namespace ApiDoctor.Publishing.CSDL
             {
                 var annotation = new Annotation
                 {
-                    Term = term.Contains(".")? term : $"Org.OData.Capabilities.V1.{term}"
+                    Term = term.Contains(".") ? term : $"Org.OData.Capabilities.V1.{term}"
                 };
 
                 if (property != null)
@@ -555,19 +555,26 @@ namespace ApiDoctor.Publishing.CSDL
                                 {
                                     PropertyValues = new List<PropertyValue>
                                     {
-                                        new PropertyValue { Property = "ResponseCode", String  = response.StatusCode.ToString(), },
-                                        new PropertyValue { Property = "Examples" , Records = new List<Record>
+                                        new PropertyValue { Property = "ResponseCode", String  = response.StatusCode.ToString() },
+                                        new PropertyValue
                                         {
-                                            new Record
+                                            Property = "Examples" ,
+                                            Collection = new RecordCollection
                                             {
-                                                Type = "Org.OData.Core.V1.InlineExample",
-                                                PropertyValues = new List<PropertyValue>
+                                                Records = new List<Record>
                                                 {
-                                                    new PropertyValue { Property = "InlineExample", String  = response.Body, },
-                                                    new PropertyValue { Property = "Description", String = response.ContentType },
+                                                    new Record
+                                                    {
+                                                        Type = "Org.OData.Core.V1.InlineExample",
+                                                        PropertyValues = new List<PropertyValue>
+                                                        {
+                                                            new PropertyValue { Property = "InlineExample", String  = response.Body, },
+                                                            new PropertyValue { Property = "Description", String = response.ContentType },
+                                                        }
+                                                    }
                                                 }
                                             }
-                                        }},
+                                        }
                                     }
                                 }
                             }
@@ -599,7 +606,7 @@ namespace ApiDoctor.Publishing.CSDL
             return record;
         }
 
-        private static void MergeAnnotations(string fullName, IODataAnnotatable annotatable, Dictionary<string,Annotations> schemaLevelAnnotations)
+        private static void MergeAnnotations(string fullName, IODataAnnotatable annotatable, Dictionary<string, Annotations> schemaLevelAnnotations)
         {
             if (annotatable.Annotation?.Count > 0)
             {
@@ -643,7 +650,7 @@ namespace ApiDoctor.Publishing.CSDL
         }
 
         /// <summary>
-        /// Scan the MethodDefintions in the documentation and create actions and functions in the 
+        /// Scan the MethodDefintions in the documentation and create actions and functions in the
         /// EntityFramework for matching call patterns.
         /// </summary>
         /// <param name="edmx"></param>
@@ -896,7 +903,7 @@ namespace ApiDoctor.Publishing.CSDL
                 target.ReturnType = new ReturnType { Type = methodCollection.ResponseType.ODataResourceName(), Nullable = false };
                 var targetAction = target as Validation.OData.Action;
                 if (targetAction != null &&
-                    target.Parameters.FirstOrDefault(p=>p.Name=="bindingParameter")?.Type?.StartsWith("Collection(") == false)
+                    target.Parameters.FirstOrDefault(p => p.Name == "bindingParameter")?.Type?.StartsWith("Collection(") == false)
                 {
                     targetAction.EntitySetPath = "bindingParameter";
                 }
@@ -948,7 +955,7 @@ namespace ApiDoctor.Publishing.CSDL
         /// <returns></returns>
         private static ODataTargetInfo ParseRequestTargetType(string requestPath, MethodCollection requestMethodCollection, EntityFramework edmx, IssueLogger issues)
         {
-            string[] requestParts = requestPath.Substring(1).Split(new char[] { '/'});
+            string[] requestParts = requestPath.Substring(1).Split(new char[] { '/' });
 
             EntityContainer entryPoint = (from s in edmx.DataServices.Schemas
                                           where s.EntityContainers.Count > 0
@@ -959,7 +966,7 @@ namespace ApiDoctor.Publishing.CSDL
             IODataNavigable currentObject = entryPoint;
             IODataNavigable previousObject = null;
 
-            for(int i=0; i<requestParts.Length; i++)
+            for (int i = 0; i < requestParts.Length; i++)
             {
                 bool isLastSegment = i == requestParts.Length - 1;
                 string uriPart = requestParts[i];
@@ -1146,9 +1153,9 @@ namespace ApiDoctor.Publishing.CSDL
         }
 
         private Dictionary<string, MethodCollection> cachedUniqueRequestPaths { get; set; }
-    
+
         /// <summary>
-        /// Return a dictionary of the unique request paths in the 
+        /// Return a dictionary of the unique request paths in the
         /// documentation and the method definitions that defined them.
         /// </summary>
         /// <returns></returns>
@@ -1222,8 +1229,8 @@ namespace ApiDoctor.Publishing.CSDL
             }
 
             var matchingSchema = (from s in edmx.DataServices.Schemas
-                                 where s.Namespace == ns
-                                 select s).FirstOrDefault();
+                                  where s.Namespace == ns
+                                  select s).FirstOrDefault();
 
             if (null != matchingSchema)
                 return matchingSchema;
@@ -1252,7 +1259,7 @@ namespace ApiDoctor.Publishing.CSDL
             var existingEntity = (from e in schema.EntityTypes where e.Name == typeName select e).SingleOrDefault();
             if (existingEntity != null)
             {
-                type = existingEntity;    
+                type = existingEntity;
             }
 
             // If that didn't work, look for a complex type that matches
@@ -1351,7 +1358,7 @@ namespace ApiDoctor.Publishing.CSDL
             where TProp : Property, new()
         {
             var documentedProperties = docProps.ToDictionary(x => x.Name, x => x);
-            foreach(var schemaProp in schemaProps)
+            foreach (var schemaProp in schemaProps)
             {
                 ParameterDefinition documentedVersion = null;
                 if (documentedProperties.TryGetValue(schemaProp.Name, out documentedVersion))
@@ -1380,7 +1387,7 @@ namespace ApiDoctor.Publishing.CSDL
 
             if (generateNewElements)
             {
-                foreach(var newPropDef in documentedProperties.Values)
+                foreach (var newPropDef in documentedProperties.Values)
                 {
                     // Create new properties based on the documentation
                     var newProp = ConvertParameterToProperty<TProp>(typeName, newPropDef, issues.For(newPropDef.Name));
@@ -1391,7 +1398,7 @@ namespace ApiDoctor.Publishing.CSDL
 
         private static void LogIfDifferent(object schemaValue, object documentationValue, IssueLogger issues, string errorString)
         {
-            if ( (schemaValue == null && documentationValue != null) || 
+            if ((schemaValue == null && documentationValue != null) ||
                  (schemaValue != null && documentationValue == null) ||
                  (schemaValue != null && documentationValue != null && !schemaValue.Equals(documentationValue)))
             {
@@ -1490,7 +1497,7 @@ namespace ApiDoctor.Publishing.CSDL
             T targetProperty,
             ParameterDefinition sourceParameter,
             IssueLogger issues,
-            string termForDescription = Term.DescriptionTerm) where T: Property, IODataAnnotatable
+            string termForDescription = Term.DescriptionTerm) where T : Property, IODataAnnotatable
         {
             if (this.options.Annotations == AnnotationOptions.None)
             {
@@ -1501,7 +1508,7 @@ namespace ApiDoctor.Publishing.CSDL
             {
                 if (targetProperty.Annotation == null)
                 {
-                	targetProperty.Annotation = new List<Annotation>();
+                    targetProperty.Annotation = new List<Annotation>();
                 }
 
                 // Check to see if there already is a term with Description
@@ -1512,7 +1519,7 @@ namespace ApiDoctor.Publishing.CSDL
                 }
                 else
                 {
-                	targetProperty.Annotation.Add(
+                    targetProperty.Annotation.Add(
                     new Annotation()
                     {
                         Term = termForDescription,
@@ -1569,22 +1576,22 @@ namespace ApiDoctor.Publishing.CSDL
     [Flags]
     public enum MetadataFormat
     {
-        Default      = EdmxInput | EdmxOutput,
-        EdmxInput    = 1 << 0,
-        EdmxOutput   = 1 << 1,
-        SchemaInput  = 1 << 2,
+        Default = EdmxInput | EdmxOutput,
+        EdmxInput = 1 << 0,
+        EdmxOutput = 1 << 1,
+        SchemaInput = 1 << 2,
         SchemaOutput = 1 << 3
     }
 
     [Flags]
     public enum AnnotationOptions
     {
-        None            = 0x00,
-        Properties      = 0x01,
-        Capabilities    = 0x02,
-        HttpRequests    = 0x04,
-        Independent     = 0x08,
-        AllAnnotations  = Properties | Capabilities | HttpRequests,
+        None = 0x00,
+        Properties = 0x01,
+        Capabilities = 0x02,
+        HttpRequests = 0x04,
+        Independent = 0x08,
+        AllAnnotations = Properties | Capabilities | HttpRequests,
         OnlyAnnotations = AllAnnotations | Independent,
     }
 }
