@@ -521,7 +521,7 @@ namespace ApiDoctor.Publishing.CSDL
                                     PropertyValues = new List<PropertyValue>
                                     {
                                         new PropertyValue { Property = "Name", String = p.Name },
-                                        new PropertyValue { Property = "Description", String = p.Type.ToStringClean() },
+                                        new PropertyValue { Property = "Description", String = p.Description.ToStringClean() },
                                         new PropertyValue { Property = "Required", Bool = p.Required.GetValueOrDefault() },
                                     }
                                 }))?.ToList()
@@ -568,7 +568,7 @@ namespace ApiDoctor.Publishing.CSDL
                                                         Type = "Org.OData.Core.V1.InlineExample",
                                                         PropertyValues = new List<PropertyValue>
                                                         {
-                                                            new PropertyValue { Property = "InlineExample", String  = response.Body, },
+                                                            new PropertyValue { Property = "InlineValue", String  = response.Body, },
                                                             new PropertyValue { Property = "Description", String = response.ContentType },
                                                         }
                                                     }
