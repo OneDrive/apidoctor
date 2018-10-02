@@ -44,11 +44,21 @@ namespace ApiDoctor.Validation.OData
         [XmlAttribute("Type"), ContainsType]
         public string Type { get; set; }
 
+        private bool _isNullable;
+
         [XmlAttribute("Nullable"), MergePolicy(MergePolicy.Ignore)]
-        public bool ValueOfNullableProp { get; set; }
+        public bool ValueOfNullableProp
+        {
+            get { return _isNullable; }
+            set
+            {
+                _isNullable = value;
+                ValueOfNullablePropSpecified = true;
+            }
+        }
 
         [XmlIgnore]
-        public bool ValueOfNullablePropSpecified => this.ValueOfNullableProp;
+        public bool ValueOfNullablePropSpecified { get; set; }
 
         [XmlIgnore, MergePolicy(MergePolicy.Ignore)]
         public bool ValueOfNullablePropertySpecified { get; set; }

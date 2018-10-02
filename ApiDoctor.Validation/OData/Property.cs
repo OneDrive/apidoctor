@@ -37,7 +37,6 @@ namespace ApiDoctor.Validation.OData
     {
         public Property()
         {
-            Unicode = false;
             this.Annotation = new List<Annotation>();
         }
 
@@ -47,15 +46,45 @@ namespace ApiDoctor.Validation.OData
         [XmlAttribute("Type"), ContainsType, MergePolicy(MergePolicy.PreferLesserValue)]
         public string Type { get; set; }
 
-        [XmlAttribute("Nullable"), MergePolicy(MergePolicy.PreferTrueValue)]
-        public bool Nullable { get; set; }
+        [XmlIgnore]
+        private bool _nullable;
+
+        [XmlAttribute("Nullable"), MergePolicy(MergePolicy.PreferFalseValue)]
+        public bool Nullable {
+            get { return _nullable; }
+            set
+            {
+                _nullable = value;
+                NullableSpecified = true;
+            }
+        }
 
         [XmlIgnore]
-        public bool NullableSpecified => this.Nullable;
+        public bool NullableSpecified{ get; set;}
+
+        [XmlIgnore]
+        private bool _isUnicode;
 
         [XmlAttribute("Unicode"), MergePolicy(MergePolicy.PreferFalseValue)]
-        public bool Unicode { get; set; }
-        public bool UnicodeSpecified => "Edm.String".Equals(this.Type);
+        public bool Unicode
+        {
+            get => _isUnicode;
+            set
+            {
+                _isUnicode = value;
+                UnicodeSpecified = true;
+            }
+        }
+
+        [XmlIgnore]
+        private bool _isUnicodeSpecified;
+
+        [XmlIgnore]
+        public bool UnicodeSpecified
+        {
+            get => _isUnicodeSpecified;
+            set { _isUnicodeSpecified = value; }
+        }
 
         [XmlElement("Annotation", Namespace = ODataParser.EdmNamespace), Sortable]
         public List<Annotation> Annotation { get; set; }
