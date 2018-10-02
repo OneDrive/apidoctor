@@ -45,17 +45,17 @@ namespace ApiDoctor.Validation.OData
             this.Annotation = new List<Annotation>();
         }
 
+        [XmlAttribute("Name"), SortBy]
+        public string Name { get; set; }
+        
+        [XmlAttribute("BaseType"), ContainsType, MergePolicy(MergePolicy.EqualOrNull)]
+        public string BaseType { get; set; }
+
         [XmlAttribute("Abstract"), DefaultValue(false), MergePolicy(MergePolicy.PreferTrueValue)]
         public bool Abstract { get; set; }
 
-        [XmlAttribute("Name"), SortBy]
-        public string Name { get; set; }
-
         [XmlAttribute("OpenType"), DefaultValue(false), MergePolicy(MergePolicy.PreferGreaterValue)]
         public bool OpenType { get; set; }
-
-        [XmlAttribute("BaseType"), ContainsType, MergePolicy(MergePolicy.EqualOrNull)]
-        public string BaseType { get; set; }
 
         [XmlElement("Property", Namespace = ODataParser.EdmNamespace), Sortable]
         public List<Property> Properties { get; set; }

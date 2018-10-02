@@ -89,11 +89,21 @@ namespace ApiDoctor.Validation.OData
             }
         }
 
+        private bool _isUnicode;
+
         [XmlAttribute("Unicode"), MergePolicy(MergePolicy.Ignore)]
-        public bool UnicodePropertyValue { get; set; }
+        public bool UnicodePropertyValue
+        {
+            get { return _isUnicode; }
+            set
+            {
+                _isUnicode = value;
+                UnicodePropertyValueSpecified = true;
+            }
+        }
 
         [XmlIgnore]
-        public bool UnicodePropertyValueSpecified => this.Type == "Edm.String";
+        public bool UnicodePropertyValueSpecified { get; set; }
 
         [XmlIgnore, MergePolicy(MergePolicy.PreferFalseValue)]
         public bool? Unicode

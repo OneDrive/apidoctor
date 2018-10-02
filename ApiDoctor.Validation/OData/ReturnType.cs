@@ -42,11 +42,21 @@ namespace ApiDoctor.Validation.OData
         [XmlAttribute("Type"), ContainsType]
         public string Type { get; set; }
 
-        [XmlAttribute("Nullable"), DefaultValue(false)]
-        public bool Nullable { get; set; }
+        private bool _isNullable;
+
+        [XmlAttribute("Nullable"), MergePolicy(MergePolicy.PreferFalseValue)]
+        public bool Nullable
+        {
+            get { return _isNullable; }
+            set
+            {
+                _isNullable = value;
+                NullableSpecified = true;
+            }
+        }
 
         [XmlIgnore]
-        public bool NullableSpecified => this.Nullable;
+        public bool NullableSpecified { get; set; }
 
         [XmlAttribute("Unicode"), DefaultValue(true)]
         public bool Unicode { get; set; }
