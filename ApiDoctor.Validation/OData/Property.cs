@@ -25,9 +25,7 @@
 
 namespace ApiDoctor.Validation.OData
 {
-    using System;
     using System.Collections.Generic;
-    using System.ComponentModel;
     using System.Xml.Serialization;
     using Transformation;
     using Utility;
@@ -35,6 +33,9 @@ namespace ApiDoctor.Validation.OData
     [XmlRoot("Property", Namespace = ODataParser.EdmNamespace), Mergable(CollectionIdentifier = "Name")]
     public class Property : XmlBackedTransformableObject, IODataAnnotatable
     {
+        private bool isUnicode;
+        private bool nullable;
+
         public Property()
         {
             this.Annotation = new List<Annotation>();
@@ -46,45 +47,32 @@ namespace ApiDoctor.Validation.OData
         [XmlAttribute("Type"), ContainsType, MergePolicy(MergePolicy.PreferLesserValue)]
         public string Type { get; set; }
 
-        [XmlIgnore]
-        private bool _nullable;
-
         [XmlAttribute("Nullable"), MergePolicy(MergePolicy.PreferFalseValue)]
         public bool Nullable {
-            get { return _nullable; }
+            get { return this.nullable; }
             set
             {
-                _nullable = value;
-                NullableSpecified = true;
+                this.nullable = value;
+                this.NullableSpecified = true;
             }
         }
 
         [XmlIgnore]
         public bool NullableSpecified{ get; set;}
 
-        [XmlIgnore]
-        private bool _isUnicode;
-
         [XmlAttribute("Unicode"), MergePolicy(MergePolicy.PreferFalseValue)]
         public bool Unicode
         {
-            get => _isUnicode;
+            get { return this.isUnicode; } 
             set
             {
-                _isUnicode = value;
-                UnicodeSpecified = true;
+                this.isUnicode = value;
+                this.UnicodeSpecified = true;
             }
         }
 
         [XmlIgnore]
-        private bool _isUnicodeSpecified;
-
-        [XmlIgnore]
-        public bool UnicodeSpecified
-        {
-            get => _isUnicodeSpecified;
-            set { _isUnicodeSpecified = value; }
-        }
+        public bool UnicodeSpecified { get; set; }
 
         [XmlElement("Annotation", Namespace = ODataParser.EdmNamespace), Sortable]
         public List<Annotation> Annotation { get; set; }

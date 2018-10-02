@@ -25,8 +25,6 @@
 
 namespace ApiDoctor.Validation.OData
 {
-    using System;
-    using System.ComponentModel;
     using System.Xml.Serialization;
     using Transformation;
     using Utility;
@@ -34,6 +32,9 @@ namespace ApiDoctor.Validation.OData
     [XmlRoot("Parameter", Namespace = ODataParser.EdmNamespace), Mergable(CollectionIdentifier = "Name")]
     public class Parameter : XmlBackedTransformableObject
     {
+        private bool nullable;
+        private bool isUnicode;
+
         public Parameter()
         {
         }
@@ -44,33 +45,37 @@ namespace ApiDoctor.Validation.OData
         [XmlAttribute("Type"), ContainsType]
         public string Type { get; set; }
 
-        private bool _isNullable;
-
-        [XmlAttribute("Nullable"), MergePolicy(MergePolicy.Ignore)]
-        public bool ValueOfNullableProp
+        [XmlAttribute("Nullable"), MergePolicy(MergePolicy.PreferFalseValue)]
+        public bool Nullable
         {
-            get { return _isNullable; }
+            get { return this.nullable; }
             set
             {
-                _isNullable = value;
-                ValueOfNullablePropSpecified = true;
+                this.nullable = value;
+                this.NullableSpecified = true;
             }
         }
 
+        /// <summary>
+        /// Nullable + NullableSpecified are based on some convention  
+        /// </summary>
         [XmlIgnore]
-        public bool ValueOfNullablePropSpecified { get; set; }
+        public bool NullableSpecified { get; set; }
 
         [XmlIgnore, MergePolicy(MergePolicy.Ignore)]
         public bool ValueOfNullablePropertySpecified { get; set; }
 
+        /// <summary>
+        /// This appears to be used for merging.
+        /// </summary>
         [XmlIgnore, MergePolicy(MergePolicy.PreferFalseValue)]
-        public bool? Nullable
+        public bool? IsNullable
         {
             get
             {
-                if (ValueOfNullablePropertySpecified)
+                if (this.ValueOfNullablePropertySpecified)
                 {
-                    return ValueOfNullableProp;
+                    return this.Nullable;
                 }
                 return null;
             }
@@ -79,26 +84,24 @@ namespace ApiDoctor.Validation.OData
             {
                 if (!value.HasValue)
                 {
-                    ValueOfNullablePropertySpecified = false;
+                    this.ValueOfNullablePropertySpecified = false;
                 }
                 else
                 {
-                    ValueOfNullablePropertySpecified = true;
-                    ValueOfNullableProp = value.Value;
+                    this.ValueOfNullablePropertySpecified = true;
+                    this.Nullable = value.Value;
                 }
             }
         }
 
-        private bool _isUnicode;
-
         [XmlAttribute("Unicode"), MergePolicy(MergePolicy.Ignore)]
         public bool UnicodePropertyValue
         {
-            get { return _isUnicode; }
+            get { return this.isUnicode; }
             set
             {
-                _isUnicode = value;
-                UnicodePropertyValueSpecified = true;
+                this.isUnicode = value;
+                this.UnicodePropertyValueSpecified = true;
             }
         }
 
@@ -112,7 +115,7 @@ namespace ApiDoctor.Validation.OData
             {
                 if (UnicodePropertyValueSpecified)
                 {
-                    return UnicodePropertyValue;
+                    return this.UnicodePropertyValue;
                 }
 
                 return null;
@@ -121,7 +124,7 @@ namespace ApiDoctor.Validation.OData
             {
                 if (value.HasValue)
                 {
-                    UnicodePropertyValue = value.Value;
+                    this.UnicodePropertyValue = value.Value;
                 }
             }
         }
