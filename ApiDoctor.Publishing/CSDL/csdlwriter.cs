@@ -816,7 +816,7 @@ namespace ApiDoctor.Publishing.CSDL
 
             target.Name = name.TypeOnly();
             target.IsBound = true;
-            target.Parameters.Add(new Parameter { Name = "bindingParameter", Type = boundToType, Nullable = false });
+            target.Parameters.Add(new Parameter { Name = "bindingParameter", Type = boundToType, IsNullable = false });
             foreach (var param in methodCollection.Where(m => m.HttpMethodVerb() == "POST").SelectMany(m => m.RequestBodyParameters))
             {
                 try
@@ -833,7 +833,7 @@ namespace ApiDoctor.Publishing.CSDL
                             {
                                 Name = param.Name,
                                 Type = param.Type.ODataResourceName(),
-                                Nullable = (param.Required.HasValue ? param.Required.Value : false)
+                                IsNullable = (param.Required.HasValue ? param.Required.Value : false)
                             });
                     }
                 }
@@ -865,7 +865,7 @@ namespace ApiDoctor.Publishing.CSDL
                             {
                                 Name = matchingParamDef.Name,
                                 Type = matchingParamDef.Type.ODataResourceName(),
-                                Nullable = (matchingParamDef.Required.GetValueOrDefault())
+                                IsNullable = (matchingParamDef.Required.GetValueOrDefault())
                             });
 
                         // if we have an optional param, recursively call again without it

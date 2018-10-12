@@ -25,7 +25,6 @@
 
 namespace ApiDoctor.Validation.OData
 {
-    using System;
     using System.ComponentModel;
     using System.Xml.Serialization;
     using Transformation;
@@ -34,6 +33,8 @@ namespace ApiDoctor.Validation.OData
     [XmlRoot("ReturnType", Namespace = ODataParser.EdmNamespace), Mergable]
     public class ReturnType : XmlBackedTransformableObject
     {
+        private bool isNullable;
+
         public ReturnType()
         {
             this.Unicode = true;
@@ -42,11 +43,19 @@ namespace ApiDoctor.Validation.OData
         [XmlAttribute("Type"), ContainsType]
         public string Type { get; set; }
 
-        [XmlAttribute("Nullable"), DefaultValue(false)]
-        public bool Nullable { get; set; }
+        [XmlAttribute("Nullable"), MergePolicy(MergePolicy.PreferFalseValue)]
+        public bool Nullable
+        {
+            get { return this.isNullable; }
+            set
+            {
+                this.isNullable = value;
+                this.NullableSpecified = true;
+            }
+        }
 
         [XmlIgnore]
-        public bool NullableSpecified => this.Nullable;
+        public bool NullableSpecified { get; set; }
 
         [XmlAttribute("Unicode"), DefaultValue(true)]
         public bool Unicode { get; set; }

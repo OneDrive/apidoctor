@@ -25,9 +25,7 @@
 
 namespace ApiDoctor.Validation.OData
 {
-    using System;
     using System.Collections.Generic;
-    using System.ComponentModel;
     using System.Xml.Serialization;
     using Transformation;
     using Utility;
@@ -35,9 +33,11 @@ namespace ApiDoctor.Validation.OData
     [XmlRoot("Property", Namespace = ODataParser.EdmNamespace), Mergable(CollectionIdentifier = "Name")]
     public class Property : XmlBackedTransformableObject, IODataAnnotatable
     {
+        private bool isUnicode;
+        private bool nullable;
+
         public Property()
         {
-            Unicode = false;
             this.Annotation = new List<Annotation>();
         }
 
@@ -47,15 +47,32 @@ namespace ApiDoctor.Validation.OData
         [XmlAttribute("Type"), ContainsType, MergePolicy(MergePolicy.PreferLesserValue)]
         public string Type { get; set; }
 
-        [XmlAttribute("Nullable"), MergePolicy(MergePolicy.PreferTrueValue)]
-        public bool Nullable { get; set; }
+        [XmlAttribute("Nullable"), MergePolicy(MergePolicy.PreferFalseValue)]
+        public bool Nullable {
+            get { return this.nullable; }
+            set
+            {
+                this.nullable = value;
+                this.NullableSpecified = true;
+            }
+        }
 
         [XmlIgnore]
-        public bool NullableSpecified => this.Nullable;
+        public bool NullableSpecified{ get; set;}
 
         [XmlAttribute("Unicode"), MergePolicy(MergePolicy.PreferFalseValue)]
-        public bool Unicode { get; set; }
-        public bool UnicodeSpecified => "Edm.String".Equals(this.Type);
+        public bool Unicode
+        {
+            get { return this.isUnicode; } 
+            set
+            {
+                this.isUnicode = value;
+                this.UnicodeSpecified = true;
+            }
+        }
+
+        [XmlIgnore]
+        public bool UnicodeSpecified { get; set; }
 
         [XmlElement("Annotation", Namespace = ODataParser.EdmNamespace), Sortable]
         public List<Annotation> Annotation { get; set; }

@@ -107,7 +107,7 @@ namespace ApiDoctor.Validation.OData
                     if (otherParameter == null ||
                         otherParameter.Type == null ||
                         thisParameter.Type == null ||
-                        otherParameter.Nullable != thisParameter.Nullable ||
+                        otherParameter.IsNullable != thisParameter.IsNullable ||
                         otherParameter.Unicode != thisParameter.Unicode)
                     {
                         return false;
