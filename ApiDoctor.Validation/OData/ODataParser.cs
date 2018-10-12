@@ -306,7 +306,6 @@ namespace ApiDoctor.Validation.OData
 
             XmlSerializerNamespaces ns = new XmlSerializerNamespaces();
             ns.Add("edmx", ODataParser.EdmxNamespace);
-            ns.Add("ags", ODataParser.AgsNamespace);
 
             XmlSerializer ser = new XmlSerializer(typeof(T));
             ser.Serialize(writer, input, ns);
