@@ -197,8 +197,8 @@ namespace ApiDoctor.Publishing.CSDL
 
             bool generateNewElements = (generateFromDocs == null && !options.SkipMetadataGeneration) || (generateFromDocs.HasValue && generateFromDocs.Value);
 
-            // Add resources
-            if (generateNewElements && Documents.Files.Any())
+            // Add resources 
+            if (Documents.Files.Any())
             {
                 foreach (var resource in this.Documents.Resources)
                 {
@@ -209,44 +209,48 @@ namespace ApiDoctor.Publishing.CSDL
                     }
                 }
 
-                // Figure out the EntityCollection
-                this.BuildEntityContainer(edmx, DocSet.SchemaConfig.BaseUrls, issues);
-
-                // Add actions to the collection
-                this.ProcessRestRequestPaths(edmx, DocSet.SchemaConfig.BaseUrls, issues);
-
-                // add enums to the default schema
-                var defaultSchema = edmx.DataServices.Schemas.FirstOrDefault(s => s.Namespace == DocSet.SchemaConfig.DefaultNamespace);
-                foreach (var enumDefinition in Documents.Enums.GroupBy(e => e.TypeName))
+                // Add new elements from the documentation if they don't already exist.
+                if (generateNewElements)
                 {
-                    var enumType = new EnumType
-                    {
-                        Name = enumDefinition.Key,
-                        Members = enumDefinition.Distinct(new EnumComparer()).Select(e =>
-                            new EnumMember
-                            {
-                                Name = e.MemberName,
-                                Value = e.NumericValue.HasValue ? e.NumericValue.GetValueOrDefault().ToString() : null
-                            }).ToList(),
-                        IsFlags = enumDefinition.FirstOrDefault().IsFlags,
-                    };
+                    // Figure out the EntityCollection
+                    this.BuildEntityContainer(edmx, DocSet.SchemaConfig.BaseUrls, issues);
 
-                    if (enumType.Members[0].Value == null)
+                    // Add actions to the collection
+                    this.ProcessRestRequestPaths(edmx, DocSet.SchemaConfig.BaseUrls, issues);
+
+                    // add enums to the default schema
+                    var defaultSchema = edmx.DataServices.Schemas.FirstOrDefault(s => s.Namespace == DocSet.SchemaConfig.DefaultNamespace);
+                    foreach (var enumDefinition in Documents.Enums.GroupBy(e => e.TypeName))
                     {
-                        for (int i = 0; i < enumType.Members.Count; i++)
+                        var enumType = new EnumType
                         {
-                            if (enumType.Members[i].Value != null)
+                            Name = enumDefinition.Key,
+                            Members = enumDefinition.Distinct(new EnumComparer()).Select(e =>
+                                new EnumMember
+                                {
+                                    Name = e.MemberName,
+                                    Value = e.NumericValue.HasValue ? e.NumericValue.GetValueOrDefault().ToString() : null
+                                }).ToList(),
+                            IsFlags = enumDefinition.FirstOrDefault().IsFlags,
+                        };
+
+                        if (enumType.Members[0].Value == null)
+                        {
+                            for (int i = 0; i < enumType.Members.Count; i++)
                             {
-                                issues.Warning(ValidationErrorCode.Unknown,
-                                    $"Enum {enumType.Name} has some values specified and others unspecified.");
-                                continue;
+                                if (enumType.Members[i].Value != null)
+                                {
+                                    issues.Warning(ValidationErrorCode.Unknown,
+                                        $"Enum {enumType.Name} has some values specified and others unspecified.");
+                                    continue;
+                                }
+
+                                enumType.Members[i].Value = i.ToString();
                             }
-
-                            enumType.Members[i].Value = i.ToString();
                         }
-                    }
 
-                    defaultSchema.Enumerations.Add(enumType);
+                        defaultSchema.Enumerations.Add(enumType);
+                    }
                 }
             }
 
