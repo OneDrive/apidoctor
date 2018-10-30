@@ -197,7 +197,7 @@ namespace ApiDoctor.Publishing.CSDL
 
             bool generateNewElements = (generateFromDocs == null && !options.SkipMetadataGeneration) || (generateFromDocs.HasValue && generateFromDocs.Value);
 
-            // Add resources
+            // Add resources and add new elements from the documentation if they don't already exist.
             if (generateNewElements && Documents.Files.Any())
             {
                 foreach (var resource in this.Documents.Resources)
@@ -247,6 +247,19 @@ namespace ApiDoctor.Publishing.CSDL
                     }
 
                     defaultSchema.Enumerations.Add(enumType);
+                }
+            }
+
+            // Skip-generation of new elements, add doc annotations to existing elements.
+            if(!generateNewElements)
+            {
+                foreach (var resource in Documents.Resources)
+                {
+                    var targetSchema = FindOrCreateSchemaForNamespace(resource.Name.NamespaceOnly(), edmx, generateNewElements: generateNewElements);
+                    if (targetSchema != null)
+                    {
+                        AddResourceToSchema(targetSchema, resource, edmx, issues, generateNewElements: generateNewElements);
+                    }
                 }
             }
 
