@@ -13,7 +13,7 @@
         <copyright>Copyright Microsoft</copyright>
         <dependencies>
             <group targetFramework=".NETFramework4.5">
-                <dependency id="Newtonsoft.Json" version="7.0.1" />
+                <dependency id="Newtonsoft.Json" version="6.0.8" />
                 <dependency id="ApiDoctor.Validation" version="$version$" />
             </group>
         </dependencies>
