@@ -105,7 +105,18 @@ namespace ApiDoctor.Validation
                     return new string[0];
                 }
 
-                return this.MarkdownLinks.Select(m => m.Definition.url).ToArray();
+                var destinations = new List<string>(this.MarkdownLinks.Count);
+                foreach (var link in this.MarkdownLinks)
+                {
+                    if (link.Definition == null)
+                    {
+                        throw new ArgumentException("Link Definition was null. Link text: " + link.Text);
+                    }
+
+                    destinations.Add(link.Definition.url);
+                }
+
+                return destinations.ToArray();
             }
         }
 
@@ -1388,6 +1399,12 @@ namespace ApiDoctor.Validation
                 int indexOfHash = workingLinkUrl.IndexOf('#');
                 bookmarkName = workingLinkUrl.Substring(indexOfHash + 1);
                 workingLinkUrl = workingLinkUrl.Substring(0, indexOfHash);
+            }
+
+            if (this.Parent?.LinkValidationConfig?.IgnoredPaths?.Any(ignoredPath =>
+                workingLinkUrl.StartsWith(ignoredPath, StringComparison.OrdinalIgnoreCase)) == true)
+            {
+                return LinkValidationResult.ExternalSkipped;
             }
 
             if (workingLinkUrl.StartsWith("/"))

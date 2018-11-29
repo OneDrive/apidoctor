@@ -107,6 +107,8 @@ namespace ApiDoctor.Validation
 
         public DocumentOutlineFile DocumentStructure { get; internal set;}
 
+        public LinkValidationConfigFile LinkValidationConfig { get; private set; }
+
         internal TableSpec.TableSpecConverter TableParser { get; private set; }
         #endregion
 
@@ -155,6 +157,14 @@ namespace ApiDoctor.Validation
             {
                 Console.WriteLine("Using document structure file: {0}", foundOutlines.SourcePath);
                 this.DocumentStructure = foundOutlines;
+            }
+
+            LinkValidationConfigFile[] linkConfigs = TryLoadConfigurationFiles<LinkValidationConfigFile>(this.SourceFolderPath);
+            var foundLinkConfig = linkConfigs.FirstOrDefault();
+            if (foundLinkConfig != null)
+            {
+                Console.WriteLine($"Using link validation config file: {foundLinkConfig.SourcePath}");
+                this.LinkValidationConfig = foundLinkConfig;
             }
 
             SchemaConfigFile[] schemaConfigs = TryLoadConfigurationFiles<SchemaConfigFile>(this.SourceFolderPath);
@@ -582,20 +592,34 @@ namespace ApiDoctor.Validation
                 }
             }
 
-            foreach (var file in filesToCheck.Where(f => f.LinkDestinations.Any()))
+            foreach (var file in filesToCheck) //.Where(f => f.LinkDestinations.Any()))
             {
-                string[] linkedPages;
-                file.ValidateNoBrokenLinks(includeWarnings, issues.For(file.DisplayName), out linkedPages, requireFilenameCaseMatch);
-
-                foreach (string pageName in linkedPages)
+                var issuesForFile = issues.For(file.DisplayName);
+                try
                 {
-                    orphanedPageIndex[pageName] = false;
+                    // skip files without links
+                    if (file.LinkDestinations?.Length == 0)
+                    {
+                        continue;
+                    }
+
+                    string[] linkedPages;
+                    file.ValidateNoBrokenLinks(includeWarnings, issuesForFile, out linkedPages, requireFilenameCaseMatch);
+
+                    foreach (string pageName in linkedPages)
+                    {
+                        orphanedPageIndex[pageName] = false;
+                    }
+
+                    if (null != file.Annotation && file.Annotation.TocPath != null)
+                    {
+                        var pageName = this.CleanUpDisplayName(file.DisplayName);
+                        orphanedPageIndex[pageName] = false;
+                    }
                 }
-
-                if (null != file.Annotation && file.Annotation.TocPath != null)
+                catch (Exception ex)
                 {
-                    var pageName = this.CleanUpDisplayName(file.DisplayName);
-                    orphanedPageIndex[pageName] = false;
+                    issuesForFile.Error(ValidationErrorCode.Unknown, "Exception processing links.", ex);
                 }
             }
 
