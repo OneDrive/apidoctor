@@ -23,80 +23,82 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+
+
 namespace ApiDoctor.Validation.Http
 {
     using System;
-    using System.IO;
+    using System.Collections.Specialized;
+    using System.Linq;
     using System.Net;
-    using System.Collections.Generic;
-
     public class HttpParser
     {
-        
-        
         /// <summary>
-        /// Converts a raw HTTP request into an HttpWebRequest instance.
+        ///     Converts a raw HTTP request into an HttpWebRequest instance.
         /// </summary>
         /// <param name="requestString"></param>
         /// <returns></returns>
         public HttpRequest ParseHttpRequest(string requestString)
         {
             if (string.IsNullOrWhiteSpace(requestString))
-            {
                 throw new ArgumentException("requestString was empty or whitespace only. Not a valid HTTP request.");
-            }
 
-            StringReader reader = new StringReader(requestString);
-            string line;
-            ParserMode mode = ParserMode.FirstLine;
-
-            HttpRequest request = new HttpRequest();
-
-            while( (line = reader.ReadLine()) != null)
+            var firstNewLine = requestString.IndexOf(NewLine, StringComparison.InvariantCultureIgnoreCase);
+            if ($"{requestString.ElementAtOrDefault(firstNewLine)}{requestString.ElementAtOrDefault(firstNewLine + 1)}" !=Environment.NewLine)
             {
+            }
+            else
+            {
+                requestString = requestString.Remove(firstNewLine, 2);
+            }
+            var reader = new StringReader(requestString);
+            string line;
+            var bodyBrace = string.Empty;
+            var mode = ParserMode.FirstLine;
+
+            var request = new HttpRequest();
+            while ((line = reader.ReadLine()) != null)
+            {
+                line = line.Trim();
+
                 switch (mode)
                 {
                     case ParserMode.FirstLine:
-                        var components = line.Split(' ');
-                        if (components.Length < 2) 
-                            throw new HttpParserRequestException("RequestString does not contain a proper HTTP request first line.");
-                        if (components.Length > 3)
-                            throw new HttpParserRequestException("RequestString does not contain a proper HTTP request first line (more than the expected 3 components)");
 
+                        var components = line.Split(' ');
+                        var componentsLength = components.Length;
+
+                        if (componentsLength < 2)
+                            throw new HttpParserRequestException(
+                                "RequestString does not contain a proper HTTP request first line.");
                         if (components[0].StartsWith("HTTP/"))
                             throw new HttpParserRequestException("RequestString contains an HTTP response.");
 
                         request.Method = components[0];
-                        request.Url = components[1];
-
-                        if (components.Length >= 3)
-                        {
-                            request.HttpVersion = components[2];
-                        }
-                        else
-                        {
-                            request.HttpVersion = "HTTP/1.1";
-                        }
+                        request.Url = componentsLength > 3 ? line.Replace(request.Method, string.Empty) : components[1];
+                        request.HttpVersion = components[componentsLength - 1].StartsWith("HTTP/")
+                            ? components[componentsLength - 1]
+                            : "HTTP/1.1";
 
                         mode = ParserMode.Headers;
                         break;
 
                     case ParserMode.Headers:
-                        if (string.IsNullOrEmpty(line))
+                        if (string.IsNullOrEmpty(line) || line.StartsWith("{", true, CultureInfo.InvariantCulture))
                         {
+                            if (line.StartsWith("{", true, CultureInfo.InvariantCulture)) bodyBrace = line;
                             mode = ParserMode.Body;
                             continue;
                         }
 
                         // Parse each header
-                        int split = line.IndexOf(": ", StringComparison.Ordinal);
-                        if (split < 1) 
+                        var split = line.IndexOf(": ", StringComparison.Ordinal);
+                        if (split < 1)
                             throw new ArgumentException("requestString contains an invalid header definition");
 
                         var headerName = line.Substring(0, split);
                         var headerValue = line.Substring(split + 1);
                         request.Headers.Add(headerName, headerValue);
-
                         break;
 
                     case ParserMode.Body:
@@ -104,34 +106,34 @@ namespace ApiDoctor.Validation.Http
 
                         // normalize line endings to CRLF, which is required for headers, etc.
                         restOfBody = restOfBody.Replace("\r\n", "\n").Replace("\n", "\r\n");
-                        request.Body = string.Concat(line, "\r\n", restOfBody);
+                        request.Body = string.Concat(bodyBrace, line, "\r\n", restOfBody);
                         break;
                 }
             }
-
             return request;
         }
 
         /// <summary>
-        /// Convert a raw HTTP response into an HttpResponse instance.
+        ///     Convert a raw HTTP response into an HttpResponse instance.
         /// </summary>
         /// <param name="responseString"></param>
         /// <returns></returns>
         public HttpResponse ParseHttpResponse(string responseString)
         {
-            StringReader reader = new StringReader(responseString);
+            var reader = new StringReader(responseString);
             string line;
-            ParserMode mode = ParserMode.FirstLine;
+            var mode = ParserMode.FirstLine;
 
-            HttpResponse response = new HttpResponse() { Headers = new WebHeaderCollection() };
+            var response = new HttpResponse {Headers = new WebHeaderCollection()};
 
             while ((line = reader.ReadLine()) != null)
-            {
                 switch (mode)
                 {
                     case ParserMode.FirstLine:
                         var components = line.Split(' ');
-                        if (components.Length < 3) throw new ArgumentException("responseString does not contain a proper HTTP request first line.");
+                        if (components.Length < 3)
+                            throw new ArgumentException(
+                                "responseString does not contain a proper HTTP request first line.");
 
                         response.HttpVersion = components[0];
                         response.StatusCode = int.Parse(components[1]);
@@ -148,8 +150,10 @@ namespace ApiDoctor.Validation.Http
                         }
 
                         // Parse each header
-                        int split = line.IndexOf(": ", StringComparison.Ordinal);
-                        if (split < 1) throw new ArgumentException($"Request contains an invalid header definition: \"{line}\". Missing whitespace between the headers and body?");
+                        var split = line.IndexOf(": ", StringComparison.Ordinal);
+                        if (split < 1)
+                            throw new ArgumentException(
+                                $"Request contains an invalid header definition: \"{line}\". Missing whitespace between the headers and body?");
 
                         var headerName = line.Substring(0, split);
                         var headerValue = line.Substring(split + 1);
@@ -158,29 +162,25 @@ namespace ApiDoctor.Validation.Http
                         break;
 
                     case ParserMode.Body:
-                        response.Body = line + Environment.NewLine + reader.ReadToEnd();
+                        response.Body = line + NewLine + reader.ReadToEnd();
                         break;
                 }
-            }
 
             return response;
         }
 
 
         /// <summary>
-        /// Take query string formatted input (a=1&b=2) and return a dictionary
-        /// of values.
+        ///     Take query string formatted input (a=1&b=2) and return a dictionary
+        ///     of values.
         /// </summary>
         /// <param name="input"></param>
         /// <returns></returns>
-        public static System.Collections.Specialized.NameValueCollection ParseQueryString(string input)
+        public static NameValueCollection ParseQueryString(string input)
         {
-            if (input != null && input[0] != '?')
-            {
-                input = "?" + input;
-            }
+            if (input != null && input[0] != '?') input = "?" + input;
 
-            var output = System.Web.HttpUtility.ParseQueryString(input);
+            var output = HttpUtility.ParseQueryString(input);
             return output;
         }
 

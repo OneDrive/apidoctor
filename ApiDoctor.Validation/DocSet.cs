@@ -46,7 +46,6 @@ namespace ApiDoctor.Validation
 
         private static readonly HashSet<string> foldersToSkip = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
-            "beta",
             "templates",
         };
 
@@ -105,7 +104,7 @@ namespace ApiDoctor.Validation
 
         public ApiRequirements Requirements { get; internal set; }
 
-        public DocumentOutlineFile DocumentStructure { get; internal set;}
+        public DocumentOutlineFile DocumentStructure { get; internal set; }
 
         public LinkValidationConfigFile LinkValidationConfig { get; private set; }
 
@@ -230,11 +229,11 @@ namespace ApiDoctor.Validation
             var jsonFiles = docSetDir.GetFiles("*.json", SearchOption.AllDirectories);
             foreach (var file in jsonFiles)
             {
-                if (file.DirectoryName.Contains("beta"))
-                {
-                    // hack: skip beta for now.
-                    continue;
-                }
+                //if (file.DirectoryName.Contains("beta"))
+                //{
+                //    // hack: skip beta for now.
+                //    continue;
+                //}
 
                 try
                 {
@@ -584,7 +583,7 @@ namespace ApiDoctor.Validation
             }
             else
             {
-                foreach(var relativePath in relativePathForFiles)
+                foreach (var relativePath in relativePathForFiles)
                 {
                     var file = this.LookupFileForPath(relativePath);
                     if (null != file)
@@ -659,15 +658,18 @@ namespace ApiDoctor.Validation
                 throw new FileNotFoundException(string.Format("Cannot find documentation. Directory doesn't exist: {0}", sourceFolder.FullName));
             }
 
-            var markdownFileInfos = sourceFolder.GetFiles(DocumentationFileExtension, SearchOption.AllDirectories);
-            var markdownFiles = markdownFileInfos.
-                Where(fi => foldersToSkip.All(folderToSkip => !fi.DirectoryName.Contains(folderToSkip)) && !filesToSkip.Contains(fi.Name)).
-                Select(fi => new DocFile(this.SourceFolderPath, this.RelativePathToFile(fi.FullName), this) { WriteFixesBackToDisk = this.writeFixesBackToDisk });
+            var markdownFileInfos = sourceFolder.GetFiles(DocumentationFileExtension, SearchOption.AllDirectories)
+                .Where(x => !x.Name.Contains("intune") && !x.Name.Contains("education")).ToArray();
+
+
+            var markdownFiles = markdownFileInfos
+                .Where(fi => foldersToSkip.All(folderToSkip => !fi.DirectoryName.Contains(folderToSkip)) && !filesToSkip.Contains(fi.Name))
+                .Select(fi => new DocFile(this.SourceFolderPath, this.RelativePathToFile(fi.FullName), this) { WriteFixesBackToDisk = this.writeFixesBackToDisk });
 
             var supplementalFileInfos = XmlFileExtensions.SelectMany(x => sourceFolder.GetFiles(x, SearchOption.AllDirectories)).ToArray();
-            var supplementalFiles = supplementalFileInfos.
-                Where(fi => foldersToSkip.All(folderToSkip => !fi.DirectoryName.Contains(folderToSkip)) && !filesToSkip.Contains(fi.Name)).
-                Select(fi => new SupplementalFile(this.SourceFolderPath, this.RelativePathToFile(fi.FullName), this));
+            var supplementalFiles = supplementalFileInfos
+                .Where(fi => foldersToSkip.All(folderToSkip => !fi.DirectoryName.Contains(folderToSkip)) && !filesToSkip.Contains(fi.Name))
+                .Select(fi => new SupplementalFile(this.SourceFolderPath, this.RelativePathToFile(fi.FullName), this));
 
             this.Files = markdownFiles.Concat(supplementalFiles).ToArray();
         }
@@ -727,12 +729,12 @@ namespace ApiDoctor.Validation
             List<string> deepPathComponents = new List<string>(deepFilePath.Split(new char[] { '/', '\\' }, StringSplitOptions.RemoveEmptyEntries));
             List<string> shallowPathComponents = new List<string>(shallowFilePath.Split(new char[] { '/', '\\' }, StringSplitOptions.RemoveEmptyEntries));
 
-            while(deepPathComponents.Count > 0 && shallowPathComponents.Count > 0 && deepPathComponents[0].Equals(shallowPathComponents[0], StringComparison.OrdinalIgnoreCase))
+            while (deepPathComponents.Count > 0 && shallowPathComponents.Count > 0 && deepPathComponents[0].Equals(shallowPathComponents[0], StringComparison.OrdinalIgnoreCase))
             {
                 deepPathComponents.RemoveAt(0);
                 shallowPathComponents.RemoveAt(0);
             }
-            
+
             int depth = Math.Max(0, deepPathComponents.Count - 1);
 
             StringBuilder sb = new StringBuilder();
@@ -790,7 +792,7 @@ namespace ApiDoctor.Validation
     {
         public string Message { get; private set; }
         public bool Verbose { get; private set; }
-        public string Title {get; private set;}
+        public string Title { get; private set; }
 
         public DocSetEventArgs(string message, bool verbose = false)
         {
