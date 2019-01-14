@@ -25,6 +25,10 @@
 
 
 
+using System.Globalization;
+using System.IO;
+using System.Web;
+
 namespace ApiDoctor.Validation.Http
 {
     using System;
@@ -43,11 +47,8 @@ namespace ApiDoctor.Validation.Http
             if (string.IsNullOrWhiteSpace(requestString))
                 throw new ArgumentException("requestString was empty or whitespace only. Not a valid HTTP request.");
 
-            var firstNewLine = requestString.IndexOf(NewLine, StringComparison.InvariantCultureIgnoreCase);
-            if ($"{requestString.ElementAtOrDefault(firstNewLine)}{requestString.ElementAtOrDefault(firstNewLine + 1)}" !=Environment.NewLine)
-            {
-            }
-            else
+            var firstNewLine = requestString.IndexOf(Environment.NewLine, StringComparison.InvariantCultureIgnoreCase);
+            if ($"{requestString.ElementAtOrDefault(firstNewLine)}{requestString.ElementAtOrDefault(firstNewLine + 1)}" == Environment.NewLine)
             {
                 requestString = requestString.Remove(firstNewLine, 2);
             }
@@ -124,7 +125,7 @@ namespace ApiDoctor.Validation.Http
             string line;
             var mode = ParserMode.FirstLine;
 
-            var response = new HttpResponse {Headers = new WebHeaderCollection()};
+            var response = new HttpResponse { Headers = new WebHeaderCollection() };
 
             while ((line = reader.ReadLine()) != null)
                 switch (mode)
@@ -162,7 +163,7 @@ namespace ApiDoctor.Validation.Http
                         break;
 
                     case ParserMode.Body:
-                        response.Body = line + NewLine + reader.ReadToEnd();
+                        response.Body = line + Environment.NewLine + reader.ReadToEnd();
                         break;
                 }
 
