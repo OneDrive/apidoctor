@@ -84,7 +84,8 @@ namespace ApiDoctor.Validation.TableSpec
 
             TableDecoder decoder = new TableDecoder { Type = TableBlockType.Unknown };
 
-            var headerText = headerStack.Peek()?.Title;
+            //var headerText = headerStack.Peek()?.Title;
+            var headerText=headerStack.Count > 0 ? headerStack.Peek()?.Title : null;
             
             // Try matching based on header
             if (headerText != null)

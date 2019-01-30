@@ -80,7 +80,7 @@ namespace ApiDoctor.Validation.Json
 
         /// <summary>
         /// When set to True, string types are not validated
-        /// for the types defined in the documetnation (url, 
+        /// for the types defined in the documentation (url, 
         /// dateTime, enumerated values, etc)
         /// </summary>
         public bool RelaxedStringValidation { get; set; }

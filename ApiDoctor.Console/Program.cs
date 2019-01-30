@@ -171,8 +171,7 @@ namespace ApiDoctor.ConsoleApp
 #endif
             };
 
-            string[] missingProps;
-            if (!options.HasRequiredProperties(out missingProps))
+            if (!options.HasRequiredProperties(out var missingProps))
             {
                 issues.Error(ValidationErrorCode.MissingRequiredArguments, $"Command line is missing required arguments: {missingProps.ComponentsJoinedByString(", ")}");
                 FancyConsole.WriteLine(origCommandLineOpts.GetUsage(invokedVerb));
@@ -302,10 +301,10 @@ namespace ApiDoctor.ConsoleApp
                 tagsToInclude = String.Empty;
             }
 
-            DateTimeOffset start = DateTimeOffset.Now;
+            var start = DateTimeOffset.Now;
             set.ScanDocumentation(tagsToInclude, issues);
-            DateTimeOffset end = DateTimeOffset.Now;
-            TimeSpan duration = end.Subtract(start);
+            var end = DateTimeOffset.Now;
+            var duration = end.Subtract(start);
 
             FancyConsole.WriteLine($"Took {duration.TotalSeconds} to parse {set.Files.Length} source files.");
             return Task.FromResult<DocSet>(set);

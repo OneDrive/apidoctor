@@ -153,7 +153,7 @@ namespace ApiDoctor.Validation
         public bool IsEnum { get; private set; }
 
         /// <summary>
-        /// A dictionary that reprensets the known type members of an undefined object type.
+        /// A dictionary that represents the known type members of an undefined object type.
         /// </summary>
         public List<ParameterDefinition> CustomMembers { get; private set; }
 

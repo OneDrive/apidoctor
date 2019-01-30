@@ -442,7 +442,7 @@ namespace ApiDoctor.Validation.Json
                         }
                         else if (null == inputProperty.Type.CustomMembers)
                         {
-                            issues.Error(ValidationErrorCode.NoCustomMembersFound, $"Property '{inputProperty.Name}' is of type Custom but has no custom members.");
+                           //issues.Error(ValidationErrorCode.NoCustomMembersFound, $"Property '{inputProperty.Name}' is of type Custom but has no custom members.");
                         }
                         return PropertyValidationOutcome.Ok;
                     }
@@ -752,7 +752,7 @@ namespace ApiDoctor.Validation.Json
                     param.Type = ParameterDataType.Boolean;
                     break;
                 case JTokenType.Float:
-                    param.Type = ParameterDataType.Float;
+                    param.Type = ParameterDataType.Double;
                     break;
                 case JTokenType.Integer:
                     param.Type = ParameterDataType.Int64;
