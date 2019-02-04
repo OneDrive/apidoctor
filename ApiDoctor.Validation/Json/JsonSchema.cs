@@ -442,7 +442,7 @@ namespace ApiDoctor.Validation.Json
                         }
                         else if (null == inputProperty.Type.CustomMembers)
                         {
-                            issues.Error(ValidationErrorCode.NoCustomMembersFound, $"Property '{inputProperty.Name}' is of type Custom but has no custom members.");
+                            //issues.Error(ValidationErrorCode.NoCustomMembersFound, $"Property '{inputProperty.Name}' is of type Custom but has no custom members.");
                         }
                         return PropertyValidationOutcome.Ok;
                     }

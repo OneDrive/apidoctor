@@ -659,7 +659,7 @@ namespace ApiDoctor.Validation
             }
 
             var markdownFileInfos = sourceFolder.GetFiles(DocumentationFileExtension, SearchOption.AllDirectories)
-                .Where(x => !x.Name.Contains("intune") && !x.Name.Contains("education")).ToArray();
+                .Where(x => !x.Name.Contains("intune")).ToArray();
 
 
             var markdownFiles = markdownFileInfos
