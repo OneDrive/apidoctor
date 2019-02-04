@@ -752,7 +752,7 @@ namespace ApiDoctor.Validation.Json
                     param.Type = ParameterDataType.Boolean;
                     break;
                 case JTokenType.Float:
-                    param.Type = ParameterDataType.Float;
+                    param.Type = ParameterDataType.Double;
                     break;
                 case JTokenType.Integer:
                     param.Type = ParameterDataType.Int64;
