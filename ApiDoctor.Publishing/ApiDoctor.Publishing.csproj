@@ -1,96 +1,26 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{B675CF73-AA42-4A54-B5E7-FF5F155DA4A7}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>ApiDoctor.Publishing</RootNamespace>
-    <AssemblyName>ApiDoctor.Publishing</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
-    <RestorePackages>true</RestorePackages>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <Copyright>Copyright ©  2017</Copyright>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
+    <OutputPath>bin\Debug\</OutputPath>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+
   <ItemGroup>
-    <Reference Include="Newtonsoft.Json">
-      <HintPath>..\packages\Newtonsoft.Json.6.0.8\lib\net45\Newtonsoft.Json.dll</HintPath>
-    </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
-    <Reference Include="mustache-sharp, Version=0.2.8.2, Culture=neutral, PublicKeyToken=40ca26c1e088cef4">
-      <HintPath>..\packages\mustache-sharp.0.2.8.2\lib\net40\mustache-sharp.dll</HintPath>
-    </Reference>
+    <PackageReference Include="mustache-sharp" Version="1.0.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.1" />
   </ItemGroup>
+
   <ItemGroup>
-    <Compile Include="CSDL\CsdlExtensionMethods.cs" />
-    <Compile Include="CSDL\CsdlWriter.cs" />
-    <Compile Include="CSDL\ObjectGraphMerger.cs" />
-    <Compile Include="CSDL\MethodCollection.cs" />
-    <Compile Include="CSDL\XmlSorter.cs" />
-    <Compile Include="Html\ApiDocsConditionalTag.cs" />
-    <Compile Include="Html\DocumentPublisherHtml.cs" />
-    <Compile Include="Html\FileTagDefinition.cs" />
-    <Compile Include="Html\HtmlMustacheWriter.cs" />
-    <Compile Include="Html\IfMatchTagDefinition.cs" />
-    <Compile Include="Html\ExtendedElseTag.cs" />
-    <Compile Include="PathExtensionMethods.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Swagger\SwaggerClasses.cs" />
-    <Compile Include="Swagger\SwaggerExtensionMethods.cs" />
-    <Compile Include="Swagger\SwaggerWriter.cs" />
+    <ProjectReference Include="..\ApiDoctor.Validation\ApiDoctor.Validation.csproj" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\ApiDoctor.Validation\ApiDoctor.Validation.csproj">
-      <Project>{33B10320-3802-49CF-8965-3510AE66D5EC}</Project>
-      <Name>ApiDoctor.Validation</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\OSS\markdowndeep\MarkdownDeep\MarkdownDeep.csproj">
-      <Project>{1569ED47-C7C9-4261-B6F4-7445BD0F2C95}</Project>
-      <Name>MarkdownDeep</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup />
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-    <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
-    </PropertyGroup>
-    <Error Condition="!Exists('$(SolutionDir)\.nuget\NuGet.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(SolutionDir)\.nuget\NuGet.targets'))" />
-  </Target>
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
+
 </Project>
