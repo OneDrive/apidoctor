@@ -37,7 +37,7 @@ namespace ApiDoctor.Validation.UnitTests
 
         public static JsonSchema SimpleSchemaExample()
         {
-            var obj = new { stringProp = "string", urlProp = "url", numberProp = 123, dateProp = "datetime", floatProp = 123.121 };
+            var obj = new { stringProp = "string", urlProp = "url", numberProp = 123, dateProp = "datetime", floatProp = 123.121f };
             string json = JsonConvert.SerializeObject(obj);
             return new JsonSchema(json, null);
         }
@@ -78,7 +78,7 @@ namespace ApiDoctor.Validation.UnitTests
                         Assert.AreEqual(123, Int32.Parse(property.OriginalValue));
                         break;
                     case "floatProp":
-                        Assert.AreEqual(property.Type, ParameterDataType.Float);
+                        Assert.AreEqual(property.Type, ParameterDataType.Double);
                         Assert.AreEqual(123.121, Double.Parse(property.OriginalValue));
                         break;
                     case "dateProp":
