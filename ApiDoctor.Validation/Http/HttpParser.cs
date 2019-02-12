@@ -25,9 +25,8 @@
 
 
 
-using System.Globalization;
-using System.IO;
-using System.Web;
+
+
 
 namespace ApiDoctor.Validation.Http
 {
@@ -35,6 +34,10 @@ namespace ApiDoctor.Validation.Http
     using System.Collections.Specialized;
     using System.Linq;
     using System.Net;
+    using System.Globalization;
+    using System.IO;
+    using System.Text;
+    using System.Web;
     public class HttpParser
     {
         /// <summary>
@@ -45,49 +48,58 @@ namespace ApiDoctor.Validation.Http
         public HttpRequest ParseHttpRequest(string requestString)
         {
             if (string.IsNullOrWhiteSpace(requestString))
-                throw new ArgumentException("requestString was empty or whitespace only. Not a valid HTTP request.");
-
-            var firstNewLine = requestString.IndexOf(Environment.NewLine, StringComparison.InvariantCultureIgnoreCase);
-            if ($"{requestString.ElementAtOrDefault(firstNewLine)}{requestString.ElementAtOrDefault(firstNewLine + 1)}" == Environment.NewLine)
             {
-                requestString = requestString.Remove(firstNewLine, 2);
+                throw new ArgumentException("requestString was empty or whitespace only. Not a valid HTTP request.");
             }
+
             var reader = new StringReader(requestString);
             string line;
-            var bodyBrace = string.Empty;
             var mode = ParserMode.FirstLine;
 
             var request = new HttpRequest();
+
             while ((line = reader.ReadLine()) != null)
             {
                 line = line.Trim();
-
                 switch (mode)
                 {
                     case ParserMode.FirstLine:
 
                         var components = line.Split(' ');
-                        var componentsLength = components.Length;
 
-                        if (componentsLength < 2)
-                            throw new HttpParserRequestException(
-                                "RequestString does not contain a proper HTTP request first line.");
+                        if (components.Length < 2)
+                            throw new HttpParserRequestException("RequestString does not contain a proper HTTP request first line.");
                         if (components[0].StartsWith("HTTP/"))
                             throw new HttpParserRequestException("RequestString contains an HTTP response.");
 
+                        string url;
+                        var httpVersion = components[1].StartsWith("HTTP/") ? components[1] : "HTTP/1.1";
+                        if (components.Length > 3)
+                        {
+                            //Assume Odata Uri
+                            var uri = new StringBuilder(components.Length);
+                            for (var i = 1; i < components.Length; i++)
+                            {
+                                uri.Append(components[i]);
+                                uri.Append(' ');
+                            }
+                            url = uri.ToString().Trim();
+                        }
+                        else
+                        {
+                            url = components[1];
+                        }
+
                         request.Method = components[0];
-                        request.Url = componentsLength > 3 ? line.Replace(request.Method, string.Empty) : components[1];
-                        request.HttpVersion = components[componentsLength - 1].StartsWith("HTTP/")
-                            ? components[componentsLength - 1]
-                            : "HTTP/1.1";
+                        request.Url = url;
+                        request.HttpVersion = httpVersion;
 
                         mode = ParserMode.Headers;
                         break;
 
                     case ParserMode.Headers:
-                        if (string.IsNullOrEmpty(line) || line.StartsWith("{", true, CultureInfo.InvariantCulture))
+                        if (string.IsNullOrEmpty(line))
                         {
-                            if (line.StartsWith("{", true, CultureInfo.InvariantCulture)) bodyBrace = line;
                             mode = ParserMode.Body;
                             continue;
                         }
@@ -100,6 +112,7 @@ namespace ApiDoctor.Validation.Http
                         var headerName = line.Substring(0, split);
                         var headerValue = line.Substring(split + 1);
                         request.Headers.Add(headerName, headerValue);
+
                         break;
 
                     case ParserMode.Body:
@@ -107,10 +120,13 @@ namespace ApiDoctor.Validation.Http
 
                         // normalize line endings to CRLF, which is required for headers, etc.
                         restOfBody = restOfBody.Replace("\r\n", "\n").Replace("\n", "\r\n");
-                        request.Body = string.Concat(bodyBrace, line, "\r\n", restOfBody);
+                        request.Body = string.Concat(line, "\r\n", restOfBody);
                         break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
                 }
             }
+
             return request;
         }
 

@@ -105,9 +105,14 @@ namespace ApiDoctor.Validation
                     return new string[0];
                 }
 
+
                 var destinations = new List<string>(this.MarkdownLinks.Count);
                 foreach (var link in this.MarkdownLinks)
                 {
+                    if (link.Text != null && link.Text.StartsWith("!INCLUDE"))
+                    {
+                        continue;
+                    }
                     if (link.Definition == null)
                     {
                         throw new ArgumentException("Link Definition was null. Link text: " + link.Text);
@@ -1274,7 +1279,7 @@ namespace ApiDoctor.Validation
                 if (null == link.Definition)
                 {
                     // Don't treat TAGS or END markers like links
-                    if (!link.Text.ToUpper().Equals("END") && !link.Text.ToUpper().StartsWith("TAGS="))
+                    if (!link.Text.ToUpper().Equals("END") && !link.Text.ToUpper().StartsWith("TAGS=") && !link.Text.ToUpper().StartsWith("!INCLUDE"))
                     {
                         issues.Error(ValidationErrorCode.MissingLinkSourceId,
                             $"Link ID '[{link.Text}]' used in document but not defined. Define with '[{link.Text}]: url' or remove square brackets.");
@@ -1299,7 +1304,7 @@ namespace ApiDoctor.Validation
                         issues.Error(ValidationErrorCode.LinkDestinationNotFound, $"BookmarkMissing: '[{link.Definition.url}]({link.Text})'. {suggestion}");
                         break;
                     case LinkValidationResult.ParentAboveDocSetPath:
-                        issues.Error(ValidationErrorCode.LinkDestinationOutsideDocSet, $"Relative link outside of doc set: '[{link.Definition.url}]({link.Text})'.");
+                        //issues.Error(ValidationErrorCode.LinkDestinationOutsideDocSet, $"Relative link outside of doc set: '[{link.Definition.url}]({link.Text})'.");
                         break;
                     case LinkValidationResult.UrlFormatInvalid:
                         issues.Error(ValidationErrorCode.LinkFormatInvalid, $"InvalidUrlFormat '[{link.Definition.url}]({link.Text})'.");

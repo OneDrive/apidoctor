@@ -237,6 +237,7 @@ namespace ApiDoctor.ConsoleApp
                 }
             }
 
+
             Exit(failure: !returnSuccess);
         }
 
