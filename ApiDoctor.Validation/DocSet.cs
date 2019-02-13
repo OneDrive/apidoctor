@@ -229,12 +229,6 @@ namespace ApiDoctor.Validation
             var jsonFiles = docSetDir.GetFiles("*.json", SearchOption.AllDirectories);
             foreach (var file in jsonFiles)
             {
-                //if (file.DirectoryName.Contains("beta"))
-                //{
-                //    // hack: skip beta for now.
-                //    continue;
-                //}
-
                 try
                 {
                     using (var reader = file.OpenText())
@@ -658,10 +652,7 @@ namespace ApiDoctor.Validation
                 throw new FileNotFoundException(string.Format("Cannot find documentation. Directory doesn't exist: {0}", sourceFolder.FullName));
             }
 
-            var markdownFileInfos = sourceFolder.GetFiles(DocumentationFileExtension, SearchOption.AllDirectories)
-                .Where(x => !x.Name.Contains("intune")).ToArray();
-
-
+            var markdownFileInfos = sourceFolder.GetFiles(DocumentationFileExtension, SearchOption.AllDirectories);
             var markdownFiles = markdownFileInfos
                 .Where(fi => foldersToSkip.All(folderToSkip => !fi.DirectoryName.Contains(folderToSkip)) && !filesToSkip.Contains(fi.Name))
                 .Select(fi => new DocFile(this.SourceFolderPath, this.RelativePathToFile(fi.FullName), this) { WriteFixesBackToDisk = this.writeFixesBackToDisk });

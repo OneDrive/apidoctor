@@ -23,11 +23,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
-
-
-
 namespace ApiDoctor.Validation.Http
 {
     using System;
@@ -38,6 +33,7 @@ namespace ApiDoctor.Validation.Http
     using System.IO;
     using System.Text;
     using System.Web;
+
     public class HttpParser
     {
         /// <summary>
