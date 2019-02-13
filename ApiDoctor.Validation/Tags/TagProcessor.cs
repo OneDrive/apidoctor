@@ -40,11 +40,11 @@ namespace ApiDoctor.Validation.Tags
         private string DocSetRoot = null;
         private static string[] tagSeparators = { ",", " " };
 
-        
-        private static Regex ValidTagFormat = new Regex(@"^\[TAGS=[-\.\w]+(?:,\s?[-\.\w]*)*\]",RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+        private static Regex ValidTagFormat = new Regex(@"^\[TAGS=[-\.\w]+(?:,\s?[-\.\w]*)*\]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static Regex GetTagList = new Regex(@"\[TAGS=([-\.,\s\w]+)\]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static Regex IncludeFormat = new Regex(@"\[!INCLUDE\s*\[[-/.\w]+\]\(([-/.\w]+)\)\s*\]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        private static Regex ImportantFormat = new Regex(@"\[!IMPORTANT\s*\]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static Regex AlertFormat = new Regex(@"\[(!NOTE|!TIP|!IMPORTANT|!CAUTION|!WARNING)\s*\]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         private Action<ValidationError> LogMessage = null;
 
@@ -187,9 +187,9 @@ namespace ApiDoctor.Validation.Tags
 
                         continue;
                     }
-                    if (IsImportantLine(nextLine))
+                    if (IsAlertLine(nextLine))
                     {
-                        LogMessage(new ValidationMessage(string.Concat(sourceFile.Name, ":", lineNumber), "Removing [!IMPORTANT]"));
+                        LogMessage(new ValidationMessage(string.Concat(sourceFile.Name, ":", lineNumber), "Removing docfx Alerts"));
                         continue;
                     }
 
@@ -332,19 +332,15 @@ namespace ApiDoctor.Validation.Tags
             return text.Equals("<p>[END]</p>");
         }
         /// <summary>
-        /// Checks if the line contains the [!IMPORTANT] docfx syntax
+        /// Checks if the line contains any of the docfx syntax items. 
         /// </summary>
-        /// <param name="nextLine"></param>
-        /// <returns>returns true or false</returns>
-        private static bool IsImportantLine(string nextLine)
+        /// <param name="nextLine">line to process</param>
+        /// <returns>true when there is a match otherwise false.</returns>
+        private static bool IsAlertLine(string nextLine)
         {
-            if (nextLine.ToUpper().Contains("IMPORTANT"))
-            {
-                var isMatch = ImportantFormat.IsMatch(nextLine);
-                return isMatch;
-            }
-
-            return false;
+            var upperNextLine = nextLine.ToUpper();
+            var alerts = new[] { "NOTE", "TIP", "IMPORTANT", "CAUTION", "WARNING" };
+            return alerts.Any(alert => upperNextLine.Contains(alert) && AlertFormat.IsMatch(upperNextLine));
         }
 
         private FileInfo GetIncludeFile(string text, FileInfo sourceFile)
