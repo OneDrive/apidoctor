@@ -45,7 +45,8 @@ namespace ApiDoctor.Validation.Tags
         private static Regex GetTagList = new Regex(@"\[TAGS=([-\.,\s\w]+)\]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static Regex IncludeFormat = new Regex(@"\[!INCLUDE\s*\[[-/.\w]+\]\(([-/.\w]+)\)\s*\]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static Regex AlertFormat = new Regex(@"\[(!NOTE|!TIP|!IMPORTANT|!CAUTION|!WARNING)\s*\]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
+        private static Regex DivFormat = new Regex(@"\[(!div (([\w]*=""[\w]*"")\s*)*)\s*\]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static Regex VideoFormat = new Regex(@"\[!VIDEO ((https]?):\/)?\/?([^:\/\s]+)((\/\w+)*\/)([\w\-\.]+[^#?\s]+)(.*)?(#[\w\-]+)?\]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private Action<ValidationError> LogMessage = null;
 
         public TagProcessor(string tags, string docSetRoot, Action<ValidationError> logMethod = null)
@@ -193,6 +194,17 @@ namespace ApiDoctor.Validation.Tags
                         continue;
                     }
 
+                    if (IsDocFxDivLine(nextLine))
+                    {
+                        LogMessage(new ValidationMessage(string.Concat(sourceFile.Name, ":", lineNumber), "Removing docfx Div"));
+                        continue;
+                    }
+                    if (IsDocFxVideoLine(nextLine))
+                    {
+                        LogMessage(new ValidationMessage(string.Concat(sourceFile.Name, ":", lineNumber), "Removing docfx Video"));
+                        continue;
+                    }
+
                     writer.WriteLine(nextLine);
                 }
 
@@ -332,7 +344,7 @@ namespace ApiDoctor.Validation.Tags
             return text.Equals("<p>[END]</p>");
         }
         /// <summary>
-        /// Checks if the line contains any of the docfx syntax items. 
+        /// Checks if the line contains any of the docfx alert syntax items. 
         /// </summary>
         /// <param name="nextLine">line to process</param>
         /// <returns>true when there is a match otherwise false.</returns>
@@ -341,6 +353,28 @@ namespace ApiDoctor.Validation.Tags
             var upperNextLine = nextLine.ToUpper();
             var alerts = new[] { "NOTE", "TIP", "IMPORTANT", "CAUTION", "WARNING" };
             return alerts.Any(alert => upperNextLine.Contains(alert) && AlertFormat.IsMatch(upperNextLine));
+        }
+        /// <summary>
+        /// Checks if the line contains any of the docfx div syntax items. 
+        /// </summary>
+        /// <param name="nextLine">line to process</param>
+        /// <returns>true when there is a match otherwise false.</returns>
+        private static bool IsDocFxDivLine(string nextLine)
+        {
+            var upperNextLine = nextLine.ToUpper();
+            var htmlContainers = new[] { "div" };
+            return htmlContainers.Any(htmlContainer => upperNextLine.Contains(htmlContainer) && DivFormat.IsMatch(upperNextLine));
+        }
+        /// <summary>
+        /// Checks if the line contains any of the docfx video syntax items.
+        /// </summary>
+        /// <param name="nextLine"></param>
+        /// <returns></returns>
+        private static bool IsDocFxVideoLine(string nextLine)
+        {
+            var upperNextLine = nextLine.ToUpper();
+            var videoTags = new string[] { "video" };
+            return videoTags.Any(videoTag => upperNextLine.Contains(videoTag) && VideoFormat.IsMatch(upperNextLine));
         }
 
         private FileInfo GetIncludeFile(string text, FileInfo sourceFile)

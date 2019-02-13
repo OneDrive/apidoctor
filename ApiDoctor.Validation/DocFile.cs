@@ -110,7 +110,7 @@ namespace ApiDoctor.Validation
                 {
                     if (link.Definition == null)
                     {
-                        throw new ArgumentException("Link Definition was null. Link text: " + link.Text);
+                        throw new ArgumentException("Link Definition was null. Link text: " + link.Text, nameof(link.Definition));
                     }
 
                     destinations.Add(link.Definition.url);
