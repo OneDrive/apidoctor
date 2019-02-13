@@ -52,12 +52,10 @@ namespace ApiDoctor.Validation.Http
                 throw new ArgumentException("requestString was empty or whitespace only. Not a valid HTTP request.");
             }
 
+            var mode = ParserMode.FirstLine;
+            var request = new HttpRequest();
             var reader = new StringReader(requestString);
             string line;
-            var mode = ParserMode.FirstLine;
-
-            var request = new HttpRequest();
-
             while ((line = reader.ReadLine()) != null)
             {
                 line = line.Trim();

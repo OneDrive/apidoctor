@@ -40,9 +40,11 @@ namespace ApiDoctor.Validation.Tags
         private string DocSetRoot = null;
         private static string[] tagSeparators = { ",", " " };
 
-        private static Regex ValidTagFormat = new Regex(@"^\[TAGS=[-\.\w]+(?:,\s?[-\.\w]*)*\]", RegexOptions.IgnoreCase);
-        private static Regex GetTagList = new Regex(@"\[TAGS=([-\.,\s\w]+)\]", RegexOptions.IgnoreCase);
-        private static Regex IncludeFormat = new Regex(@"\[!INCLUDE\s*\[[-/.\w]+\]\(([-/.\w]+)\)\s*\]", RegexOptions.IgnoreCase);
+        
+        private static Regex ValidTagFormat = new Regex(@"^\[TAGS=[-\.\w]+(?:,\s?[-\.\w]*)*\]",RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static Regex GetTagList = new Regex(@"\[TAGS=([-\.,\s\w]+)\]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static Regex IncludeFormat = new Regex(@"\[!INCLUDE\s*\[[-/.\w]+\]\(([-/.\w]+)\)\s*\]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static Regex ImportantFormat = new Regex(@"\[!IMPORTANT\s*\]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         private Action<ValidationError> LogMessage = null;
 
@@ -185,6 +187,11 @@ namespace ApiDoctor.Validation.Tags
 
                         continue;
                     }
+                    if (IsImportant(nextLine))
+                    {
+                        LogMessage(new ValidationMessage(string.Concat(sourceFile.Name, ":", lineNumber), "Removing [!IMPORTANT]"));
+                        continue;
+                    }
 
                     writer.WriteLine(nextLine);
                 }
@@ -198,6 +205,17 @@ namespace ApiDoctor.Validation.Tags
 
                 return writer.ToString();
             }
+        }
+
+        private bool IsImportant(string nextLine)
+        {
+            if (nextLine.ToUpper().Contains("IMPORTANT"))
+            {
+                var isMatch = ImportantFormat.IsMatch(nextLine);
+                return isMatch;
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -251,7 +269,7 @@ namespace ApiDoctor.Validation.Tags
             if (!looksLikeTag) return false;
 
             // It looks like a tag, but is it legit?
-            if(!ValidTagFormat.IsMatch(text.Trim()))
+            if (!ValidTagFormat.IsMatch(text.Trim()))
             {
                 LogMessage(new ValidationError(ValidationErrorCode.MarkdownParserError,
                     string.Concat(fileName, ":", lineNumber), "Invalid TAGS line detected, ignoring..."));
@@ -419,6 +437,6 @@ namespace ApiDoctor.Validation.Tags
     //            source[key] = value;
     //        }
     //    }
-            
+
     //}
 }
