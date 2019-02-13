@@ -187,7 +187,7 @@ namespace ApiDoctor.Validation.Tags
 
                         continue;
                     }
-                    if (IsImportant(nextLine))
+                    if (IsImportantLine(nextLine))
                     {
                         LogMessage(new ValidationMessage(string.Concat(sourceFile.Name, ":", lineNumber), "Removing [!IMPORTANT]"));
                         continue;
@@ -205,17 +205,6 @@ namespace ApiDoctor.Validation.Tags
 
                 return writer.ToString();
             }
-        }
-
-        private bool IsImportant(string nextLine)
-        {
-            if (nextLine.ToUpper().Contains("IMPORTANT"))
-            {
-                var isMatch = ImportantFormat.IsMatch(nextLine);
-                return isMatch;
-            }
-
-            return false;
         }
 
         /// <summary>
@@ -341,6 +330,21 @@ namespace ApiDoctor.Validation.Tags
         private bool IsConvertedEndLine(string text)
         {
             return text.Equals("<p>[END]</p>");
+        }
+        /// <summary>
+        /// Checks if the line contains the [!IMPORTANT] docfx syntax
+        /// </summary>
+        /// <param name="nextLine"></param>
+        /// <returns>returns true or false</returns>
+        private static bool IsImportantLine(string nextLine)
+        {
+            if (nextLine.ToUpper().Contains("IMPORTANT"))
+            {
+                var isMatch = ImportantFormat.IsMatch(nextLine);
+                return isMatch;
+            }
+
+            return false;
         }
 
         private FileInfo GetIncludeFile(string text, FileInfo sourceFile)
