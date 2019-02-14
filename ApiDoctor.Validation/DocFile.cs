@@ -1299,7 +1299,7 @@ namespace ApiDoctor.Validation
                         issues.Error(ValidationErrorCode.LinkDestinationNotFound, $"BookmarkMissing: '[{link.Definition.url}]({link.Text})'. {suggestion}");
                         break;
                     case LinkValidationResult.ParentAboveDocSetPath:
-                        //issues.Error(ValidationErrorCode.LinkDestinationOutsideDocSet, $"Relative link outside of doc set: '[{link.Definition.url}]({link.Text})'.");
+                        //Removed this error because of the beta-disclaimer.md file is in the includes [!INCLUDE [beta-disclaimer](../../includes/beta-disclaimer.md)]
                         break;
                     case LinkValidationResult.UrlFormatInvalid:
                         issues.Error(ValidationErrorCode.LinkFormatInvalid, $"InvalidUrlFormat '[{link.Definition.url}]({link.Text})'.");
