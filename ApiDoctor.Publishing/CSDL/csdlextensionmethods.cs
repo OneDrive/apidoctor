@@ -83,9 +83,9 @@ namespace ApiDoctor.Publishing.CSDL
             // Normalize function params
             var substitutions = new Dictionary<string, string>();
             var parenIndex = path.IndexOf('(');
-            for (int i=0; i< path.Length; i++)
+            for (int i = 0; i < path.Length; i++)
             {
-                if (path[i]=='(')
+                if (path[i] == '(')
                 {
                     // this is the start of a function. let's find the closing paren.
                     var close = path.IndexOf(')', i);
@@ -101,7 +101,9 @@ namespace ApiDoctor.Publishing.CSDL
             foreach (var sub in substitutions)
             {
                 if (string.IsNullOrWhiteSpace(sub.Key))
+                {
                     continue;
+                }
                 path = path.Replace(sub.Key, sub.Value);
             }
 
@@ -116,7 +118,7 @@ namespace ApiDoctor.Publishing.CSDL
             // foo=bar, baz ='qux',x= 9
             var normalized = new StringBuilder();
             var allParams = funcParams.Split(',');
-            for (int i=0; i< allParams.Length; i++)
+            for (int i = 0; i < allParams.Length; i++)
             {
                 var param = allParams[i].Trim();
                 var kvp = param.Split('=');
@@ -161,18 +163,20 @@ namespace ApiDoctor.Publishing.CSDL
             var edmx = merger.Merge();
 
             // Clean up bindingParameters on actions and methods to be consistently the same
-            foreach(var schema in edmx.DataServices.Schemas)
+            foreach (var schema in edmx.DataServices.Schemas)
             {
                 foreach (var action in schema.Actions)
                 {
-                    foreach(var param in action.Parameters.Where(x => x.Name == "bindingParameter" || x.Name == "this")) {
+                    foreach (var param in action.Parameters.Where(x => x.Name == "bindingParameter" || x.Name == "this"))
+                    {
                         param.Name = "bindingParameter";
                         param.IsNullable = null;
                     }
                 }
-                foreach(var func in schema.Functions)
+                foreach (var func in schema.Functions)
                 {
-                    foreach (var param in func.Parameters.Where(x => x.Name == "bindingParameter" || x.Name == "this")) {
+                    foreach (var param in func.Parameters.Where(x => x.Name == "bindingParameter" || x.Name == "this"))
+                    {
                         param.Name = "bindingParameter";
                         param.IsNullable = null;
                     }
@@ -184,8 +188,8 @@ namespace ApiDoctor.Publishing.CSDL
 
         }
 
-       
 
-       
+
+
     }
 }
