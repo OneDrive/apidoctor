@@ -353,7 +353,7 @@ namespace ApiDoctor.ConsoleApp
             }
             if (options.PrintAccounts)
             {
-                await PrintAccountsAsync(options, docset);
+                PrintAccountsAsync(options, docset);
             }
         }
 
@@ -464,7 +464,7 @@ namespace ApiDoctor.ConsoleApp
             }
         }
 
-        private static async Task PrintAccountsAsync(PrintOptions options, DocSet docset)
+        private static void PrintAccountsAsync(PrintOptions options, DocSet docset)
         {
             var accounts = Program.CurrentConfiguration.Accounts;
             foreach (var account in accounts)
