@@ -39,7 +39,7 @@ namespace ApiDoctor.Validation.Tags
         private string[] TagsToInclude = null;
         private string DocSetRoot = null;
         private static string[] tagSeparators = { ",", " " };
-
+        private static string[] docFxAlerts = new[] { "NOTE", "TIP", "IMPORTANT", "CAUTION", "WARNING" };
 
         private static Regex ValidTagFormat = new Regex(@"^\[TAGS=[-\.\w]+(?:,\s?[-\.\w]*)*\]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static Regex GetTagList = new Regex(@"\[TAGS=([-\.,\s\w]+)\]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
@@ -47,6 +47,8 @@ namespace ApiDoctor.Validation.Tags
         private static Regex AlertFormat = new Regex(@"\[(!NOTE|!TIP|!IMPORTANT|!CAUTION|!WARNING)\s*\]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static Regex DivFormat = new Regex(@"\[(!div (([\w]*=""[\w]*"")\s*)*)\s*\]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static Regex VideoFormat = new Regex(@"\[!VIDEO ((https]?):\/)?\/?([^:\/\s]+)((\/\w+)*\/)([\w\-\.]+[^#?\s]+)(.*)?(#[\w\-]+)?\]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static Regex CodeSnippetFormat = new Regex(@"\[!(code)(-)(\w*)\[(\w*)\]\((.*\))\]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
         private Action<ValidationError> LogMessage = null;
 
         public TagProcessor(string tags, string docSetRoot, Action<ValidationError> logMethod = null)
@@ -205,6 +207,12 @@ namespace ApiDoctor.Validation.Tags
                         continue;
                     }
 
+                    if (IsDocFxCodeSnippet(nextLine))
+                    {
+                        LogMessage(new ValidationMessage(string.Concat(sourceFile.Name, ":", lineNumber), "Removing docfx code snippet"));
+                        continue;
+                    }
+
                     writer.WriteLine(nextLine);
                 }
 
@@ -346,37 +354,57 @@ namespace ApiDoctor.Validation.Tags
         /// <summary>
         /// Checks if the line contains any of the docfx alert syntax items. 
         /// </summary>
-        /// <param name="nextLine">line to process</param>
+        /// <param name="text">line to process</param>
         /// <returns>true when there is a match otherwise false.</returns>
-        private static bool IsAlertLine(string nextLine)
+        private static bool IsAlertLine(string text)
         {
-            var upperNextLine = nextLine.ToUpper();
-            var alerts = new[] { "NOTE", "TIP", "IMPORTANT", "CAUTION", "WARNING" };
-            return alerts.Any(alert => upperNextLine.Contains(alert) && AlertFormat.IsMatch(upperNextLine));
+            var upperNextLine = text.ToUpper();
+            return docFxAlerts.Any(alert => upperNextLine.Contains(alert) && AlertFormat.IsMatch(text));
         }
         /// <summary>
         /// Checks if the line contains any of the docfx div syntax items. 
         /// </summary>
-        /// <param name="nextLine">line to process</param>
+        /// <param name="text">line to process</param>
         /// <returns>true when there is a match otherwise false.</returns>
-        private static bool IsDocFxDivLine(string nextLine)
+        private static bool IsDocFxDivLine(string text)
         {
-            var upperNextLine = nextLine.ToUpper();
-            var htmlContainers = new[] { "div" };
-            return htmlContainers.Any(htmlContainer => upperNextLine.Contains(htmlContainer) && DivFormat.IsMatch(upperNextLine));
+            if (text.Contains("div"))
+            {
+                return DivFormat.IsMatch(text);
+            }
+
+            return false;
         }
         /// <summary>
         /// Checks if the line contains any of the docfx video syntax items.
         /// </summary>
-        /// <param name="nextLine"></param>
+        /// <param name="text"></param>
         /// <returns></returns>
-        private static bool IsDocFxVideoLine(string nextLine)
+        private static bool IsDocFxVideoLine(string text)
         {
-            var upperNextLine = nextLine.ToUpper();
-            var videoTags = new string[] { "video" };
-            return videoTags.Any(videoTag => upperNextLine.Contains(videoTag) && VideoFormat.IsMatch(upperNextLine));
+            var upperNextLine = text.ToUpper();
+            if (text.ToUpper().Contains("VIDEO"))
+            {
+                return VideoFormat.IsMatch(text);
+            }
+
+            return false;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="text"></param>
+        /// <returns></returns>
+        private static bool IsDocFxCodeSnippet(string text)
+        {
+            if (text.Contains("code"))
+            {
+                return CodeSnippetFormat.IsMatch(text);
+            }
+
+            return false;
+        }
         private FileInfo GetIncludeFile(string text, FileInfo sourceFile)
         {
             var m = IncludeFormat.Match(text);
