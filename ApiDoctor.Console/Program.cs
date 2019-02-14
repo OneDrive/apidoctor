@@ -237,7 +237,6 @@ namespace ApiDoctor.ConsoleApp
                 }
             }
 
-
             Exit(failure: !returnSuccess);
         }
 
@@ -2010,7 +2009,5 @@ namespace ApiDoctor.ConsoleApp
             return FancyConsole.ConsoleDefaultColor;
 
         }
-
     }
-
 }

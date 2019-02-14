@@ -58,7 +58,11 @@ namespace ApiDoctor.Validation.Http
                 switch (mode)
                 {
                     case ParserMode.FirstLine:
-
+                        //FirstLines in HttpRequests can be of the formats special case for the Odata Url with equality operators. 
+                        //GET https://graph.microsoft.com/beta/accessReviews('2b83cc42-09db-46f6-8c6e-16fec466a82d')
+                        //GET HTTP/1.1  https://graph.microsoft.com/beta/accessReviews('2b83cc42-09db-46f6-8c6e-16fec466a82d')
+                        //GET https://graph.microsoft.com/beta/riskyUsers?$filter=riskLevel eq microsoft.graph.riskLevel'medium'
+                        //Removing the exception allows us to parse all three types of url.
                         var components = line.Split(' ');
 
                         if (components.Length < 2)
@@ -70,13 +74,14 @@ namespace ApiDoctor.Validation.Http
                         var httpVersion = components[1].StartsWith("HTTP/") ? components[1] : "HTTP/1.1";
                         if (components.Length > 3)
                         {
-                            //Assume Odata Uri
+                            //Assume Odata Uri in the form https://graph.microsoft.com/beta/riskyUsers?$filter=riskLevel eq microsoft.graph.riskLevel'medium'
                             var uri = new StringBuilder(components.Length);
                             for (var i = 1; i < components.Length; i++)
                             {
                                 uri.Append(components[i]);
                                 uri.Append(' ');
                             }
+                            //Trim because some urls have unnecessary spaces after the url, leading to a mismatch downstream.
                             url = uri.ToString().Trim();
                         }
                         else
