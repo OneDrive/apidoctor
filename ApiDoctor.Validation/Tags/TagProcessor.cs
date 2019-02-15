@@ -39,10 +39,15 @@ namespace ApiDoctor.Validation.Tags
         private string[] TagsToInclude = null;
         private string DocSetRoot = null;
         private static string[] tagSeparators = { ",", " " };
+        private static string[] docFxAlerts = new[] { "NOTE", "TIP", "IMPORTANT", "CAUTION", "WARNING" };
 
-        private static Regex ValidTagFormat = new Regex(@"^\[TAGS=[-\.\w]+(?:,\s?[-\.\w]*)*\]", RegexOptions.IgnoreCase);
-        private static Regex GetTagList = new Regex(@"\[TAGS=([-\.,\s\w]+)\]", RegexOptions.IgnoreCase);
-        private static Regex IncludeFormat = new Regex(@"\[INCLUDE\s*\[[-/.\w]+\]\(([-/.\w]+)\)\]", RegexOptions.IgnoreCase);
+        private static Regex ValidTagFormat = new Regex(@"^\[TAGS=[-\.\w]+(?:,\s?[-\.\w]*)*\]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static Regex GetTagList = new Regex(@"\[TAGS=([-\.,\s\w]+)\]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static Regex IncludeFormat = new Regex(@"\[!INCLUDE\s*\[[-/.\w]+\]\(([-/.\w]+)\)\s*\]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static Regex AlertFormat = new Regex(@"\[(!NOTE|!TIP|!IMPORTANT|!CAUTION|!WARNING)\s*\]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static Regex DivFormat = new Regex(@"\[(!div (([\w]*=""[\w]*"")\s*)*)\s*\]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static Regex VideoFormat = new Regex(@"\[!VIDEO ((https]?):\/)?\/?([^:\/\s]+)((\/\w+)*\/)([\w\-\.]+[^#?\s]+)(.*)?(#[\w\-]+)?\]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static Regex CodeSnippetFormat = new Regex(@"\[!(code)(-)(\w*)\[(\w*)\]\((.*\))\]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         private Action<ValidationError> LogMessage = null;
 
@@ -67,12 +72,12 @@ namespace ApiDoctor.Validation.Tags
         /// <returns>The preprocessed contents of the file.</returns>
         public string Preprocess(FileInfo sourceFile)
         {
-            using (StringWriter writer = new StringWriter())
-            using (StreamReader reader = new StreamReader(sourceFile.OpenRead()))
+            using (var writer = new StringWriter())
+            using (var reader = new StreamReader(sourceFile.OpenRead()))
             {
                 long lineNumber = 0;
-                int tagCount = 0;
-                int dropCount = 0;
+                var tagCount = 0;
+                var dropCount = 0;
                 string nextLine;
                 while ((nextLine = reader.ReadLine()) != null)
                 {
@@ -110,7 +115,7 @@ namespace ApiDoctor.Validation.Tags
                     // Check if this is a [TAGS] marker
                     if (IsTagLine(nextLine, sourceFile.Name, lineNumber))
                     {
-                        string[] tags = GetTags(nextLine);
+                        var tags = GetTags(nextLine);
 
                         LogMessage(new ValidationMessage(string.Concat(sourceFile.Name, ":", lineNumber), "Found TAGS line with {0}", string.Join(",", tags)));
 
@@ -159,7 +164,7 @@ namespace ApiDoctor.Validation.Tags
                     // Import include file content
                     if (IsIncludeLine(nextLine))
                     {
-                        FileInfo includeFile = GetIncludeFile(nextLine, sourceFile);
+                        var includeFile = GetIncludeFile(nextLine, sourceFile);
                         if (!includeFile.Exists)
                         {
                             LogMessage(new ValidationError(ValidationErrorCode.ErrorOpeningFile, nextLine, "The included file {0} was not found", includeFile.FullName));
@@ -174,7 +179,7 @@ namespace ApiDoctor.Validation.Tags
                                 continue;
                             }
 
-                            string includeContent = Preprocess(includeFile);
+                            var includeContent = Preprocess(includeFile);
 
                             writer.WriteLine(includeContent);
                         }
@@ -183,6 +188,28 @@ namespace ApiDoctor.Validation.Tags
                             LogMessage(new ValidationError(ValidationErrorCode.ErrorReadingFile, nextLine, "Could not load include content from {0}", includeFile.FullName));
                         }
 
+                        continue;
+                    }
+                    if (IsAlertLine(nextLine))
+                    {
+                        LogMessage(new ValidationMessage(string.Concat(sourceFile.Name, ":", lineNumber), "Removing docfx Alerts"));
+                        continue;
+                    }
+
+                    if (IsDocFxDivLine(nextLine))
+                    {
+                        LogMessage(new ValidationMessage(string.Concat(sourceFile.Name, ":", lineNumber), "Removing docfx Div"));
+                        continue;
+                    }
+                    if (IsDocFxVideoLine(nextLine))
+                    {
+                        LogMessage(new ValidationMessage(string.Concat(sourceFile.Name, ":", lineNumber), "Removing docfx Video"));
+                        continue;
+                    }
+
+                    if (IsDocFxCodeSnippet(nextLine))
+                    {
+                        LogMessage(new ValidationMessage(string.Concat(sourceFile.Name, ":", lineNumber), "Removing docfx code snippet"));
                         continue;
                     }
 
@@ -209,8 +236,8 @@ namespace ApiDoctor.Validation.Tags
         /// <returns>The postprocessed HTML content.</returns>
         public string PostProcess(string html, FileInfo sourceFile, Markdown converter)
         {
-            StringWriter writer = new StringWriter();
-            StringReader reader = new StringReader(html);
+            var writer = new StringWriter();
+            var reader = new StringReader(html);
 
             // Checks for closed tag and nesting were handled in preprocessing,
             // so not repeating them here
@@ -221,7 +248,7 @@ namespace ApiDoctor.Validation.Tags
                 // Replace with <div class="content-<tag>">
                 if (IsConvertedTagLine(nextLine))
                 {
-                    string[] tags = GetTags(nextLine);
+                    var tags = GetTags(nextLine);
                     writer.WriteLine(GetDivMarker(tags));
                     continue;
                 }
@@ -246,12 +273,12 @@ namespace ApiDoctor.Validation.Tags
 
         private bool IsTagLine(string text, string fileName, long lineNumber)
         {
-            bool looksLikeTag = text.Trim().ToUpper().StartsWith("[TAGS=");
+            var looksLikeTag = text.Trim().ToUpper().StartsWith("[TAGS=");
 
             if (!looksLikeTag) return false;
 
             // It looks like a tag, but is it legit?
-            if(!ValidTagFormat.IsMatch(text.Trim()))
+            if (!ValidTagFormat.IsMatch(text.Trim()))
             {
                 LogMessage(new ValidationError(ValidationErrorCode.MarkdownParserError,
                     string.Concat(fileName, ":", lineNumber), "Invalid TAGS line detected, ignoring..."));
@@ -263,7 +290,7 @@ namespace ApiDoctor.Validation.Tags
 
         private string[] GetTags(string text)
         {
-            Match m = GetTagList.Match(text.Trim());
+            var m = GetTagList.Match(text.Trim());
 
             if (m.Success && m.Groups.Count == 2)
             {
@@ -281,7 +308,7 @@ namespace ApiDoctor.Validation.Tags
                 return false;
             }
 
-            foreach (string tag in tags)
+            foreach (var tag in tags)
             {
                 // If any tag matches included tags, return true
                 if (TagsToInclude.Contains(tag))
@@ -324,16 +351,69 @@ namespace ApiDoctor.Validation.Tags
         {
             return text.Equals("<p>[END]</p>");
         }
+        /// <summary>
+        /// Checks if the line contains any of the docfx alert syntax items. 
+        /// </summary>
+        /// <param name="text">line to process</param>
+        /// <returns>true when there is a match otherwise false.</returns>
+        private static bool IsAlertLine(string text)
+        {
+            var upperNextLine = text.ToUpper();
+            return docFxAlerts.Any(alert => upperNextLine.Contains(alert) && AlertFormat.IsMatch(text));
+        }
+        /// <summary>
+        /// Checks if the line contains any of the docfx div syntax items. 
+        /// </summary>
+        /// <param name="text">line to process</param>
+        /// <returns>true when there is a match otherwise false.</returns>
+        private static bool IsDocFxDivLine(string text)
+        {
+            if (text.Contains("div"))
+            {
+                return DivFormat.IsMatch(text);
+            }
 
+            return false;
+        }
+        /// <summary>
+        /// Checks if the line contains any of the docfx video syntax items.
+        /// </summary>
+        /// <param name="text"></param>
+        /// <returns></returns>
+        private static bool IsDocFxVideoLine(string text)
+        {
+            var upperNextLine = text.ToUpper();
+            if (text.ToUpper().Contains("VIDEO"))
+            {
+                return VideoFormat.IsMatch(text);
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="text"></param>
+        /// <returns></returns>
+        private static bool IsDocFxCodeSnippet(string text)
+        {
+            if (text.Contains("code"))
+            {
+                return CodeSnippetFormat.IsMatch(text);
+            }
+
+            return false;
+        }
         private FileInfo GetIncludeFile(string text, FileInfo sourceFile)
         {
-            Match m = IncludeFormat.Match(text);
+            var m = IncludeFormat.Match(text);
 
             if (m.Success && m.Groups.Count == 2)
             {
-                string relativePath = Path.ChangeExtension(m.Groups[1].Value, "md");
+                var relativePath = Path.ChangeExtension(m.Groups[1].Value, "md");
 
-                string fullPathToIncludeFile = string.Empty;
+                var fullPathToIncludeFile = string.Empty;
 
                 if (Path.IsPathRooted(relativePath))
                 {
@@ -354,7 +434,7 @@ namespace ApiDoctor.Validation.Tags
 
         private string GetDivMarker(string[] tags)
         {
-            for (int i = 0; i < tags.Length; i++)
+            for (var i = 0; i < tags.Length; i++)
             {
                 tags[i] = string.Format("content-{0}", tags[i].ToLower().Replace('.', '-'));
             }
@@ -419,6 +499,6 @@ namespace ApiDoctor.Validation.Tags
     //            source[key] = value;
     //        }
     //    }
-            
+
     //}
 }

@@ -90,7 +90,7 @@ namespace ApiDoctor.Validation
 
         public SamplesDefinition[] Samples { get { return this.samples.ToArray(); } }
 
-        public EnumerationDefinition[] Enums {  get { return this.enums.ToArray(); } }
+        public EnumerationDefinition[] Enums { get { return this.enums.ToArray(); } }
 
         public AuthScopeDefinition[] AuthScopes { get; protected set; }
 
@@ -110,7 +110,7 @@ namespace ApiDoctor.Validation
                 {
                     if (link.Definition == null)
                     {
-                        throw new ArgumentException("Link Definition was null. Link text: " + link.Text);
+                        throw new ArgumentException("Link Definition was null. Link text: " + link.Text, nameof(link.Definition));
                     }
 
                     destinations.Add(link.Definition.url);
@@ -750,7 +750,7 @@ namespace ApiDoctor.Validation
 
             // find all the property tables
             //  find properties of type string that have a list of `enum`, `values`. see if they match me.
-            foreach (var table in foundTables.Where(t=>t.Type == TableBlockType.RequestObjectProperties || t.Type == TableBlockType.ResourcePropertyDescriptions))
+            foreach (var table in foundTables.Where(t => t.Type == TableBlockType.RequestObjectProperties || t.Type == TableBlockType.ResourcePropertyDescriptions))
             {
                 var rows = table.Rows.Cast<ParameterDefinition>();
                 foreach (var row in rows.Where(r => r.Type?.Type == SimpleDataType.String))
@@ -1192,7 +1192,7 @@ namespace ApiDoctor.Validation
                                 {
                                     detectedErrors.Add(new ValidationError(ValidationErrorCode.MarkdownParserError, this.DisplayName, "Unable to pair response with request {0}: {1}.", annotation.MethodName, ex.Message));
                                 }
-                                
+
                             }
                             else
                             {
@@ -1279,7 +1279,7 @@ namespace ApiDoctor.Validation
                         issues.Error(ValidationErrorCode.MissingLinkSourceId,
                             $"Link ID '[{link.Text}]' used in document but not defined. Define with '[{link.Text}]: url' or remove square brackets.");
                     }
-                    
+
                     continue;
                 }
 
@@ -1299,6 +1299,8 @@ namespace ApiDoctor.Validation
                         issues.Error(ValidationErrorCode.LinkDestinationNotFound, $"BookmarkMissing: '[{link.Definition.url}]({link.Text})'. {suggestion}");
                         break;
                     case LinkValidationResult.ParentAboveDocSetPath:
+                        //Possible error because of the beta-disclaimer.md file is in the includes [!INCLUDE [beta-disclaimer](../../includes/beta-disclaimer.md)]
+                        //Needs further investigation and tests.
                         issues.Error(ValidationErrorCode.LinkDestinationOutsideDocSet, $"Relative link outside of doc set: '[{link.Definition.url}]({link.Text})'.");
                         break;
                     case LinkValidationResult.UrlFormatInvalid:
@@ -1315,7 +1317,7 @@ namespace ApiDoctor.Validation
                         issues.Error(ValidationErrorCode.Unknown, $"{result}: Link '[{link.Text}]({link.Definition.url})'.");
                         break;
                 }
-                
+
             }
             linkedDocFiles = linkedPages.Distinct().ToArray();
             return !(issues.Issues.WereErrors() || issues.Issues.WereWarnings());
@@ -1356,7 +1358,7 @@ namespace ApiDoctor.Validation
                     {
                         return LinkValidationResult.Valid;
                     }
-                    else 
+                    else
                     {
                         var suggestion = StringSuggestions.SuggestStringFromCollection(bookmarkName, this.bookmarks);
                         if (suggestion != null)
