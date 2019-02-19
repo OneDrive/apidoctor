@@ -353,7 +353,7 @@ namespace ApiDoctor.ConsoleApp
             }
             if (options.PrintAccounts)
             {
-                await PrintAccountsAsync(options, docset);
+                PrintAccountsAsync(options, docset);
             }
         }
 
@@ -464,10 +464,10 @@ namespace ApiDoctor.ConsoleApp
             }
         }
 
-        private static async Task PrintAccountsAsync(PrintOptions options, DocSet docset)
+        private static void PrintAccountsAsync(PrintOptions options, DocSet docset)
         {
             var accounts = Program.CurrentConfiguration.Accounts;
-            foreach(var account in accounts)
+            foreach (var account in accounts)
             {
                 FancyConsole.WriteLine($"{account.Name} = {account.BaseUrl}");
             }
@@ -671,7 +671,7 @@ namespace ApiDoctor.ConsoleApp
             {
                 var methodIssues = issues.For(method.Identifier);
                 var testName = "API Request: " + method.Identifier;
-                
+
                 TestReport.StartTest(testName, method.SourceFile.DisplayName, skipPrintingHeader: options.PrintFailuresOnly);
 
                 if (string.IsNullOrEmpty(method.ExpectedResponse))
@@ -686,7 +686,7 @@ namespace ApiDoctor.ConsoleApp
                 try
                 {
                     var expectedResponse = parser.ParseHttpResponse(method.ExpectedResponse);
-                    
+
                     method.ValidateResponse(expectedResponse, null, null, methodIssues, new ValidationOptions { RelaxedStringValidation = options.RelaxStringTypeValidation ?? true });
                 }
                 catch (Exception ex)
@@ -708,7 +708,7 @@ namespace ApiDoctor.ConsoleApp
             {
                 GitHelper helper = new GitHelper(options.GitExecutablePath, options.DocumentationSetPath);
                 var changedFiles = helper.FilesChangedFromBranch(options.FilesChangedFromOriginalBranch);
-                
+
                 foreach (var filePath in changedFiles)
                 {
                     var file = docset.LookupFileForPath(filePath);
@@ -819,7 +819,7 @@ namespace ApiDoctor.ConsoleApp
 
             var errorMessages = issues.Issues.Where(x => x.IsError);
             var warningMessages = issues.Issues.Where(x => x.IsWarning);
-                        
+
             if (errorMessages.Any())
             {
                 // Write failure message
@@ -841,7 +841,7 @@ namespace ApiDoctor.ConsoleApp
                     outputMessage = "Multiple warnings occured.";
                 outcome = TestOutcome.Passed;
             }
-            else 
+            else
             {
                 // write success message!
                 outputMessage = successMessage;
@@ -870,7 +870,7 @@ namespace ApiDoctor.ConsoleApp
             bool printUnusedSuppressions = false)
         {
             bool writtenHeader = false;
-            foreach (var error in issues.Issues.OrderBy(err=>err.IsWarningOrError).ThenBy(err=>err.IsError).ThenBy(err=>err.Source))
+            foreach (var error in issues.Issues.OrderBy(err => err.IsWarningOrError).ThenBy(err => err.IsError).ThenBy(err => err.Source))
             {
                 RecordUndocumentedProperties(error);
 
@@ -901,7 +901,7 @@ namespace ApiDoctor.ConsoleApp
             }
 
             var usedSuppressions = issues.UsedSuppressions;
-            if (usedSuppressions.Count>0)
+            if (usedSuppressions.Count > 0)
             {
                 FancyConsole.WriteLine(ConsoleColor.DarkYellow, $"{usedSuppressions.Count} issues were suppressed with manual overrides in the docs.");
             }
@@ -949,7 +949,7 @@ namespace ApiDoctor.ConsoleApp
             }
             else if (error.InnerErrors != null && error.InnerErrors.Any())
             {
-                foreach(var innerError in error.InnerErrors)
+                foreach (var innerError in error.InnerErrors)
                 {
                     RecordUndocumentedProperties(innerError);
                 }
@@ -1026,7 +1026,7 @@ namespace ApiDoctor.ConsoleApp
                 ValidationConfig.ODataMetadataLevel = options.ODataMetadataLevel;
             }
 
-            if (options.FoundAccounts == null || !options.FoundAccounts.Any(x=>x.Enabled))
+            if (options.FoundAccounts == null || !options.FoundAccounts.Any(x => x.Enabled))
             {
                 RecordError("No account was found. Cannot connect to the service.");
                 return false;
@@ -1157,7 +1157,7 @@ namespace ApiDoctor.ConsoleApp
                     return null;
                 }
             }
-            
+
             int concurrentTasks = commandLineOptions.ParallelTests ? ParallelTaskCount : 1;
 
             CheckResults docSetResults = new CheckResults();
@@ -1173,8 +1173,9 @@ namespace ApiDoctor.ConsoleApp
                 ScenarioDefinition[] scenarios = docset.TestScenarios.ScenariosForMethod(method);
 
                 // Test these scenarios and validate responses
-                ValidationResults results = await method.ValidateServiceResponseAsync(scenarios, primaryAccount, secondaryAccount, 
-                    new ValidationOptions {
+                ValidationResults results = await method.ValidateServiceResponseAsync(scenarios, primaryAccount, secondaryAccount,
+                    new ValidationOptions
+                    {
                         RelaxedStringValidation = commandLineOptions.RelaxStringTypeValidation ?? true,
                         IgnoreRequiredScopes = commandLineOptions.IgnoreRequiredScopes
                     });
@@ -1182,7 +1183,7 @@ namespace ApiDoctor.ConsoleApp
                 PrintResultsToConsole(method, primaryAccount, results, commandLineOptions);
                 await TestReport.LogMethodTestResults(method, primaryAccount, results);
                 docSetResults.RecordResults(results, commandLineOptions);
-                
+
                 if (concurrentTasks == 1)
                 {
                     AddPause(commandLineOptions);
@@ -1200,7 +1201,7 @@ namespace ApiDoctor.ConsoleApp
             return docSetResults;
         }
 
-        
+
 
         /// <summary>
         /// Parallel enabled for each processor that supports async lambdas. Copied from 
@@ -1334,7 +1335,7 @@ namespace ApiDoctor.ConsoleApp
         }
 
 
-       
+
 
         private static void AddPause(CheckServiceOptions options)
         {
@@ -1441,7 +1442,7 @@ namespace ApiDoctor.ConsoleApp
             FancyConsole.WriteLineIndented("  ", "Format: {0}", publisher.GetType().Name);
             publisher.VerboseLogging = options.EnableVerboseOutput;
             FancyConsole.WriteLine();
-            
+
             FancyConsole.WriteLine("Publishing content...");
             publisher.NewMessage += publisher_NewMessage;
 
@@ -1585,7 +1586,7 @@ namespace ApiDoctor.ConsoleApp
 
                     foreach (var inputEnum in inputSchema.Enumerations)
                     {
-                        if (!docs.Enums.Any(e=>e.TypeName.TypeOnly() == inputEnum.Name.TypeOnly()))
+                        if (!docs.Enums.Any(e => e.TypeName.TypeOnly() == inputEnum.Name.TypeOnly()))
                         {
                             // found an enum that wasn't in the docs.
                             // see if we can find the resource it belongs to and stick a definition table in.
@@ -1615,7 +1616,7 @@ namespace ApiDoctor.ConsoleApp
                                         }
                                     }
 
-                                    if (param.PossibleEnumValues().Count(v=>enumMembers.ContainsKey(v)) >=2)
+                                    if (param.PossibleEnumValues().Count(v => enumMembers.ContainsKey(v)) >= 2)
                                     {
                                         found = true;
                                         break;
@@ -1629,7 +1630,7 @@ namespace ApiDoctor.ConsoleApp
                                     int propertiesHNumber = 0;
                                     int nextWhiteSpaceLineNumber = 0;
                                     var lines = File.ReadAllLines(resource.SourceFile.FullPath);
-                                    for (int i=0; i< lines.Length; i++)
+                                    for (int i = 0; i < lines.Length; i++)
                                     {
                                         var line = lines[i];
                                         if (propertiesLineNumber == 0 &&
@@ -1806,7 +1807,7 @@ namespace ApiDoctor.ConsoleApp
 
         public static IEnumerable<string> FileSplicer(string[] original, int offset, string valueToSplice)
         {
-            for (int i=0; i< original.Length; i++)
+            for (int i = 0; i < original.Length; i++)
             {
                 yield return original[i];
 
@@ -1852,11 +1853,11 @@ namespace ApiDoctor.ConsoleApp
 
                 // Check if this resource exists in the documentation at all
                 ResourceDefinition matchingDocumentationResource = null;
-                    var docResourceQuery =
-                        from r in docSet.Resources
-                        where r.Name == resource.Name
-                        select r;
-                    matchingDocumentationResource = docResourceQuery.FirstOrDefault();
+                var docResourceQuery =
+                    from r in docSet.Resources
+                    where r.Name == resource.Name
+                    select r;
+                matchingDocumentationResource = docResourceQuery.FirstOrDefault();
                 if (docResourceQuery.Count() > 1)
                 {
                     // Log an error about multiple resource definitions
@@ -1880,7 +1881,7 @@ namespace ApiDoctor.ConsoleApp
                     // Verify that this resource matches the documentation
                     docSet.ResourceCollection.ValidateJsonExample(resource.OriginalMetadata, resource.ExampleText, resourceIssues, new ValidationOptions { RelaxedStringValidation = true });
                 }
-                
+
                 results.IncrementResultCount(resourceIssues.Issues);
 
                 await WriteOutErrorsAndFinishTestAsync(resourceIssues, options.SilenceWarnings, successMessage: " passed.", printFailuresOnly: options.PrintFailuresOnly);
@@ -1893,7 +1894,7 @@ namespace ApiDoctor.ConsoleApp
 
             var output = (from e in issues.Issues select e.ErrorText).ComponentsJoinedByString("\r\n");
 
-            await TestReport.FinishTestAsync(testname, results.WereFailures ? TestOutcome.Failed : TestOutcome.Passed, stdOut:output);
+            await TestReport.FinishTestAsync(testname, results.WereFailures ? TestOutcome.Failed : TestOutcome.Passed, stdOut: output);
 
             results.PrintToConsole();
             return !results.WereFailures;
@@ -1951,7 +1952,7 @@ namespace ApiDoctor.ConsoleApp
 
             public int Compare(Parameter x, Parameter y)
             {
-                if (object.ReferenceEquals(x,y))
+                if (object.ReferenceEquals(x, y))
                 {
                     return 0;
                 }
@@ -2008,7 +2009,5 @@ namespace ApiDoctor.ConsoleApp
             return FancyConsole.ConsoleDefaultColor;
 
         }
-
     }
-
 }

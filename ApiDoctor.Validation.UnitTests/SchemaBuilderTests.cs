@@ -78,8 +78,8 @@ namespace ApiDoctor.Validation.UnitTests
                         Assert.AreEqual(123, Int32.Parse(property.OriginalValue));
                         break;
                     case "floatProp":
-                        Assert.AreEqual(property.Type, ParameterDataType.Float);
-                        Assert.AreEqual(123.121, Double.Parse(property.OriginalValue));
+                        Assert.AreEqual(property.Type, ParameterDataType.Double);
+                        Assert.AreEqual(123.121, double.Parse(property.OriginalValue));
                         break;
                     case "dateProp":
                         Assert.AreEqual(property.Type, ParameterDataType.DateTimeOffset);
