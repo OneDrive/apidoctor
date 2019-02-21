@@ -246,6 +246,8 @@ namespace ApiDoctor.ConsoleApp
         private static string GenerateMarkdownLog(IssueLogger issues, DocSetOptions options)
         {
             StringBuilder log = new StringBuilder();
+            bool isTruncated = false;
+            int logLength = 0;
 
             string[] changedFiles = null;
             GitHelper helper = new GitHelper(options.GitExecutablePath, options.DocumentationSetPath);
@@ -282,6 +284,7 @@ namespace ApiDoctor.ConsoleApp
                 log.Append($"\n{warningCount} warnings");
             }
             log.Append($"\n\n{status}");
+            logLength = logLength + log.Length;
 
             List<dynamic> list = new List<dynamic>();
             StringBuilder detailedLog = new StringBuilder();
@@ -311,6 +314,11 @@ namespace ApiDoctor.ConsoleApp
                     detailedLog.Append($"* **[Error]** {source} {detail.Message.FirstLineOnly()} ");
                 }
 
+                if ((logLength + detailedLog.Length) > GitHub.maxCommentLength)
+                {
+                    isTruncated = true;
+                    break;
+                }
             }
 
             if (!options.IgnoreWarnings)
@@ -337,7 +345,17 @@ namespace ApiDoctor.ConsoleApp
                         var source = fileName != detail.Source ? $" *[{detail.Source}]*\n" : "";
                         detailedLog.Append($"* **[Warning]** {source} {detail.Message.FirstLineOnly()} ");
                     }
+
+                    if ((logLength + detailedLog.Length) > GitHub.maxCommentLength)
+                    {
+                        isTruncated = true;
+                        break;
+                    }
                 }
+            }
+            if (isTruncated)
+            {
+                log.Append("\n Note: *Some output has been truncated for brevity*");
             }
 
             if (list.Any())
@@ -350,6 +368,7 @@ namespace ApiDoctor.ConsoleApp
 
             log.Append(detailedLog);
             log.Append("\n\nFor more details please refer to this [report](#)");
+
             return log.ToString();
         }
 

@@ -45,7 +45,6 @@ namespace ApiDoctor.ConsoleApp
                 client.DefaultRequestHeaders.Accept.Clear();
 				client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 				client.DefaultRequestHeaders.Add("User-Agent", "api-doctor");
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("token", "1faf478cb8a0338790a57c5468b02a965c1f8321");
                 ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
 
                 try
@@ -68,24 +67,6 @@ namespace ApiDoctor.ConsoleApp
 				
             }
 
-        }
-
-        public static async Task PostPullRequestCommentAsync(string comment)
-        {
-            try
-            {             
-                var body = new
-                {
-                    body = comment
-                };
-                var path = "/repos/millicentachieng/apidoctor/issues/1/comments";
-
-                await PostToApiAsync(path, body);
-            }
-            catch
-            {
-                //ignored
-            }
         }
     }
 }
