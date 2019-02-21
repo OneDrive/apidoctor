@@ -247,8 +247,15 @@ namespace ApiDoctor.ConsoleApp
         {
             StringBuilder log = new StringBuilder();
 
+            string[] changedFiles = null;
+            GitHelper helper = new GitHelper(options.GitExecutablePath, options.DocumentationSetPath);
+            changedFiles = helper.FilesChangedFromBranch(options.FilesChangedFromOriginalBranch);
+
+            var warnings = issues.Warnings
+                .Where(x => changedFiles.Contains(x.SourceFile));
+
             int errorCount = issues.Errors.Count();
-            int warningCount = options.IgnoreErrors ? 0 : issues.Warnings.Count();
+            int warningCount = options.IgnoreErrors ? 0 : warnings.Count();
             var status = "PASSED";
             var header = "API Doctor validation status";
 
@@ -301,19 +308,17 @@ namespace ApiDoctor.ConsoleApp
                 foreach (var detail in error)
                 {
                     var source = fileName != detail.Source ? $" *[{detail.Source}]*\n" : "";
-                    detailedLog.Append($"\n **[Error]** {source} {detail.Message.FirstLineOnly()} ");
+                    detailedLog.Append($"* **[Error]** {source} {detail.Message.FirstLineOnly()} ");
                 }
 
             }
 
             if (!options.IgnoreWarnings)
             {
-                var warnings = issues.Warnings
-                   .GroupBy(x => x.SourceFile)
-                   .Select(x => x.ToList())
-                   .Take(10);
+                var filteredWarnings = warnings.GroupBy(x => x.SourceFile)
+                   .Select(x => x.ToList());
 
-                foreach (var warning in warnings)
+                foreach (var warning in filteredWarnings)
                 {
                     var fileName = warning.Select(x => x.SourceFile).First();
                     var filePath = options.DocumentationSetPath + fileName;
@@ -330,7 +335,7 @@ namespace ApiDoctor.ConsoleApp
                     foreach (var detail in warning)
                     {
                         var source = fileName != detail.Source ? $" *[{detail.Source}]*\n" : "";
-                        detailedLog.Append($"\n **[Warning]** {source} {detail.Message.FirstLineOnly()} ");
+                        detailedLog.Append($"* **[Warning]** {source} {detail.Message.FirstLineOnly()} ");
                     }
                 }
             }
