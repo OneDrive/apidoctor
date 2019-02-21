@@ -23,7 +23,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-namespace ApiDoctor.Console
+namespace ApiDoctor.ConsoleApp
 {
     using System;
     using System.Net;
@@ -35,7 +35,7 @@ namespace ApiDoctor.Console
     public class GitHub
     {
 
-        public const int maxCommentLengthn = 65536;
+        public const int maxCommentLength = 65536;
 
         private static async Task PostToApiAsync(string path, object body)
         {
@@ -67,6 +67,24 @@ namespace ApiDoctor.Console
 				
             }
 
+        }
+
+        public static async Task PostPullRequestCommentAsync(string comment)
+        {
+            try
+            {             
+                var body = new
+                {
+                    body = comment
+                };
+                var path = "";
+
+                await PostToApiAsync(path, body);
+            }
+            catch
+            {
+                //ignored
+            }
         }
     }
 }

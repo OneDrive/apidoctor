@@ -389,7 +389,7 @@ namespace ApiDoctor.Validation
 
             if (null != addErrorAction)
             {
-                addErrorAction(new ValidationWarning(ValidationErrorCode.TypeConversionFailure, "Couldn't convert '{0}' into understood data type. Assuming Object type.", value));
+                addErrorAction(new ValidationWarning(ValidationErrorCode.TypeConversionFailure, null, "Couldn't convert '{0}' into understood data type. Assuming Object type.", value));
             }
             return new ParameterDataType(value, isCollection);
         }
@@ -783,6 +783,7 @@ namespace ApiDoctor.Validation
                         ValidationWarning skippedSimilarErrors =
                             new ValidationWarning(
                                 ValidationErrorCode.SkippedSimilarErrors,
+                                null,
                                 null,
                                 "Similar errors were skipped.");
                         collection.Add(skippedSimilarErrors);

@@ -28,8 +28,8 @@ namespace ApiDoctor.Validation.Error
     public class ValidationWarning : ValidationError
     {
 
-        public ValidationWarning(ValidationErrorCode code, string source, string format, params object[] formatParams)
-            : base(code, source, format, formatParams)
+        public ValidationWarning(ValidationErrorCode code, string source, string sourceFile, string format, params object[] formatParams)
+            : base(code, source, sourceFile, format, formatParams)
         {
 
         }

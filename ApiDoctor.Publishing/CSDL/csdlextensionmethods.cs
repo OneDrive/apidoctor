@@ -100,6 +100,8 @@ namespace ApiDoctor.Publishing.CSDL
 
             foreach (var sub in substitutions)
             {
+                if(String.IsNullOrEmpty(sub.Key) || String.IsNullOrEmpty(sub.Value))
+                    continue;
                 path = path.Replace(sub.Key, sub.Value);
             }
 

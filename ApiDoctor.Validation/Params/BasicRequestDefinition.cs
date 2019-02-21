@@ -77,7 +77,7 @@ namespace ApiDoctor.Validation.Params
             List<ValidationError> errors = new List<ValidationError>();
 
             if (!string.IsNullOrEmpty(this.RawHttpRequest) && !string.IsNullOrEmpty(this.MethodName))
-                errors.Add(new ValidationError(ValidationErrorCode.HttpRequestAndMethodSpecified, null, "http-request and method are mutually exclusive: http-request: {0}, method: {1}", this.RawHttpRequest, this.MethodName));
+                errors.Add(new ValidationError(ValidationErrorCode.HttpRequestAndMethodSpecified, null, null, "http-request and method are mutually exclusive: http-request: {0}, method: {1}", this.RawHttpRequest, this.MethodName));
 
             foreach (var key in this.RequestParameters.Keys)
             {
@@ -86,7 +86,7 @@ namespace ApiDoctor.Validation.Params
                 {
                     case PlaceholderLocation.Invalid:
                     case PlaceholderLocation.StoredValue:
-                        errors.Add(new ValidationError(ValidationErrorCode.HttpRequestParameterInvalid, null, "request-parameters key {0} is invalid. KeyType was {1}", key, keyType));
+                        errors.Add(new ValidationError(ValidationErrorCode.HttpRequestParameterInvalid, null, null, "request-parameters key {0} is invalid. KeyType was {1}", key, keyType));
                         break;
                 }
             }

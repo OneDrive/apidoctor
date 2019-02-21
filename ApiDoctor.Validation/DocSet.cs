@@ -380,7 +380,7 @@ namespace ApiDoctor.Validation
 
             foreach (var resource in this.Resources)
             {
-                var resourceIssues = issues.For(resource.Name);
+                var resourceIssues = issues.For(resource.Name, resource.SourceFile.DisplayName);
                 if (!string.IsNullOrEmpty(resource.BaseType) && !definedTypes.Contains(resource.BaseType))
                 {
                     resourceIssues.Error(ValidationErrorCode.ResourceTypeNotFound,
@@ -410,7 +410,7 @@ namespace ApiDoctor.Validation
                 {
                     if (param.Type?.CustomTypeName != null)
                     {
-                        EnsureDefinedInDocs(param.Type.CustomTypeName, definedTypes, method.SourceFile, issues.For(method.Identifier + "/" + param.Name));
+                        EnsureDefinedInDocs(param.Type.CustomTypeName, definedTypes, method.SourceFile, issues.For(method.Identifier + "/" + param.Name, method.SourceFile.DisplayName));
                     }
                 }
             }

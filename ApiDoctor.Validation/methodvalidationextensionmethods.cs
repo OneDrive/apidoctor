@@ -98,6 +98,7 @@ namespace ApiDoctor.Validation
                         new ValidationError(
                             ValidationErrorCode.ExceptionWhileValidatingMethod,
                             method.SourceFile.DisplayName,
+                            method.SourceFile.DisplayName,
                             ex.Message));
                 }
             }
@@ -207,7 +208,7 @@ namespace ApiDoctor.Validation
             {
                 requestResults.AddResults(
                     new ValidationError[]
-                    { new ValidationWarning(ValidationErrorCode.RequestWasRetried, null, "HTTP request was retried {0} times.", actualResponse.RetryCount) });
+                    { new ValidationWarning(ValidationErrorCode.RequestWasRetried, null, null, "HTTP request was retried {0} times.", actualResponse.RetryCount) });
             }
 
             requestResults.AddResults(

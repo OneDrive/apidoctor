@@ -236,7 +236,19 @@ namespace ApiDoctor.ConsoleApp
                 }
             }
 
+            var log = GenerateMarkdownLog(issues, options as DocSetOptions);
+            await GitHub.PostPullRequestCommentAsync(log);
+
             Exit(failure: !returnSuccess);
+        }
+
+        private static string GenerateMarkdownLog(IssueLogger issues, DocSetOptions options)
+        {
+            StringBuilder log = new StringBuilder();
+
+            int errorCount = issues.Errors.Count();
+
+            return log.ToString();
         }
 
         /// <summary>
@@ -668,7 +680,7 @@ namespace ApiDoctor.ConsoleApp
 
             foreach (var method in methods)
             {
-                var methodIssues = issues.For(method.Identifier);
+                var methodIssues = issues.For(method.Identifier, method.SourceFile.DisplayName);
                 var testName = "API Request: " + method.Identifier;
                 
                 TestReport.StartTest(testName, method.SourceFile.DisplayName, skipPrintingHeader: options.PrintFailuresOnly);
@@ -1841,7 +1853,7 @@ namespace ApiDoctor.ConsoleApp
 
             foreach (var resource in foundResources)
             {
-                var resourceIssues = issues.For(resource.Name);
+                var resourceIssues = issues.For(resource.Name, resource.SourceFile.DisplayName);
                 FancyConsole.WriteLine();
                 FancyConsole.Write(FancyConsole.ConsoleHeaderColor, "Checking metadata resource: {0}...", resource.Name);
 

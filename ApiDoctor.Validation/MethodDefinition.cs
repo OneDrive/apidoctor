@@ -248,6 +248,7 @@ namespace ApiDoctor.Validation
                                         new ValidationError(
                                             ValidationErrorCode.SecondaryAccountMissing,
                                             "GenerateMethodRequestAsync",
+                                            this.SourceFile.DisplayName,
                                             "Expected secondary account for test scenario"));
 
                                     return new ValidationResult<HttpRequest>(null, errors);
@@ -293,6 +294,7 @@ namespace ApiDoctor.Validation
                         new ValidationError(
                             ValidationErrorCode.RewriteRequestFailure,
                             "GenerateMethodRequestAsync",
+                            this.SourceFile.DisplayName,
                             ex.Message));
 
                     return new ValidationResult<HttpRequest>(null, errors);

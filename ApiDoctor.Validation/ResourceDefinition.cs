@@ -57,6 +57,7 @@ namespace ApiDoctor.Validation
                     new ValidationError(
                         ValidationErrorCode.MissingResourceName,
                         source.DisplayName,
+                        this.SourceFile.DisplayName,
                         "Resource definition is missing Name value"));
             }
         }

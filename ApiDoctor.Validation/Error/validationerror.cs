@@ -131,10 +131,11 @@ namespace ApiDoctor.Validation.Error
             
         }
 
-        public ValidationError(ValidationErrorCode code, string source, string messageformat, params object[] formatParams)
+        public ValidationError(ValidationErrorCode code, string source, string sourceFile, string messageformat, params object[] formatParams)
         {
             this.Code = code;
             this.Source = source;
+            this.SourceFile = sourceFile;
             try
             {
                 this.Message = string.Format(messageformat, formatParams);
@@ -145,12 +146,12 @@ namespace ApiDoctor.Validation.Error
             }
         }
 
-        public static ValidationError CreateError(bool isWarning, ValidationErrorCode code, string source, string messageFormat, params object[] formatParams)
+        public static ValidationError CreateError(bool isWarning, ValidationErrorCode code, string source, string sourceFile, string messageFormat, params object[] formatParams)
         {
             if (isWarning)
-                return new ValidationWarning(code, source, messageFormat, formatParams);
+                return new ValidationWarning(code, source, sourceFile, messageFormat, formatParams);
             else
-                return new ValidationError(code, source, messageFormat, formatParams);
+                return new ValidationError(code, source, sourceFile, messageFormat, formatParams);
         }
 
         public ValidationErrorCode Code { get; set; }
@@ -158,6 +159,8 @@ namespace ApiDoctor.Validation.Error
         public string Message { get; set; }
 
         public string Source { get; set; }
+
+        public string SourceFile { get; set; }
 
         public ValidationError[] InnerErrors { get; set; }
 
@@ -215,7 +218,7 @@ namespace ApiDoctor.Validation.Error
 
         public static ValidationError NewConsolidatedError(ValidationErrorCode code, IssueLogger issues, string message, params object[] parameters)
         {
-            var error = issues.Issues.All(err => err.IsWarning) ? new ValidationWarning(code, null, message, parameters) : new ValidationError(code, null, message, parameters);
+            var error = issues.Issues.All(err => err.IsWarning) ? new ValidationWarning(code, null, null, message, parameters) : new ValidationError(code, null, null, message, parameters);
 
             error.InnerErrors = issues.Issues.ToArray();
             return error;
