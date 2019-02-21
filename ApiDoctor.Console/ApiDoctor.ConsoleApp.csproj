@@ -30,6 +30,7 @@
 
   <ItemGroup>
     <PackageReference Include="CommandLineParser" Version="1.9.71" />
+    <PackageReference Include="MarkdownLog" Version="0.9.3" />
     <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="2.23.302261847" />
     <PackageReference Include="System.Drawing.Common" Version="4.5.1" />
   </ItemGroup>

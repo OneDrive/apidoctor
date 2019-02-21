@@ -46,6 +46,7 @@ namespace ApiDoctor.ConsoleApp
     using Validation.OData;
     using Validation.Params;
     using Validation.Writers;
+    using MarkdownLog;
 
     class Program
     {
@@ -247,7 +248,103 @@ namespace ApiDoctor.ConsoleApp
             StringBuilder log = new StringBuilder();
 
             int errorCount = issues.Errors.Count();
+            int warningCount = options.IgnoreErrors ? 0 : issues.Warnings.Count();
+            var status = "PASSED";
+            var header = "API Doctor validation status";
 
+            if (errorCount > 0)
+            {
+                header = ":x: " + header;
+                status = "FAILED with errors";
+            }
+            else if(warningCount > 0 && !options.IgnoreWarnings)
+            {
+                header = ":warning: " + header;
+                status = "FAILED with warnings";
+            }
+            else
+            {
+                header = ":white_check_mark: " + header;
+            }
+
+            log.Append($"### {header}");
+            if (errorCount > 0 || warningCount > 0)
+            {
+                log.Append("\n**Summary**");
+                log.Append($"\n{errorCount} errors");
+                log.Append($"\n{warningCount} warnings");
+            }
+            log.Append($"\n\n{status}");
+
+            List<dynamic> list = new List<dynamic>();
+            StringBuilder detailedLog = new StringBuilder();
+           
+            var errors = issues.Errors
+                .GroupBy(x => x.SourceFile)
+                .Select(x => x.ToList());
+
+            foreach (var error in errors)
+            {
+                var fileName = error.Select(x => x.SourceFile).First();
+                var filePath = options.DocumentationSetPath + fileName;
+                var error_codes = error.Select(x => x.Code).Distinct();
+                list.Add(
+                    new
+                    {
+                        File = $"[{fileName}]({filePath})",
+                        Status = ":x: Error",
+                        StatusCode = string.Join(", ", error_codes)
+                    }
+                );
+
+                detailedLog.Append($"\n#### [{fileName}]({filePath})");
+                foreach (var detail in error)
+                {
+                    var source = fileName != detail.Source ? $" *[{detail.Source}]*\n" : "";
+                    detailedLog.Append($"\n **[Error]** {source} {detail.Message.FirstLineOnly()} ");
+                }
+
+            }
+
+            if (!options.IgnoreWarnings)
+            {
+                var warnings = issues.Warnings
+                   .GroupBy(x => x.SourceFile)
+                   .Select(x => x.ToList())
+                   .Take(10);
+
+                foreach (var warning in warnings)
+                {
+                    var fileName = warning.Select(x => x.SourceFile).First();
+                    var filePath = options.DocumentationSetPath + fileName;
+                      list.Add(
+                        new
+                        {
+                            File = $"[{fileName}]({filePath})",
+                            Status = ":warning: Warning",
+                            StatusCode = ""
+                        }
+                    );
+
+                    detailedLog.Append($"\n#### [{fileName}]({filePath})");
+                    foreach (var detail in warning)
+                    {
+                        var source = fileName != detail.Source ? $" *[{detail.Source}]*\n" : "";
+                        detailedLog.Append($"\n **[Warning]** {source} {detail.Message.FirstLineOnly()} ");
+                    }
+                }
+            }
+
+            if (list.Any())
+            {
+                var logSummary = list.ToArray();
+                var tableWithHeaders = logSummary.ToMarkdownTable(i => i.File, i => i.Status, i => i.StatusCode)
+                    .WithHeaders("File", "Status", "Status Code").ToHtml();
+                log.Append(tableWithHeaders);
+            }
+
+            log.Append(detailedLog);
+            log.Append("\n\nFor more details please refer to this [report](#)");
             return log.ToString();
         }
 
