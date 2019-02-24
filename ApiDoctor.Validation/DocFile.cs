@@ -982,16 +982,16 @@ namespace ApiDoctor.Validation
                 var unmappedMethods = (from m in foundMethods select m.RequestMetadata.MethodName?.FirstOrDefault()).ComponentsJoinedByString(", ");
                 if (!string.IsNullOrEmpty(unmappedMethods))
                 {
-                    innerErrors.Add(new ValidationMessage("Unmapped methods", unmappedMethods));
+                    innerErrors.Add(new ValidationMessage("Unmapped methods", this.DisplayName, unmappedMethods));
                 }
 
                 var unmappedTables = (from t in foundTables select string.Format("{0} - {1}", t.Title, t.Type)).ComponentsJoinedByString(", ");
                 if (!string.IsNullOrEmpty(unmappedTables))
                 {
-                    innerErrors.Add(new ValidationMessage("Unmapped tables", unmappedTables));
+                    innerErrors.Add(new ValidationMessage("Unmapped tables", this.DisplayName, unmappedTables));
                 }
 
-                var unmappedContentsError = new ValidationWarning(ValidationErrorCode.UnmappedDocumentElements, this.DisplayName, "Unable to map some markdown elements into schema.")
+                var unmappedContentsError = new ValidationWarning(ValidationErrorCode.UnmappedDocumentElements, this.DisplayName, this.DisplayName, "Unable to map some markdown elements into schema.")
                 {
                     InnerErrors = innerErrors.ToArray(),
                 };
@@ -1173,7 +1173,7 @@ namespace ApiDoctor.Validation
                                 }
                                 else
                                 {
-                                    detectedErrors.Add(new ValidationError(ValidationErrorCode.MarkdownParserError, this.DisplayName, "Unable to locate the corresponding request for response block: {0}. Requests must be defined before a response.", annotation.MethodName));
+                                    detectedErrors.Add(new ValidationError(ValidationErrorCode.MarkdownParserError, this.DisplayName, this.DisplayName, "Unable to locate the corresponding request for response block: {0}. Requests must be defined before a response.", annotation.MethodName));
                                 }
                             }
                         }
@@ -1190,7 +1190,7 @@ namespace ApiDoctor.Validation
                                 }
                                 catch (Exception ex)
                                 {
-                                    detectedErrors.Add(new ValidationError(ValidationErrorCode.MarkdownParserError, this.DisplayName, "Unable to pair response with request {0}: {1}.", annotation.MethodName, ex.Message));
+                                    detectedErrors.Add(new ValidationError(ValidationErrorCode.MarkdownParserError, this.DisplayName, this.DisplayName, "Unable to pair response with request {0}: {1}.", annotation.MethodName, ex.Message));
                                 }
 
                             }

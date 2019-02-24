@@ -208,7 +208,7 @@ namespace ApiDoctor.Validation.Writers
 			{
 				if (this.IsInternalPath(file))
 				{
-				    this.LogMessage(new ValidationMessage(file.Name, "Source file was on the internal path list, skipped."));
+				    this.LogMessage(new ValidationMessage(file.Name, null, "Source file was on the internal path list, skipped."));
 				}
 				else if (this.IsMarkdownFile(file))
 				{
@@ -230,13 +230,13 @@ namespace ApiDoctor.Validation.Writers
 
 				if (this.IsInternalPath(folder))
 				{
-				    this.LogMessage(new ValidationMessage(folder.Name, "Source file was on the internal path list, skipped."));
+				    this.LogMessage(new ValidationMessage(folder.Name, null, "Source file was on the internal path list, skipped."));
 					// Skip output for that directory
 					continue;
 				}
 			    
                 var displayName = this.RelativeDirectoryPath(folder, true);
-			    this.LogMessage(new ValidationMessage(displayName, "Scanning directory."));
+			    this.LogMessage(new ValidationMessage(displayName, null, "Scanning directory."));
 			    await this.PublishFromDirectoryAsync(folder, destinationRoot, false);
 			}
 
@@ -255,7 +255,7 @@ namespace ApiDoctor.Validation.Writers
             var newDirectory = new DirectoryInfo(newDirectoryPath);
             if (!newDirectory.Exists)
             {
-                this.LogMessage(new ValidationMessage(pathDisplayName, "Creating new directory in output folder."));
+                this.LogMessage(new ValidationMessage(pathDisplayName, null, "Creating new directory in output folder."));
                 newDirectory.Create();
             }
         }
@@ -308,12 +308,12 @@ namespace ApiDoctor.Validation.Writers
 			try
 			{
 				var outPath = this.GetPublishedFilePath(file, destinationRoot);
-			    this.LogMessage(new ValidationMessage(file.Name, "Copying to output directory without scanning."));
+			    this.LogMessage(new ValidationMessage(file.Name, file.Name, "Copying to output directory without scanning."));
                 file.CopyTo(outPath, true);
 			}
 			catch (Exception ex)
 			{
-			    this.LogMessage(new ValidationError(ValidationErrorCode.ErrorCopyingFile, file.Name, "Cannot copy file to output directory: {0}", ex.Message));
+			    this.LogMessage(new ValidationError(ValidationErrorCode.ErrorCopyingFile, file.Name,  file.Name, "Cannot copy file to output directory: {0}", ex.Message));
 			}
 		}
 

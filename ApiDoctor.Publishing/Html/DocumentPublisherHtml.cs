@@ -230,7 +230,7 @@ namespace ApiDoctor.Publishing.Html
 
         protected override async Task PublishFileToDestinationAsync(FileInfo sourceFile, DirectoryInfo destinationRoot, DocFile page)
         {
-            this.LogMessage(new ValidationMessage(sourceFile.Name, "Publishing file to HTML"));
+            this.LogMessage(new ValidationMessage(sourceFile.Name, null, "Publishing file to HTML"));
 
             var destinationPath = this.GetPublishedFilePath(sourceFile, destinationRoot, HtmlOutputExtension);
             

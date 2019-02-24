@@ -237,6 +237,9 @@ namespace ApiDoctor.ConsoleApp
                 }
             }
 
+            var log = GenerateMarkdownLog(issues, options as DocSetOptions);
+            await GitHub.PostPullRequestCommentAsync(log);
+
             Exit(failure: !returnSuccess);
         }
 

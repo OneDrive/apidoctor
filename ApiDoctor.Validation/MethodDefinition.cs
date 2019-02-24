@@ -248,6 +248,7 @@ namespace ApiDoctor.Validation
                                         new ValidationError(
                                             ValidationErrorCode.SecondaryAccountMissing,
                                             "GenerateMethodRequestAsync",
+                                            this.SourceFile.DisplayName,
                                             "Expected secondary account for test scenario"));
 
                                     return new ValidationResult<HttpRequest>(null, errors);
@@ -276,7 +277,7 @@ namespace ApiDoctor.Validation
                         }
                         catch (Exception ex)
                         {
-                            return new ValidationResult<HttpRequest>(null, new ValidationError(ValidationErrorCode.ConsolidatedError, null, "An exception occured while processing setup-requests: {0}", ex.Message));
+                            return new ValidationResult<HttpRequest>(null, new ValidationError(ValidationErrorCode.ConsolidatedError, null, this.SourceFile.DisplayName, "An exception occured while processing setup-requests: {0}", ex.Message));
                         }
                     }
                 }
@@ -293,6 +294,7 @@ namespace ApiDoctor.Validation
                         new ValidationError(
                             ValidationErrorCode.RewriteRequestFailure,
                             "GenerateMethodRequestAsync",
+                            this.SourceFile.DisplayName,
                             ex.Message));
 
                     return new ValidationResult<HttpRequest>(null, errors);
