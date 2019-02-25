@@ -238,13 +238,13 @@ namespace ApiDoctor.ConsoleApp
                 }
             }
 
-            var log = GenerateMarkdownLog(issues, options as DocSetOptions);
+            var log = GenerateMarkdownLog(issues, options as BasicCheckOptions);
             await GitHub.PostPullRequestCommentAsync(log);
 
             Exit(failure: !returnSuccess);
         }
 
-        private static string GenerateMarkdownLog(IssueLogger issues, DocSetOptions options)
+        private static string GenerateMarkdownLog(IssueLogger issues, BasicCheckOptions options)
         {
             StringBuilder log = new StringBuilder();
             bool isTruncated = false;
