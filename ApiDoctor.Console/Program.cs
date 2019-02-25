@@ -46,6 +46,7 @@ namespace ApiDoctor.ConsoleApp
     using Validation.OData;
     using Validation.Params;
     using Validation.Writers;
+    using MarkdownLog;
 
     class Program
     {
@@ -241,6 +242,142 @@ namespace ApiDoctor.ConsoleApp
             await GitHub.PostPullRequestCommentAsync(log);
 
             Exit(failure: !returnSuccess);
+        }
+
+        private static string GenerateMarkdownLog(IssueLogger issues, DocSetOptions options)
+        {
+            StringBuilder log = new StringBuilder();
+            bool isTruncated = false;
+            int logLength = 0;
+            
+            GitHelper helper = new GitHelper(options.GitExecutablePath, options.DocumentationSetPath);
+            string[] changedFiles = helper.FilesChangedFromBranch(options.FilesChangedFromOriginalBranch);
+
+            var warnings = issues.Warnings
+                .Where(x => changedFiles.Contains(x.SourceFile));
+
+            int errorCount = issues.Errors.Count();
+            int warningCount = options.IgnoreErrors ? 0 : warnings.Count();
+            var status = "PASSED";
+            var header = "API Doctor validation status";
+
+            if (errorCount > 0)
+            {
+                header = ":x: " + header;
+                status = "FAILED with errors";
+            }
+            else if (warningCount > 0 && !options.IgnoreWarnings)
+            {
+                header = ":warning: " + header;
+                status = "FAILED with warnings";
+            }
+            else
+            {
+                header = ":white_check_mark: " + header;
+            }
+
+            log.Append($"### {header}");
+            if (errorCount > 0 || warningCount > 0)
+            {
+                log.Append("\n**Summary**");
+                log.Append($"\n{errorCount} errors");
+                log.Append($"\n{warningCount} warnings");
+            }
+            log.Append($"\n\n{status}");
+            logLength = logLength + log.Length;
+
+            List<dynamic> list = new List<dynamic>();
+            StringBuilder detailedLog = new StringBuilder();
+
+            var errors = issues.Errors
+                .GroupBy(x => x.SourceFile)
+                .Select(x => x.ToList());
+
+            foreach (var error in errors)
+            {
+                var fileName = error.Select(x => x.SourceFile).First();
+                var filePath = options.DocumentationSetPath + fileName;
+                var error_codes = error.Select(x => x.Code).Distinct();
+                if (fileName != null)
+                {
+                    list.Add(
+                        new
+                        {
+                            File = $"[{fileName}]({filePath})",
+                            Status = ":x: Error",
+                            StatusCode = string.Join(", ", error_codes)
+                        }
+                    );
+                    detailedLog.Append($"\n#### [{fileName}]({filePath})");
+                }
+               
+                foreach (var detail in error)
+                {
+                    var source = (fileName != detail.Source) && !string.IsNullOrEmpty(detail.Source) ? $" *[{detail.Source}]*\n" : "";
+                    detailedLog.Append($"\n * **[Error]** {source} {detail.Message.FirstLineOnly()} ");
+                }
+
+                logLength = logLength + list.ToMarkdownTable().ToHtml().Length;
+                logLength = logLength + detailedLog.Length;
+                if (logLength > GitHub.maxCommentLength)
+                {
+                    isTruncated = true;
+                    break;
+                }
+            }
+
+            if (!options.IgnoreWarnings)
+            {
+                var filteredWarnings = warnings.GroupBy(x => x.SourceFile)
+                   .Select(x => x.ToList())
+                   .Take(1);
+
+                foreach (var warning in filteredWarnings)
+                {
+                    var fileName = warning.Select(x => x.SourceFile).First();
+                    var filePath = options.DocumentationSetPath + fileName;
+                    list.Add(
+                      new
+                      {
+                          File = $"[{fileName}]({filePath})",
+                          Status = ":warning: Warning",
+                          StatusCode = ""
+                      }
+                  );
+
+                    detailedLog.Append($"\n#### [{fileName}]({filePath})");
+                    foreach (var detail in warning)
+                    {
+                        var source = (fileName != detail.Source) && !string.IsNullOrEmpty(detail.Source) ? $" *[{detail.Source}]*\n" : "";
+                        detailedLog.Append($"\n* **[Warning]** {source} {detail.Message.FirstLineOnly()} ");
+                    }
+
+                    logLength = logLength + list.ToMarkdownTable().ToHtml().Length;
+                    logLength = logLength + detailedLog.Length;
+                    if (logLength > GitHub.maxCommentLength)
+                    {
+                        isTruncated = true;
+                        break;
+                    }
+                }
+            }
+            if (isTruncated)
+            {
+                log.Append("\n Note: *Some output has been truncated for brevity*");
+            }
+
+            if (list.Any())
+            {
+                var logSummary = list.ToArray();
+                var tableWithHeaders = logSummary.ToMarkdownTable(i => i.File, i => i.Status, i => i.StatusCode)
+                    .WithHeaders("File", "Status", "Status Code").ToHtml();
+                log.Append(tableWithHeaders);
+            }
+
+            log.Append(detailedLog);
+            log.Append("\n\nFor more details please refer to this [report](#)");
+
+            return log.ToString();
         }
 
         /// <summary>
@@ -672,7 +809,7 @@ namespace ApiDoctor.ConsoleApp
 
             foreach (var method in methods)
             {
-                var methodIssues = issues.For(method.Identifier);
+                var methodIssues = issues.For(method.Identifier, method.SourceFile.DisplayName);
                 var testName = "API Request: " + method.Identifier;
 
                 TestReport.StartTest(testName, method.SourceFile.DisplayName, skipPrintingHeader: options.PrintFailuresOnly);

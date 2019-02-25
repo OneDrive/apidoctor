@@ -514,7 +514,7 @@ namespace ApiDoctor.Validation.Json
                 }
 
                 // This property isn't documented
-                issues.Warning(new UndocumentedPropertyWarning(null, inputProperty.Name, inputProperty.Type, ResourceName));
+                issues.Warning(new UndocumentedPropertyWarning(null, OriginalResource?.SourceFile.DisplayName, inputProperty.Name, inputProperty.Type, ResourceName));
                 return PropertyValidationOutcome.MissingFromSchema;
             }
         }

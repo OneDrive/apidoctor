@@ -1028,7 +1028,7 @@ namespace ApiDoctor.Validation
                         break;
                     case TableBlockType.RequestObjectProperties:
                         table.UsedIn.Add(onlyMethod);
-                        MergeParametersIntoCollection(onlyMethod.RequestBodyParameters, table.Rows.Cast<ParameterDefinition>(), issues.For(methodName), addMissingParameters: true, expectedInResource: false);
+                        MergeParametersIntoCollection(onlyMethod.RequestBodyParameters, table.Rows.Cast<ParameterDefinition>(), issues.For(methodName, onlyMethod.SourceFile.DisplayName), addMissingParameters: true, expectedInResource: false);
                         break;
                     default:
                         if (table.UsedIn.Count == 0)

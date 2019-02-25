@@ -1437,7 +1437,7 @@ namespace ApiDoctor.Publishing.CSDL
                                                where p.IsNavigatable &&
                                                     (resource.ResolvedBaseTypeReference == null ||
                                                     !resource.HasOrInheritsProperty(p.Name))
-                                               select ConvertParameterToProperty<NavigationProperty>(entity.Name, p, issues.For(p.Name))).ToList();
+                                               select ConvertParameterToProperty<NavigationProperty>(entity.Name, p, issues.For(p.Name, resource.SourceFile.DisplayName))).ToList();
                 schema.EntityTypes.Add(entity);
                 type = entity;
             }

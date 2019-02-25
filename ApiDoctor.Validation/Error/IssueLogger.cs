@@ -140,6 +140,9 @@ namespace ApiDoctor.Validation.Error
                 SourceFile = sourceFile ?? this.SourceFile ?? NullIfEmpty(this.Source) ?? NullIfEmpty(source)
             };
 
+            if (!logger.SourceFile.EndsWith(".md"))
+                Console.Write("Yeess");
+
             this.children.Add(logger);
             return logger;
         }
