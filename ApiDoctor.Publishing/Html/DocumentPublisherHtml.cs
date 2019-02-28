@@ -247,7 +247,7 @@ namespace ApiDoctor.Publishing.Html
 
             // Post-process the resulting HTML for any remaining tags
             TagProcessor tagProcessor = new TagProcessor(tagsInput,
-                page.Parent.SourceFolderPath, LogMessage);
+                page.Parent.SourceFolderPath, LogMessage);      
             html = tagProcessor.PostProcess(html, sourceFile, converter);
 
             var pageData = page.Annotation ?? new PageAnnotation();

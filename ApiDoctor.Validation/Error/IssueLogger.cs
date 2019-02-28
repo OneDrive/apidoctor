@@ -104,14 +104,14 @@ namespace ApiDoctor.Validation.Error
         public void Error(ValidationErrorCode code, string message, Exception exception = null, [CallerLineNumber]int lineNumber = 0)
         {
             LaunchDebuggerIfNeeded(lineNumber);
-            AddIfNeeded(new ValidationError(code, this.Source, this.SourceFile, message + $"\r\n{exception}"), this.errors);
+            AddIfNeeded(new ValidationError(code, this.Source, this.SourceFile, message + Environment.NewLine + exception), this.errors);
             this.IssuesInCurrentScope++;
         }
 
         public void Warning(ValidationErrorCode code, string message, Exception exception = null, [CallerLineNumber]int lineNumber = 0)
         {
             LaunchDebuggerIfNeeded(lineNumber);
-            AddIfNeeded(new ValidationWarning(code, this.Source, this.SourceFile, message + $"\r\n{exception}"), this.warnings);
+            AddIfNeeded(new ValidationWarning(code, this.Source, this.SourceFile, message + Environment.NewLine + exception), this.warnings);
             this.IssuesInCurrentScope++;
         }
 
@@ -139,9 +139,6 @@ namespace ApiDoctor.Validation.Error
                 Source = this.Source + (string.IsNullOrEmpty(this.Source) ? "" : "/") + source,
                 SourceFile = sourceFile ?? this.SourceFile ?? NullIfEmpty(this.Source) ?? NullIfEmpty(source)
             };
-
-            if (!logger.SourceFile.EndsWith(".md"))
-                Console.Write("Yeess");
 
             this.children.Add(logger);
             return logger;
@@ -212,7 +209,7 @@ namespace ApiDoctor.Validation.Error
 
         private static string NullIfEmpty(string value)
         {
-            if (String.IsNullOrEmpty(value))
+            if (string.IsNullOrWhiteSpace(value))
                 return null;
 
             return value;

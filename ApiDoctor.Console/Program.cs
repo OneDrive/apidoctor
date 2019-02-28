@@ -238,8 +238,9 @@ namespace ApiDoctor.ConsoleApp
                 }
             }
 
-            var log = GenerateMarkdownLog(issues, options as BasicCheckOptions);
-            await GitHub.PostPullRequestCommentAsync(log);
+            var basicOptions = options as BasicCheckOptions;
+            var log = GenerateMarkdownLog(issues, basicOptions);
+            await GitHub.PostPullRequestCommentAsync(basicOptions.DocumentationSetPath, 1, log);
 
             Exit(failure: !returnSuccess);
         }
@@ -249,27 +250,32 @@ namespace ApiDoctor.ConsoleApp
             StringBuilder log = new StringBuilder();
             bool isTruncated = false;
             int logLength = 0;
-            
-            GitHelper helper = new GitHelper(options.GitExecutablePath, options.DocumentationSetPath);
-            string[] changedFiles = helper.FilesChangedFromBranch(options.FilesChangedFromOriginalBranch);
 
-            var warnings = issues.Warnings
-                .Where(x => changedFiles.Contains(x.SourceFile));
+            var warnings = Enumerable.Empty<ValidationWarning>();
+            if (!options.IgnoreWarnings)
+            {
+                GitHelper helper = new GitHelper(options.GitExecutablePath, options.DocumentationSetPath);
+                string[] changedFiles = helper.FilesChangedFromBranch(options.FilesChangedFromOriginalBranch);
+
+                warnings = issues.Warnings
+                    .Where(x => changedFiles.Contains(x.SourceFile));
+            }
 
             int errorCount = issues.Errors.Count();
-            int warningCount = options.IgnoreErrors ? 0 : warnings.Count();
-            var status = "PASSED";
+            int warningCount = warnings.Count();
+
+            var validationStatus = "PASSED";
             var header = "API Doctor validation status";
 
             if (errorCount > 0)
             {
                 header = ":x: " + header;
-                status = "FAILED with errors";
+                validationStatus = "FAILED with errors";
             }
-            else if (warningCount > 0 && !options.IgnoreWarnings)
+            else if (warningCount > 0)
             {
                 header = ":warning: " + header;
-                status = "FAILED with warnings";
+                validationStatus = "FAILED with warnings";
             }
             else
             {
@@ -277,93 +283,85 @@ namespace ApiDoctor.ConsoleApp
             }
 
             log.Append($"### {header}");
+
             if (errorCount > 0 || warningCount > 0)
             {
                 log.Append("\n**Summary**");
                 log.Append($"\n{errorCount} errors");
                 log.Append($"\n{warningCount} warnings");
             }
-            log.Append($"\n\n{status}");
+
+            log.Append($"\n\n{validationStatus}");
+
             logLength = logLength + log.Length;
 
             List<dynamic> list = new List<dynamic>();
             StringBuilder detailedLog = new StringBuilder();
 
-            var errors = issues.Errors
+            var errorsAndWarnings = issues.Errors
+                .Concat(warnings)
+                .OrderBy(x => x.SourceFile == null)
+                .ThenBy(x => x.IsWarning)
                 .GroupBy(x => x.SourceFile)
                 .Select(x => x.ToList());
-
-            foreach (var error in errors)
+            
+            foreach (var error in errorsAndWarnings)
             {
-                var fileName = error.Select(x => x.SourceFile).First();
-                var filePath = options.DocumentationSetPath + fileName;
-                var error_codes = error.Select(x => x.Code).Distinct();
+                var isError = error
+                    .Select(x => x.IsError)
+                    .First();
+
+                var fileName = error
+                    .Select(x => x.SourceFile)
+                    .First();
+
+                var statusCodes = error
+                    .Select(x => x.Code)
+                    .Distinct();
+               
                 if (fileName != null)
                 {
+                    fileName = fileName.ToStringClean();
+                    var filePath = options.DocumentationSetPath + fileName;
+
                     list.Add(
                         new
                         {
                             File = $"[{fileName}]({filePath})",
-                            Status = ":x: Error",
-                            StatusCode = string.Join(", ", error_codes)
+                            Status = isError ? ":x: Error" : ":warning: Warning",
+                            StatusCode = string.Join(", ", statusCodes) ?? "Unknown"
                         }
                     );
+
                     detailedLog.Append($"\n#### [{fileName}]({filePath})");
                 }
                
                 foreach (var detail in error)
                 {
-                    var source = (fileName != detail.Source) && !string.IsNullOrEmpty(detail.Source) ? $" *[{detail.Source}]*\n" : "";
-                    detailedLog.Append($"\n * **[Error]** {source} {detail.Message.FirstLineOnly()} ");
+                    var status = detail.IsError ? "Error" : "Warning";
+                    detail.Source = detail.Source.ToStringClean();
+                    var source = "";
+                    if (!string.IsNullOrEmpty(detail.Source) && fileName != detail.Source)
+                    {
+                        source = detail.Source.Replace(fileName + "/", "");
+                        source = $" *[{source}]*\n";
+                    }
+                    detailedLog.Append($"\n * **[{status}]** {source} {detail.Message.FirstLineOnly()} ");
                 }
 
-                logLength = logLength + list.ToMarkdownTable().ToHtml().Length;
-                logLength = logLength + detailedLog.Length;
-                if (logLength > GitHub.maxCommentLength)
+                var resultLength = list.ToArray().ToMarkdownTable(i => i.File, i => i.Status, i => i.StatusCode)
+                    .WithHeaders("File", "Status", "Status Code").ToHtml().Length + detailedLog.Length;
+       
+                if (logLength + resultLength > GitHub.maxCommentLength - 10000)
                 {
                     isTruncated = true;
                     break;
                 }
             }
-
-            if (!options.IgnoreWarnings)
-            {
-                var filteredWarnings = warnings.GroupBy(x => x.SourceFile)
-                   .Select(x => x.ToList())
-                   .Take(1);
-
-                foreach (var warning in filteredWarnings)
-                {
-                    var fileName = warning.Select(x => x.SourceFile).First();
-                    var filePath = options.DocumentationSetPath + fileName;
-                    list.Add(
-                      new
-                      {
-                          File = $"[{fileName}]({filePath})",
-                          Status = ":warning: Warning",
-                          StatusCode = ""
-                      }
-                  );
-
-                    detailedLog.Append($"\n#### [{fileName}]({filePath})");
-                    foreach (var detail in warning)
-                    {
-                        var source = (fileName != detail.Source) && !string.IsNullOrEmpty(detail.Source) ? $" *[{detail.Source}]*\n" : "";
-                        detailedLog.Append($"\n* **[Warning]** {source} {detail.Message.FirstLineOnly()} ");
-                    }
-
-                    logLength = logLength + list.ToMarkdownTable().ToHtml().Length;
-                    logLength = logLength + detailedLog.Length;
-                    if (logLength > GitHub.maxCommentLength)
-                    {
-                        isTruncated = true;
-                        break;
-                    }
-                }
-            }
+            
             if (isTruncated)
             {
-                log.Append("\n Note: *Some output has been truncated for brevity*");
+                log.Append("\n **Note:** *Some output has been truncated for brevity*");
             }
 
             if (list.Any())

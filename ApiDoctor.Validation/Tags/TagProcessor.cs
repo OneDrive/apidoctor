@@ -70,8 +70,9 @@ namespace ApiDoctor.Validation.Tags
         /// </summary>
         /// <param name="sourceFile">The file containing the Markdown contents to preprocess.</param>
         /// <returns>The preprocessed contents of the file.</returns>
-        public string Preprocess(FileInfo sourceFile)
+        public string Preprocess(DocFile docFile)
         {
+            FileInfo sourceFile = new FileInfo(docFile.FullPath);
             using (var writer = new StringWriter())
             using (var reader = new StreamReader(sourceFile.OpenRead()))
             {
@@ -106,18 +107,18 @@ namespace ApiDoctor.Validation.Tags
                         else
                         {
                             LogMessage(new ValidationError(ValidationErrorCode.MarkdownParserError,
-                                string.Concat(sourceFile.Name, ":", lineNumber), null, "Unexpected [END] marker."));
+                                string.Concat(sourceFile.Name, ":", lineNumber), docFile.DisplayName, "Unexpected [END] marker."));
                         }
 
                         continue;
                     }
 
                     // Check if this is a [TAGS] marker
-                    if (IsTagLine(nextLine, sourceFile.Name, lineNumber))
+                    if (IsTagLine(nextLine, docFile, lineNumber))
                     {
                         var tags = GetTags(nextLine);
 
-                        LogMessage(new ValidationMessage(string.Concat(sourceFile.Name, ":", lineNumber), null, "Found TAGS line with {0}", string.Join(",", tags)));
+                        LogMessage(new ValidationMessage(string.Concat(sourceFile.Name, ":", lineNumber), docFile.DisplayName, "Found TAGS line with {0}", string.Join(",", tags)));
 
                         tagCount++;
 
@@ -128,12 +129,12 @@ namespace ApiDoctor.Validation.Tags
 
                         if (dropCount == 1)
                         {
-                            LogMessage(new ValidationMessage(string.Concat(sourceFile.Name, ":", lineNumber), null,
+                            LogMessage(new ValidationMessage(string.Concat(sourceFile.Name, ":", lineNumber), docFile.DisplayName,
                                 "{0} not found in the specified tags to include, content will be dropped.", string.Join(",", tags)));
                         }
                         else if (dropCount > 1)
                         {
-                            LogMessage(new ValidationMessage(string.Concat(sourceFile.Name, ":", lineNumber), null,
+                            LogMessage(new ValidationMessage(string.Concat(sourceFile.Name, ":", lineNumber), docFile.DisplayName,
                                 "Dropping content due to containing [TAGS]"));
                         }
                         else
@@ -150,14 +151,14 @@ namespace ApiDoctor.Validation.Tags
                     if (tagCount > 0 && dropCount > 0)
                     {
                         // Inside of a tag that shouldn't be included
-                        LogMessage(new ValidationMessage(string.Concat(sourceFile.Name, ":", lineNumber), null, "Removing tagged content"));
+                        LogMessage(new ValidationMessage(string.Concat(sourceFile.Name, ":", lineNumber), docFile.DisplayName, "Removing tagged content"));
                         continue;
                     }
 
                     // Remove double blockquotes (">>")
                     if (IsDoubleBlockQuote(nextLine))
                     {
-                        LogMessage(new ValidationMessage(string.Concat(sourceFile.Name, ":", lineNumber), null, "Removing DoubleBlockQuote"));
+                        LogMessage(new ValidationMessage(string.Concat(sourceFile.Name, ":", lineNumber), docFile.DisplayName, "Removing DoubleBlockQuote"));
                         continue;
                     }
 
@@ -167,7 +168,7 @@ namespace ApiDoctor.Validation.Tags
                         var includeFile = GetIncludeFile(nextLine, sourceFile);
                         if (!includeFile.Exists)
                         {
-                            LogMessage(new ValidationError(ValidationErrorCode.ErrorOpeningFile, nextLine, null, "The included file {0} was not found", includeFile.FullName));
+                            LogMessage(new ValidationError(ValidationErrorCode.ErrorOpeningFile, nextLine, docFile.DisplayName, "The included file {0} was not found", includeFile.FullName));
                             continue;
                         }
 
@@ -175,41 +176,41 @@ namespace ApiDoctor.Validation.Tags
                         {
                             if (includeFile.FullName.Equals(sourceFile.FullName))
                             {
-                                LogMessage(new ValidationError(ValidationErrorCode.MarkdownParserError, nextLine, null, "A Markdown file cannot include itself"));
+                                LogMessage(new ValidationError(ValidationErrorCode.MarkdownParserError, nextLine, docFile.DisplayName, "A Markdown file cannot include itself"));
                                 continue;
                             }
-
-                            var includeContent = Preprocess(includeFile);
+                            DocFile includedDocFile = null;
+                            var includeContent = Preprocess(includedDocFile);
 
                             writer.WriteLine(includeContent);
                         }
                         else
                         {
-                            LogMessage(new ValidationError(ValidationErrorCode.ErrorReadingFile, nextLine, null, "Could not load include content from {0}", includeFile.FullName));
+                            LogMessage(new ValidationError(ValidationErrorCode.ErrorReadingFile, nextLine, docFile.DisplayName, "Could not load include content from {0}", includeFile.FullName));
                         }
 
                         continue;
                     }
                     if (IsAlertLine(nextLine))
                     {
-                        LogMessage(new ValidationMessage(string.Concat(sourceFile.Name, ":", lineNumber), null, "Removing docfx Alerts"));
+                        LogMessage(new ValidationMessage(string.Concat(sourceFile.Name, ":", lineNumber), docFile.DisplayName, "Removing docfx Alerts"));
                         continue;
                     }
 
                     if (IsDocFxDivLine(nextLine))
                     {
-                        LogMessage(new ValidationMessage(string.Concat(sourceFile.Name, ":", lineNumber), null, "Removing docfx Div"));
+                        LogMessage(new ValidationMessage(string.Concat(sourceFile.Name, ":", lineNumber), docFile.DisplayName, "Removing docfx Div"));
                         continue;
                     }
                     if (IsDocFxVideoLine(nextLine))
                     {
-                        LogMessage(new ValidationMessage(string.Concat(sourceFile.Name, ":", lineNumber), null, "Removing docfx Video"));
+                        LogMessage(new ValidationMessage(string.Concat(sourceFile.Name, ":", lineNumber), docFile.DisplayName, "Removing docfx Video"));
                         continue;
                     }
 
                     if (IsDocFxCodeSnippet(nextLine))
                     {
-                        LogMessage(new ValidationMessage(string.Concat(sourceFile.Name, ":", lineNumber), null, "Removing docfx code snippet"));
+                        LogMessage(new ValidationMessage(string.Concat(sourceFile.Name, ":", lineNumber), docFile.DisplayName, "Removing docfx code snippet"));
                         continue;
                     }
 
@@ -220,7 +221,7 @@ namespace ApiDoctor.Validation.Tags
                 {
                     // If inTag is true, there was a missing [END] tag somewhere
                     LogMessage(new ValidationError(ValidationErrorCode.MarkdownParserError,
-                        sourceFile.Name, null, "The file ended while still in a [TAGS] tag. All [TAGS] must be closed with an [END] tag."));
+                        sourceFile.Name, docFile.DisplayName, "The file ended while still in a [TAGS] tag. All [TAGS] must be closed with an [END] tag."));
                 }
 
                 return writer.ToString();
@@ -271,7 +272,7 @@ namespace ApiDoctor.Validation.Tags
             return text.StartsWith(">>") || text.StartsWith(" >>");
         }
 
-        private bool IsTagLine(string text, string fileName, long lineNumber)
+        private bool IsTagLine(string text, DocFile docFile, long lineNumber)
         {
             var looksLikeTag = text.Trim().ToUpper().StartsWith("[TAGS=");
 
@@ -280,8 +281,9 @@ namespace ApiDoctor.Validation.Tags
             // It looks like a tag, but is it legit?
             if (!ValidTagFormat.IsMatch(text.Trim()))
             {
+                var fileInfo = new FileInfo(docFile.FullPath);
                 LogMessage(new ValidationError(ValidationErrorCode.MarkdownParserError,
-                    string.Concat(fileName, ":", lineNumber), null, "Invalid TAGS line detected, ignoring..."));
+                    string.Concat(fileInfo.Name, ":", lineNumber), docFile.DisplayName, "Invalid TAGS line detected, ignoring..."));
                 return false;
             }
 

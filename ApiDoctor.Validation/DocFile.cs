@@ -186,9 +186,8 @@ namespace ApiDoctor.Validation
         protected virtual string GetContentsOfFile(string tags)
         {
             // Preprocess file content
-            FileInfo docFile = new FileInfo(this.FullPath);
             TagProcessor tagProcessor = new TagProcessor(tags, Parent.SourceFolderPath);
-            return tagProcessor.Preprocess(docFile);
+            return tagProcessor.Preprocess(this);
         }
 
 
