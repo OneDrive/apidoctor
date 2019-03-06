@@ -115,6 +115,14 @@ namespace ApiDoctor.Validation
         {
             return value?.Split(' ', ',', ';', '.', '\'', '\"', '|', '`') ?? new string[0];
         }
+        
+        public static string NullIfEmpty(this string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return null;
+
+            return value;
+        }
 
         public static string ComponentsJoinedByString(this IEnumerable<string> source, string separator, int startIndex = 0)
         {

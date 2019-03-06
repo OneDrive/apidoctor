@@ -238,24 +238,22 @@ namespace ApiDoctor.ConsoleApp
                 }
             }
 
-            var basicOptions = options as BasicCheckOptions;
-            var log = GenerateMarkdownLog(issues, basicOptions);
-            await GitHub.PostPullRequestCommentAsync(basicOptions.DocumentationSetPath, 1, log);
+            var basicCheckOptions = options as BasicCheckOptions;
+            var log = GenerateMarkdownLog(issues, basicCheckOptions);
+            GitHub.accessToken = basicCheckOptions.GitHubToken;
+            GitHub.repositoryUrl = basicCheckOptions.DocumentationSetPath;
+            await GitHub.PostPullRequestCommentAsync(basicCheckOptions.PullRequestNumber, log);
 
             Exit(failure: !returnSuccess);
         }
 
         private static string GenerateMarkdownLog(IssueLogger issues, BasicCheckOptions options)
         {
-            StringBuilder log = new StringBuilder();
-            bool isTruncated = false;
-            int logLength = 0;
-
             var warnings = Enumerable.Empty<ValidationWarning>();
-            if (!options.IgnoreWarnings)
+            if (!options.IgnoreWarnings && !string.IsNullOrEmpty(options.BaseBranch))
             {
                 GitHelper helper = new GitHelper(options.GitExecutablePath, options.DocumentationSetPath);
-                string[] changedFiles = helper.FilesChangedFromBranch(options.FilesChangedFromOriginalBranch);
+                string[] changedFiles = helper.FilesChangedFromBranch(options.BaseBranch);
 
                 warnings = issues.Warnings
                     .Where(x => changedFiles.Contains(x.SourceFile));
@@ -282,6 +280,7 @@ namespace ApiDoctor.ConsoleApp
                 header = ":white_check_mark: " + header;
             }
 
+            StringBuilder log = new StringBuilder();
             log.Append($"### {header}");
 
             if (errorCount > 0 || warningCount > 0)
@@ -290,46 +289,35 @@ namespace ApiDoctor.ConsoleApp
                 log.Append($"\n{errorCount} errors");
                 log.Append($"\n{warningCount} warnings");
             }
-
             log.Append($"\n\n{validationStatus}");
-
-            logLength = logLength + log.Length;
 
             List<dynamic> list = new List<dynamic>();
             StringBuilder detailedLog = new StringBuilder();
+            var beforeLogLength = 0;
+            int logLength = log.Length;
+            bool isTruncated = false;
 
-            var errorsAndWarnings = issues.Errors
-                .Concat(warnings)
-                .OrderBy(x => x.SourceFile == null)
-                .ThenBy(x => x.IsWarning)
-                .GroupBy(x => x.SourceFile)
-                .Select(x => x.ToList());
+            var errorsAndWarnings = issues.Errors.Concat(warnings)
+                .OrderBy(x => x.SourceFile == null).ThenBy(x => x.IsWarning).GroupBy(x => x.SourceFile).Select(x => x.ToList());
             
             foreach (var error in errorsAndWarnings)
             {
-                var isError = error
-                    .Select(x => x.IsError)
-                    .First();
-
-                var fileName = error
-                    .Select(x => x.SourceFile)
-                    .First();
-
-                var statusCodes = error
-                    .Select(x => x.Code)
-                    .Distinct();
-               
+                beforeLogLength = detailedLog.Length;
+                var fileName = error.Select(x => x.SourceFile).First();            
                 if (fileName != null)
                 {
                     fileName = fileName.ToStringClean();
                     var filePath = options.DocumentationSetPath + fileName;
 
+                    var fileHasError = error.Select(x => x.IsError).First();
+                    var statusCodes = string.Join(", ", error.Select(x => x.Code).Distinct()).NullIfEmpty();
+
                     list.Add(
                         new
                         {
                             File = $"[{fileName}]({filePath})",
-                            Status = isError ? ":x: Error" : ":warning: Warning",
-                            StatusCode = string.Join(", ", statusCodes) ?? "Unknown"
+                            Status = fileHasError ? ":x: Error" : ":warning: Warning",
+                            StatusCode = statusCodes ?? "Unknown"
                         }
                     );
 
@@ -352,8 +340,12 @@ namespace ApiDoctor.ConsoleApp
                 var resultLength = list.ToArray().ToMarkdownTable(i => i.File, i => i.Status, i => i.StatusCode)
                     .WithHeaders("File", "Status", "Status Code").ToHtml().Length + detailedLog.Length;
        
-                if (logLength + resultLength > GitHub.maxCommentLength - 10000)
+                if (logLength + resultLength > GitHub.maxCommentLength)
                 {
+                    // remove items added in iteration
+                    list.RemoveAt(list.Count() - 1);
+                    detailedLog.Remove(beforeLogLength - 1, detailedLog.Length -beforeLogLength);
+
                     isTruncated = true;
                     break;
                 }
@@ -361,7 +353,7 @@ namespace ApiDoctor.ConsoleApp
             
             if (isTruncated)
             {
-                log.Append("\n **Note:** *Some output has been truncated for brevity*");
+                log.Append("\n **Note:** *Some output has been truncated for brevity.*");
             }
 
             if (list.Any())

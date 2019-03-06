@@ -137,7 +137,7 @@ namespace ApiDoctor.Validation.Error
                 globalSuppressions = this.globalSuppressions,
                 DebugLine = this.DebugLine,
                 Source = this.Source + (string.IsNullOrEmpty(this.Source) ? "" : "/") + source,
-                SourceFile = sourceFile ?? this.SourceFile ?? NullIfEmpty(this.Source) ?? NullIfEmpty(source)
+                SourceFile = sourceFile ?? this.SourceFile ?? this.Source.NullIfEmpty() ?? source.NullIfEmpty()
             };
 
             this.children.Add(logger);
@@ -205,14 +205,6 @@ namespace ApiDoctor.Validation.Error
             {
                 issues.Add((T)issue);
             }
-        }
-
-        private static string NullIfEmpty(string value)
-        {
-            if (string.IsNullOrWhiteSpace(value))
-                return null;
-
-            return value;
         }
 
         private class SuppressionComparer : IEqualityComparer<string>

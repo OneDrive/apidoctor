@@ -187,7 +187,8 @@ namespace ApiDoctor.Validation
         {
             // Preprocess file content
             TagProcessor tagProcessor = new TagProcessor(tags, Parent.SourceFolderPath);
-            return tagProcessor.Preprocess(this);
+            var fileInfo = new FileInfo(this.FullPath);
+            return tagProcessor.Preprocess(fileInfo);
         }
 
 

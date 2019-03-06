@@ -37,6 +37,10 @@ namespace ApiDoctor.ConsoleApp
 
         public const int maxCommentLength = 65536;
 
+        public static string accessToken;
+
+        public static string repositoryUrl;
+
         private static async Task PostToApiAsync(string path, object body)
         {
             using (HttpClient client = new HttpClient())
@@ -44,6 +48,7 @@ namespace ApiDoctor.ConsoleApp
                 client.BaseAddress = new Uri("https://api.github.com");
                 client.DefaultRequestHeaders.Accept.Clear();
 				client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("token", accessToken);
                 client.DefaultRequestHeaders.Add("User-Agent", "api-doctor");
                 ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
 
@@ -69,7 +74,7 @@ namespace ApiDoctor.ConsoleApp
 
         }
 
-        public static async Task PostPullRequestCommentAsync(string repositoryUrl, int pullRequestNumber, string comment)
+        public static async Task PostPullRequestCommentAsync(int pullRequestNumber, string comment)
         {
             try
             {
@@ -78,8 +83,8 @@ namespace ApiDoctor.ConsoleApp
                     body = comment
                 };
 
-                var repositoryOwner = new Uri(repositoryUrl).Segments[1];
-                var repositoryName = new Uri(repositoryUrl).Segments[2];
+                var repositoryOwner = new Uri(repositoryUrl).Segments[1].Replace("/", "");
+                var repositoryName = new Uri(repositoryUrl).Segments[2].Replace("/", "");
 
                 var path = $"/repos/{repositoryOwner}/{repositoryName}/issues/{pullRequestNumber}/comments";
                 await PostToApiAsync(path, body);
