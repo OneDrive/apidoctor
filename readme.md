@@ -74,11 +74,19 @@ It verifies that:
 * The API methods that accept or return a specific resource type have valid request/response examples
 * The metadata in the documentation is formatted properly
 
-| Option                   | Description                                                                                        |
-|:-------------------------|:---------------------------------------------------------------------------------------------------|
-| `--method <method_name>` | Optional. Specify the name of a request method to evaluate. If missing, all methods are evaluated. |
+| Option                         | Description                                                                                        |
+|:-------------------------------|:---------------------------------------------------------------------------------------------------|
+| `--method <method_name>`       | Optional. Specify the name of a request method to evaluate. If missing, all methods are evaluated. |
+| `--pull <pull_request_number>` | Identifier of pull request being validated by the app.											  |
+| `--base_branch <branch_name>`  | Base branch of the pull request metioned above.													  |
+| `--gitub-token <access_token>` | OAuth access token for GitHub. Required for posting validation logs as PR comments to GitHub.      |
+| `--git-path <git_path>`		 | Path to the git executable. Required to only post warnings from files changed in pull request.     |   
 
-Example: `apidoc.exe check-docs --path ~/github/api-docs --method search`
+Example: 
+```
+apidoc.exe check-docs --path ~/github/api-docs --method search
+apidoc.exe check-docs --path ~/github/api-docs --pull 1 --base_branch master --github-token "foo" --git-path "\Git\bin\git.exe"
+```
 
 ### Check-service Command
 
