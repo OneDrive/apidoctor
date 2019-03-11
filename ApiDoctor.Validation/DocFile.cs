@@ -51,6 +51,15 @@ namespace ApiDoctor.Validation
         private readonly List<SamplesDefinition> samples = new List<SamplesDefinition>();
         private readonly List<EnumerationDefinition> enums = new List<EnumerationDefinition>();
         private readonly List<string> bookmarks = new List<string>();
+        private string[] mandatoryYamlHeaders = new string[] 
+        {
+            "title",
+            "description",
+            "localization_priority",
+            "author",
+            "ms.prod",
+            "doc_type"
+        };
 
         protected bool HasScanRun;
         protected string BasePath;
@@ -202,7 +211,7 @@ namespace ApiDoctor.Validation
 
             try
             {
-                string fileContents = this.ReadAndPreprocessFileContents(tags);
+                string fileContents = this.ReadAndPreprocessFileContents(tags, issues);
                 this.TransformMarkdownIntoBlocksAndLinks(fileContents, tags);
             }
             catch (IOException ioex)
@@ -224,12 +233,12 @@ namespace ApiDoctor.Validation
         /// </summary>
         /// <param name="tags"></param>
         /// <returns></returns>
-        public string ReadAndPreprocessFileContents(string tags)
+        public string ReadAndPreprocessFileContents(string tags, IssueLogger issues)
         {
             try
             {
                 string fileContents = this.GetContentsOfFile(tags);
-                fileContents = this.ParseAndRemoveYamlFrontMatter(fileContents);
+                fileContents = this.ParseAndRemoveYamlFrontMatter(fileContents, issues);
                 return fileContents;
             }
             catch (Exception ex)
@@ -243,7 +252,7 @@ namespace ApiDoctor.Validation
         /// Parses the file contents and removes yaml front matter from the markdown.
         /// </summary>
         /// <param name="contents">Contents.</param>
-        private string ParseAndRemoveYamlFrontMatter(string contents)
+        private string ParseAndRemoveYamlFrontMatter(string contents, IssueLogger issues)
         {
             const string YamlFrontMatterHeader = "---";
             using (StringReader reader = new StringReader(contents))
@@ -260,6 +269,7 @@ namespace ApiDoctor.Validation
                             if (!string.IsNullOrWhiteSpace(trimmedCurrentLine) && trimmedCurrentLine != YamlFrontMatterHeader)
                             {
                                 // This file doesn't have YAML front matter, so we just return the full contents of the file
+                                issues.Error(ValidationErrorCode.RequiredYamlHeaderMissing, $"Missing required YAML headers: {mandatoryYamlHeaders.ComponentsJoinedByString(", ")}");
                                 return contents;
                             }
                             else if (trimmedCurrentLine == YamlFrontMatterHeader)
@@ -293,7 +303,7 @@ namespace ApiDoctor.Validation
                 if (currentState == YamlFrontMatterDetectionState.SecondTokenFound)
                 {
                     // Parse YAML metadata
-                    ParseYamlMetadata(frontMatter.ToString());
+                    ParseYamlMetadata(frontMatter.ToString(), issues);
                     return reader.ReadToEnd();
                 }
                 else
@@ -304,9 +314,37 @@ namespace ApiDoctor.Validation
             }
         }
 
-        private void ParseYamlMetadata(string yamlMetadata)
+        private void ParseYamlMetadata(string yamlMetadata, IssueLogger issues) 
         {
-            // TODO: Implement YAML parsing
+            Dictionary<string, string> dictionary = new Dictionary<string, string>();
+            string[] items = yamlMetadata.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (string item in items)
+            {
+                string[] keyValue = item.Split(':');
+                dictionary.Add(keyValue[0].Trim(), keyValue[1].Trim());
+            }
+
+            List<string> missingHeaders = new List<string>();
+            foreach (var header in mandatoryYamlHeaders)
+            {
+                string value;
+                if (dictionary.TryGetValue(header, out value))
+                {
+                   if(string.IsNullOrEmpty(value))
+                    {
+                        issues.Error(ValidationErrorCode.RequiredYamlHeaderMissing, $"Missing value for YAML header: {header}");
+                    }
+                }
+                else
+                {
+                    missingHeaders.Add(header);
+                }
+            }
+
+            if (missingHeaders.Any())
+            {
+                issues.Error(ValidationErrorCode.RequiredYamlHeaderMissing, $"Missing required YAML header(s): {missingHeaders.ComponentsJoinedByString(", ")}");
+            }
         }
 
         private enum YamlFrontMatterDetectionState
