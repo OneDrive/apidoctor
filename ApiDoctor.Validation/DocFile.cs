@@ -32,12 +32,14 @@ namespace ApiDoctor.Validation
     using System.Linq;
     using ApiDoctor.Validation.Error;
     using ApiDoctor.Validation.TableSpec;
+    using ApiDoctor.Validation.OData.Transformation;
     using Tags;
     using MarkdownDeep;
     using Newtonsoft.Json;
     using System.Threading.Tasks;
     using ApiDoctor.Validation.OData;
     using Newtonsoft.Json.Linq;
+
 
     /// <summary>
     /// A documentation file that may contain one more resources or API methods
@@ -51,15 +53,6 @@ namespace ApiDoctor.Validation
         private readonly List<SamplesDefinition> samples = new List<SamplesDefinition>();
         private readonly List<EnumerationDefinition> enums = new List<EnumerationDefinition>();
         private readonly List<string> bookmarks = new List<string>();
-        private string[] mandatoryYamlHeaders = new string[] 
-        {
-            "title",
-            "description",
-            "localization_priority",
-            "author",
-            "ms.prod",
-            "doc_type"
-        };
 
         protected bool HasScanRun;
         protected string BasePath;
@@ -268,8 +261,13 @@ namespace ApiDoctor.Validation
                         case YamlFrontMatterDetectionState.NotDetected:
                             if (!string.IsNullOrWhiteSpace(trimmedCurrentLine) && trimmedCurrentLine != YamlFrontMatterHeader)
                             {
+                                var requiredYamlHeaders = DocSet.SchemaConfig.RequiredYamlHeaders;
+                                if (requiredYamlHeaders.Any())
+                                {
+                                    issues.Error(ValidationErrorCode.RequiredYamlHeaderMissing, $"Missing required YAML headers: {requiredYamlHeaders.ComponentsJoinedByString(", ")}");
+                                }
+
                                 // This file doesn't have YAML front matter, so we just return the full contents of the file
-                                issues.Error(ValidationErrorCode.RequiredYamlHeaderMissing, $"Missing required YAML headers: {mandatoryYamlHeaders.ComponentsJoinedByString(", ")}");
                                 return contents;
                             }
                             else if (trimmedCurrentLine == YamlFrontMatterHeader)
@@ -323,9 +321,9 @@ namespace ApiDoctor.Validation
                 string[] keyValue = item.Split(':');
                 dictionary.Add(keyValue[0].Trim(), keyValue[1].Trim());
             }
-
+            
             List<string> missingHeaders = new List<string>();
-            foreach (var header in mandatoryYamlHeaders)
+            foreach (var header in DocSet.SchemaConfig.RequiredYamlHeaders)
             {
                 string value;
                 if (dictionary.TryGetValue(header, out value))
