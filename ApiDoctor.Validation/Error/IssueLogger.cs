@@ -34,7 +34,7 @@ namespace ApiDoctor.Validation.Error
     using System.Text.RegularExpressions;
 
     public class IssueLogger
-    { 
+    {
         private List<IssueLogger> children = new List<IssueLogger>();
         private Dictionary<string, int> localSuppressions = new Dictionary<string, int>(SuppressionComparer.Instance);
         private HashSet<string> globalSuppressions = new HashSet<string>(SuppressionComparer.Instance);
@@ -195,7 +195,7 @@ namespace ApiDoctor.Validation.Error
                 }
                 else
                 {
-                    if (DocSet.SchemaConfig.TreatErrorsAsWarningsWorkloads.Any(s => !string.IsNullOrWhiteSpace(this.Source) && this.Source.Contains(s)))
+                    if (DocSet.SchemaConfig != null && DocSet.SchemaConfig.TreatErrorsAsWarningsWorkloads.Any(s => !string.IsNullOrWhiteSpace(this.Source) && this.Source.Contains(s)))
                     {
                         if (!issue.IsWarning)
                         {
@@ -212,7 +212,7 @@ namespace ApiDoctor.Validation.Error
             else
             {
 
-                if (DocSet.SchemaConfig.TreatErrorsAsWarningsWorkloads.Any(s => !string.IsNullOrWhiteSpace(this.Source) && this.Source.Contains(s)))
+                if (DocSet.SchemaConfig != null && DocSet.SchemaConfig.TreatErrorsAsWarningsWorkloads.Any(s => !string.IsNullOrWhiteSpace(this.Source) && this.Source.Contains(s)))
                 {
                     if (!issue.IsWarning)
                     {
