@@ -177,6 +177,11 @@ namespace ApiDoctor.Validation
             {
                 SchemaConfig = new SchemaConfig();
             }
+
+            foreach (var config in SchemaConfig.TreatErrorsAsWarningsWorkloads)
+            {
+                Console.WriteLine($"Treating Errors as Warnings for : {config}");
+            }
         }
 
         private void LoadTableParser()
