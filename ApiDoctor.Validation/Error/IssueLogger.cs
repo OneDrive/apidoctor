@@ -34,7 +34,7 @@ namespace ApiDoctor.Validation.Error
     using System.Text.RegularExpressions;
 
     public class IssueLogger
-    {
+    { 
         private List<IssueLogger> children = new List<IssueLogger>();
         private Dictionary<string, int> localSuppressions = new Dictionary<string, int>(SuppressionComparer.Instance);
         private HashSet<string> globalSuppressions = new HashSet<string>(SuppressionComparer.Instance);
@@ -195,12 +195,12 @@ namespace ApiDoctor.Validation.Error
                 }
                 else
                 {
-                    if (issue.Source.Contains("intune"))
+                    if (DocSet.SchemaConfig.TreatErrorsAsWarningsWorkloads.Any(s => !string.IsNullOrWhiteSpace(this.Source) && this.Source.Contains(s)))
                     {
                         if (!issue.IsWarning)
                         {
                             this.warnings.Add(new ValidationWarning(issue.Code, issue.Source,
-                                $"Treating Error as Warning for Intune{Environment.NewLine}{issue.Message}"));
+                                $"Treating Error as Warning {Environment.NewLine} {issue.Message}"));
                         }
                     }
                     else
@@ -211,12 +211,13 @@ namespace ApiDoctor.Validation.Error
             }
             else
             {
-                if (issue.Source.Contains("intune"))
+
+                if (DocSet.SchemaConfig.TreatErrorsAsWarningsWorkloads.Any(s => !string.IsNullOrWhiteSpace(this.Source) && this.Source.Contains(s)))
                 {
                     if (!issue.IsWarning)
                     {
                         this.warnings.Add(new ValidationWarning(issue.Code, issue.Source,
-                            $"Treating Error as Warning for Intune{Environment.NewLine}{issue.Message}"));
+                            $"Treating Error as Warning {Environment.NewLine} {issue.Message}"));
                     }
                 }
                 else
