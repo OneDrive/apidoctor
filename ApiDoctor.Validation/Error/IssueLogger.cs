@@ -94,7 +94,7 @@ namespace ApiDoctor.Validation.Error
                            //Where(sup => sup.Value > 0).
                            Select(sup => sup.Key).
                        Union(this.children.
-                             SelectMany(c=>c.UsedSuppressions)).
+                             SelectMany(c => c.UsedSuppressions)).
                        ToList();
             }
         }
@@ -176,7 +176,7 @@ namespace ApiDoctor.Validation.Error
             return true;
         }
 
-        private void AddIfNeeded<T>(ValidationError issue, List<T> issues) where T: ValidationError
+        private void AddIfNeeded<T>(ValidationError issue, List<T> issues) where T : ValidationError
         {
             if (issue.Source == null)
             {
@@ -195,12 +195,34 @@ namespace ApiDoctor.Validation.Error
                 }
                 else
                 {
-                    issues.Add((T)issue);
+                    if (issue.Source.Contains("intune"))
+                    {
+                        if (!issue.IsWarning)
+                        {
+                            this.warnings.Add(new ValidationWarning(issue.Code, issue.Source,
+                                $"Treating Error as Warning for Intune{Environment.NewLine}{issue.Message}"));
+                        }
+                    }
+                    else
+                    {
+                        issues.Add((T)issue);
+                    }
                 }
             }
             else
             {
-                issues.Add((T)issue);
+                if (issue.Source.Contains("intune"))
+                {
+                    if (!issue.IsWarning)
+                    {
+                        this.warnings.Add(new ValidationWarning(issue.Code, issue.Source,
+                            $"Treating Error as Warning for Intune{Environment.NewLine}{issue.Message}"));
+                    }
+                }
+                else
+                {
+                    issues.Add((T)issue);
+                }
             }
         }
 
