@@ -672,7 +672,6 @@ namespace ApiDoctor.Validation
             return output.ToString();
         }
 
-
         internal static ExpectedStringFormat StringFormat(this ParameterDefinition param)
         {
             if (param.Type != ParameterDataType.String)
