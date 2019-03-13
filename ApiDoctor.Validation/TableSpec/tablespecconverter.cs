@@ -84,8 +84,8 @@ namespace ApiDoctor.Validation.TableSpec
 
             TableDecoder decoder = new TableDecoder { Type = TableBlockType.Unknown };
 
-            var headerText = headerStack.Peek()?.Title;
-            
+            var headerText = headerStack.Count > 0 ? headerStack.Peek()?.Title : null;
+
             // Try matching based on header
             if (headerText != null)
             {
@@ -207,7 +207,7 @@ namespace ApiDoctor.Validation.TableSpec
                 var tableHeaders = $"|{ string.Join("|", table.ColumnHeaders)}|";
                 if (badRows == records.Count)
                 {
-                    issues.Warning(ValidationErrorCode.MarkdownParserError, $"Failed to parse any rows out of table with headers: {tableHeaders}");
+                    issues.Warning(ValidationErrorCode.MarkdownParserError, $"Failed to parse any rows out of table with headers: {tableHeaders}\nTable was parsed as {decoder.ParseAs}, which requires a name column called one of the following: {{ {String.Join(",", decoder.ParseRule.ColumnNames["name"])} }}");
                     return Enumerable.Empty<ParameterDefinition>();
                 }
 
