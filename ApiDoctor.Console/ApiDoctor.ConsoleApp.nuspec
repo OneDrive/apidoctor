@@ -8,7 +8,7 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Tool for validating API documentation</description>
     <releaseNotes>Check http://github.com/onedrive/apidoctor for details.</releaseNotes>
-    <copyright>Copyright Microsoft</copyright>
+    <copyright>© Microsoft Corporation. All rights reserved.</copyright>
     <licenseUrl>http://msdn.microsoft.com/en-US/cc300389</licenseUrl>
     <projectUrl>http://github.com/onedrive/apidoctor</projectUrl>
     <frameworkAssemblies>

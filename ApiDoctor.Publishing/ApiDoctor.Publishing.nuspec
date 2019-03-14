@@ -10,7 +10,7 @@
         <description>Toolkit to enable publishing from markdown to other formats.</description>
         <releaseNotes>Check http://github.com/onedrive/apidoctor for details.</releaseNotes>
         <licenseUrl>http://msdn.microsoft.com/en-US/cc300389</licenseUrl>
-        <copyright>Copyright Microsoft</copyright>
+        <copyright>© Microsoft Corporation. All rights reserved.</copyright>
         <dependencies>
             <group targetFramework=".NETFramework4.5">
                 <dependency id="Newtonsoft.Json" version="6.0.8" />
