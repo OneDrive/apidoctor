@@ -33,7 +33,10 @@ namespace ApiDoctor.Validation.UnitTests
     {
         internal static IEnumerable<ValidationError> WarningsOrErrorsOnly(this IEnumerable<ValidationError> errors)
         {
-            return errors.Where(e => e.IsWarningOrError);
+            return from e in errors
+                   where e.IsWarning || e.IsError
+                   select e;
         }
+
     }
 }
