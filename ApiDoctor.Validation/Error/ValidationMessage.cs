@@ -28,8 +28,8 @@ namespace ApiDoctor.Validation.Error
 {
     public class ValidationMessage : ValidationError
     {
-        public ValidationMessage(string source, string format, params object[] formatParams)
-            : base(ValidationErrorCode.Unknown, source, format, formatParams)
+        public ValidationMessage(string source, string sourceFile, string format, params object[] formatParams)
+            : base(ValidationErrorCode.Unknown, source, sourceFile, format, formatParams)
         {
 
         }

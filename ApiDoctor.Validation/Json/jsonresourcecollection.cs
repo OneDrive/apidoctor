@@ -75,7 +75,7 @@ namespace ApiDoctor.Validation.Json
                 }
                 else if (!this.registeredSchema.TryGetValue(resourceType, out schema))
                 {
-                    newErrors.Add(new ValidationWarning(ValidationErrorCode.ResponseResourceTypeMissing, null, "Missing required resource: {0}. Validation limited to basics only.", resourceType));
+                    newErrors.Add(new ValidationWarning(ValidationErrorCode.ResponseResourceTypeMissing, null, null, "Missing required resource: {0}. Validation limited to basics only.", resourceType));
                     // Create a new schema based on what's available in the json
                     schema = new JsonSchema(actualResponseBodyJson, new CodeBlockAnnotation { ResourceType = expectedResponseAnnotation.ResourceType });
                 }

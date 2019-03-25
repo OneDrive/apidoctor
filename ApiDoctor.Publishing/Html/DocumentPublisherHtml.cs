@@ -230,7 +230,7 @@ namespace ApiDoctor.Publishing.Html
 
         protected override async Task PublishFileToDestinationAsync(FileInfo sourceFile, DirectoryInfo destinationRoot, DocFile page)
         {
-            this.LogMessage(new ValidationMessage(sourceFile.Name, "Publishing file to HTML"));
+            this.LogMessage(new ValidationMessage(sourceFile.Name, null, "Publishing file to HTML"));
 
             var destinationPath = this.GetPublishedFilePath(sourceFile, destinationRoot, HtmlOutputExtension);
             
@@ -247,7 +247,7 @@ namespace ApiDoctor.Publishing.Html
 
             // Post-process the resulting HTML for any remaining tags
             TagProcessor tagProcessor = new TagProcessor(tagsInput,
-                page.Parent.SourceFolderPath, LogMessage);
+                page.Parent.SourceFolderPath, LogMessage);      
             html = tagProcessor.PostProcess(html, sourceFile, converter);
 
             var pageData = page.Annotation ?? new PageAnnotation();

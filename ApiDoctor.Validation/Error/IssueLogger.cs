@@ -78,6 +78,8 @@ namespace ApiDoctor.Validation.Error
 
         public string Source { get; private set; } = string.Empty;
 
+        public string SourceFile { get; private set; }
+
         public List<string> UnusedSuppressions
         {
             get
@@ -102,14 +104,14 @@ namespace ApiDoctor.Validation.Error
         public void Error(ValidationErrorCode code, string message, Exception exception = null, [CallerLineNumber]int lineNumber = 0)
         {
             LaunchDebuggerIfNeeded(lineNumber);
-            AddIfNeeded(new ValidationError(code, this.Source, message + $"\r\n{exception}"), this.errors);
+            AddIfNeeded(new ValidationError(code, this.Source, this.SourceFile, message + Environment.NewLine + exception), this.errors);
             this.IssuesInCurrentScope++;
         }
 
         public void Warning(ValidationErrorCode code, string message, Exception exception = null, [CallerLineNumber]int lineNumber = 0)
         {
             LaunchDebuggerIfNeeded(lineNumber);
-            AddIfNeeded(new ValidationWarning(code, this.Source, message + $"\r\n{exception}"), this.warnings);
+            AddIfNeeded(new ValidationWarning(code, this.Source, this.SourceFile, message + Environment.NewLine + exception), this.warnings);
             this.IssuesInCurrentScope++;
         }
 
@@ -123,11 +125,11 @@ namespace ApiDoctor.Validation.Error
         public void Message(string message, [CallerLineNumber]int lineNumber = 0)
         {
             LaunchDebuggerIfNeeded(lineNumber);
-            this.messages.Add(new ValidationMessage(this.Source, message));
+            this.messages.Add(new ValidationMessage(this.Source, this.SourceFile, message));
             this.IssuesInCurrentScope++;
         }
 
-        public IssueLogger For(string source, bool onlyKeepUniqueErrors = false)
+        public IssueLogger For(string source, string sourceFile = null, bool onlyKeepUniqueErrors = false)
         {
             var logger = new IssueLogger
             {
@@ -135,6 +137,7 @@ namespace ApiDoctor.Validation.Error
                 globalSuppressions = this.globalSuppressions,
                 DebugLine = this.DebugLine,
                 Source = this.Source + (string.IsNullOrEmpty(this.Source) ? "" : "/") + source,
+                SourceFile = sourceFile ?? this.SourceFile ?? this.Source.NullIfEmpty() ?? source.NullIfEmpty()
             };
 
             this.children.Add(logger);
@@ -189,7 +192,7 @@ namespace ApiDoctor.Validation.Error
                 {
                     if (!this.similarIssuesFound)
                     {
-                        this.warnings.Add(new ValidationWarning(ValidationErrorCode.SkippedSimilarErrors, this.Source, "Similar errors were skipped."));
+                        this.warnings.Add(new ValidationWarning(ValidationErrorCode.SkippedSimilarErrors, this.Source, this.SourceFile, "Similar errors were skipped."));
                         this.similarIssuesFound = true;
                     }
                 }

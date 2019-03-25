@@ -115,6 +115,14 @@ namespace ApiDoctor.Validation
         {
             return value?.Split(' ', ',', ';', '.', '\'', '\"', '|', '`') ?? new string[0];
         }
+        
+        public static string NullIfEmpty(this string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return null;
+
+            return value;
+        }
 
         public static string ComponentsJoinedByString(this IEnumerable<string> source, string separator, int startIndex = 0)
         {
@@ -389,7 +397,7 @@ namespace ApiDoctor.Validation
 
             if (null != addErrorAction)
             {
-                addErrorAction(new ValidationWarning(ValidationErrorCode.TypeConversionFailure, "Couldn't convert '{0}' into understood data type. Assuming Object type.", value));
+                addErrorAction(new ValidationWarning(ValidationErrorCode.TypeConversionFailure, null, null, "Couldn't convert '{0}' into understood data type. Assuming Object type.", value));
             }
             return new ParameterDataType(value, isCollection);
         }
@@ -783,6 +791,7 @@ namespace ApiDoctor.Validation
                         ValidationWarning skippedSimilarErrors =
                             new ValidationWarning(
                                 ValidationErrorCode.SkippedSimilarErrors,
+                                null,
                                 null,
                                 "Similar errors were skipped.");
                         collection.Add(skippedSimilarErrors);

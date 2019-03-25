@@ -58,7 +58,7 @@ namespace ApiDoctor.Validation.Params
             foreach (string key in this.OutputValues.Keys)
             {
                 if (LocationForKey(key) != PlaceholderLocation.StoredValue)
-                    errors.Add(new ValidationError(ValidationErrorCode.OutputValueKeyNameIncorrect, null, "capture key name must be a stored value name (missing square brackets): {0}", key));
+                    errors.Add(new ValidationError(ValidationErrorCode.OutputValueKeyNameIncorrect, null, null, "capture key name must be a stored value name (missing square brackets): {0}", key));
 
                 var valueType = LocationForKey(this.OutputValues[key]);
                 switch (valueType)
@@ -66,7 +66,7 @@ namespace ApiDoctor.Validation.Params
                     case PlaceholderLocation.Invalid:
                     case PlaceholderLocation.StoredValue:
                     case PlaceholderLocation.Url:
-                        errors.Add(new ValidationError(ValidationErrorCode.OutputValueValueIncorrect, null, "capture value name is invalid. Must be Json, Body, or HttpHeader. Found: {0}", valueType));
+                        errors.Add(new ValidationError(ValidationErrorCode.OutputValueValueIncorrect, null, null, "capture value name is invalid. Must be Json, Body, or HttpHeader. Found: {0}", valueType));
                         break;
                 }
             }
@@ -109,7 +109,7 @@ namespace ApiDoctor.Validation.Params
                         .FirstOrDefault();
                 if (null == cannedRequest)
                 {
-                    errors.Add(new ValidationError(ValidationErrorCode.InvalidRequestFormat, null, "Couldn't locate the canned-request named: {0}", this.CannedRequestName));
+                    errors.Add(new ValidationError(ValidationErrorCode.InvalidRequestFormat, null, null, "Couldn't locate the canned-request named: {0}", this.CannedRequestName));
                     return new ValidationResult<bool>(false, errors);
                 }
 
@@ -127,7 +127,7 @@ namespace ApiDoctor.Validation.Params
             }
             catch (Exception ex)
             {
-                errors.Add(new ValidationError(ValidationErrorCode.InvalidRequestFormat, null, "An error occured creating the http request: {0}", ex.Message));
+                errors.Add(new ValidationError(ValidationErrorCode.InvalidRequestFormat, null, null, "An error occured creating the http request: {0}", ex.Message));
                 return new ValidationResult<bool>(false, errors);
             }
             MethodDefinition.AddTestHeaderToRequest(scenario, request);
@@ -143,7 +143,7 @@ namespace ApiDoctor.Validation.Params
             }
             catch (Exception ex)
             {
-                errors.Add(new ValidationError(ValidationErrorCode.ParameterParserError, SourceName, "Error rewriting the request with parameters from the scenario: {0}", ex.Message));
+                errors.Add(new ValidationError(ValidationErrorCode.ParameterParserError, SourceName, null, "Error rewriting the request with parameters from the scenario: {0}", ex.Message));
                 return new ValidationResult<bool>(false, errors);
             }
             MethodDefinition.AddAccessTokenToRequest(account.CreateCredentials(), request);
@@ -158,7 +158,7 @@ namespace ApiDoctor.Validation.Params
 
                 if (response.RetryCount > 0)
                 {
-                    errors.Add(new ValidationWarning(ValidationErrorCode.RequestWasRetried, null, "HTTP request was retried {0} times.", response.RetryCount));
+                    errors.Add(new ValidationWarning(ValidationErrorCode.RequestWasRetried, null, null, "HTTP request was retried {0} times.", response.RetryCount));
                 }
                 errors.Add(new ValidationMessage(null, "HTTP Response:\n{0}\n\n", response.FullText()));
 
@@ -171,7 +171,7 @@ namespace ApiDoctor.Validation.Params
                     // Check for content type mismatch
                     if (string.IsNullOrEmpty(response.ContentType) && expectedContentType != null)
                     {
-                        return new ValidationResult<bool>(false, new ValidationError(ValidationErrorCode.UnsupportedContentType, SourceName, "No Content-Type found for a non-204 response"));
+                        return new ValidationResult<bool>(false, new ValidationError(ValidationErrorCode.UnsupportedContentType, SourceName, null, "No Content-Type found for a non-204 response"));
                     }
 
                     // Load requested values into stored values
@@ -193,11 +193,11 @@ namespace ApiDoctor.Validation.Params
                         string expectedCodes = "200-299";
                         if (this.AllowedStatusCodes != null)
                             expectedCodes = this.AllowedStatusCodes.ComponentsJoinedByString(",");
-                        errors.Add(new ValidationError(ValidationErrorCode.HttpStatusCodeDifferent, SourceName, "Http response status code {0} didn't match expected values: {1}", response.StatusCode, expectedCodes));
+                        errors.Add(new ValidationError(ValidationErrorCode.HttpStatusCodeDifferent, SourceName, null, "Http response status code {0} didn't match expected values: {1}", response.StatusCode, expectedCodes));
                     }
                     else
                     {
-                        errors.Add(new ValidationError(ValidationErrorCode.HttpStatusCodeDifferent, SourceName, "Http response content type was invalid: {0}", response.ContentType));
+                        errors.Add(new ValidationError(ValidationErrorCode.HttpStatusCodeDifferent, SourceName, null, "Http response content type was invalid: {0}", response.ContentType));
                     }
                     
                     return new ValidationResult<bool>(false, errors);
@@ -205,7 +205,7 @@ namespace ApiDoctor.Validation.Params
             }
             catch (Exception ex)
             {
-                errors.Add(new ValidationError(ValidationErrorCode.Unknown, SourceName, "Exception while making request: {0}", ex.Message));
+                errors.Add(new ValidationError(ValidationErrorCode.Unknown, SourceName, null, "Exception while making request: {0}", ex.Message));
                 return new ValidationResult<bool>(false, errors);
             }
         }

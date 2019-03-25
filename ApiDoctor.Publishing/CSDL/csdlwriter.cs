@@ -1292,7 +1292,7 @@ namespace ApiDoctor.Publishing.CSDL
                 LogIfDifferent(type.OpenType, resource.OriginalMetadata.IsOpenType, issues, $"Schema type {type.Name} has a different OpenType value {type.OpenType} than the documentation {resource.OriginalMetadata.IsOpenType}.");
                 LogIfDifferent(type.BaseType, resource.OriginalMetadata.BaseType, issues, $"Schema type {type.Name} has a different BaseType value {type.BaseType} than the documentation {resource.OriginalMetadata.BaseType}.");
 
-                AddDocPropertiesToSchemaResource(type, resource, edmx, generateNewElements, issues);
+                AddDocPropertiesToSchemaResource(type, resource, edmx, generateNewElements, issues.For(type.Name, resource.SourceFile.DisplayName));
             }
         }
 
@@ -1437,7 +1437,7 @@ namespace ApiDoctor.Publishing.CSDL
                                                where p.IsNavigatable &&
                                                     (resource.ResolvedBaseTypeReference == null ||
                                                     !resource.HasOrInheritsProperty(p.Name))
-                                               select ConvertParameterToProperty<NavigationProperty>(entity.Name, p, issues.For(p.Name))).ToList();
+                                               select ConvertParameterToProperty<NavigationProperty>(entity.Name, p, issues.For(p.Name, resource.SourceFile.DisplayName))).ToList();
                 schema.EntityTypes.Add(entity);
                 type = entity;
             }
