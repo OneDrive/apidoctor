@@ -79,7 +79,7 @@ namespace ApiDoctor.Validation
             if (scenarios.Any() && !scenarios.Any(x => x.Enabled))
             {
                 results.AddResult("init", 
-                    new ValidationWarning(ValidationErrorCode.AllScenariosDisabled, null, method.SourceFile.DisplayName, "All scenarios for method {0} were disabled.", method.Identifier),
+                    new ValidationWarning(ValidationErrorCode.AllScenariosDisabled, null, "All scenarios for method {0} were disabled.", method.Identifier),
                     ValidationOutcome.Skipped);
                 
                 return results;
@@ -97,7 +97,6 @@ namespace ApiDoctor.Validation
                         "validation",
                         new ValidationError(
                             ValidationErrorCode.ExceptionWhileValidatingMethod,
-                            method.SourceFile.DisplayName,
                             method.SourceFile.DisplayName,
                             ex.Message));
                 }
@@ -137,7 +136,6 @@ namespace ApiDoctor.Validation
                 results.AddResult(actionName,
                     new ValidationWarning(ValidationErrorCode.RequiredScopesMissing,
                     null,
-                    method.SourceFile.DisplayName,
                     "Scenario was not run. Scopes required were not available: {0}", missingScopes.ComponentsJoinedByString(",")));
                 return;
             }
@@ -151,7 +149,6 @@ namespace ApiDoctor.Validation
                 results.AddResult(actionName,
                     new ValidationWarning(ValidationErrorCode.RequiredApiVersionsMissing,
                     null,
-                    method.SourceFile.DisplayName,
                     "Scenario was not run. Api Versions required were not available: {0}", missingApiVersions.ComponentsJoinedByString(",")));
                 return;
             }
@@ -165,7 +162,6 @@ namespace ApiDoctor.Validation
                 results.AddResult(actionName,
                     new ValidationWarning(ValidationErrorCode.RequiredTagsMissing,
                     null,
-                    method.SourceFile.DisplayName,
                     "Scenario was not run. Tags required were not available: {0}", missingTags.ComponentsJoinedByString(",")));
                 return;
             }
@@ -191,7 +187,7 @@ namespace ApiDoctor.Validation
 
             results.AddResult(
                 actionName,
-                new ValidationMessage(null, method.SourceFile.DisplayName, "Generated Method HTTP Request:\r\n{0}", requestPreview.FullHttpText()));
+                new ValidationMessage(null, "Generated Method HTTP Request:\r\n{0}", requestPreview.FullHttpText()));
 
             HttpParser parser = new HttpParser();
             HttpResponse expectedResponse = null;
@@ -211,7 +207,7 @@ namespace ApiDoctor.Validation
             {
                 requestResults.AddResults(
                     new ValidationError[]
-                    { new ValidationWarning(ValidationErrorCode.RequestWasRetried, null, method.SourceFile.DisplayName, "HTTP request was retried {0} times.", actualResponse.RetryCount) });
+                    { new ValidationWarning(ValidationErrorCode.RequestWasRetried, null, "HTTP request was retried {0} times.", actualResponse.RetryCount) });
             }
 
             requestResults.AddResults(

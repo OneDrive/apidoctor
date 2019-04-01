@@ -74,12 +74,6 @@ namespace ApiDoctor.ConsoleApp
                     select f.Substring(prefix.Length)).ToArray();
         }
 
-        public string GetRepositoryUrl()
-        {
-            return RunGitCommand("git config --get remote.origin.url");
-        }
-        
-
         public string PrefixForWorkingPath()
         {
             return RunGitCommand("rev-parse --show-prefix").TrimEnd();

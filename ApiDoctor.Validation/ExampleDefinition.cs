@@ -56,7 +56,6 @@ namespace ApiDoctor.Validation
                                 new ValidationError(
                                     ValidationErrorCode.JsonParserException,
                                     source.DisplayName,
-                                    this.SourceFile.DisplayName,
                                     "Error parsing resource definition: {0}",
                                     ex.Message));
                         }
@@ -72,7 +71,6 @@ namespace ApiDoctor.Validation
                         new ValidationError(
                             ValidationErrorCode.UnsupportedLanguage,
                             source.DisplayName,
-                            this.SourceFile.DisplayName,
                             "The code language for this example is unuspported: {0}", language));
                     break;
             }
