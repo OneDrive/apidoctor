@@ -1,4 +1,4 @@
-﻿/*
+/*
  * API Doctor
  * Copyright (c) Microsoft Corporation
  * All rights reserved. 
@@ -30,7 +30,10 @@ namespace ApiDoctor.ConsoleApp
     using System.Diagnostics;
     using System.IO;
     using System.Linq;
+    using System.Net;
+    using System.Net.Http;
     using System.Text;
+    using System.Text.RegularExpressions;
     using System.Threading.Tasks;
     using ApiDoctor.DocumentationGeneration;
     using ApiDoctor.Validation.OData.Transformation;
@@ -125,7 +128,7 @@ namespace ApiDoctor.ConsoleApp
             var checkOptions = verbOptions as BasicCheckOptions;
             if (null != checkOptions)
             {
-                if (!string.IsNullOrEmpty(checkOptions.FilesChangedFromOriginalBranch))
+                if ((!string.IsNullOrEmpty(checkOptions.FilesChangedFromOriginalBranch)) || (verbOptions is GenerateSnippetsOptions))
                 {
                     if (string.IsNullOrEmpty(checkOptions.GitExecutablePath))
                     {
@@ -215,6 +218,9 @@ namespace ApiDoctor.ConsoleApp
                     break;
                 case CommandLineOptions.VerbFix:
                     returnSuccess = await FixDocsAsync((FixDocsOptions)options, issues);
+                    break;
+                case CommandLineOptions.VerbGenerateSnippets:
+                    returnSuccess = await GenerateSnippetsAsync((GenerateSnippetsOptions)options, issues);
                     break;
                 case CommandLineOptions.VerbAbout:
                     PrintAboutMessage();
@@ -1899,6 +1905,343 @@ namespace ApiDoctor.ConsoleApp
             results.PrintToConsole();
             return !results.WereFailures;
         }
+
+        /// <summary>
+        /// Generate snippets for the methods present in the documents by querying an existing snippet generation api
+        /// </summary>
+        /// <param name="options"></param>
+        /// <param name="issues"></param>
+        /// <param name="docs"></param>
+        /// <returns>The success/failure of the task</returns>
+        private static async Task<bool> GenerateSnippetsAsync(GenerateSnippetsOptions options, IssueLogger issues , DocSet docs = null)
+        {
+            var helper = new GitHelper(options.GitExecutablePath, options.DocumentationSetPath);
+
+            //cleanup any changes that are unstaged/uncommited in repo
+            helper.ResetChanges();
+            helper.CleanupChanges();
+
+            //check out new branch to create new PR on 
+            var branchPrefix = "snippets-generator/";
+            var branchName = helper.GetCurrentBranchName();
+            var snippetsBranchName = branchPrefix + branchName;
+            
+            //do not add the prefix if it is already there
+            if (branchName.Contains(branchPrefix))
+            {
+                snippetsBranchName = branchName;
+            }
+
+            helper.CheckoutBranch(snippetsBranchName);
+            FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"Checking out new branch: {snippetsBranchName}");
+
+            Uri snippetApiUri = null;
+            try
+            {
+                snippetApiUri = new Uri(options.SnippetApiUrl);
+            }
+            catch (UriFormatException uFe)
+            {
+                FancyConsole.WriteLine(FancyConsole.ConsoleErrorColor, "Error with the provided api URL: " + uFe.Message);
+                return false;
+            }
+
+            //scan the docset and find the methods present
+            var docset = docs ?? await GetDocSetAsync(options, issues);
+            if (null == docset)
+            {
+                return false;
+            }
+            var methods = FindTestMethods(options, docset);
+
+            using (var httpClient = new HttpClient())
+            {
+                httpClient.DefaultRequestHeaders.Add("User-Agent", "api-doctor");
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+                var languages = options.Language.Split(',');
+
+                FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"Generating snippets from Snippets API..");
+
+                foreach (var method in methods)
+                {
+                    var parser = new HttpParser();
+                    var request = parser.ParseHttpRequest(method.Request);
+
+                    //cleanup any issues we might have with the url
+                    request = PreProcessUrlForSnippetGeneration(request, method, issues);
+
+                    foreach (var lang in languages)
+                    {
+                        var codeSnippet = await GetSnippetFromApiAsync(httpClient, snippetApiUri, request ,issues, lang);
+
+                        if (!string.IsNullOrEmpty(codeSnippet))
+                        {
+                            InjectSnippetIntoFile(method, codeSnippet, lang);
+                        }
+                        else
+                        {
+                            //Log the warning for the documentation or api to be fixed.
+                            issues.Warning(ValidationErrorCode.ExceptionWhileValidatingMethod, $"Failure to generate snippet for method: {method.Request}. File name: {method.SourceFile}");
+                        }
+                    }
+                }
+            }
+
+            
+            //check if there is any diff to commit
+            if (helper.ChangesPresent())
+            {
+                
+                //stage and commit changes to git 
+                helper.StageAllChanges();
+                FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"Commiting changes to disk.");
+                var commitMessage = $"Updated docs with snippets injected into docs by API doctor from branch : {branchName}";
+                helper.CommitChanges(commitMessage);
+
+                //setup for push and pull request
+                GitHub.RepositoryUrl = helper.GetRepositoryUrl();
+                GitHub.AccessToken = options.GithubToken;
+
+                //push chages upstream
+                FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"Pushing changes upstream");
+                helper.PushToOrigin( GitHub.AccessToken, GitHub.RepositoryUrl);
+
+                //if target branch is not specified, default to master
+                var targetBranch = options.TargetBranch ?? "master";
+
+                //Create the Pull request
+                FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"Creating Github Pull Request");
+                await GitHub.CreatePullRequest(snippetsBranchName, targetBranch, $"API Doctor Snippet generation from branch : {branchName}", commitMessage);
+
+            }
+            else
+            {
+                FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, "No changes found in docs to commit/push");
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Finds the file the request is located and inserts the code snippet into the file.
+        /// </summary>
+        /// <param name="method">The <see cref="MethodDefinition"/> of the request being generated a snippet for</param>
+        /// <param name="codeSnippet">The string of the code snippet</param>
+        /// <param name="language">Language of programming to insert snippet into</param>
+        private static void InjectSnippetIntoFile(MethodDefinition method, string codeSnippet, string language)
+        {
+            var lines = File.ReadAllLines(method.SourceFile.FullPath);
+            var requestFirstLine = method.Request.Split(Environment.NewLine.ToCharArray()).First();
+            var insertionLine = 0;
+            var parseMode = "FindIdentifierLine";
+            var snippetEndingsCount = 0;
+
+            for(var currentIndex = 0; currentIndex < lines.Length; currentIndex++)
+            {
+                switch (parseMode)
+                {
+                    case "FindIdentifierLine":
+                        //check if we have found the line with the identifier
+                        if (lines[currentIndex].Length < method.Identifier.Length)
+                        {
+                            break;
+                        }
+                        if (lines[currentIndex].Contains(method.Identifier))
+                        {
+                            parseMode = "FindRequestLine";
+                        }
+                        break;
+                    case "FindRequestLine":
+                        //check if we have found the line with the request
+                        if (lines[currentIndex].Length < requestFirstLine.Length)
+                        {
+                            break;
+                        }
+                        if (lines[currentIndex].Equals(requestFirstLine))
+                        {
+                            parseMode = "FindEndOfCodeBlock";
+                        }
+                        break;
+
+                    case "FindEndOfCodeBlock":
+                        if (lines[currentIndex].Trim().Equals("```"))
+                        {
+                            snippetEndingsCount++;
+                        }
+                        if (snippetEndingsCount == 2)
+                        {
+                            insertionLine = currentIndex;
+                            parseMode = "FoundInsertionPoint";
+                        }
+                        break;
+
+                    case "FoundInsertionPoint":
+                        //we've found it nothing to do here
+                        break;
+
+                    default:
+                        //do nothing
+                        break;
+                }
+            }
+
+            if (insertionLine == 0)
+            {
+                //Just return and do not insert a snippet if we can't find an proper place to inject the snippet
+                return;
+            }
+            
+            var codeSnippetBlock = $"\r\n```{language.Replace("#", "S")}\r\n\r\n{codeSnippet}\r\n\r\n```";
+            var tabText = $"# [{language}](#tab/{language.Replace("#", "S")})\r\n";
+
+            //remove any potential spaces or "." signifying file extensions
+            var fileName = Regex.Replace(method.Identifier, @"[# .()\\/]", ""); 
+            fileName = fileName + $"-{language}-snippets.md";
+
+            //insert include text to original file
+            var includeLink = "[!INCLUDE [Sample Code]( ../includes/" + fileName + ")]";
+            var includeText = tabText + includeLink;
+
+            //check if we have ever injected a snippet    
+            if ((insertionLine + 1 < lines.Length) && (!lines[insertionLine + 1].Contains("Sample Code")))
+            {
+                includeText = $"#### Sample Code\r\n\r\n{includeText}\r\n\r\n---\r\n";
+                var final = FileSplicer(lines, insertionLine, includeText);
+                File.WriteAllLines(method.SourceFile.FullPath, final);
+            }
+            else
+            {
+                //Snippets injections exist. But now check if this specific one has happened  before.
+                var shouldUpdate = true;
+
+                for (var checkIndex = insertionLine; (checkIndex < lines.Length) && (shouldUpdate == true); checkIndex++)
+                {
+                    if (lines[checkIndex].Contains("---"))//we have reached end of tab section so no need to continue
+                        break;
+
+                    if (lines[checkIndex].Equals(includeLink))//the include exists no need to add it again
+                        shouldUpdate = false;
+                }
+
+                if (shouldUpdate)
+                {
+                    //save the changes to disk
+                    var final = FileSplicer(lines, insertionLine + 1, includeText);
+                    File.WriteAllLines(method.SourceFile.FullPath, final);
+                }
+            }
+
+            //sort out where will write the snippet to by creating the directory if it does not exist.
+            var directory = Directory.GetParent(Path.GetDirectoryName(method.SourceFile.FullPath)) + "/includes/";
+            Directory.CreateDirectory(directory);
+            //write snippet to file
+            File.WriteAllText(directory + "/" + fileName, codeSnippetBlock);
+        }
+
+        /// <summary>
+        /// Makes request to the api given to obtain a code snippet for the request in the code.
+        /// </summary>
+        /// <param name="httpClient"> <see cref="HttpClient"/> Reused instance to be used to make requests that may be reduced</param>
+        /// <param name="snippetApiUri">The api endpoint giving the code snippets</param>
+        /// <param name="request">The <see cref="HttpRequest"/> found in docs needing a code snippet generated</param>
+        /// <param name="issues">IssueLogger to record any snippet generator issues</param>
+        /// <param name="language">Language to be request for snippet</param>
+        /// <returns> String of the snippet on success a null string on failure.</returns>
+        private static async Task<string> GetSnippetFromApiAsync(HttpClient httpClient, Uri snippetApiUri, HttpRequest request, IssueLogger issues,string language)
+        {
+            var requestStringFullHttpText = request.FullHttpText(true);
+            string responseFromServer = null;
+
+            try
+            {
+                var bodyString = new StringContent(requestStringFullHttpText,Encoding.UTF8, "application/http");
+                var builder = new UriBuilder(snippetApiUri);
+                var query = System.Web.HttpUtility.ParseQueryString(string.Empty);
+                query["lang"] = language;
+                builder.Query = query.ToString();
+
+                using (var httpResponseMessage = await httpClient.PostAsync(builder.Uri, bodyString))
+                {
+                    if (httpResponseMessage.IsSuccessStatusCode)
+                    {
+                        responseFromServer = await httpResponseMessage.Content.ReadAsStringAsync();
+                    }
+                    else
+                    {
+                        //Log the error for the documentation or api to be fixed.
+                        var errorReason = await httpResponseMessage.Content.ReadAsStringAsync();
+                        issues.Warning(ValidationErrorCode.ExceptionWhileValidatingMethod, $"Failure to generate snippet for request Method: {request.Method}. Request Url: {request.Url}. Reason: {errorReason} ");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occured on making request to Snippet API: {ex.Message}");
+            }
+
+            return responseFromServer;
+        }
+
+        /// <summary>
+        /// Finds the file the request is located and inserts the code snippet into the file.
+        /// </summary>
+        /// <param name="request">Request with url to be verified or corrected</param>
+        /// <param name="method">The <see cref="MethodDefinition"/> of the request being generated a snippet for</param>
+        /// <param name="issues">Issue logger to record any issues</param>
+        private static HttpRequest PreProcessUrlForSnippetGeneration(HttpRequest request ,MethodDefinition method,IssueLogger issues)
+        {  
+            //Version 1.1 of HTTP protocol MUST specify the host header
+            if (request.HttpVersion.Equals("HTTP/1.1"))
+            {
+                if ((request.Headers.Get("Host") == null) || (request.Headers.Get("host") == null))
+                {
+                    try
+                    {
+                        var testUri = new Uri(request.Url);
+                        request.Url = testUri.PathAndQuery;
+                        request.Headers.Add("Host", testUri.Host);
+                    }
+                    catch (UriFormatException)
+                    {
+                        //cant determine host. Relative url with no host header
+                        request.Headers.Add("Host", "graph.microsoft.com");
+                    }
+                }
+            }
+
+            //make sure the url in the request begins with a valid api endpoint
+            if (!(request.Url.Substring(0, 6).Equals("/beta/") || request.Url.Substring(0, 6).Equals("/v1.0/")))
+            {
+                //Log the error for the documentation to be fixed.
+                issues.Warning(ValidationErrorCode.InvalidUrlString, $"The url: {request.Url} does not start a supported api version( /v1.0/ or /beta/ ). File: {method.SourceFile}");
+
+                if (method.SourceFile.DisplayName.Contains("beta"))
+                {
+                    //try to force the url to a beta endpoint.
+                    request.Url = "/beta" + request.Url;
+                }
+                else
+                {
+                    //try to force the url to a version 1 endpoint.
+                    request.Url = "/v1.0" + request.Url;
+                }
+            }
+
+            //replace instance of "<" with single quotes parameter to prevent api fails
+            if (request.Url.Contains("%3C"))
+            {
+                request.Url = request.Url.Replace("%3C", "%27");
+            }
+
+            //replace instance ">" with single quotes parameter to prevent api fails
+            if (request.Url.Contains("%3E"))
+            {
+                request.Url = request.Url.Replace("%3E", "%27");
+            }
+
+            return request;
+        }
+
 
         private static async Task<bool> GenerateDocsAsync(GenerateDocsOptions options)
         {

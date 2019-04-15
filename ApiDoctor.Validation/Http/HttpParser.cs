@@ -125,7 +125,6 @@ namespace ApiDoctor.Validation.Http
                         throw new ArgumentOutOfRangeException();
                 }
             }
-
             return request;
         }
 

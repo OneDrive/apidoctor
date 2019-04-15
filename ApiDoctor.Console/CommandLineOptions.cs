@@ -50,6 +50,7 @@ namespace ApiDoctor.ConsoleApp
         public const string VerbPublishMetadata = "publish-edmx";
 
         public const string VerbGenerateDocs = "generate-docs";
+        public const string VerbGenerateSnippets = "generate-snippets";
 
         [VerbOption(VerbPrint, HelpText = "Print files, resources, and methods discovered in the documentation.")]
         public PrintOptions PrintVerbOptions { get; set; }
@@ -80,6 +81,9 @@ namespace ApiDoctor.ConsoleApp
 
         [VerbOption(VerbGenerateDocs, HelpText = "Generate documentation from an CSDL model")]
         public GenerateDocsOptions GenerateDocsVerb { get; set; }
+
+        [VerbOption(VerbGenerateSnippets, HelpText = "Generate code snippets from requests in documentation")]
+        public GenerateSnippetsOptions GenerateSnippetsVerb { get; set; }
 
         [VerbOption(VerbAbout, HelpText = "Print about information for this application.")]
         public BaseOptions AboutVerb { get; set; }
@@ -619,5 +623,20 @@ namespace ApiDoctor.ConsoleApp
     {
         [Option("resource-template", HelpText = "Specifies the path to a mustache template file to use for generating documentation for resources (complex and entity types)", Required = false)]
         public string ResourceTemplateFile { get; set; }
+    }
+
+    class GenerateSnippetsOptions : BasicCheckOptions
+    {
+        [Option("snippet-api-url", HelpText = "The url of the api that is queried for code snippets", Required = true)]
+        public string SnippetApiUrl { get; set; }
+
+        [Option("lang", HelpText = "The programming languages for snippet generation(comma separated list)", Required = false)]
+        public string Language { get; set; }
+
+        [Option("github-token", HelpText = "The token needed to create pull request with github", Required = true)]
+        public string GithubToken { get; set; }
+
+        [Option("target-branch", HelpText = "The branch to target when creating a pull request", Required = false)]
+        public string TargetBranch { get; set; }
     }
 }

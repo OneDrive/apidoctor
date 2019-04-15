@@ -1,4 +1,4 @@
-﻿/*
+/*
  * API Doctor
  * Copyright (c) Microsoft Corporation
  * All rights reserved. 
@@ -93,36 +93,91 @@ namespace ApiDoctor.ConsoleApp
             return null;
         }
 
-
-        private static string RunCommand(string executable, string arguments, string workingDirectory = null)
+        public void CheckoutBranch(string branchName)
         {
-            ProcessStartInfo parameters = new ProcessStartInfo();
-            parameters.CreateNoWindow = true;
-            parameters.UseShellExecute = false;
-            parameters.RedirectStandardError = true;
-            parameters.RedirectStandardOutput = true;
-            parameters.FileName = executable;
-            parameters.Arguments = arguments;
-            if (null != workingDirectory)
-            parameters.WorkingDirectory = workingDirectory;
+            RunGitCommand($"branch { branchName }", false);
+            RunGitCommand($"checkout { branchName }", false);
+        }
 
+        public void CommitChanges(string commitMessage)
+        {
+            RunGitCommand($"commit -m \"{ commitMessage }\"", false);
+        }
+
+        public void PushToOrigin(string accesstoken , string repoUrl)
+        {
+            var pushUrl = repoUrl.Replace("github.com", accesstoken+"@github.com");
+            RunGitCommand($"push { pushUrl } --force", false);
+        }
+
+        public string GetCurrentBranchName()
+        {
+            return RunGitCommand("rev-parse --abbrev-ref HEAD").Replace(Environment.NewLine, "");
+        }
+
+        public string StageAllChanges()
+        {
+            return RunGitCommand("add -A ", false);
+        }
+
+        public void ResetChanges()
+        {
+            RunGitCommand("reset HEAD --hard", false);
+        }
+
+        public string GetRepositoryUrl()
+        {
+            return RunGitCommand("config --get remote.origin.url").Replace(Environment.NewLine, "");
+        }
+
+        public void CleanupChanges()
+        {
+            RunGitCommand("clean -fd", false);
+        }
+
+        public Boolean ChangesPresent()
+        {
+            var output = RunGitCommand("status --porcelain");
+            return (!string.IsNullOrEmpty(output));
+        }
+
+        private static string RunCommand(string executable, string arguments, string workingDirectory = null, bool expectResponse = true)
+        {
+            ProcessStartInfo parameters = new ProcessStartInfo
+            {
+                CreateNoWindow = true,
+                UseShellExecute = false,
+                RedirectStandardError = expectResponse,
+                RedirectStandardOutput = expectResponse,
+                FileName = executable,
+                Arguments = arguments
+            };
+
+            if (null != workingDirectory)
+                parameters.WorkingDirectory = workingDirectory;
 
             var p = Process.Start(parameters);
 
             StringBuilder sb = new StringBuilder();
-            string currentLine = null;
-            while ((currentLine = p.StandardOutput.ReadLine()) != null)
+
+            if (expectResponse)
             {
-                sb.AppendLine(currentLine);
+                string currentLine = null;
+                while ((currentLine = p.StandardOutput.ReadLine()) != null)
+                {
+                    sb.AppendLine(currentLine);
+                }
             }
+
+            p.WaitForExit();
 
             return sb.ToString();
 
         }
 
-        private string RunGitCommand(string arguments)
+        private string RunGitCommand(string arguments , bool expectResponse = true)
         {
-            return RunCommand(this.GitExecutablePath, arguments, this.RepoDirectoryPath);
+            return RunCommand(this.GitExecutablePath, arguments, this.RepoDirectoryPath ,expectResponse);
         }
     }
 }
