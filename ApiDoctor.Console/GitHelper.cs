@@ -135,7 +135,7 @@ namespace ApiDoctor.ConsoleApp
             RunGitCommand("clean -fd", false);
         }
 
-        public Boolean ChangesPresent()
+        public bool ChangesPresent()
         {
             var output = RunGitCommand("status --porcelain");
             return (!string.IsNullOrEmpty(output));

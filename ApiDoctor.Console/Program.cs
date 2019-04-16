@@ -1987,13 +1987,12 @@ namespace ApiDoctor.ConsoleApp
                 }
             }
 
-            
+            //stage any changes to git 
+            helper.StageAllChanges();
+
             //check if there is any diff to commit
             if (helper.ChangesPresent())
             {
-                
-                //stage and commit changes to git 
-                helper.StageAllChanges();
                 FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"Commiting changes to disk.");
                 var commitMessage = $"Updated docs with snippets injected into docs by API doctor from branch : {branchName}";
                 helper.CommitChanges(commitMessage);
