@@ -1962,10 +1962,21 @@ namespace ApiDoctor.ConsoleApp
 
                 FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"Generating snippets from Snippets API..");
 
+                var parser = new HttpParser();
+
                 foreach (var method in methods)
                 {
-                    var parser = new HttpParser();
-                    var request = parser.ParseHttpRequest(method.Request);
+                    HttpRequest request = null;
+                    try
+                    {
+                        request = parser.ParseHttpRequest(method.Request);
+                    }
+                    catch (Exception e )
+                    {
+                        Console.WriteLine(method.Identifier);
+                        Console.WriteLine(e.Message);
+                        continue;
+                    }
 
                     //cleanup any issues we might have with the url
                     request = PreProcessUrlForSnippetGeneration(request, method, issues);
