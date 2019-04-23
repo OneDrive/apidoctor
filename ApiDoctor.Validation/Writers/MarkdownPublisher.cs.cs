@@ -46,7 +46,7 @@ namespace ApiDoctor.Validation.Writers
 	    /// <param name="page"></param>
 	    protected override async Task PublishFileToDestinationAsync(FileInfo sourceFile, DirectoryInfo destinationRoot, DocFile page)
 		{
-		    this.LogMessage(new ValidationMessage(sourceFile.Name, "Scanning text file for internal content."));
+		    this.LogMessage(new ValidationMessage(sourceFile.Name, sourceFile.Name, "Scanning text file for internal content."));
 
             var outputPath = this.GetPublishedFilePath(sourceFile, destinationRoot);
             var writer = new StreamWriter(outputPath, false, Encoding.UTF8) { AutoFlush = true };

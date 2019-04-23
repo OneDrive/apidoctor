@@ -28,8 +28,8 @@ namespace ApiDoctor.Validation.Error
     public class ValidationWarning : ValidationError
     {
 
-        public ValidationWarning(ValidationErrorCode code, string source, string format, params object[] formatParams)
-            : base(code, source, format, formatParams)
+        public ValidationWarning(ValidationErrorCode code, string source, string sourceFile, string format, params object[] formatParams)
+            : base(code, source, sourceFile, format, formatParams)
         {
 
         }
@@ -42,8 +42,8 @@ namespace ApiDoctor.Validation.Error
 
     public class UndocumentedPropertyWarning : ValidationWarning
     {
-        public UndocumentedPropertyWarning(string source, string propertyName, ParameterDataType propertyType, string resourceName)
-            : base(ValidationErrorCode.AdditionalPropertyDetected, source, "Undocumented property '{0}' [{1}] was not expected on resource {2}.", propertyName, propertyType, resourceName)
+        public UndocumentedPropertyWarning(string source, string sourceFile, string propertyName, ParameterDataType propertyType, string resourceName)
+            : base(ValidationErrorCode.AdditionalPropertyDetected, source, sourceFile, "Undocumented property '{0}' [{1}] was not expected on resource {2}.", propertyName, propertyType, resourceName)
         {
             this.PropertyName = propertyName;
             this.PropertyType = propertyType;

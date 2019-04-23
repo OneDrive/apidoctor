@@ -92,7 +92,7 @@ namespace ApiDoctor.Publishing.CSDL
                     if (close > -1)
                     {
                         var inner = path.Substring(i + 1, close - i - 1);
-                        substitutions[inner] = NormalizeFunctionParameters(inner, issues);
+                        substitutions[inner] = NormalizeFunctionParameters(inner, issues.For(method.Identifier, method.SourceFile.DisplayName));
                         i = close;
                     }
                 }

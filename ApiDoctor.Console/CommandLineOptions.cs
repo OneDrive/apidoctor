@@ -274,6 +274,15 @@ namespace ApiDoctor.ConsoleApp
         [Option("git-path", HelpText="Path to the git executable. Required for changes-since-branch-only.")]
         public string GitExecutablePath { get; set; }
 
+        [Option("github-token", HelpText = "OAuth access token for GitHub. Required for posting validation logs as issue comments to GitHub.")]
+        public string GitHubToken { get; set; }
+
+        [Option("base-branch", HelpText = "Git branch to merge changes to.")]
+        public string BaseBranch { get; set; }
+
+        [Option("pull", HelpText = "Identifier of pull request to be validated.")]
+        public int PullRequestNumber { get; set; }
+
         [Option("link-case-match", HelpText = "Require the CaSe of relative links within the content to match the filenames.")]
         public bool RequireFilenameCaseMatch { get; set; }
     }

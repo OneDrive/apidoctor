@@ -87,7 +87,7 @@ namespace ApiDoctor.Validation.OData
                     var dataType = value.ParseParameterDataType();
                     if (!edmx.IsValidType(dataType))
                     {
-                        errors.Add(new ValidationError(ValidationErrorCode.InvalidContentType, null, $"Unable to locate type: {dataType}"));
+                        errors.Add(new ValidationError(ValidationErrorCode.InvalidContentType, null, null, $"Unable to locate type: {dataType}"));
                     }
                 }
             });

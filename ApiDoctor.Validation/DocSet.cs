@@ -249,11 +249,11 @@ namespace ApiDoctor.Validation
                 }
                 catch (JsonException ex)
                 {
-                    Logging.LogMessage(new ValidationWarning(ValidationErrorCode.JsonParserException, file.FullName, "JSON parser error: {0}", ex.Message));
+                    Logging.LogMessage(new ValidationWarning(ValidationErrorCode.JsonParserException, file.FullName, null,  "JSON parser error: {0}", ex.Message));
                 }
                 catch (Exception ex)
                 {
-                    Logging.LogMessage(new ValidationWarning(ValidationErrorCode.JsonParserException, file.FullName, "Exception reading file: {0}", ex.Message));
+                    Logging.LogMessage(new ValidationWarning(ValidationErrorCode.JsonParserException, file.FullName, null, "Exception reading file: {0}", ex.Message));
                 }
 
             }
@@ -379,7 +379,7 @@ namespace ApiDoctor.Validation
 
             foreach (var resource in this.Resources)
             {
-                var resourceIssues = issues.For(resource.Name);
+                var resourceIssues = issues.For(resource.Name, resource.SourceFile.DisplayName);
                 if (!string.IsNullOrEmpty(resource.BaseType) && !definedTypes.Contains(resource.BaseType))
                 {
                     resourceIssues.Error(ValidationErrorCode.ResourceTypeNotFound,
@@ -409,7 +409,7 @@ namespace ApiDoctor.Validation
                 {
                     if (param.Type?.CustomTypeName != null)
                     {
-                        EnsureDefinedInDocs(param.Type.CustomTypeName, definedTypes, method.SourceFile, issues.For(method.Identifier + "/" + param.Name));
+                        EnsureDefinedInDocs(param.Type.CustomTypeName, definedTypes, method.SourceFile, issues.For(method.Identifier + "/" + param.Name, method.SourceFile.DisplayName));
                     }
                 }
             }
