@@ -236,8 +236,8 @@ namespace ApiDoctor.ConsoleApp
 
             if (returnSuccess)
             {
-                if (issues.Errors.Any() ||
-                    (issues.Warnings.Any() && !options.IgnoreErrors))
+                if ((issues.Errors.Any() && !options.IgnoreErrors) ||
+                    (issues.Warnings.Any() && !options.IgnoreWarnings))
                 {
                     returnSuccess = false;
                 }

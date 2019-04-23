@@ -424,6 +424,7 @@ namespace ApiDoctor.Validation
             Int64 = new ParameterDataType(SimpleDataType.Int64);
             Int32 = new ParameterDataType(SimpleDataType.Int32);
             DateTimeOffset = new ParameterDataType(SimpleDataType.DateTimeOffset);
+            JsonCollection = new ParameterDataType(SimpleDataType.Json, isCollection: false);
         }
 
         public static ParameterDataType String
@@ -466,6 +467,14 @@ namespace ApiDoctor.Validation
         {
             get; private set;
         }
+        public static ParameterDataType Json
+        {
+            get; private set;
+        }
+        public static ParameterDataType JsonCollection
+        {
+            get; private set;
+        }
 
         #endregion
     }
@@ -481,7 +490,7 @@ namespace ApiDoctor.Validation
         Int16,
         Int32,
         Int64,
-        
+
         Float,
         Double,
 
@@ -505,6 +514,10 @@ namespace ApiDoctor.Validation
 
         Single,
 
-        Binary
+        Binary,
+        /// <summary>
+        /// Specified Json (including Json collections)
+        /// </summary>
+        Json
     }
 }
