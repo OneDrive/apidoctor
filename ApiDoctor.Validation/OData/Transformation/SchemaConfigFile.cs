@@ -43,8 +43,10 @@ namespace ApiDoctor.Validation.OData.Transformation
     {
         public SchemaConfig()
         {
+            RequiredYamlHeaders = new string[] {};
             TreatErrorsAsWarningsWorkloads = new List<string>();
         }
+
         /// <summary>
         /// default namespace for types
         /// </summary>
@@ -68,6 +70,12 @@ namespace ApiDoctor.Validation.OData.Transformation
         /// </summary>
         [JsonProperty("supportedTags")]
         public string[] SupportedTags { get; set; }
+
+        /// <summary>
+        /// Specifies the mandatory YAML headers for all docs
+        /// </summary>
+        [JsonProperty("requiredYamlHeaders")]
+        public string[] RequiredYamlHeaders { get; set; }
 
         /// <summary>
         /// optionally specify workloads whose errors should be treated as warnings

@@ -130,7 +130,7 @@ namespace ApiDoctor.Validation.Writers
             DirectoryInfo destination = new DirectoryInfo(outputFolder);
             this.SnapVariables();
 
-			await this.PublishFromDirectoryAsync(new DirectoryInfo(this.RootPath), destination, true);
+			await this.PublishFromDirectoryAsync(new DirectoryInfo(this.RootPath), destination, true, issues);
 		}
 
         protected void SnapVariables()
@@ -186,7 +186,7 @@ namespace ApiDoctor.Validation.Writers
 	    /// </summary>
 	    /// <param name="directory">Directory.</param>
 	    /// <param name="destinationRoot"></param>
-	    protected virtual async Task PublishFromDirectoryAsync(DirectoryInfo directory, DirectoryInfo destinationRoot, bool isRootPath)
+	    protected virtual async Task PublishFromDirectoryAsync(DirectoryInfo directory, DirectoryInfo destinationRoot, bool isRootPath, IssueLogger issues)
 		{
             if (directory.FullName == this.Options.TemplatePath)
             {
@@ -214,7 +214,7 @@ namespace ApiDoctor.Validation.Writers
 				{
                     var docFile = this.Documents.Files.FirstOrDefault(x => x.FullPath.Equals(file.FullName));
                     if (this.ShouldPublishFile(docFile))
-					    await this.PublishFileToDestinationAsync(file, destinationRoot, docFile);
+					    await this.PublishFileToDestinationAsync(file, destinationRoot, docFile, issues);
 				}
 				else if (this.ShouldPublishFile(file))
 				{
@@ -237,7 +237,7 @@ namespace ApiDoctor.Validation.Writers
 			    
                 var displayName = this.RelativeDirectoryPath(folder, true);
 			    this.LogMessage(new ValidationMessage(displayName, "Scanning directory."));
-			    await this.PublishFromDirectoryAsync(folder, destinationRoot, false);
+			    await this.PublishFromDirectoryAsync(folder, destinationRoot, false, issues);
 			}
 
             await WriteAdditionalFilesAsync();
@@ -324,7 +324,7 @@ namespace ApiDoctor.Validation.Writers
 	    /// <param name="destinationRoot"></param>
 	    /// <param name="page"></param>
 #pragma warning disable 1998
-	    protected virtual async Task PublishFileToDestinationAsync(FileInfo sourceFile, DirectoryInfo destinationRoot, DocFile page)
+	    protected virtual async Task PublishFileToDestinationAsync(FileInfo sourceFile, DirectoryInfo destinationRoot, DocFile page, IssueLogger issues)
 #pragma warning restore 1998
 		{
             throw new NotImplementedException("This method is not implemented in the abstract class.");

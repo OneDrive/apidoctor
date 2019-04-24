@@ -44,7 +44,7 @@ namespace ApiDoctor.Validation.Writers
 	    /// <param name="sourceFile">File.</param>
 	    /// <param name="destinationRoot"></param>
 	    /// <param name="page"></param>
-	    protected override async Task PublishFileToDestinationAsync(FileInfo sourceFile, DirectoryInfo destinationRoot, DocFile page)
+	    protected override async Task PublishFileToDestinationAsync(FileInfo sourceFile, DirectoryInfo destinationRoot, DocFile page, IssueLogger issues)
 		{
 		    this.LogMessage(new ValidationMessage(sourceFile.Name, "Scanning text file for internal content."));
 
