@@ -463,34 +463,33 @@ namespace ApiDoctor.Validation
                             }
                         }
                     }
-                    else if (this.Annotation == null)
-                    {
-                        // See if this is the page-level annotation
-                        try
-                        {
-                            this.Annotation = this.ParsePageAnnotation(block);
-                            if (this.Annotation != null)
-                            {
-                                if (this.Annotation.Suppressions != null)
-                                {
-                                    issues.AddSuppressions(this.Annotation.Suppressions);
-                                }
 
-                                if (string.IsNullOrEmpty(this.Annotation.Title))
-                                {
-                                    this.Annotation.Title = this.OriginalMarkdownBlocks.FirstOrDefault(b => IsHeaderBlock(b, 1))?.Content;
-                                }
+                    // See if this is the page-level annotation
+                    try
+                    {
+                        this.Annotation = this.ParsePageAnnotation(block);
+                        if (this.Annotation != null)
+                        {
+                            if (this.Annotation.Suppressions != null)
+                            {
+                                issues.AddSuppressions(this.Annotation.Suppressions);
+                            }
+
+                            if (string.IsNullOrEmpty(this.Annotation.Title))
+                            {
+                                this.Annotation.Title = this.OriginalMarkdownBlocks.FirstOrDefault(b => IsHeaderBlock(b, 1))?.Content;
                             }
                         }
-                        catch (JsonReaderException readerEx)
-                        {
-                            issues.Warning(ValidationErrorCode.JsonParserException, $"Unable to parse page annotation JSON: {readerEx}");
-                        }
-                        catch (Exception ex)
-                        {
-                            issues.Warning(ValidationErrorCode.AnnotationParserException, $"Unable to parse annotation: {ex}");
-                        }
                     }
+                    catch (JsonReaderException readerEx)
+                    {
+                        issues.Warning(ValidationErrorCode.JsonParserException, $"Unable to parse page annotation JSON: {readerEx}");
+                    }
+                    catch (Exception ex)
+                    {
+                        issues.Warning(ValidationErrorCode.AnnotationParserException, $"Unable to parse annotation: {ex}");
+                    }
+
                 }
                 else if (block.BlockType == BlockType.table_spec)
                 {
