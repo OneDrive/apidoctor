@@ -282,7 +282,7 @@ namespace ApiDoctor.Validation.Json
             List<string> missingProperties = new List<string>();
             missingProperties.AddRange(from m in this.ExpectedProperties select m.Key);
 
-            foreach(var property in propertiesOnObject)
+            foreach (var property in propertiesOnObject)
             {
                 missingProperties.Remove(property.Name);
 
@@ -594,6 +594,10 @@ namespace ApiDoctor.Validation.Json
             {
                 return PropertyValidationOutcome.Ok;
             }
+            else if (expectedProperty.Type.IsLessSpecificThan(actualProperty.Type))
+            {
+                return PropertyValidationOutcome.Ok;
+            }
             else
             {
                 issues.Error(ValidationErrorCode.ArrayTypeMismatch, $"Array expected members to be of type {expectedProperty.Type} but found: {actualProperty.Type}");
@@ -640,7 +644,7 @@ namespace ApiDoctor.Validation.Json
 
             bool hadErrors = false;
             var memberIssues = issues.For("member", onlyKeepUniqueErrors: true);
-            for(int i=0; i<actualArray.Count; i++)
+            for (int i = 0; i < actualArray.Count; i++)
             {
                 JContainer member = actualArray[i] as JContainer;
                 if (member != null)
