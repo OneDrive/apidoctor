@@ -228,7 +228,7 @@ namespace ApiDoctor.Publishing.Html
             return url;
         }
 
-        protected override async Task PublishFileToDestinationAsync(FileInfo sourceFile, DirectoryInfo destinationRoot, DocFile page)
+        protected override async Task PublishFileToDestinationAsync(FileInfo sourceFile, DirectoryInfo destinationRoot, DocFile page, IssueLogger issues)
         {
             this.LogMessage(new ValidationMessage(sourceFile.Name, "Publishing file to HTML"));
 
@@ -240,7 +240,7 @@ namespace ApiDoctor.Publishing.Html
             {
                 tagsInput = string.Empty;
             }
-            var markdownSource = page.ReadAndPreprocessFileContents(tagsInput);
+            var markdownSource = page.ReadAndPreprocessFileContents(tagsInput, issues);
 
             var converter = this.GetMarkdownConverter();
             var html = converter.Transform(markdownSource);

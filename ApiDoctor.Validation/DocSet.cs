@@ -178,9 +178,15 @@ namespace ApiDoctor.Validation
                 SchemaConfig = new SchemaConfig();
             }
 
+            string[] requiredYamlHeaders = SchemaConfig.RequiredYamlHeaders;
+            if (!requiredYamlHeaders.Any())
+            {
+                Console.WriteLine("Required YAML headers have not been set.");
+            }
+
             foreach (var config in SchemaConfig.TreatErrorsAsWarningsWorkloads)
             {
-                Console.WriteLine($"Treating Errors as Warnings for : {config}");
+                Console.WriteLine($"Treating errors as warnings for: {config}");
             }
         }
 
