@@ -312,7 +312,7 @@ namespace ApiDoctor.Validation
             }
         }
 
-        private void ParseYamlMetadata(string yamlMetadata, IssueLogger issues) 
+        private void ParseYamlMetadata(string yamlMetadata, IssueLogger issues)
         {
             Dictionary<string, string> dictionary = new Dictionary<string, string>();
             string[] items = yamlMetadata.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
@@ -321,14 +321,14 @@ namespace ApiDoctor.Validation
                 string[] keyValue = item.Split(':');
                 dictionary.Add(keyValue[0].Trim(), keyValue[1].Trim());
             }
-            
+
             List<string> missingHeaders = new List<string>();
             foreach (var header in DocSet.SchemaConfig.RequiredYamlHeaders)
             {
                 string value;
                 if (dictionary.TryGetValue(header, out value))
                 {
-                   if(string.IsNullOrEmpty(value))
+                    if (string.IsNullOrEmpty(value))
                     {
                         issues.Error(ValidationErrorCode.RequiredYamlHeaderMissing, $"Missing value for YAML header: {header}");
                     }
@@ -499,34 +499,33 @@ namespace ApiDoctor.Validation
                             }
                         }
                     }
-                    else if (this.Annotation == null)
-                    {
-                        // See if this is the page-level annotation
-                        try
-                        {
-                            this.Annotation = this.ParsePageAnnotation(block);
-                            if (this.Annotation != null)
-                            {
-                                if (this.Annotation.Suppressions != null)
-                                {
-                                    issues.AddSuppressions(this.Annotation.Suppressions);
-                                }
 
-                                if (string.IsNullOrEmpty(this.Annotation.Title))
-                                {
-                                    this.Annotation.Title = this.OriginalMarkdownBlocks.FirstOrDefault(b => IsHeaderBlock(b, 1))?.Content;
-                                }
+                    // See if this is the page-level annotation
+                    try
+                    {
+                        this.Annotation = this.ParsePageAnnotation(block);
+                        if (this.Annotation != null)
+                        {
+                            if (this.Annotation.Suppressions != null)
+                            {
+                                issues.AddSuppressions(this.Annotation.Suppressions);
+                            }
+
+                            if (string.IsNullOrEmpty(this.Annotation.Title))
+                            {
+                                this.Annotation.Title = this.OriginalMarkdownBlocks.FirstOrDefault(b => IsHeaderBlock(b, 1))?.Content;
                             }
                         }
-                        catch (JsonReaderException readerEx)
-                        {
-                            issues.Warning(ValidationErrorCode.JsonParserException, $"Unable to parse page annotation JSON: {readerEx}");
-                        }
-                        catch (Exception ex)
-                        {
-                            issues.Warning(ValidationErrorCode.AnnotationParserException, $"Unable to parse annotation: {ex}");
-                        }
                     }
+                    catch (JsonReaderException readerEx)
+                    {
+                        issues.Warning(ValidationErrorCode.JsonParserException, $"Unable to parse page annotation JSON: {readerEx}");
+                    }
+                    catch (Exception ex)
+                    {
+                        issues.Warning(ValidationErrorCode.AnnotationParserException, $"Unable to parse annotation: {ex}");
+                    }
+
                 }
                 else if (block.BlockType == BlockType.table_spec)
                 {
