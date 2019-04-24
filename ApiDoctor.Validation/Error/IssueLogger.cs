@@ -211,7 +211,6 @@ namespace ApiDoctor.Validation.Error
             }
             else
             {
-
                 if (DocSet.SchemaConfig != null && DocSet.SchemaConfig.TreatErrorsAsWarningsWorkloads.Any(s => !string.IsNullOrWhiteSpace(this.Source) && this.Source.IContains(s)))
                 {
                     if (!issue.IsWarning)
