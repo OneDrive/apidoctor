@@ -315,7 +315,7 @@ namespace ApiDoctor.Validation
         private void ParseYamlMetadata(string yamlMetadata, IssueLogger issues) 
         {
             Dictionary<string, string> dictionary = new Dictionary<string, string>();
-            string[] items = yamlMetadata.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+            string[] items = yamlMetadata.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
             foreach (string item in items)
             {
                 string[] keyValue = item.Split(':');

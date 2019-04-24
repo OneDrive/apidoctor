@@ -95,7 +95,7 @@ namespace ApiDoctor.Validation.Json
         {
             HttpParser parser = new HttpParser();
             var response = parser.ParseHttpResponse(method.ExpectedResponse);
-            
+
             JsonExample example = new JsonExample(response.Body, method.ExpectedResponseMetadata);
             var otherSchemas = new Dictionary<string, JsonSchema>();
             return this.ValidateJson(example, issues, otherSchemas, null);
@@ -385,7 +385,7 @@ namespace ApiDoctor.Validation.Json
             {
                 // The property was expected to be found in this schema! Yay.
                 var schemaPropertyDef = this.ExpectedProperties[inputProperty.Name];
-                
+
                 // Check for simple value types first
                 if (this.SimpleValueTypes(schemaPropertyDef.Type, inputProperty.Type) && this.AllFalse(schemaPropertyDef.Type.IsCollection, inputProperty.Type.IsCollection))
                 {
@@ -519,7 +519,7 @@ namespace ApiDoctor.Validation.Json
             }
         }
 
-        
+
 
         private static PropertyValidationOutcome ValidateStringFormat(ParameterDefinition schemaProperty, ParameterDefinition inputProperty, IssueLogger issues)
         {
@@ -801,45 +801,51 @@ namespace ApiDoctor.Validation.Json
                         break;
                     }
                 case JTokenType.Array:
-                {
-                    ParameterDataType propertyType = ParameterDataType.GenericCollection;
-
-                    // Try to infer type from the items in the array
-                    var firstChild = value.First;
-                    if (null != firstChild)
                     {
-                        var objectType = ParseProperty("array[0]", firstChild, null);
-                        if (null != objectType)
+                        ParameterDataType propertyType = ParameterDataType.GenericCollection;
+
+                        // Try to infer type from the items in the array
+                        var firstChild = value.First;
+                        if (null != firstChild)
                         {
-                            propertyType = ParameterDataType.CollectionOfType(objectType.Type);
+                            var objectType = ParseProperty("array[0]", firstChild, null);
+                            if (null != objectType)
+                            {
+                                //Assume is a collection of Json
+                                propertyType = ParameterDataType.CollectionOfType(objectType.Type);
+                                if (propertyType.CollectionResourceType == SimpleDataType.Collection)
+                                {
+                                    //If inner type is collection, assume its a Json collection
+                                    propertyType = ParameterDataType.JsonCollection;
+                                }
+                            }
                         }
-                    }
 
-                    // See if we can do better than GenericCollection if that's the situation we're in.
-                    if (propertyType == ParameterDataType.GenericCollection)
-                    {
-                        ParameterDefinition schemaProperty;
-                        if (null != containerSchema && containerSchema.ExpectedProperties.TryGetValue(name, out schemaProperty))
+                        // See if we can do better than GenericCollection if that's the situation we're in.
+                        if (propertyType == ParameterDataType.GenericCollection)
                         {
-                            // Use the parent schema's type indication
-                            //propertyType = ParameterDataType.CollectionOfType(schemaProperty.Type);
-                            propertyType = schemaProperty.Type;
+                            ParameterDefinition schemaProperty;
+                            if (null != containerSchema && containerSchema.ExpectedProperties.TryGetValue(name, out schemaProperty))
+                            {
+                                // Use the parent schema's type indication
+                                //propertyType = ParameterDataType.CollectionOfType(schemaProperty.Type);
+                                propertyType = schemaProperty.Type;
+                            }
                         }
-                    }
 
-                    Dictionary<string, ParameterDefinition> members = null;
-                    if ((propertyType.IsObject || (propertyType.IsCollection && propertyType.CollectionResourceType == SimpleDataType.Object)) &&
-                        string.IsNullOrEmpty(propertyType.CustomTypeName))
-                    {
-                        // If we don't know what kind of object is here, let's record what we see as custom members
-                        var firstValue = value.First as JObject;
-                        members = firstValue != null ? GeneratePropertyCollection(firstValue) : new Dictionary<string, ParameterDefinition>();
+                        Dictionary<string, ParameterDefinition> members = null;
+                        if ((propertyType.IsObject || (propertyType.IsCollection && propertyType.CollectionResourceType == SimpleDataType.Object)) &&
+                            string.IsNullOrEmpty(propertyType.CustomTypeName))
+                        {
+                            // If we don't know what kind of object is here, let's record what we see as custom members
+                            var firstValue = value.First as JObject;
+                            members = firstValue != null ? GeneratePropertyCollection(firstValue) : new Dictionary<string, ParameterDefinition>();
+                        }
+                        ParameterDefinition[] customMembers = null;
+                        if (members != null) customMembers = members.Values.ToArray();
+                        param.Type = new ParameterDataType(propertyType, customMembers);
+                        break;
                     }
-                    ParameterDefinition[] customMembers = null;
-                    if (members != null) customMembers = members.Values.ToArray();
-                    param.Type = new ParameterDataType(propertyType, customMembers);
-                    break;
-                }
                 case JTokenType.Null:
                     param.Type = ParameterDataType.GenericObject;
                     param.OriginalValue = null;

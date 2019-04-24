@@ -181,7 +181,12 @@ namespace ApiDoctor.Validation
             string[] requiredYamlHeaders = SchemaConfig.RequiredYamlHeaders;
             if (!requiredYamlHeaders.Any())
             {
-                Console.WriteLine("Warning: Required YAML headers have not been set.");
+                Console.WriteLine("Required YAML headers have not been set.");
+            }
+
+            foreach (var config in SchemaConfig.TreatErrorsAsWarningsWorkloads)
+            {
+                Console.WriteLine($"Treating errors as warnings for: {config}");
             }
         }
 
