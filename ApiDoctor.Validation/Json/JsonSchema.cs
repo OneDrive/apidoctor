@@ -594,6 +594,10 @@ namespace ApiDoctor.Validation.Json
             {
                 return PropertyValidationOutcome.Ok;
             }
+            else if(expectedProperty.Type.IsLessSpecificThan(actualProperty.Type))
+            {
+                return PropertyValidationOutcome.Ok;
+            }
             else
             {
                 issues.Error(ValidationErrorCode.ArrayTypeMismatch, $"Array expected members to be of type {expectedProperty.Type} but found: {actualProperty.Type}");
