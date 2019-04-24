@@ -193,7 +193,6 @@ namespace ApiDoctor.Validation
             return tagProcessor.Preprocess(docFile);
         }
 
-
         /// <summary>
         /// Read the contents of the file into blocks and generate any resource or method definitions from the contents
         /// </summary>
