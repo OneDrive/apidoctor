@@ -44,19 +44,9 @@ namespace ApiDoctor.Validation
         private const string DocumentationFileExtension = "*.md";
         private static readonly string[] XmlFileExtensions = new[] { "*.xml", "*.html", "*.htm" };
 
-        private static readonly HashSet<string> foldersToSkip = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            "templates",
-        };
+        private static List<string> foldersToSkip;
 
-        private static readonly HashSet<string> filesToSkip = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            "changelog.md",
-            "contributing.md",
-            "issue_template.md",
-            "readme.md",
-            "license.md",
-        };
+        private static List<string> filesToSkip;
 
         private bool writeFixesBackToDisk;
 
@@ -120,13 +110,13 @@ namespace ApiDoctor.Validation
             {
                 sourceFolderPath = sourceFolderPath.TrimEnd(Path.DirectorySeparatorChar);
             }
-
             this.SourceFolderPath = sourceFolderPath;
-            this.ReadDocumentationHierarchy(sourceFolderPath);
 
             this.LoadRequirements();
             this.LoadTestScenarios();
             this.LoadTableParser();
+
+            this.ReadDocumentationHierarchy(sourceFolderPath);
         }
 
 
@@ -194,6 +184,9 @@ namespace ApiDoctor.Validation
             {
                 Console.WriteLine($"{indent}Treating errors as warnings for: {treatErrorsAsWarningsWorkloads.ComponentsJoinedByString(", ")}");
             }
+
+            foldersToSkip = SchemaConfig.FoldersToSkip;
+            filesToSkip = SchemaConfig.FilesToSkip;
         }
 
         private void LoadTableParser()
