@@ -32,12 +32,14 @@ namespace ApiDoctor.Validation
     using System.Linq;
     using ApiDoctor.Validation.Error;
     using ApiDoctor.Validation.TableSpec;
+    using ApiDoctor.Validation.OData.Transformation;
     using Tags;
     using MarkdownDeep;
     using Newtonsoft.Json;
     using System.Threading.Tasks;
     using ApiDoctor.Validation.OData;
     using Newtonsoft.Json.Linq;
+
 
     /// <summary>
     /// A documentation file that may contain one more resources or API methods
@@ -191,7 +193,6 @@ namespace ApiDoctor.Validation
             return tagProcessor.Preprocess(docFile);
         }
 
-
         /// <summary>
         /// Read the contents of the file into blocks and generate any resource or method definitions from the contents
         /// </summary>
@@ -202,7 +203,7 @@ namespace ApiDoctor.Validation
 
             try
             {
-                string fileContents = this.ReadAndPreprocessFileContents(tags);
+                string fileContents = this.ReadAndPreprocessFileContents(tags, issues);
                 this.TransformMarkdownIntoBlocksAndLinks(fileContents, tags);
             }
             catch (IOException ioex)
@@ -224,12 +225,12 @@ namespace ApiDoctor.Validation
         /// </summary>
         /// <param name="tags"></param>
         /// <returns></returns>
-        public string ReadAndPreprocessFileContents(string tags)
+        public string ReadAndPreprocessFileContents(string tags, IssueLogger issues)
         {
             try
             {
                 string fileContents = this.GetContentsOfFile(tags);
-                fileContents = this.ParseAndRemoveYamlFrontMatter(fileContents);
+                fileContents = this.ParseAndRemoveYamlFrontMatter(fileContents, issues);
                 return fileContents;
             }
             catch (Exception ex)
@@ -243,7 +244,7 @@ namespace ApiDoctor.Validation
         /// Parses the file contents and removes yaml front matter from the markdown.
         /// </summary>
         /// <param name="contents">Contents.</param>
-        private string ParseAndRemoveYamlFrontMatter(string contents)
+        private string ParseAndRemoveYamlFrontMatter(string contents, IssueLogger issues)
         {
             const string YamlFrontMatterHeader = "---";
             using (StringReader reader = new StringReader(contents))
@@ -259,6 +260,12 @@ namespace ApiDoctor.Validation
                         case YamlFrontMatterDetectionState.NotDetected:
                             if (!string.IsNullOrWhiteSpace(trimmedCurrentLine) && trimmedCurrentLine != YamlFrontMatterHeader)
                             {
+                                var requiredYamlHeaders = DocSet.SchemaConfig.RequiredYamlHeaders;
+                                if (requiredYamlHeaders.Any())
+                                {
+                                    issues.Error(ValidationErrorCode.RequiredYamlHeaderMissing, $"Missing required YAML headers: {requiredYamlHeaders.ComponentsJoinedByString(", ")}");
+                                }
+
                                 // This file doesn't have YAML front matter, so we just return the full contents of the file
                                 return contents;
                             }
@@ -293,7 +300,7 @@ namespace ApiDoctor.Validation
                 if (currentState == YamlFrontMatterDetectionState.SecondTokenFound)
                 {
                     // Parse YAML metadata
-                    ParseYamlMetadata(frontMatter.ToString());
+                    ParseYamlMetadata(frontMatter.ToString(), issues);
                     return reader.ReadToEnd();
                 }
                 else
@@ -304,9 +311,37 @@ namespace ApiDoctor.Validation
             }
         }
 
-        private void ParseYamlMetadata(string yamlMetadata)
+        private void ParseYamlMetadata(string yamlMetadata, IssueLogger issues)
         {
-            // TODO: Implement YAML parsing
+            Dictionary<string, string> dictionary = new Dictionary<string, string>();
+            string[] items = yamlMetadata.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (string item in items)
+            {
+                string[] keyValue = item.Split(':');
+                dictionary.Add(keyValue[0].Trim(), keyValue[1].Trim());
+            }
+
+            List<string> missingHeaders = new List<string>();
+            foreach (var header in DocSet.SchemaConfig.RequiredYamlHeaders)
+            {
+                string value;
+                if (dictionary.TryGetValue(header, out value))
+                {
+                    if (string.IsNullOrEmpty(value))
+                    {
+                        issues.Error(ValidationErrorCode.RequiredYamlHeaderMissing, $"Missing value for YAML header: {header}");
+                    }
+                }
+                else
+                {
+                    missingHeaders.Add(header);
+                }
+            }
+
+            if (missingHeaders.Any())
+            {
+                issues.Error(ValidationErrorCode.RequiredYamlHeaderMissing, $"Missing required YAML header(s): {missingHeaders.ComponentsJoinedByString(", ")}");
+            }
         }
 
         private enum YamlFrontMatterDetectionState
@@ -463,34 +498,33 @@ namespace ApiDoctor.Validation
                             }
                         }
                     }
-                    else if (this.Annotation == null)
-                    {
-                        // See if this is the page-level annotation
-                        try
-                        {
-                            this.Annotation = this.ParsePageAnnotation(block);
-                            if (this.Annotation != null)
-                            {
-                                if (this.Annotation.Suppressions != null)
-                                {
-                                    issues.AddSuppressions(this.Annotation.Suppressions);
-                                }
 
-                                if (string.IsNullOrEmpty(this.Annotation.Title))
-                                {
-                                    this.Annotation.Title = this.OriginalMarkdownBlocks.FirstOrDefault(b => IsHeaderBlock(b, 1))?.Content;
-                                }
+                    // See if this is the page-level annotation
+                    try
+                    {
+                        this.Annotation = this.ParsePageAnnotation(block);
+                        if (this.Annotation != null)
+                        {
+                            if (this.Annotation.Suppressions != null)
+                            {
+                                issues.AddSuppressions(this.Annotation.Suppressions);
+                            }
+
+                            if (string.IsNullOrEmpty(this.Annotation.Title))
+                            {
+                                this.Annotation.Title = this.OriginalMarkdownBlocks.FirstOrDefault(b => IsHeaderBlock(b, 1))?.Content;
                             }
                         }
-                        catch (JsonReaderException readerEx)
-                        {
-                            issues.Warning(ValidationErrorCode.JsonParserException, $"Unable to parse page annotation JSON: {readerEx}");
-                        }
-                        catch (Exception ex)
-                        {
-                            issues.Warning(ValidationErrorCode.AnnotationParserException, $"Unable to parse annotation: {ex}");
-                        }
                     }
+                    catch (JsonReaderException readerEx)
+                    {
+                        issues.Warning(ValidationErrorCode.JsonParserException, $"Unable to parse page annotation JSON: {readerEx}");
+                    }
+                    catch (Exception ex)
+                    {
+                        issues.Warning(ValidationErrorCode.AnnotationParserException, $"Unable to parse annotation: {ex}");
+                    }
+
                 }
                 else if (block.BlockType == BlockType.table_spec)
                 {
