@@ -630,7 +630,7 @@ namespace ApiDoctor.ConsoleApp
         [Option("snippet-api-url", HelpText = "The url of the api that is queried for code snippets", Required = true)]
         public string SnippetApiUrl { get; set; }
 
-        [Option("lang", HelpText = "The programming languages for snippet generation(comma separated list)", Required = false)]
+        [Option("lang", HelpText = "The programming languages for snippet generation(comma separated list)", Required = true)]
         public string Language { get; set; }
 
         [Option("github-token", HelpText = "The token needed to create pull request with github", Required = true)]

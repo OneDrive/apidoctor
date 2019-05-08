@@ -1989,11 +1989,6 @@ namespace ApiDoctor.ConsoleApp
                         {
                             InjectSnippetIntoFile(method, codeSnippet, lang);
                         }
-                        else
-                        {
-                            //Log the warning for the documentation or api to be fixed.
-                            issues.Warning(ValidationErrorCode.ExceptionWhileValidatingMethod, $"Failure to generate snippet for method: {method.Request}. File name: {method.SourceFile}");
-                        }
                     }
                 }
             }
@@ -2045,6 +2040,7 @@ namespace ApiDoctor.ConsoleApp
             var insertionLine = 0;
             var parseMode = "FindIdentifierLine";
             var snippetEndingsCount = 0;
+            var lastBackTicksLine = 0;
 
             for(var currentIndex = 0; currentIndex < lines.Length; currentIndex++)
             {
@@ -2077,7 +2073,16 @@ namespace ApiDoctor.ConsoleApp
                         if (lines[currentIndex].Trim().Equals("```"))
                         {
                             snippetEndingsCount++;
+                            lastBackTicksLine = currentIndex;
                         }
+
+                        //we have found another request before the response
+                        if ((snippetEndingsCount > 0) && (lines[currentIndex].Contains("\"blockType\": \"request\"")))
+                        {
+                            insertionLine = lastBackTicksLine;
+                            parseMode = "FoundInsertionPoint";
+                        }
+
                         if (snippetEndingsCount == 2)
                         {
                             insertionLine = currentIndex;
@@ -2101,23 +2106,46 @@ namespace ApiDoctor.ConsoleApp
                 return;
             }
             
-            var codeSnippetBlock = $"\r\n```{language.Replace("#", "S")}\r\n\r\n{codeSnippet}\r\n\r\n```";
-            var tabText = $"# [{language}](#tab/{language.Replace("#", "S")})\r\n";
+            var codeSnippetBlock = $"\r\n```{language.Replace("#", "s")}\r\n\r\n{codeSnippet}\r\n\r\n```";
+            var tabText = $"# [{language}](#tab/{language.ToLower().Replace("#", "s")})\r\n";
 
             //remove any potential spaces or "." signifying file extensions
             var fileName = Regex.Replace(method.Identifier, @"[# .()\\/]", ""); 
-            fileName = fileName + $"-{language}-snippets.md";
+            fileName = fileName + $"-{language.Replace("#", "s")}-snippets.md";
+            var includeSdkFileName = "snippets_sdk_documentation_link.md";
 
             //insert include text to original file
-            var includeLink = "[!INCLUDE [Sample Code]( ../includes/" + fileName + ")]";
+            var includeLink = "[!INCLUDE [sample-code](../includes/" + fileName + ")]";
             var includeText = tabText + includeLink;
+            var includeSdkLink = "[!INCLUDE [sdk-documentation](../includes/" + includeSdkFileName + ")]"; ;
+            var includeSdkText = "<!-- markdownlint-disable MD041-->\r\n\r\n" +
+                                  "> Read the [SDK documentation](https://docs.microsoft.com/en-us/graph/sdks/sdks-overview) " +
+                                 "for details on how to [add the SDK](https://docs.microsoft.com/en-us/graph/sdks/sdk-installation) to your project and " +
+                                 "[create an authProvider](https://docs.microsoft.com/en-us/graph/sdks/choose-authentication-providers) instance.\r\n";
 
-            //check if we have ever injected a snippet    
-            if ((insertionLine + 1 < lines.Length) && (!lines[insertionLine + 1].Contains("Sample Code")))
+            var sampleCodeTitle = "SDK sample code";
+
+            //check if we have ever injected a snippet
+            bool everInserted = false;
+            for (var checkIndex = insertionLine; (checkIndex < lines.Length) && (everInserted == false); checkIndex++)
             {
-                includeText = $"#### Sample Code\r\n\r\n{includeText}\r\n\r\n---\r\n";
+                if (lines[checkIndex].Contains(sampleCodeTitle))
+                {
+                    everInserted = true;
+                    insertionLine = checkIndex - 1;
+                }
+            }
+
+            if (everInserted == false)
+            {
+
+                includeText = $"#### {sampleCodeTitle}\r\n\r\n{includeText}\r\n\r\n---\r\n\r\n";
+                includeText = includeText + includeSdkLink; 
                 var final = FileSplicer(lines, insertionLine, includeText);
                 File.WriteAllLines(method.SourceFile.FullPath, final);
+                var sdkLinkDirectory = Directory.GetParent(Path.GetDirectoryName(method.SourceFile.FullPath)) + "/includes/";
+                Directory.CreateDirectory(sdkLinkDirectory);
+                File.WriteAllText(sdkLinkDirectory + "/" + includeSdkFileName, includeSdkText);
             }
             else
             {
