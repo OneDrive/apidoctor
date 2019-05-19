@@ -78,6 +78,8 @@ namespace ApiDoctor.Validation
         /// </summary>
         public List<string> ContentOutline { get; set; }
 
+        public DocumentType DocType { get; protected set; } = DocumentType.NotSpecified;
+
         public ResourceDefinition[] Resources
         {
             get { return this.resources.ToArray(); }
@@ -342,6 +344,21 @@ namespace ApiDoctor.Validation
             {
                 issues.Error(ValidationErrorCode.RequiredYamlHeaderMissing, $"Missing required YAML header(s): {missingHeaders.ComponentsJoinedByString(", ")}");
             }
+
+            // Get document type from YAML front matter
+            string docTypeValue;
+            if (dictionary.TryGetValue("doc_type", out docTypeValue))
+            {
+                DocumentType documentType;
+                if (Enum.TryParse(docTypeValue, true, out documentType))
+                {
+                    this.DocType = documentType;
+                }
+                else
+                {
+                    issues.Warning(ValidationErrorCode.InvalidYamlFrontMatter, "Invalid value for `doc_type`");
+                }
+            }
         }
 
         private enum YamlFrontMatterDetectionState
@@ -349,6 +366,15 @@ namespace ApiDoctor.Validation
             NotDetected,
             FirstTokenFound,
             SecondTokenFound
+        }
+
+        public enum DocumentType
+        {
+            NotSpecified,
+            ResourcePageType,
+            ApiPageType,
+            ConceptualPageType,
+            EnumPageType
         }
 
         private static bool IsHeaderBlock(Block block, int maxDepth = 2)
