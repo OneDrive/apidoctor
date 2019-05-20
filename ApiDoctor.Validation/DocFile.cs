@@ -350,13 +350,13 @@ namespace ApiDoctor.Validation
             if (dictionary.TryGetValue("doc_type", out docTypeValue))
             {
                 DocumentType documentType;
-                if (Enum.TryParse(docTypeValue, true, out documentType))
+                if (Enum.TryParse(docTypeValue.Replace("\"", String.Empty), true, out documentType))
                 {
                     this.DocType = documentType;
                 }
                 else
                 {
-                    issues.Warning(ValidationErrorCode.InvalidYamlFrontMatter, "Invalid value for `doc_type`");
+                    issues.Warning(ValidationErrorCode.InvalidYamlFrontMatter, "Invalid value for `doc_type` specified in YAML metadata");
                 }
             }
         }
@@ -445,6 +445,8 @@ namespace ApiDoctor.Validation
         {
             get; set;
         }
+
+        public List<Config.DocumentHeader> ExpectedDocumentHeaders{ get; set; }
 
         /// <summary>
         /// Convert blocks of text found inside the markdown file into things we know how to work
@@ -582,6 +584,30 @@ namespace ApiDoctor.Validation
             return issues.Issues.All(x => !x.IsError);
         }
 
+        public void SetExpectedDocumentHeaders()
+        {
+            var documentOutline = this.Parent.DocumentStructure;
+            switch (this.DocType)
+            {
+                case DocumentType.ApiPageType:
+                    this.ExpectedDocumentHeaders = documentOutline.ApiPageType;
+                    break;
+                case DocumentType.ResourcePageType:
+                    this.ExpectedDocumentHeaders = documentOutline.ResourcePageType;
+                    break;
+                case DocumentType.EnumPageType:
+                    this.ExpectedDocumentHeaders = documentOutline.EnumPageType;
+                    break;
+                case DocumentType.ConceptualPageType:
+                    this.ExpectedDocumentHeaders = documentOutline.ConceptualPageType;
+                    break;
+                default:
+                    this.ExpectedDocumentHeaders = new List<Config.DocumentHeader>();
+                    break;
+            }
+        }
+       
+
         /// <summary>
         /// Checks the document for outline errors compared to any required document structure.
         /// </summary>
@@ -591,7 +617,8 @@ namespace ApiDoctor.Validation
             List<ValidationError> errors = new List<ValidationError>();
             if (this.Parent.DocumentStructure != null)
             {
-                ValidateDocumentStructure(this.Parent.DocumentStructure.AllowedHeaders, this.DocumentHeaders, issues);
+                SetExpectedDocumentHeaders();
+                ValidateDocumentStructure(this.ExpectedDocumentHeaders, this.DocumentHeaders, issues);
             }
         }
 

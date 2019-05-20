@@ -31,16 +31,19 @@ namespace ApiDoctor.Validation.Config
 
     public class DocumentOutlineFile : ConfigFile
     {
-        [JsonProperty("allowedDocumentHeaders")]
-        public DocumentHeader[] AllowedHeaders { get; set; }
+        [JsonProperty("apiPageType")]
+        public List<DocumentHeader> ApiPageType { get; set; }
 
-        public override bool IsValid
-        {
-            get
-            {
-                return this.AllowedHeaders != null;
-            }
-        }
+        [JsonProperty("resourcePageType")]
+        public List<DocumentHeader> ResourcePageType { get; set; }
+
+        [JsonProperty("conceptualPageType")]
+        public List<DocumentHeader> ConceptualPageType { get; set; }
+
+        [JsonProperty("enumPageType")]
+        public List<DocumentHeader> EnumPageType { get; set; }
+
+        public override bool IsValid => this.ApiPageType != null || this.ResourcePageType != null || this.ConceptualPageType != null || this.EnumPageType != null;
     }
 
     public class DocumentHeader
