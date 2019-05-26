@@ -22,7 +22,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-
+ 
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
@@ -44,6 +44,8 @@ namespace ApiDoctor.Validation.OData.Transformation
         public SchemaConfig()
         {
             RequiredYamlHeaders = new string[] {};
+            FoldersToSkip = new List<string>();
+            FilesToSkip = new List<string>();
             TreatErrorsAsWarningsWorkloads = new List<string>();
         }
 
@@ -76,6 +78,18 @@ namespace ApiDoctor.Validation.OData.Transformation
         /// </summary>
         [JsonProperty("requiredYamlHeaders")]
         public string[] RequiredYamlHeaders { get; set; }
+
+        /// <summary>
+        /// Specifies the folders to be excluded from validation
+        /// </summary>
+        [JsonProperty("foldersToSkip")]
+        public List<string> FoldersToSkip { get; set; }
+
+        /// <summary>
+        /// Specifies the files to be excluded from validation
+        /// </summary>
+        [JsonProperty("filesToSkip")]
+        public List<string> FilesToSkip { get; set; }
 
         /// <summary>
         /// optionally specify workloads whose errors should be treated as warnings
