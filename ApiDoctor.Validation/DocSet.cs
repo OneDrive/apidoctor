@@ -44,19 +44,9 @@ namespace ApiDoctor.Validation
         private const string DocumentationFileExtension = "*.md";
         private static readonly string[] XmlFileExtensions = new[] { "*.xml", "*.html", "*.htm" };
 
-        private static readonly HashSet<string> foldersToSkip = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            "templates",
-        };
+        private static List<string> foldersToSkip;
 
-        private static readonly HashSet<string> filesToSkip = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            "changelog.md",
-            "contributing.md",
-            "issue_template.md",
-            "readme.md",
-            "license.md",
-        };
+        private static List<string> filesToSkip;
 
         private bool writeFixesBackToDisk;
 
@@ -120,13 +110,13 @@ namespace ApiDoctor.Validation
             {
                 sourceFolderPath = sourceFolderPath.TrimEnd(Path.DirectorySeparatorChar);
             }
-
             this.SourceFolderPath = sourceFolderPath;
-            this.ReadDocumentationHierarchy(sourceFolderPath);
 
             this.LoadRequirements();
             this.LoadTestScenarios();
             this.LoadTableParser();
+
+            this.ReadDocumentationHierarchy(sourceFolderPath);
         }
 
 
@@ -178,16 +168,25 @@ namespace ApiDoctor.Validation
                 SchemaConfig = new SchemaConfig();
             }
 
+            string indent = "".PadLeft(4);
             string[] requiredYamlHeaders = SchemaConfig.RequiredYamlHeaders;
-            if (!requiredYamlHeaders.Any())
+            if (requiredYamlHeaders.Any())
             {
-                Console.WriteLine("Required YAML headers have not been set.");
+                Console.WriteLine($"{indent}Required YAML headers: {requiredYamlHeaders.ComponentsJoinedByString(", ")}");
+            }
+            else
+            {
+                Console.WriteLine($"{indent}Required YAML headers have not been set.");
             }
 
-            foreach (var config in SchemaConfig.TreatErrorsAsWarningsWorkloads)
+            List<string> treatErrorsAsWarningsWorkloads = SchemaConfig.TreatErrorsAsWarningsWorkloads;
+            if (treatErrorsAsWarningsWorkloads.Any())
             {
-                Console.WriteLine($"Treating errors as warnings for: {config}");
+                Console.WriteLine($"{indent}Treating errors as warnings for: {treatErrorsAsWarningsWorkloads.ComponentsJoinedByString(", ")}");
             }
+
+            foldersToSkip = SchemaConfig.FoldersToSkip;
+            filesToSkip = SchemaConfig.FilesToSkip;
         }
 
         private void LoadTableParser()
