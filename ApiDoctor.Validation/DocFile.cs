@@ -53,7 +53,7 @@ namespace ApiDoctor.Validation
         private readonly List<SamplesDefinition> samples = new List<SamplesDefinition>();
         private readonly List<EnumerationDefinition> enums = new List<EnumerationDefinition>();
         private readonly List<string> bookmarks = new List<string>();
-
+        private readonly List<char> illegalFileNameCharacters = new List<char>() { '_' };
         protected bool HasScanRun;
         protected string BasePath;
 
@@ -200,10 +200,16 @@ namespace ApiDoctor.Validation
         {
             this.HasScanRun = true;
             List<ValidationError> detectedErrors = new List<ValidationError>();
-
             try
             {
-                string fileContents = this.ReadAndPreprocessFileContents(tags, issues);
+                var illegalCharacters = this.FullPath.Where(character => illegalFileNameCharacters.Contains(character)).ToList();
+                if (illegalCharacters.Any())
+                {
+                    issues.Error(ValidationErrorCode.IllegalCharacterInFileName,
+                        $"IllegalCharacterInFileName: ${string.Join(string.Empty, illegalCharacters)} is not allowed for file name in ${this.FullPath}");
+                    return false;
+                }
+                var fileContents = this.ReadAndPreprocessFileContents(tags, issues);
                 this.TransformMarkdownIntoBlocksAndLinks(fileContents, tags);
             }
             catch (IOException ioex)

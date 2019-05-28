@@ -123,6 +123,7 @@ namespace ApiDoctor.Validation.Error
         ContentFormatException,
 
         AmbiguousExample,
+        IllegalCharacterInFileName
     }
 
     public class ValidationError
