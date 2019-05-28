@@ -206,7 +206,7 @@ namespace ApiDoctor.Validation
                 if (illegalCharacters.Any())
                 {
                     issues.Error(ValidationErrorCode.IllegalCharacterInFileName,
-                        $"IllegalCharacterInFileName: ${string.Join(string.Empty, illegalCharacters)} is not allowed for file name in ${this.FullPath}");
+                        $"IllegalCharacterInFileName: {string.Join(string.Empty, illegalCharacters)} is not allowed for file name in ${this.FullPath}");
                     return false;
                 }
                 var fileContents = this.ReadAndPreprocessFileContents(tags, issues);
