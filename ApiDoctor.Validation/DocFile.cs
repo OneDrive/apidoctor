@@ -81,6 +81,8 @@ namespace ApiDoctor.Validation
 
         public DocumentType DocType { get; protected set; } = DocumentType.NotSpecified;
 
+        public string TopicTitle { get; set; }
+
         public ResourceDefinition[] Resources
         {
             get { return this.resources.ToArray(); }
@@ -359,6 +361,13 @@ namespace ApiDoctor.Validation
                 {
                     issues.Warning(ValidationErrorCode.InvalidYamlFrontMatter, $"Invalid value for `doc_type` specified in YAML metadata: {docTypeValue}");
                 }
+
+                // Get topic title from YAML front matter
+                string topicTitle;
+                if (dictionary.TryGetValue("title", out topicTitle))
+                {
+                    this.TopicTitle = topicTitle.Replace("\"", string.Empty);
+                }
             }
         }
 
@@ -606,8 +615,25 @@ namespace ApiDoctor.Validation
                     this.ExpectedDocumentHeaders = new List<Config.DocumentHeader>();
                     break;
             }
+            ReplaceExpectedTopicTitlePlaceholderWithActualValue(this.ExpectedDocumentHeaders) ;
         }
-       
+
+        /// <summary>
+        /// Updates topic title placeholder in document outline with value from YAML front matter
+        /// </summary>
+        /// <returns></returns>
+        public void ReplaceExpectedTopicTitlePlaceholderWithActualValue(List<DocumentHeader> expectedHeaders)
+        {
+            foreach (var title in expectedHeaders)
+            {
+                if (title.Title == "{Topic title}")
+                {
+                    title.Title = this.TopicTitle;
+                    break;
+                }
+                ReplaceExpectedTopicTitlePlaceholderWithActualValue(title.ChildHeaders);
+            }
+        }   
 
         /// <summary>
         /// Checks the document for outline errors compared to any required document structure.
