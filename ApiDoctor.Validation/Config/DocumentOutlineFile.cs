@@ -43,7 +43,7 @@ namespace ApiDoctor.Validation.Config
         [JsonProperty("enumPageType")]
         public List<DocumentHeader> EnumPageType { get; set; }
 
-        public override bool IsValid => this.ApiPageType != null || this.ResourcePageType != null || this.ConceptualPageType != null || this.EnumPageType != null;
+        public override bool IsValid => (this.ApiPageType ?? this.ResourcePageType ?? this.ConceptualPageType ?? this.EnumPageType) != null;
     }
 
     public class DocumentHeader
@@ -78,6 +78,9 @@ namespace ApiDoctor.Validation.Config
         [JsonProperty("headers")]
         public List<DocumentHeader> ChildHeaders { get; set; }
 
+        [JsonProperty("conditionalHeaders")]
+        public ConditionalDocumentHeader ConditionalHeader { get; set; }
+
         internal bool Matches(DocumentHeader found)
         {
             return this.Level == found.Level && DoTitlesMatch(this.Title, found.Title);
@@ -93,4 +96,27 @@ namespace ApiDoctor.Validation.Config
         }
     }
 
+    public class ConditionalDocumentHeader
+    {
+        [JsonProperty("condition")]
+        public string Condition { get; set; }
+
+        [JsonProperty("arguments")]
+        public List<List<DocumentHeader>> Arguments { get; set; }
+
+        public ConditionalOperator? Operator
+        {
+            get
+            {
+                ConditionalOperator op;
+                return Enum.TryParse(this.Condition, true, out op) ? op : (ConditionalOperator?)null;
+            }
+        }
+    }
+
+    public enum ConditionalOperator
+    {
+        OR,
+        AND
+    }
 }

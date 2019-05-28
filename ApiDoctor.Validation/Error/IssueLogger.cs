@@ -106,6 +106,13 @@ namespace ApiDoctor.Validation.Error
             this.IssuesInCurrentScope++;
         }
 
+        public void Error(ValidationError error, [CallerLineNumber]int lineNumber = 0)
+        {
+            LaunchDebuggerIfNeeded(lineNumber);
+            AddIfNeeded(error, this.errors);
+            this.IssuesInCurrentScope++;
+        }
+
         public void Warning(ValidationErrorCode code, string message, Exception exception = null, [CallerLineNumber]int lineNumber = 0)
         {
             LaunchDebuggerIfNeeded(lineNumber);
@@ -200,7 +207,7 @@ namespace ApiDoctor.Validation.Error
                         if (!issue.IsWarning)
                         {
                             this.warnings.Add(new ValidationWarning(issue.Code, issue.Source,
-                                $"Treating Error as Warning {Environment.NewLine} {issue.Message}"));
+                                $"Treating error as warning {Environment.NewLine} {issue.Message}"));
                         }
                     }
                     else
@@ -216,7 +223,7 @@ namespace ApiDoctor.Validation.Error
                     if (!issue.IsWarning)
                     {
                         this.warnings.Add(new ValidationWarning(issue.Code, issue.Source,
-                            $"Treating Error as Warning {Environment.NewLine} {issue.Message}"));
+                            $"Treating error as warning {Environment.NewLine} {issue.Message}"));
                     }
                 }
                 else
