@@ -16,7 +16,7 @@ variables:
   graphDocsRepo: 'https://github.com/microsoftgraph/microsoft-graph-docs.git'
   graphDocsBranch: 'master'
   docSubPath: 'api-reference\beta'
-  apiDoctorPath: '$(Build.BinariesDirectory)/ApiDoctor.Console/bin/Release/apidoc.exe'
+  apiDoctorPath: '$(System.DefaultWorkingDirectory)/ApiDoctor.Console/bin/Release/apidoc.exe'
   graphDocsPath: 'GraphDocs'
   
 
@@ -41,7 +41,7 @@ steps:
 - task: PowerShell@2
   inputs:
     targetType: filePath
-    filePath: Test-Docs.ps1
+    filePath: "Test-Docs.ps1"
     arguments: -cleanUp -graphDocsPath '$(graphDocsPath)' -graphDocsRepo '$(graphDocsRepo)' -graphDocsBranch '$(graphDocsBranch)' -docSubPath '$(docSubPath)' -apiDoctorPath '$(apiDoctorPath)
     #script: '# Write your powershell commands here.' # Required when targetType == Inline
     #errorActionPreference: 'stop' # Optional. Options: stop, continue, silentlyContinue
