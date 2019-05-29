@@ -20,7 +20,7 @@ Write-Host $params
 Write-Host $apiDoctor
 
 #Clone Docs Repo
-New-Item -Path $fullDocsPath -ItemType Directory
+New-Item -Path $fullDocsPath -ItemType Directory -Force
 Write-Host "Cloning Microsoft Graph Docs from Github"
 Write-Host "`tRemote URL: $graphDocsRepo"
 Write-Host "`tBranch: $graphDocsBranch"
