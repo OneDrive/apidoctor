@@ -19,9 +19,6 @@ Write-Host $fullDocsSubPath
 Write-Host $params
 Write-Host $apiDoctor
 
-Test-Connection -ComputerName github.com -Count 4 -Verbose
-
-
 #Clone Docs Repo
 New-Item -Path $graphDocsPath -ItemType Directory -Force
 Write-Host "Cloning Microsoft Graph Docs from Github"
