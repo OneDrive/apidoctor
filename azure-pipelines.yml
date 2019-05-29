@@ -13,6 +13,12 @@ variables:
   solution: '**/*.sln'
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
+  graphDocsRepo: 'https://github.com/microsoftgraph/microsoft-graph-docs.git'
+  graphDocsBranch: 'master'
+  docsSubPath: 'api-reference\beta'
+  apiDoctorPath: '$(Build.BinariesDirectory)/ApiDoctor.Console/bin/Release/apidoc.exe'
+  graphDocsPath: 'GraphDocs'
+  
 
 steps:
 - task: NuGetToolInstaller@0
@@ -31,3 +37,16 @@ steps:
   inputs:
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
+
+- task: PowerShell@2
+  inputs:
+    targetType: filePath
+    filePath: Test-Docs.ps1
+    arguments: -cleanUp -graphDocsPath graphDocsPath -graphDocsRepo $graphDocsRepo -graphDocsBranch $graphDocsBranch -docSubPath $docsSubPath -apiDoctorPath $apiDoctorPath
+    #script: '# Write your powershell commands here.' # Required when targetType == Inline
+    #errorActionPreference: 'stop' # Optional. Options: stop, continue, silentlyContinue
+    #failOnStderr: false # Optional
+    #ignoreLASTEXITCODE: false # Optional
+    #pwsh: false # Optional
+    #workingDirectory: # Optional
+
