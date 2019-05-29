@@ -33,14 +33,3 @@ Invoke-Expression "git clone -b $graphDocsBranch $graphDocsRepo --recurse-submod
 
 & $apiDoctor $params
 
-# Clean up the stuff we downloaded
-if ($cleanUp -eq $true) {
-   Remove-Item $graphDocsPath -Recurse -Force
-}
-
-
-if ($LastExitCode -ne 0) {
-    Write-Host "Errors were detected. This build failed."
-    Write-Host $LastExitCode
-    exit $LastExitCode
-}
