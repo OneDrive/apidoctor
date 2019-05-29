@@ -1,14 +1,9 @@
 Param(
     [switch]$cleanUp,
-    [Parameter(Mandatory)]
 	[string]$apiDoctorPath,
-    [Parameter(Mandatory)]
 	[string]$docSubPath,
-    [Parameter(Mandatory)]
 	[string]$graphDocsRepo,
-    [Parameter(Mandatory)]
 	[string]$graphDocsBranch,
-    [Parameter(Mandatory)]
 	[string]$graphDocsPath
 )
 $repoPath = (Get-Location).Path
