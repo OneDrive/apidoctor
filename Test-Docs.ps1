@@ -24,7 +24,7 @@ New-Item -Path $fullDocsPath -ItemType Directory -Force
 Write-Host "Cloning Microsoft Graph Docs from Github"
 Write-Host "`tRemote URL: $graphDocsRepo"
 Write-Host "`tBranch: $graphDocsBranch"
-Invoke-Expression "git clone -b $graphDocsBranch $graphDocsRepo --recurse-submodules $fullDocsPath"
+& git clone -b $graphDocsBranch $graphDocsRepo --recurse-submodules $fullDocsPath
 
 & $apiDoctor $params
 
