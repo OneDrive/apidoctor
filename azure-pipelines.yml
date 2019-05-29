@@ -42,11 +42,11 @@ steps:
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
 
-- task: PowerShell@2
+- task: PowerShell@1
   displayName: "Clone Microsoft Graph Docs"
   inputs:
-    targetType: inline
-    script: "git clone -b '$(graphDocsBranch)' '$(graphDocsRepo)' --recurse-submodules '$(graphDocsPath)' 2>&1 | Write-Host"
+    scriptType: inlineScript
+    inlineScript: "git clone -b '$(graphDocsBranch)' '$(graphDocsRepo)' --recurse-submodules '$(graphDocsPath)' 2>&1 | Write-Host"
 
 - task: PowerShell@2
   displayName: "Run ApiDoctor Against beta Docs"
