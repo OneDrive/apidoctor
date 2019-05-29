@@ -45,6 +45,7 @@ steps:
 - task: PowerShell@2
   displayName: "Clone Microsoft Graph Docs"
   inputs:
+    targetType: inline
     script: "git clone -b '$(graphDocsBranch)' '$(graphDocsRepo)' --recurse-submodules '$(graphDocsPath)' 2>&1 | Write-Host"
 
 - task: PowerShell@2
