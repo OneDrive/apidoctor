@@ -42,7 +42,7 @@ steps:
   inputs:
     targetType: filePath
     filePath: "Test-Docs.ps1"
-    arguments: -cleanUp -graphDocsPath '$(graphDocsPath)' -graphDocsRepo '$(graphDocsRepo)' -graphDocsBranch '$(graphDocsBranch)' -docSubPath '$(docSubPath)' -apiDoctorPath '$(apiDoctorPath)
+    arguments: -cleanUp -graphDocsPath '$(graphDocsPath)' -graphDocsRepo '$(graphDocsRepo)' -graphDocsBranch '$(graphDocsBranch)' -docSubPath '$(docSubPath)' -apiDoctorPath '$(apiDoctorPath)'
     #script: '# Write your powershell commands here.' # Required when targetType == Inline
     #errorActionPreference: 'stop' # Optional. Options: stop, continue, silentlyContinue
     #failOnStderr: false # Optional
