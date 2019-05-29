@@ -53,7 +53,8 @@ steps:
     targetType: filePath
     filePath: "Test-Docs.ps1"
     arguments: -graphDocsPath '$(graphDocsPath)' -graphDocsRepo '$(graphDocsRepo)' -graphDocsBranch '$(graphDocsBranch)' -docSubPath '$(betaDocsSubPath)' -apiDoctorPath '$(apiDoctorPath)'
-
+    errorActionPreference: continue
+    
 - task: PowerShell@2
   displayName: "Run ApiDoctor Against v1.0 Docs"
   inputs:
