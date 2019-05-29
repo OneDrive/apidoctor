@@ -24,7 +24,17 @@ New-Item -Path $graphDocsPath -ItemType Directory -Force
 Write-Host "Cloning Microsoft Graph Docs from Github"
 Write-Host "`tRemote URL: $graphDocsRepo"
 Write-Host "`tBranch: $graphDocsBranch"
-& git clone -b $graphDocsBranch $graphDocsRepo --recurse-submodules $fullDocsPath
+$result = Invoke-Expression "git clone -b $graphDocsBranch $graphDocsRepo --recurse-submodules $fullDocsPath"
 
 & $apiDoctor $params
 
+# Clean up the stuff we downloaded
+if ($cleanUp -eq $true) {
+   Remove-Item $graphDocsPath -Recurse -Force
+}
+Write-Host $result
+if ($LastExitCode -ne 0) {
+    Write-Host "Errors were detected. This build failed."
+    Write-Host $LastExitCode
+    exit $LastExitCode
+}
