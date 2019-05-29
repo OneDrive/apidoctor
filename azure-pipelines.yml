@@ -13,7 +13,7 @@ variables:
   solution: '**/*.sln'
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
-  graphDocsRepo: 'https://github.com/microsoftgraph/microsoft-graph-docs.git'
+  graphDocsRepo: 'https://github.com/finsharp/microsoft-graph-docs.git'
   graphDocsBranch: 'master'
   docSubPath: 'api-reference\beta'
   apiDoctorPath: '/ApiDoctor.Console/bin/Release/apidoc.exe'
