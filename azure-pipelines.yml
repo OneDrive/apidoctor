@@ -16,7 +16,7 @@ variables:
   graphDocsRepo: 'https://github.com/microsoftgraph/microsoft-graph-docs.git'
   graphDocsBranch: 'master'
   docSubPath: 'api-reference\beta'
-  apiDoctorPath: '$(Build.BinariesDirectory)/ApiDoctor.Console/bin/Release/apidoc.exe'
+  apiDoctorPath: '$(System.DefaultWorkingDirectory)/ApiDoctor.Console/bin/Release/apidoc.exe'
   graphDocsPath: 'GraphDocs'
   
 
