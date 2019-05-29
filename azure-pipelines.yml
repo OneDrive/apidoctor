@@ -23,12 +23,15 @@ variables:
 
 steps:
 - task: NuGetToolInstaller@0
+  displayName: "Install Nuget.exe"
 
 - task: NuGetCommand@2
+  displayName: "Restore Packages for '$(solution)'"
   inputs:
     restoreSolution: '$(solution)'
 
 - task: VSBuild@1
+  displayName: "Build Solution for '$(solution)'' in '$(buildConfiguration)'"
   inputs:
     solution: '$(solution)'
     platform: '$(buildPlatform)'
@@ -49,7 +52,7 @@ steps:
   inputs:
     targetType: filePath
     filePath: "Test-Docs.ps1"
-    arguments: -cleanUp -graphDocsPath '$(graphDocsPath)' -graphDocsRepo '$(graphDocsRepo)' -graphDocsBranch '$(graphDocsBranch)' -docSubPath '$(betaDocsSubPath)' -apiDoctorPath '$(apiDoctorPath)'
+    arguments: -graphDocsPath '$(graphDocsPath)' -graphDocsRepo '$(graphDocsRepo)' -graphDocsBranch '$(graphDocsBranch)' -docSubPath '$(betaDocsSubPath)' -apiDoctorPath '$(apiDoctorPath)'
 
 - task: PowerShell@2
   displayName: "Run ApiDoctor Against v1.0 Docs"
