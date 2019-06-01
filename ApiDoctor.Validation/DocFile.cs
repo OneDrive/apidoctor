@@ -330,7 +330,7 @@ namespace ApiDoctor.Validation
                     value = value.Replace("\"", string.Empty);
                     if (string.IsNullOrWhiteSpace(value))
                     {
-                        issues.Error(ValidationErrorCode.RequiredYamlHeaderMissing, $"Missing value for YAML header: {header}");
+                        issues.Warning(ValidationErrorCode.RequiredYamlHeaderMissing, $"Missing value for YAML header: {header}");
                     }
                 }
                 else
