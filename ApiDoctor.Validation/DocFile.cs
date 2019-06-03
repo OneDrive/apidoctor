@@ -327,9 +327,10 @@ namespace ApiDoctor.Validation
                 string value;
                 if (dictionary.TryGetValue(header, out value))
                 {
-                    if (string.IsNullOrEmpty(value))
+                    value = value.Replace("\"", string.Empty);
+                    if (string.IsNullOrWhiteSpace(value))
                     {
-                        issues.Error(ValidationErrorCode.RequiredYamlHeaderMissing, $"Missing value for YAML header: {header}");
+                        issues.Warning(ValidationErrorCode.RequiredYamlHeaderMissing, $"Missing value for YAML header: {header}");
                     }
                 }
                 else
