@@ -2105,12 +2105,14 @@ namespace ApiDoctor.ConsoleApp
                 //Just return and do not insert a snippet if we can't find an proper place to inject the snippet
                 return;
             }
-            
-            var codeSnippetBlock = $"\r\n```{language.Replace("#", "s")}\r\n\r\n{codeSnippet}\r\n\r\n```";
+
+            var codeSnippetHeader = "---\r\ndescription: \"Automatically generated file. DO NOT MODIFY\"\r\n---\r\n";
+            var codeSnippetBlock = codeSnippetHeader + $"\r\n```{language.ToLower().Replace("#", "sharp")}\r\n\r\n{codeSnippet}\r\n\r\n```";
             var tabText = $"# [{language}](#tab/{language.ToLower().Replace("#", "s")})\r\n";
 
             //remove any potential spaces or "." signifying file extensions
-            var fileName = Regex.Replace(method.Identifier, @"[# .()\\/]", ""); 
+            var fileName = Regex.Replace(method.Identifier, @"[# .()\\/]", "");
+            var tempMethodName = fileName;
             fileName = fileName + $"-{language.Replace("#", "s")}-snippets.md";
             var includeSdkFileName = "snippets_sdk_documentation_link.md";
 
@@ -2127,9 +2129,9 @@ namespace ApiDoctor.ConsoleApp
 
             //check if we have ever injected a snippet
             bool everInserted = false;
-            for (var checkIndex = insertionLine; (checkIndex < lines.Length) && (everInserted == false); checkIndex++)
+            for (var checkIndex = insertionLine; (checkIndex < lines.Length - 3) && (everInserted == false); checkIndex++)
             {
-                if (lines[checkIndex].Contains(sampleCodeTitle))
+                if (lines[checkIndex].Contains(sampleCodeTitle) && (lines[checkIndex + 2].Contains(tempMethodName) || lines[checkIndex + 3].Contains(tempMethodName)))
                 {
                     everInserted = true;
                     insertionLine = checkIndex - 1;
