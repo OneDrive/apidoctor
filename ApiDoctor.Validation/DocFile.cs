@@ -477,7 +477,7 @@ namespace ApiDoctor.Validation
                         var previousBlock = this.OriginalMarkdownBlocks[previousBlockIndex];
                         if (null != previousBlock && previousBlock.BlockType != BlockType.html)
                         {
-                            issues.Error(ValidationErrorCode.MissingMetadataBlock,
+                            issues.Warning(ValidationErrorCode.MissingMetadataBlock,
                                 $"{ValidationErrorCode.MissingMetadataBlock}: Missing Metadata Block for code block{Environment.NewLine}{block}");
                         }
                     }
