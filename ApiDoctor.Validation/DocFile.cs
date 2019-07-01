@@ -327,9 +327,10 @@ namespace ApiDoctor.Validation
                 string value;
                 if (dictionary.TryGetValue(header, out value))
                 {
-                    if (string.IsNullOrEmpty(value))
+                    value = value.Replace("\"", string.Empty);
+                    if (string.IsNullOrWhiteSpace(value))
                     {
-                        issues.Error(ValidationErrorCode.RequiredYamlHeaderMissing, $"Missing value for YAML header: {header}");
+                        issues.Warning(ValidationErrorCode.RequiredYamlHeaderMissing, $"Missing value for YAML header: {header}");
                     }
                 }
                 else
@@ -1347,9 +1348,6 @@ namespace ApiDoctor.Validation
                             linkedPages.Add(relativeFileName);
                         }
                         break;
-                    case LinkValidationResult.InvalidUpperCaseCharacterInUrl:
-                        issues.Error(ValidationErrorCode.LinkInvalidUpperCaseCharacterInUrl, $"InvalidUpperCaseCharacterInUrl '[{link.Definition.url}]({link.Text})'.");
-                        break;
                     default:
                         issues.Error(ValidationErrorCode.Unknown, $"{result}: Link '[{link.Text}]({link.Definition.url})'.");
                         break;
@@ -1370,8 +1368,7 @@ namespace ApiDoctor.Validation
             ParentAboveDocSetPath,
             BookmarkMissing,
             FileExistsBookmarkValidationSkipped,
-            BookmarkSkippedDocFileNotFound,
-            InvalidUpperCaseCharacterInUrl
+            BookmarkSkippedDocFileNotFound
         }
 
         protected LinkValidationResult VerifyLink(string docFilePath, string linkUrl, string docSetBasePath, out string relativeFileName, bool requireFilenameCaseMatch)
@@ -1403,10 +1400,6 @@ namespace ApiDoctor.Validation
                             relativeFileName = "#" + suggestion;
                         return LinkValidationResult.BookmarkMissing;
                     }
-                }
-                else if (linkUrl.Any(char.IsUpper))
-                {
-                    return LinkValidationResult.InvalidUpperCaseCharacterInUrl;
                 }
                 else
                 {
