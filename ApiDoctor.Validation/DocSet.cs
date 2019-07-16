@@ -161,6 +161,10 @@ namespace ApiDoctor.Validation
                 Console.WriteLine("Using document structure file: {0}", foundOutlines.SourcePath);
                 this.DocumentStructure = foundOutlines;
             }
+            else
+            {
+                Console.WriteLine("Document structure file has been incorrectly formatted or is missing");
+            }
 
             LinkValidationConfigFile[] linkConfigs = TryLoadConfigurationFiles<LinkValidationConfigFile>(this.SourceFolderPath);
             var foundLinkConfig = linkConfigs.FirstOrDefault();
