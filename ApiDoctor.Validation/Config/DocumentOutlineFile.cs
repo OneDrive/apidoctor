@@ -80,17 +80,21 @@ namespace ApiDoctor.Validation.Config
         [JsonProperty("headers")]
         public List<DocumentHeader> ChildHeaders { get; set; }
 
-        internal bool Matches(DocumentHeader found)
+        internal bool Matches(DocumentHeader found, bool ignoreCase = false)
         {
-            return this.Level == found.Level && DoTitlesMatch(this.Title, found.Title);
+            return this.Level == found.Level && DoTitlesMatch(this.Title, found.Title, ignoreCase);
         }
 
-        private static bool DoTitlesMatch(string expectedTitle, string foundTitle)
+        private static bool DoTitlesMatch(string expectedTitle, string foundTitle, bool ignoreCase)
         {
-            if (expectedTitle == foundTitle) return true;
+            StringComparison comparisonType = StringComparison.Ordinal;
+            if (ignoreCase) comparisonType = StringComparison.OrdinalIgnoreCase;
+
+            if (expectedTitle.Equals(foundTitle, comparisonType))
+                return true;
             if (string.IsNullOrEmpty(expectedTitle) || expectedTitle == "*") return true;
-            if (expectedTitle.StartsWith("* ") && foundTitle.EndsWith(expectedTitle.Substring(2))) return true;
-            if (expectedTitle.EndsWith(" *") && foundTitle.StartsWith(expectedTitle.Substring(0, expectedTitle.Length - 2))) return true;
+            if (expectedTitle.StartsWith("* ") && foundTitle.EndsWith(expectedTitle.Substring(2), comparisonType)) return true;
+            if (expectedTitle.EndsWith(" *") && foundTitle.StartsWith(expectedTitle.Substring(0, expectedTitle.Length - 2), comparisonType)) return true;
             return false;
         }
 
