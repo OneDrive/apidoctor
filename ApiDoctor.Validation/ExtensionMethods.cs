@@ -28,15 +28,15 @@ namespace ApiDoctor.Validation
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
+    using System.Globalization;
     using System.IO;
     using System.Linq;
     using System.Text;
     using System.Text.RegularExpressions;
-    using ApiDoctor.Validation.Error;
-    using ApiDoctor.Validation.Json;
     using MarkdownDeep;
+    using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
-    using System.Globalization;
+    using ApiDoctor.Validation.Error;
     using ApiDoctor.Validation.OData.Transformation;
 
     public static class ExtensionMethods
@@ -789,6 +789,23 @@ namespace ApiDoctor.Validation
             }
 
             return null;
+        }
+
+        public static bool TryParseJson<T>(this string obj, out T result)
+        {
+            try
+            {
+                JsonSerializerSettings settings = new JsonSerializerSettings();
+                settings.MissingMemberHandling = MissingMemberHandling.Error;
+
+                result = JsonConvert.DeserializeObject<T>(obj, settings);
+                return true;
+            }
+            catch (Exception)
+            {
+                result = default(T);
+                return false;
+            }
         }
 
         /// <summary>
