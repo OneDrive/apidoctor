@@ -99,6 +99,7 @@ namespace ApiDoctor.Validation.Error
         MissingHeaderBlock,
         InvalidDateTimeString,
         InvalidEnumeratedValueString,
+        InvalidYamlFrontMatter,
         InvalidUrlString,
         InvalidExpectationKey,
         ExpectationConditionFailed,

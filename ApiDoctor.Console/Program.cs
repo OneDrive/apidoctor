@@ -332,7 +332,7 @@ namespace ApiDoctor.ConsoleApp
             DateTimeOffset end = DateTimeOffset.Now;
             TimeSpan duration = end.Subtract(start);
 
-            FancyConsole.WriteLine($"Took {duration.TotalSeconds} to parse {set.Files.Length} source files.");
+            FancyConsole.WriteLine($"Took {duration.TotalSeconds}s to parse {set.Files.Length} source files.");
             return Task.FromResult<DocSet>(set);
         }
 
