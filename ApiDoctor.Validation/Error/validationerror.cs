@@ -69,7 +69,6 @@ namespace ApiDoctor.Validation.Error
         LinkDestinationNotFound,
         LinkDestinationOutsideDocSet,
         LinkFormatInvalid,
-        LinkInvalidUpperCaseCharacterInUrl,
 
         MissingRequiredArguments,
         MissingAccessToken,
