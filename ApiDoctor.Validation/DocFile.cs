@@ -36,7 +36,6 @@ namespace ApiDoctor.Validation
     using MarkdownDeep;
     using Newtonsoft.Json;
 
-
     /// <summary>
     /// A documentation file that may contain one more resources or API methods
     /// </summary>
@@ -530,10 +529,12 @@ namespace ApiDoctor.Validation
         /// <summary>
         /// Headers found in the markdown input (#, h1, etc)
         /// </summary>
-        public List<Config.DocumentHeader> DocumentHeaders
+        public List<DocumentHeader> DocumentHeaders
         {
             get; set;
         }
+
+        public List<object> ExpectedDocumentHeaders { get; set; } = new List<object>();
 
         /// <summary>
         /// Convert blocks of text found inside the markdown file into things we know how to work
@@ -674,26 +675,50 @@ namespace ApiDoctor.Validation
             return issues.Issues.All(x => !x.IsError);
         }
 
+        public void SetExpectedDocumentHeaders()
+        {
+            var documentOutline = this.Parent.DocumentStructure;
+            switch (this.DocType)
+            {
+                case DocumentType.ApiPageType:
+                    this.ExpectedDocumentHeaders = documentOutline.ApiPageType;
+                    break;
+                case DocumentType.ResourcePageType:
+                    this.ExpectedDocumentHeaders = documentOutline.ResourcePageType;
+                    break;
+                case DocumentType.EnumPageType:
+                    this.ExpectedDocumentHeaders = documentOutline.EnumPageType;
+                    break;
+                case DocumentType.ConceptualPageType:
+                    this.ExpectedDocumentHeaders = documentOutline.ConceptualPageType;
+                    break;
+                default:
+                    this.ExpectedDocumentHeaders = new List<object>();
+                    break;
+            }
+        }
+
+
         /// <summary>
         /// Checks the document for outline errors compared to any required document structure.
         /// </summary>
         /// <returns></returns>
         public void CheckDocumentStructure(IssueLogger issues)
         {
-            List<ValidationError> errors = new List<ValidationError>();
-            if (this.Parent.DocumentStructure != null)
+            SetExpectedDocumentHeaders();
+            if (this.ExpectedDocumentHeaders.Any())
             {
-                ValidateDocumentHeaders(this.Parent.DocumentStructure.AllowedHeaders, this.DocumentHeaders, issues);
+                ValidateDocumentHeaders(this.ExpectedDocumentHeaders, this.DocumentHeaders, issues);
             }
             ValidateTabStructure(issues);
         }
 
-        private static bool ContainsMatchingDocumentHeader(Config.DocumentHeader expectedHeader, IReadOnlyList<Config.DocumentHeader> collection)
+        private static bool ContainsMatchingDocumentHeader(DocumentHeader expectedHeader, IReadOnlyList<DocumentHeader> collection, bool ignoreCase = false)
         {
-            return collection.Any(h => h.Matches(expectedHeader));
+            return collection.Any(h => h.Matches(expectedHeader, ignoreCase));
         }
 
-        private void ValidateDocumentHeaders(IReadOnlyList<Config.DocumentHeader> expectedHeaders, IReadOnlyList<Config.DocumentHeader> foundHeaders, IssueLogger issues)
+        private void ValidateDocumentHeaders(List<object> expectedHeaders, IReadOnlyList<DocumentHeader> foundHeaders, IssueLogger issues)
         {
             int expectedIndex = 0;
             int foundIndex = 0;
@@ -703,67 +728,184 @@ namespace ApiDoctor.Validation
                 var expected = expectedHeaders[expectedIndex];
                 var found = foundHeaders[foundIndex];
 
-                if (expected.Matches(found))
+                DocumentHeaderValidationResult result;
+                if (expected is ConditionalHeader)
                 {
-                    ValidateDocumentHeaders(expected.ChildHeaders, found.ChildHeaders, issues);
-
-                    // Found an expected header, keep going!
-                    expectedIndex++;
-                    foundIndex++;
-                    continue;
-                }
-
-                if (!ContainsMatchingDocumentHeader(found, expectedHeaders))
-                {
-                    // This is an additional header that isn't in the expected header collection
-                    issues.Warning(ValidationErrorCode.ExtraDocumentHeaderFound, $"A extra document header was found: {found.Title}");
-                    ValidateDocumentHeaders(new Config.DocumentHeader[0], found.ChildHeaders, issues);
-                    foundIndex++;
-                    continue;
+                    result = ValidateConditionalDocumentHeader(ref expectedHeaders, foundHeaders, expectedIndex, foundIndex);
                 }
                 else
                 {
-                    // If the current expected header is optional, we can move past it 
-                    if (!expected.Required)
-                    {
-                        expectedIndex++;
-                        continue;
-                    }
+                    result = ValidateDocumentHeader(expectedHeaders, foundHeaders, expectedIndex, foundIndex);
+                }
 
-                    bool expectedMatchesInFoundHeaders = ContainsMatchingDocumentHeader(expected, foundHeaders);
-                    if (expectedMatchesInFoundHeaders)
-                    {
-                        // This header exists, but is in the wrong position
+                switch (result)
+                {
+                    case DocumentHeaderValidationResult.Found:
+                        ValidateDocumentStructure(((ExpectedHeader)expected).ChildHeaders, found.ChildHeaders, issues);
+                        expectedIndex++;
+                        foundIndex++;
+
+                        break;
+
+                    case DocumentHeaderValidationResult.FoundInWrongCase:
+                        ValidateDocumentStructure(((ExpectedHeader)expected).ChildHeaders, found.ChildHeaders, issues);
+                        issues.Warning(ValidationErrorCode.DocumentHeaderInWrongCase, $"Incorrect letter case in document header: {found.Title}");
+                        expectedIndex++;
+                        foundIndex++;
+
+                        break;
+
+                    case DocumentHeaderValidationResult.ExtraDocumentHeaderFound:
+                        issues.Warning(ValidationErrorCode.ExtraDocumentHeaderFound, $"An extra document header was found: {found.Title}");
+                        foundIndex++;
+
+                        break;
+
+                    case DocumentHeaderValidationResult.DocumentHeaderInWrongPosition:
                         issues.Warning(ValidationErrorCode.DocumentHeaderInWrongPosition, $"An expected document header was found in the wrong position: {found.Title}");
                         foundIndex++;
-                        continue;
-                    }
-                    else if (!expectedMatchesInFoundHeaders && expected.Required)
-                    {
-                        // Missing a required header!
-                        issues.Error(ValidationErrorCode.RequiredDocumentHeaderMissing, $"A required document header is missing from the document: {expected.Title}");
+
+                        break;
+
+                    case DocumentHeaderValidationResult.RequiredDocumentHeaderMissing:
+                        issues.Error(ValidationErrorCode.RequiredDocumentHeaderMissing, $"A required document header is missing from the document: {((ExpectedHeader)expected).Title}");
                         expectedIndex++;
-                    }
-                    else
-                    {
-                        // Expected wasn't found and is optional, that's fine.
+
+                        break;
+
+                    case DocumentHeaderValidationResult.OptionalDocumentHeaderMissing:
                         expectedIndex++;
-                        continue;
-                    }
+                        break;
+
                 }
             }
 
             for (int i = foundIndex; i < foundHeaders.Count; i++)
             {
-                issues.Warning(ValidationErrorCode.ExtraDocumentHeaderFound, $"A extra document header was found: {foundHeaders[i].Title}");
+                issues.Warning(ValidationErrorCode.ExtraDocumentHeaderFound, $"An extra document header was found: {foundHeaders[i].Title}");
             }
+
             for (int i = expectedIndex; i < expectedHeaders.Count; i++)
             {
-                if (expectedHeaders[i].Required)
+                ExpectedHeader missingHeader;
+                if (expectedHeaders[i] is ExpectedHeader)
                 {
-                    issues.Error(ValidationErrorCode.RequiredDocumentHeaderMissing, $"A required document header is missing from the document: {expectedHeaders[i].Title}");
+                    missingHeader = (ExpectedHeader)expectedHeaders[i];
+                }
+                else
+                {
+                    missingHeader = ((ConditionalHeader)expectedHeaders[i]).Arguments.OfType<ExpectedHeader>().First();
+                }
+
+                if (missingHeader.Required)
+                {
+                    issues.Error(ValidationErrorCode.RequiredDocumentHeaderMissing, $"A required document header is missing from the document: {missingHeader.Title}");
                 }
             }
+        }
+
+        private DocumentHeaderValidationResult ValidateDocumentHeader(List<object> expectedHeaders, IReadOnlyList<DocumentHeader> foundHeaders, int expectedIndex, int foundIndex)
+        {
+            var found = foundHeaders[foundIndex];
+            var expected = expectedHeaders[expectedIndex] as ExpectedHeader;
+
+            if (expected.Matches(found))
+            {
+                return DocumentHeaderValidationResult.Found;
+            }
+
+            // Try case insensitive match
+            if (expected.Matches(found, true))
+            {
+                return DocumentHeaderValidationResult.FoundInWrongCase;
+            }
+
+            var mergedExpectedHeaders = ExtractAndMergeConditionalHeaderArgumentsInList(expectedHeaders);
+            if (!ContainsMatchingDocumentHeader(found, mergedExpectedHeaders, true))
+            {
+                // This is an additional header that isn't in the expected header collection
+                return DocumentHeaderValidationResult.ExtraDocumentHeaderFound;
+            }
+            else
+            {
+                bool expectedMatchesInFoundHeaders = ContainsMatchingDocumentHeader(expected, foundHeaders, true);
+                if (expectedMatchesInFoundHeaders)
+                {
+                    // This header exists, but is in the wrong position
+                    return DocumentHeaderValidationResult.DocumentHeaderInWrongPosition;
+                }
+                else if (!expectedMatchesInFoundHeaders && expected.Required)
+                {
+                    // Missing a required header!
+                    return DocumentHeaderValidationResult.RequiredDocumentHeaderMissing;
+                }
+                else
+                {
+                    // Expected wasn't found and is optional
+                    return DocumentHeaderValidationResult.OptionalDocumentHeaderMissing;
+                }
+            }
+        }
+
+        private DocumentHeaderValidationResult ValidateConditionalDocumentHeader(ref List<object> expectedHeaders, IReadOnlyList<DocumentHeader> foundHeaders, int expectedIndex, int foundIndex)
+        {
+            var validationResult = DocumentHeaderValidationResult.None;
+            var expectedConditionalHeader = expectedHeaders[expectedIndex] as ConditionalHeader;
+            if (expectedConditionalHeader.Operator == ConditionalOperator.OR)
+            {
+                foreach (var header in expectedConditionalHeader.Arguments)
+                {
+                    // Replace conditional header with this argument for validation
+                    expectedHeaders[expectedIndex] = header;
+
+                    if (header is ConditionalHeader)
+                    {
+                        validationResult = ValidateConditionalDocumentHeader(ref expectedHeaders, foundHeaders, expectedIndex, foundIndex);
+                    }
+                    else
+                    {
+                        validationResult = ValidateDocumentHeader(expectedHeaders, foundHeaders, expectedIndex, foundIndex);
+                    }
+
+                    // If header has been found, stop looking
+                    if (validationResult == DocumentHeaderValidationResult.Found ||
+                        validationResult == DocumentHeaderValidationResult.FoundInWrongCase)
+                    {
+                        break;
+                    }
+                }
+            }
+
+            return validationResult;        
+        }
+
+        private List<ExpectedHeader> ExtractAndMergeConditionalHeaderArgumentsInList(IReadOnlyList<object> expectedHeaders)
+        {
+            List<ExpectedHeader> allHeaders = new List<ExpectedHeader>();
+            foreach (var header in expectedHeaders)
+            {
+                if (header is ExpectedHeader)
+                {
+                    allHeaders.Add((ExpectedHeader)header);
+                }
+                else if (header is ConditionalHeader)
+                {
+                    var arguments = ExtractAndMergeConditionalHeaderArgumentsInList(((ConditionalHeader)header).Arguments);
+                    allHeaders.Concat(arguments);
+                }
+            }
+            return allHeaders;
+        }
+
+        private enum DocumentHeaderValidationResult
+        {
+            Found,
+            FoundInWrongCase,
+            ExtraDocumentHeaderFound,
+            RequiredDocumentHeaderMissing,
+            OptionalDocumentHeaderMissing,
+            DocumentHeaderInWrongPosition,
+            None
         }
 
         private void AddHeaderToHierarchy(Stack<Config.DocumentHeader> headerStack, Block block)

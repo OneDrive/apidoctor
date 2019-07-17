@@ -182,7 +182,7 @@ namespace ApiDoctor.Validation.Config
                     }
 
                     // Object is neither of type ExpectedHeader nor ConditionalHeader
-                    throw new JsonReaderException($"Invalid document header definition: {item.First}");
+                    throw new JsonReaderException("Invalid document header definition");
                 }
                 return expectedHeaders;
             }
