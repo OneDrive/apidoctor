@@ -104,10 +104,12 @@ namespace ApiDoctor.ConsoleApp
             RunGitCommand($"commit -m \"{ commitMessage }\"", false);
         }
 
-        public void PushToOrigin(string accesstoken , string repoUrl)
+        public void PushToOrigin(string accessToken , string repoUrl, string branchName)
         {
-            var pushUrl = repoUrl.Replace("github.com", accesstoken+"@github.com");
-            RunGitCommand($"push { pushUrl } --force", false);
+            var pushUrl = repoUrl.Replace("github.com", accessToken + "@github.com");
+            var commandString = $"push {pushUrl} {branchName} --force";
+            Console.WriteLine("Command : "+ commandString);
+            RunGitCommand(commandString, false);
         }
 
         public string GetCurrentBranchName()

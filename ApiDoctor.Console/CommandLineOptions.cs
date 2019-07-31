@@ -638,5 +638,8 @@ namespace ApiDoctor.ConsoleApp
 
         [Option("target-branch", HelpText = "The branch to target when creating a pull request", Required = false)]
         public string TargetBranch { get; set; }
+
+        [Option("source-branch", HelpText = "The branch to create for snippet generation", Required = false)]
+        public string SourceBranch { get; set; }
     }
 }

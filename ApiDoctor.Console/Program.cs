@@ -1915,25 +1915,18 @@ namespace ApiDoctor.ConsoleApp
         /// <returns>The success/failure of the task</returns>
         private static async Task<bool> GenerateSnippetsAsync(GenerateSnippetsOptions options, IssueLogger issues , DocSet docs = null)
         {
-            var helper = new GitHelper(options.GitExecutablePath, options.DocumentationSetPath);
+            //we are not out to validate the documents in this context.
+            options.IgnoreErrors = options.IgnoreWarnings = true;
 
+            var helper = new GitHelper(options.GitExecutablePath, options.DocumentationSetPath);
             //cleanup any changes that are unstaged/uncommited in repo
             helper.ResetChanges();
             helper.CleanupChanges();
 
-            //check out new branch to create new PR on 
-            var branchPrefix = "snippets-generator/";
-            var branchName = helper.GetCurrentBranchName();
-            var snippetsBranchName = branchPrefix + branchName;
-            
-            //do not add the prefix if it is already there
-            if (branchName.Contains(branchPrefix))
-            {
-                snippetsBranchName = branchName;
-            }
+            var branchName = options.SourceBranch ?? "snippets-generator-pipeline";
 
-            helper.CheckoutBranch(snippetsBranchName);
-            FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"Checking out new branch: {snippetsBranchName}");
+            helper.CheckoutBranch(branchName);
+            FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"Checking out new branch: {branchName}");
 
             Uri snippetApiUri = null;
             try
@@ -1960,7 +1953,7 @@ namespace ApiDoctor.ConsoleApp
                 ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
                 var languages = options.Language.Split(',');
 
-                FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"Generating snippets from Snippets API..");
+                FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, "Generating snippets from Snippets API..");
 
                 var parser = new HttpParser();
 
@@ -2009,14 +2002,14 @@ namespace ApiDoctor.ConsoleApp
 
                 //push chages upstream
                 FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"Pushing changes upstream");
-                helper.PushToOrigin( GitHub.AccessToken, GitHub.RepositoryUrl);
+                helper.PushToOrigin( GitHub.AccessToken, GitHub.RepositoryUrl, branchName);
 
                 //if target branch is not specified, default to master
                 var targetBranch = options.TargetBranch ?? "master";
 
                 //Create the Pull request
                 FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"Creating Github Pull Request");
-                await GitHub.CreatePullRequest(snippetsBranchName, targetBranch, $"API Doctor Snippet generation from branch : {branchName}", commitMessage);
+                await GitHub.CreatePullRequest(branchName, targetBranch, $"API Doctor Snippet generation from branch : {branchName}", commitMessage);
 
             }
             else
@@ -2035,147 +2028,137 @@ namespace ApiDoctor.ConsoleApp
         /// <param name="language">Language of programming to insert snippet into</param>
         private static void InjectSnippetIntoFile(MethodDefinition method, string codeSnippet, string language)
         {
-            var lines = File.ReadAllLines(method.SourceFile.FullPath);
-            var requestFirstLine = method.Request.Split(Environment.NewLine.ToCharArray()).First();
+            /* Useful variables */
+            var originalFileContents = File.ReadAllLines(method.SourceFile.FullPath);
+            var methodString = Regex.Replace(method.Identifier, @"[# .()\\/]", "").Replace("_", "-").ToLower();//cleanup the method name
+            var httpRequestString = method.Request.Split(Environment.NewLine.ToCharArray()).First();
+
+            /* Useful file indexes */
             var insertionLine = 0;
-            var parseMode = "FindIdentifierLine";
-            var snippetEndingsCount = 0;
-            var lastBackTicksLine = 0;
+            var requestStartLine = 0;
+            var parseStatus = "FindIdentifierLine";
 
-            for(var currentIndex = 0; currentIndex < lines.Length; currentIndex++)
+            /* Useful File names and data*/
+            const string relativePathFolder = "includes/snippets/";
+            const string includeSdkFileName = "snippets-sdk-documentation-link.md";
+            const string firstTabText = "\r\n# [HTTP](#tab/http)";
+
+            var codeFenceString = language.ToLower().Replace("#", "sharp").Replace("objective-c", "objc");
+            var relativePathSnippetsFolder = relativePathFolder + codeFenceString + "/";
+
+            var snippetFileName = methodString + $"-{codeFenceString}-snippets.md";
+
+            var includeText = $"# [{language}](#tab/{codeFenceString})\r\n" +
+                              $"[!INCLUDE [sample-code](../{relativePathSnippetsFolder}{snippetFileName})]\r\n" +
+                              $"[!INCLUDE [sdk-documentation](../{relativePathFolder}{includeSdkFileName})]\r\n";
+
+            const string includeSdkText = "<!-- markdownlint-disable MD041-->\r\n\r\n" +
+                                          "> Read the [SDK documentation](https://docs.microsoft.com/en-us/graph/sdks/sdks-overview) " +
+                                          "for details on how to [add the SDK](https://docs.microsoft.com/en-us/graph/sdks/sdk-installation) to your project and " +
+                                          "[create an authProvider](https://docs.microsoft.com/en-us/graph/sdks/choose-authentication-providers) instance.";
+
+            /*
+                Scan through the file to find the right line to inject a snippet.
+                We first look for the identifier then the request to save from the case where there are duplicates of the request
+            */
+            for (var currentIndex = 0; currentIndex < originalFileContents.Length; currentIndex++)
             {
-                switch (parseMode)
+                switch (parseStatus)
                 {
-                    case "FindIdentifierLine":
-                        //check if we have found the line with the identifier
-                        if (lines[currentIndex].Length < method.Identifier.Length)
+                    case "FindIdentifierLine"://look for the identifier of the method
+                        if (originalFileContents[currentIndex].Length >= method.Identifier.Length && originalFileContents[currentIndex].Contains(method.Identifier))
                         {
-                            break;
-                        }
-                        if (lines[currentIndex].Contains(method.Identifier))
-                        {
-                            parseMode = "FindRequestLine";
+                            parseStatus = "FindRequestLine";
                         }
                         break;
-                    case "FindRequestLine":
-                        //check if we have found the line with the request
-                        if (lines[currentIndex].Length < requestFirstLine.Length)
+                    case "FindRequestLine"://check if we have found the line with the request with the matching identifier
+                        if (originalFileContents[currentIndex].Length >= httpRequestString.Length && originalFileContents[currentIndex].Equals(httpRequestString))
                         {
-                            break;
-                        }
-                        if (lines[currentIndex].Equals(requestFirstLine))
-                        {
-                            parseMode = "FindEndOfCodeBlock";
+                            parseStatus = "FindRequestStartLine";
                         }
                         break;
-
-                    case "FindEndOfCodeBlock":
-                        if (lines[currentIndex].Trim().Equals("```"))
+                    case "FindRequestStartLine"://scan back to find the line where we can best place the http tab(start of request).
+                        for (var identifierIndex = currentIndex; identifierIndex > 0; identifierIndex--)
                         {
-                            snippetEndingsCount++;
-                            lastBackTicksLine = currentIndex;
+                            if (originalFileContents[identifierIndex].Contains("<!-- {"))
+                            {
+                                requestStartLine = identifierIndex;
+                                currentIndex--;
+                                parseStatus = "FindEndOfCodeBlock";
+                                break;
+                            }
                         }
-
-                        //we have found another request before the response
-                        if ((snippetEndingsCount > 0) && (lines[currentIndex].Contains("\"blockType\": \"request\"")))
-                        {
-                            insertionLine = lastBackTicksLine;
-                            parseMode = "FoundInsertionPoint";
-                        }
-
-                        if (snippetEndingsCount == 2)
+                        break;
+                    case "FindEndOfCodeBlock"://Find the end of the code block
+                        if (originalFileContents[currentIndex].Trim().Equals("```"))
                         {
                             insertionLine = currentIndex;
-                            parseMode = "FoundInsertionPoint";
+                            parseStatus = "FirstTabInsertion";
                         }
                         break;
-
-                    case "FoundInsertionPoint":
+                    case "FirstTabInsertion"://check if we ever inserted any code snippet tab.
+                        if (originalFileContents[currentIndex].Contains("snippets") && originalFileContents[currentIndex].Contains("[sample-code]"))
+                        {
+                            parseStatus = "FindEndOfTabSection";
+                            currentIndex -= 3;//backtrack a few lines so that we can scan the whole tab section
+                        }
+                        break;
+                    case "FindEndOfTabSection"://we have inserted a code snippet tab before so look for end of tab section
+                        if (originalFileContents[currentIndex].Contains("---"))
+                        {
+                            insertionLine = currentIndex - 1;//insert new language just before end of tab area
+                            parseStatus = "AdditionalTabInsertion";//exit this parse mode.
+                        }
+                        if (originalFileContents[currentIndex].Contains($"# [{language}](#tab/{codeFenceString})"))
+                        {
+                            originalFileContents[currentIndex + 1] = $"[!INCLUDE [sample-code](../{relativePathSnippetsFolder}{snippetFileName})]";//update include link. Just in case.
+                            includeText = "";
+                        }
+                        break;
+                    default:
                         //we've found it nothing to do here
                         break;
-
-                    default:
-                        //do nothing
-                        break;
                 }
             }
 
-            if (insertionLine == 0)
+            IEnumerable<string> updatedFileContents;
+            switch (parseStatus)
             {
-                //Just return and do not insert a snippet if we can't find an proper place to inject the snippet
-                return;
-            }
-
-            var codeSnippetHeader = "---\r\ndescription: \"Automatically generated file. DO NOT MODIFY\"\r\n---\r\n";
-            var codeSnippetBlock = codeSnippetHeader + $"\r\n```{language.ToLower().Replace("#", "sharp")}\r\n\r\n{codeSnippet}\r\n\r\n```";
-            var tabText = $"# [{language}](#tab/{language.ToLower().Replace("#", "s")})\r\n";
-
-            //remove any potential spaces or "." signifying file extensions
-            var fileName = Regex.Replace(method.Identifier, @"[# .()\\/]", "");
-            var tempMethodName = fileName;
-            fileName = fileName + $"-{language.Replace("#", "s")}-snippets.md";
-            var includeSdkFileName = "snippets_sdk_documentation_link.md";
-
-            //insert include text to original file
-            var includeLink = "[!INCLUDE [sample-code](../includes/" + fileName + ")]";
-            var includeText = tabText + includeLink;
-            var includeSdkLink = "[!INCLUDE [sdk-documentation](../includes/" + includeSdkFileName + ")]"; ;
-            var includeSdkText = "<!-- markdownlint-disable MD041-->\r\n\r\n" +
-                                  "> Read the [SDK documentation](https://docs.microsoft.com/en-us/graph/sdks/sdks-overview) " +
-                                 "for details on how to [add the SDK](https://docs.microsoft.com/en-us/graph/sdks/sdk-installation) to your project and " +
-                                 "[create an authProvider](https://docs.microsoft.com/en-us/graph/sdks/choose-authentication-providers) instance.\r\n";
-
-            var sampleCodeTitle = "SDK sample code";
-
-            //check if we have ever injected a snippet
-            bool everInserted = false;
-            for (var checkIndex = insertionLine; (checkIndex < lines.Length - 3) && (everInserted == false); checkIndex++)
-            {
-                if (lines[checkIndex].Contains(sampleCodeTitle) && (lines[checkIndex + 2].Contains(tempMethodName) || lines[checkIndex + 3].Contains(tempMethodName)))
+                case "FirstTabInsertion":
                 {
-                    everInserted = true;
-                    insertionLine = checkIndex - 1;
+                    includeText = $"{includeText}\r\n---\r\n";//append end of tab section
+
+                    /* Add the include link at the specified index together with the first tab */
+                    updatedFileContents = FileSplicer(originalFileContents, insertionLine, includeText);//inject the include text
+                    updatedFileContents = FileSplicer(updatedFileContents.ToArray(), requestStartLine-1, firstTabText);//inject the first tab section
+
+                    /* DUMP THE SDK LINK FILE */
+                    var sdkLinkDirectory = Directory.GetParent(Path.GetDirectoryName(method.SourceFile.FullPath)) + "/" + relativePathFolder;
+                    Directory.CreateDirectory(sdkLinkDirectory);
+                    File.WriteAllText(sdkLinkDirectory + "/" + includeSdkFileName, includeSdkText);
+                    break;
                 }
+                case "AdditionalTabInsertion":
+                    /* Add the include link at the specified index */
+                    updatedFileContents = string.IsNullOrEmpty(includeText) ? originalFileContents : FileSplicer(originalFileContents, insertionLine, includeText);
+                    break;
+                default:
+                    //Just return and do not insert a snippet if we can't find an proper place to inject the snippet
+                    return;
             }
 
-            if (everInserted == false)
-            {
+            /* DUMP THE INJECTIONS*/
+            File.WriteAllLines(method.SourceFile.FullPath, updatedFileContents);
 
-                includeText = $"#### {sampleCodeTitle}\r\n\r\n{includeText}\r\n\r\n---\r\n\r\n";
-                includeText = includeText + includeSdkLink; 
-                var final = FileSplicer(lines, insertionLine, includeText);
-                File.WriteAllLines(method.SourceFile.FullPath, final);
-                var sdkLinkDirectory = Directory.GetParent(Path.GetDirectoryName(method.SourceFile.FullPath)) + "/includes/";
-                Directory.CreateDirectory(sdkLinkDirectory);
-                File.WriteAllText(sdkLinkDirectory + "/" + includeSdkFileName, includeSdkText);
-            }
-            else
-            {
-                //Snippets injections exist. But now check if this specific one has happened  before.
-                var shouldUpdate = true;
+            /* DUMP THE CODE SNIPPET FILE */
+            var snippetFileContents = "---\r\ndescription: \"Automatically generated file. DO NOT MODIFY\"\r\n---\r\n" +    //header
+                                      $"\r\n```{codeFenceString}\r\n" +     //code fence
+                                      $"\r\n{codeSnippet}\r\n" +            //generated snippet
+                                      "\r\n```";                            //closing fence
+            var directory = Directory.GetParent(Path.GetDirectoryName(method.SourceFile.FullPath)) + "/" + relativePathSnippetsFolder;
+            Directory.CreateDirectory(directory);//Make sure snippet file directory exists
+            File.WriteAllText(directory + "/" + snippetFileName, snippetFileContents);//write snippet to file
 
-                for (var checkIndex = insertionLine; (checkIndex < lines.Length) && (shouldUpdate == true); checkIndex++)
-                {
-                    if (lines[checkIndex].Contains("---"))//we have reached end of tab section so no need to continue
-                        break;
-
-                    if (lines[checkIndex].Equals(includeLink))//the include exists no need to add it again
-                        shouldUpdate = false;
-                }
-
-                if (shouldUpdate)
-                {
-                    //save the changes to disk
-                    var final = FileSplicer(lines, insertionLine + 1, includeText);
-                    File.WriteAllLines(method.SourceFile.FullPath, final);
-                }
-            }
-
-            //sort out where will write the snippet to by creating the directory if it does not exist.
-            var directory = Directory.GetParent(Path.GetDirectoryName(method.SourceFile.FullPath)) + "/includes/";
-            Directory.CreateDirectory(directory);
-            //write snippet to file
-            File.WriteAllText(directory + "/" + fileName, codeSnippetBlock);
         }
 
         /// <summary>
