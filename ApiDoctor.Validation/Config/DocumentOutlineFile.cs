@@ -80,8 +80,13 @@ namespace ApiDoctor.Validation.Config
         [JsonProperty("headers")]
         public List<DocumentHeader> ChildHeaders { get; set; }
 
-        internal bool Matches(DocumentHeader found, bool ignoreCase = false)
+        internal bool Matches(DocumentHeader found, bool ignoreCase = false, bool checkStringDistance = false)
         {
+            if (checkStringDistance)
+            {
+                return IsMisspelt(found);
+            }
+
             return this.Level == found.Level && DoTitlesMatch(this.Title, found.Title, ignoreCase);
         }
 
@@ -96,6 +101,10 @@ namespace ApiDoctor.Validation.Config
             if (expectedTitle.StartsWith("* ") && foundTitle.EndsWith(expectedTitle.Substring(2), comparisonType)) return true;
             if (expectedTitle.EndsWith(" *") && foundTitle.StartsWith(expectedTitle.Substring(0, expectedTitle.Length - 2), comparisonType)) return true;
             return false;
+        }
+        internal bool IsMisspelt(DocumentHeader found)
+        {
+            return this.Level == found.Level && this.Title.StringDistance(found.Title) < 5;
         }
 
         public override string ToString()
