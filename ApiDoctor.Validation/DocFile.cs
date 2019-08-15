@@ -196,7 +196,7 @@ namespace ApiDoctor.Validation
         protected DocFile()
         {
             this.ContentOutline = new List<string>();
-            this.DocumentHeaders = new List<Config.DocumentHeader>();
+            this.DocumentHeaders = new List<DocumentHeader>();
         }
 
         public DocFile(string basePath, string relativePath, DocSet parent)
@@ -206,7 +206,7 @@ namespace ApiDoctor.Validation
             this.FullPath = Path.Combine(basePath, relativePath.Substring(1));
             this.DisplayName = relativePath;
             this.Parent = parent;
-            this.DocumentHeaders = new List<Config.DocumentHeader>();
+            this.DocumentHeaders = new List<DocumentHeader>();
         }
 
         #endregion
@@ -678,18 +678,18 @@ namespace ApiDoctor.Validation
         public void SetExpectedDocumentHeaders()
         {
             var documentOutline = this.Parent.DocumentStructure;
-            switch (this.DocType)
+            switch (this.DocumentPageType)
             {
-                case DocumentType.ApiPageType:
+                case PageType.ApiPageType:
                     this.ExpectedDocumentHeaders = documentOutline.ApiPageType;
                     break;
-                case DocumentType.ResourcePageType:
+                case PageType.ResourcePageType:
                     this.ExpectedDocumentHeaders = documentOutline.ResourcePageType;
                     break;
-                case DocumentType.EnumPageType:
+                case PageType.EnumPageType:
                     this.ExpectedDocumentHeaders = documentOutline.EnumPageType;
                     break;
-                case DocumentType.ConceptualPageType:
+                case PageType.ConceptualPageType:
                     this.ExpectedDocumentHeaders = documentOutline.ConceptualPageType;
                     break;
                 default:
