@@ -97,7 +97,7 @@ namespace ApiDoctor.Validation
 
         public MetadataValidationConfigs MetadataValidationConfigs { get; internal set; }
 
-        public DocumentOutlineFile DocumentStructure { get; internal set; }
+        public DocumentOutlineFile DocumentStructure { get; internal set; } = new DocumentOutlineFile();
 
         public LinkValidationConfigFile LinkValidationConfig { get; private set; }
 

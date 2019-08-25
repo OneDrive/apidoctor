@@ -34,18 +34,26 @@ namespace ApiDoctor.Validation.Config
     public class DocumentOutlineFile : ConfigFile
     {
         [JsonProperty("apiPageType"), JsonConverter(typeof(DocumentHeaderJsonConverter))]
-        public List<object> ApiPageType { get; set; } = new List<object>();
+        public List<object> ApiPageType { get; set; }
 
         [JsonProperty("resourcePageType"), JsonConverter(typeof(DocumentHeaderJsonConverter))]
-        public List<object> ResourcePageType { get; set; } = new List<object>();
+        public List<object> ResourcePageType { get; set; }
 
         [JsonProperty("conceptualPageType"), JsonConverter(typeof(DocumentHeaderJsonConverter))]
-        public List<object> ConceptualPageType { get; set; } = new List<object>();
+        public List<object> ConceptualPageType { get; set; }
 
         [JsonProperty("enumPageType"), JsonConverter(typeof(DocumentHeaderJsonConverter))]
-        public List<object> EnumPageType { get; set; } = new List<object>();
+        public List<object> EnumPageType { get; set; }
 
         public override bool IsValid => this.ApiPageType.Any() || this.ResourcePageType.Any() || this.ConceptualPageType.Any() || this.EnumPageType.Any();
+
+        public DocumentOutlineFile()
+        {
+            ApiPageType = new List<object>();
+            ResourcePageType = new List<object>();
+            ConceptualPageType = new List<object>();
+            EnumPageType = new List<object>();
+        }
     }
 
     public class DocumentHeader

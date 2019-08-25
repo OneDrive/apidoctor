@@ -732,22 +732,54 @@ namespace ApiDoctor.Validation
         {
             int expectedIndex = 0;
             int foundIndex = 0;
+            int multiplesFound = 0;
 
             while (expectedIndex < expectedHeaders.Count && foundIndex < foundHeaders.Count)
             {
-                var expected = expectedHeaders[expectedIndex];
-                var found = foundHeaders[foundIndex];
+                DocumentHeaderValidationResult result = ValidateDocumentHeader(expectedHeaders, foundHeaders, expectedIndex, foundIndex);
 
-                DocumentHeaderValidationResult result;
-                if (expected is ConditionalHeader)
-                    result = ValidateConditionalDocumentHeader(ref expectedHeaders, foundHeaders, expectedIndex, foundIndex);                
-                else
-                    result = ValidateDocumentHeader(expectedHeaders, foundHeaders, expectedIndex, foundIndex);
+                var found = foundHeaders[foundIndex];
+                var expected = expectedHeaders[expectedIndex] as ExpectedHeader;
+
+                // multiple headers expected for a header definition
+                if (expected.Multiple)
+                {
+                    if (result == DocumentHeaderValidationResult.Found)
+                    {
+                        ValidateDocumentStructure(expected.ChildHeaders, found.ChildHeaders, issues);
+                        multiplesFound++;
+                        foundIndex++;
+                        continue;
+                    }
+
+                    if (result == DocumentHeaderValidationResult.FoundInWrongCase || result == DocumentHeaderValidationResult.MisspeltDocumentHeader)
+                    {
+                        multiplesFound++;
+                        foundIndex++;
+                        continue;
+                    }
+
+                    if (result == DocumentHeaderValidationResult.RequiredDocumentHeaderMissing || result == DocumentHeaderValidationResult.OptionalDocumentHeaderMissing)
+                    {
+                        if (multiplesFound == 1)
+                        {
+                            issues.Error(ValidationErrorCode.DocumentHeaderInWrongCase, $"Multiple headers expected but only one was found: {found.Title}");
+                        }
+
+                        if (multiplesFound > 0)
+                        {
+                            expectedIndex++;
+                            continue;
+                        }
+                        // reset the multiple headers counter
+                        multiplesFound = 0;
+                    }
+                }
 
                 switch (result)
                 {
                     case DocumentHeaderValidationResult.Found:
-                        ValidateDocumentStructure(((ExpectedHeader)expected).ChildHeaders, found.ChildHeaders, issues);
+                        ValidateDocumentStructure(expected.ChildHeaders, found.ChildHeaders, issues);
                         expectedIndex++;
                         foundIndex++;
                         break;
@@ -759,7 +791,7 @@ namespace ApiDoctor.Validation
                         break;
 
                     case DocumentHeaderValidationResult.MisspeltDocumentHeader:
-                        issues.Error(ValidationErrorCode.MisspeltDocumentHeader, $"Found header: {found.Title}. Did you mean: {((ExpectedHeader)expected).Title}?");
+                        issues.Error(ValidationErrorCode.MisspeltDocumentHeader, $"Found header: {found.Title}. Did you mean: {expected.Title}?");
                         expectedIndex++;
                         foundIndex++;
                         break;
@@ -780,7 +812,7 @@ namespace ApiDoctor.Validation
                         break;
 
                     case DocumentHeaderValidationResult.RequiredDocumentHeaderMissing:
-                        issues.Error(ValidationErrorCode.RequiredDocumentHeaderMissing, $"A required document header is missing from the document: {((ExpectedHeader)expected).Title}");
+                        issues.Error(ValidationErrorCode.RequiredDocumentHeaderMissing, $"A required document header is missing from the document: {expected.Title}");
                         expectedIndex++;
                         break;
 
@@ -796,7 +828,7 @@ namespace ApiDoctor.Validation
 
             for (int i = foundIndex; i < foundHeaders.Count; i++)
             {
-                issues.Warning(ValidationErrorCode.ExtraDocumentHeaderFound, $"An extraa document header was found: {foundHeaders[i].Title}");
+                issues.Warning(ValidationErrorCode.ExtraDocumentHeaderFound, $"An extra document header was found: {foundHeaders[i].Title}");
             }
 
             for (int i = expectedIndex; i < expectedHeaders.Count; i++)
@@ -813,13 +845,18 @@ namespace ApiDoctor.Validation
 
                 if (!ContainsMatchingDocumentHeader(missingHeader, foundHeaders, true, true) && missingHeader.Required)
                 {
-                    issues.Error(ValidationErrorCode.RequiredDocumentHeaderMissing, $"Aa required document header is missing from the document: {missingHeader.Title}");
+                    issues.Error(ValidationErrorCode.RequiredDocumentHeaderMissing, $"A required document header is missing from the document: {missingHeader.Title}");
                 }
             }
         }
 
         private DocumentHeaderValidationResult ValidateDocumentHeader(List<object> expectedHeaders, IReadOnlyList<DocumentHeader> foundHeaders, int expectedIndex, int foundIndex)
         {
+            if (expectedHeaders[expectedIndex] is ConditionalHeader)
+            {
+                return ValidateConditionalDocumentHeader(expectedHeaders, foundHeaders, expectedIndex, foundIndex);
+            }
+
             var found = foundHeaders[foundIndex];
             var expected = expectedHeaders[expectedIndex] as ExpectedHeader;
 
@@ -841,7 +878,7 @@ namespace ApiDoctor.Validation
             }
 
             var mergedExpectedHeaders = ExtractAndMergeConditionalHeaderArgumentsInList(expectedHeaders);
-            // Expected doesn't match found, check if found is in wrong position or is extra document
+            // Expected doesn't match found, check if found is in wrong position or is extra header
             if (!ContainsMatchingDocumentHeader(found, mergedExpectedHeaders, true))
             {
                 // Check if header has been misspelt and is in wrong position
@@ -874,7 +911,7 @@ namespace ApiDoctor.Validation
             }
         }
 
-        private DocumentHeaderValidationResult ValidateConditionalDocumentHeader(ref List<object> expectedHeaders, IReadOnlyList<DocumentHeader> foundHeaders, int expectedIndex, int foundIndex)
+        private DocumentHeaderValidationResult ValidateConditionalDocumentHeader(List<object> expectedHeaders, IReadOnlyList<DocumentHeader> foundHeaders, int expectedIndex, int foundIndex)
         {
             var validationResult = DocumentHeaderValidationResult.None;
             var expectedConditionalHeader = expectedHeaders[expectedIndex] as ConditionalHeader;
@@ -884,15 +921,7 @@ namespace ApiDoctor.Validation
                 {
                     // Replace conditional header with this argument for validation
                     expectedHeaders[expectedIndex] = header;
-
-                    if (header is ConditionalHeader)
-                    {
-                        validationResult = ValidateConditionalDocumentHeader(ref expectedHeaders, foundHeaders, expectedIndex, foundIndex);
-                    }
-                    else
-                    {
-                        validationResult = ValidateDocumentHeader(expectedHeaders, foundHeaders, expectedIndex, foundIndex);
-                    }
+                    validationResult = ValidateDocumentHeader(expectedHeaders, foundHeaders, expectedIndex, foundIndex);
 
                     // If header has been found, stop looking
                     if (validationResult == DocumentHeaderValidationResult.Found ||
@@ -902,7 +931,13 @@ namespace ApiDoctor.Validation
                     }
                 }
             }
+            else if (expectedConditionalHeader.Operator == ConditionalOperator.AND)
+            {
+                expectedHeaders[expectedIndex] = expectedConditionalHeader.Arguments.First();
+                expectedHeaders.InsertRange(expectedIndex + 1, expectedConditionalHeader.Arguments.Skip(1));
 
+                validationResult = ValidateDocumentHeader(expectedHeaders, foundHeaders, expectedIndex, foundIndex);
+            }
             return validationResult;        
         }
 
