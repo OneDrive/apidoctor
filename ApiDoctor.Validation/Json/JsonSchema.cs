@@ -27,10 +27,12 @@ namespace ApiDoctor.Validation.Json
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Globalization;
     using System.Linq;
     using ApiDoctor.Validation.Error;
     using ApiDoctor.Validation.Http;
+    using ApiDoctor.Validation.OData;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
 
@@ -286,6 +288,14 @@ namespace ApiDoctor.Validation.Json
             {
                 missingProperties.Remove(property.Name);
 
+                if (options?.IgnorablePropertyTypes != null && property?.Type?.CustomTypeName != null)
+                {
+                    if (options.IgnorablePropertyTypes.Contains(property.Type.CustomTypeName.TypeOnly()))
+                    {
+                        continue;
+                    }
+                }
+
                 // This detects bad types, extra properties, etc.
                 if (null != options && (property.Type.IsCollection || property.Type.IsObject))
                 {
@@ -381,6 +391,10 @@ namespace ApiDoctor.Validation.Json
         /// </summary>
         private PropertyValidationOutcome ValidateProperty(ParameterDefinition inputProperty, Dictionary<string, JsonSchema> schemas, IssueLogger issues, ValidationOptions options)
         {
+            //if (inputProperty.Name == "sendInvitationStatus")
+            //{
+            //    Debugger.Launch();
+            //}
             if (this.ExpectedProperties.ContainsKey(inputProperty.Name))
             {
                 // The property was expected to be found in this schema! Yay.
@@ -475,6 +489,13 @@ namespace ApiDoctor.Validation.Json
             }
             else
             {
+                // Debugger.Launch();
+                // This else only get hits for "@Odata.type" property, and it will be skipped by this "fake" ignorableUndocumentedProperties which is in
+                // C:\Git\apidocs\docs\rest-api\config\oneapi-design-v1.json - ignorableProperties
+
+                // It's funny that only this branch has "UndocumentedPropertyWarning" result, the previous if only check for the "type" of property.
+
+
                 // Check to see if this property is on the ignorable list
                 string[] ignorableUndocumentedProperties = this.OriginalResource?.SourceFile.Parent.Requirements?.IgnorableProperties;
 
@@ -764,7 +785,7 @@ namespace ApiDoctor.Validation.Json
                     break;
                 case JTokenType.String:
                     var propValue = value.Value<string>();
-                    SimpleDataType customType = ExtensionMethods.ParseSimpleTypeString(propValue.ToLowerInvariant());
+                    SimpleDataType customType = Validation.ExtensionMethods.ParseSimpleTypeString(propValue.ToLowerInvariant());
                     ParameterDataType paramType = (customType != SimpleDataType.None) ? new ParameterDataType(customType) : ParameterDataType.String;
                     param.Type = paramType;
                     break;

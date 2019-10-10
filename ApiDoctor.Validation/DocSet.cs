@@ -94,6 +94,8 @@ namespace ApiDoctor.Validation
 
         public ApiRequirements Requirements { get; internal set; }
 
+        public MetadataValidationConfigs MetadataValidationConfigs { get; internal set; }
+
         public DocumentOutlineFile DocumentStructure { get; internal set; }
 
         public LinkValidationConfigFile LinkValidationConfig { get; private set; }
@@ -138,6 +140,14 @@ namespace ApiDoctor.Validation
             {
                 Console.WriteLine("Using API requirements file: {0}", foundRequirements.SourcePath);
                 this.Requirements = foundRequirements.ApiRequirements;
+            }
+
+            MetadataValidationConfigFile[] documentsValidationConfigs = TryLoadConfigurationFiles<MetadataValidationConfigFile>(this.SourceFolderPath);
+            var foundDocsconfigs = documentsValidationConfigs.FirstOrDefault();
+            if (null != foundDocsconfigs)
+            {
+                Console.WriteLine("Using Documents validation config file: {0}", foundDocsconfigs.SourcePath);
+                this.MetadataValidationConfigs = foundDocsconfigs.MetadataValidationConfigs;
             }
 
             DocumentOutlineFile[] outlines = TryLoadConfigurationFiles<DocumentOutlineFile>(this.SourceFolderPath);
