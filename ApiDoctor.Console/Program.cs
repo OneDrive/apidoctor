@@ -2089,6 +2089,11 @@ namespace ApiDoctor.ConsoleApp
                                 parseStatus = "FindEndOfCodeBlock";
                                 break;
                             }
+                            if (originalFileContents[identifierIndex].Contains("```http") 
+                                && new HttpParser().ParseHttpRequest(method.Request).Method.Equals("GET"))
+                            {
+                                originalFileContents[identifierIndex] = "```msgraph-interactive";
+                            }
                         }
                         break;
                     case "FindEndOfCodeBlock"://Find the end of the code block
