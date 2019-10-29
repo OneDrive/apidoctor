@@ -196,9 +196,7 @@ namespace ApiDoctor.Validation.Json
             options = options ?? new ValidationOptions();
 
             var annotationTruncated = (inputJson.Annotation ?? new CodeBlockAnnotation()).TruncatedResult;
-            options.AllowTruncatedResponses = annotationTruncated
-                ? annotationTruncated
-                : options.AllowTruncatedResponses;
+            options.AllowTruncatedResponses = annotationTruncated || options.AllowTruncatedResponses;
             options.CollectionPropertyName = collectionPropertyName;
 
             return schema.ValidateJson(inputJson, issues, this.registeredSchema, options, expectedJson);
