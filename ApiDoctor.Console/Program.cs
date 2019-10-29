@@ -1860,10 +1860,10 @@ namespace ApiDoctor.ConsoleApp
                     continue;
                 }
 
-                var shouldValidateNameSpace = metadataValidationConfigs?.ModelConfigs?.ValidateNamespace;
+                var modelConfigs = metadataValidationConfigs?.ModelConfigs;
                 var documentedResources = docSet.Resources;
 
-                ResourceDefinition resourceDocumentation = GetResoureDocumentation(resource, documentedResources, shouldValidateNameSpace);
+                ResourceDefinition resourceDocumentation = GetResoureDocumentation(resource, documentedResources, modelConfigs?.ValidateNamespace);
 
                 if (null == resourceDocumentation)
                 {
@@ -1876,7 +1876,17 @@ namespace ApiDoctor.ConsoleApp
                 else
                 {
                     // Verify that this resource matches the documentation
-                    docSet.ResourceCollection.ValidateJsonExample(resource.OriginalMetadata, resource.ExampleText, resourceIssues, new ValidationOptions { RelaxedStringValidation = true, IgnorablePropertyTypes = metadataValidationConfigs?.IgnorableModels, AllowTruncatedResponses = true });
+                    docSet.ResourceCollection.ValidateJsonExample(
+                        resource.OriginalMetadata,
+                        resource.ExampleText,
+                        resourceIssues,
+                        new ValidationOptions
+                        {
+                            RelaxedStringValidation = true,
+                            IgnorablePropertyTypes = metadataValidationConfigs?.IgnorableModels,
+                            AllowTruncatedResponses = modelConfigs?.SkipProprtiesValidation ?? false
+                        }
+                    );
                 }
 
                 results.IncrementResultCount(resourceIssues.Issues);
