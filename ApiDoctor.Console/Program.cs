@@ -33,6 +33,7 @@ namespace ApiDoctor.ConsoleApp
     using System.Text;
     using System.Threading.Tasks;
     using ApiDoctor.DocumentationGeneration;
+    using ApiDoctor.Validation.Config;
     using ApiDoctor.Validation.OData.Transformation;
     using AppVeyor;
     using CommandLine;
@@ -164,6 +165,7 @@ namespace ApiDoctor.ConsoleApp
 
         private static async Task RunInvokedMethodAsync(CommandLineOptions origCommandLineOpts, string invokedVerb, BaseOptions options)
         {
+            Debugger.Launch();
             var issues = new IssueLogger()
             {
 #if DEBUG
@@ -1835,10 +1837,12 @@ namespace ApiDoctor.ConsoleApp
             if (null == docSet)
                 return false;
 
+            MetadataValidationConfigs metadataValidationConfigs = docSet.MetadataValidationConfigs;
+
             const string testname = "validate-service-metadata";
             TestReport.StartTest(testname);
 
-            List<ResourceDefinition> foundResources = ODataParser.GenerateResourcesFromSchemas(schemas, issues);
+            IEnumerable<ResourceDefinition> foundResources = ODataParser.GenerateResourcesFromSchemas(schemas, issues, metadataValidationConfigs);
             CheckResults results = new CheckResults();
 
             foreach (var resource in foundResources)
@@ -1852,11 +1856,20 @@ namespace ApiDoctor.ConsoleApp
                 FancyConsole.VerboseWriteLine();
 
                 // Check if this resource exists in the documentation at all
+                //var matchingDocumentationResource = GetResourceIfDocumented(docSet, resource);
+                if (metadataValidationConfigs?.IgnorableModels?.Contains(resource.Name) == true)
+                {
+                    continue;
+                }
                 ResourceDefinition matchingDocumentationResource = null;
-                var docResourceQuery =
-                    from r in docSet.Resources
-                    where r.Name == resource.Name
-                    select r;
+
+                IEnumerable<ResourceDefinition> docResourceQuery = (metadataValidationConfigs?.ModelConfigs?.ValidateNamespace == false)
+                    ? (from r in docSet.Resources
+                       where r.Name.TypeOnly() == resource.Name.TypeOnly()
+                       select r)
+                    : (from r in docSet.Resources
+                        where r.Name == resource.Name
+                        select r);
                 matchingDocumentationResource = docResourceQuery.FirstOrDefault();
                 if (docResourceQuery.Count() > 1)
                 {
@@ -1867,8 +1880,6 @@ namespace ApiDoctor.ConsoleApp
                         FancyConsole.WriteLine(q.SourceFile.DisplayName);
                     }
                 }
-
-
                 if (null == matchingDocumentationResource)
                 {
                     // Couldn't find this resource in the documentation!
@@ -1878,8 +1889,13 @@ namespace ApiDoctor.ConsoleApp
                 }
                 else
                 {
+                    //if (resource.Name == "sharingInvitation" || resource.ExampleText.Contains("sharingInvitation"))
+                    //{
+                    //    Debugger.Launch();
+                    //}
+
                     // Verify that this resource matches the documentation
-                    docSet.ResourceCollection.ValidateJsonExample(resource.OriginalMetadata, resource.ExampleText, resourceIssues, new ValidationOptions { RelaxedStringValidation = true });
+                    docSet.ResourceCollection.ValidateJsonExample(resource.OriginalMetadata, resource.ExampleText, resourceIssues, new ValidationOptions { RelaxedStringValidation = true, IgnorablePropertyTypes = metadataValidationConfigs.IgnorableModels, AllowTruncatedResponses = true });
                 }
 
                 results.IncrementResultCount(resourceIssues.Issues);
@@ -1912,6 +1928,44 @@ namespace ApiDoctor.ConsoleApp
             docGenerator.GenerateDocumentationFromEntityFrameworkAsync(ef, options.DocumentationSetPath);
 
             return true;
+        }
+
+        private static ResourceDefinition GetResourceIfDocumented(DocSet docSet, ResourceDefinition resource)
+        {
+            MetadataValidationConfigs documentsValidationConfigs = docSet.MetadataValidationConfigs;
+            ResourceDefinition matchingDocumentationResource = null;
+            IEnumerable<ResourceDefinition> docResourceQuery;
+
+            if (documentsValidationConfigs.IgnorableModels.Contains(resource.Name))
+            {
+
+            }
+            if (!documentsValidationConfigs.ModelConfigs.ValidateNamespace)
+            {
+                docResourceQuery =
+                    from r in docSet.Resources
+                    where r.Name.Substring(r.Name.LastIndexOf('.') + 1).ToLower() == resource.Name.Substring(resource.Name.LastIndexOf('.') + 1).ToLower()
+                    select r;
+            }
+            else
+            {
+                docResourceQuery =
+                    from r in docSet.Resources
+                    where r.Name == resource.Name
+                    select r;
+            }
+            matchingDocumentationResource = docResourceQuery.FirstOrDefault();
+            if (docResourceQuery.Count() > 1)
+            {
+                // Log an error about multiple resource definitions
+                FancyConsole.WriteLine("Multiple resource definitions for resource {0} in files:", resource.Name);
+                foreach (var q in docResourceQuery)
+                {
+                    FancyConsole.WriteLine(q.SourceFile.DisplayName);
+                }
+            }
+
+            return matchingDocumentationResource;
         }
 
         private class ParameterComparer : IEqualityComparer<Parameter>, IComparer<Parameter>
