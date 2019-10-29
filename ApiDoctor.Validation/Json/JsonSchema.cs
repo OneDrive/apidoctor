@@ -27,7 +27,6 @@ namespace ApiDoctor.Validation.Json
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics;
     using System.Globalization;
     using System.Linq;
     using ApiDoctor.Validation.Error;
@@ -391,10 +390,6 @@ namespace ApiDoctor.Validation.Json
         /// </summary>
         private PropertyValidationOutcome ValidateProperty(ParameterDefinition inputProperty, Dictionary<string, JsonSchema> schemas, IssueLogger issues, ValidationOptions options)
         {
-            //if (inputProperty.Name == "sendInvitationStatus")
-            //{
-            //    Debugger.Launch();
-            //}
             if (this.ExpectedProperties.ContainsKey(inputProperty.Name))
             {
                 // The property was expected to be found in this schema! Yay.
@@ -489,13 +484,6 @@ namespace ApiDoctor.Validation.Json
             }
             else
             {
-                // Debugger.Launch();
-                // This else only get hits for "@Odata.type" property, and it will be skipped by this "fake" ignorableUndocumentedProperties which is in
-                // C:\Git\apidocs\docs\rest-api\config\oneapi-design-v1.json - ignorableProperties
-
-                // It's funny that only this branch has "UndocumentedPropertyWarning" result, the previous if only check for the "type" of property.
-
-
                 // Check to see if this property is on the ignorable list
                 string[] ignorableUndocumentedProperties = this.OriginalResource?.SourceFile.Parent.Requirements?.IgnorableProperties;
 
