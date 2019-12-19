@@ -60,7 +60,7 @@ namespace ApiDoctor.Validation.OData
             { "Edm.SByte", -12 },
             { "Edm.DateTime", "2014-01-01T00:00:00Z" },
             { "Edm.DateTimeOffset", "2014-01-01T00:00:00Z" },
-            { "Edm.Duration", "P3DT1H" },
+            { "Edm.Duration", "P3Y3M3DT1H3M3S" },
             { "Edm.Time", "00:00:00Z" },
             { "Edm.Guid", "9F328426-8A81-40D1-8F35-D619AA90A12C" }
         };
@@ -213,13 +213,11 @@ namespace ApiDoctor.Validation.OData
 
         private static ResourceDefinition ResourceDefinitionFromType(Schema schema, IEnumerable<Schema> otherSchema, ComplexType ct, IssueLogger issues, MetadataValidationConfigs metadataValidationConfigs)
         {
-            var metadataNamespace = metadataValidationConfigs?.ModelConfigs?.AliasNamespace?? schema.Namespace;
-            var resourceType = string.Concat(metadataNamespace + "." + ct.Name);
-
-            if (!metadataValidationConfigs.ModelConfigs.ValidateNamespace)
-            {
-                resourceType = ct.Name;
-            }
+            var resourceType = BuildResourceTypeIdentifer(
+                schema.Namespace,
+                metadataValidationConfigs?.ModelConfigs?.AliasNamespace,
+                ct.Name,
+                metadataValidationConfigs?.ModelConfigs?.ValidateNamespace);
 
             var annotation = new CodeBlockAnnotation() { ResourceType = resourceType, BlockType = CodeBlockType.Resource };
             var json = BuildJsonExample(ct, otherSchema, metadataValidationConfigs);
@@ -239,16 +237,13 @@ namespace ApiDoctor.Validation.OData
 
             if (!string.IsNullOrWhiteSpace(ct.Namespace))
             {
-                var metadataNamespace = metadataValidationConfigs?.ModelConfigs?.AliasNamespace ?? ct.Namespace;
-                var resourceTypeIdentifier = !string.IsNullOrEmpty(metadataValidationConfigs?.ModelConfigs?.AliasNamespace)
-                    ? $"{metadataNamespace}.{ct.TypeIdentifier}"
-                    : ct.TypeIdentifier;
-                if (metadataValidationConfigs?.ModelConfigs?.ValidateNamespace == false)
-                {
-                    resourceTypeIdentifier = ct.TypeIdentifier;
-                }
+                var resourceType = BuildResourceTypeIdentifer(
+                    ct.Namespace,
+                    metadataValidationConfigs?.ModelConfigs?.AliasNamespace,
+                    ct.TypeIdentifier,
+                    metadataValidationConfigs?.ModelConfigs?.ValidateNamespace);
 
-                propertyExamples.Add("@odata.type", resourceTypeIdentifier);
+                propertyExamples.Add("@odata.type", resourceType);
             }
 
             foreach (var property in ct.Properties.Where(prop => prop.Type != "Edm.Stream"))
@@ -257,6 +252,23 @@ namespace ApiDoctor.Validation.OData
             }
 
             return propertyExamples;
+        }
+
+        private static string BuildResourceTypeIdentifer(string schemaNamespace, string aliasNamespace, string typeIdentifier, bool? validateNamespace)
+        {
+            string resourceTypeIdentifier;
+            if (validateNamespace == true)
+            {
+                resourceTypeIdentifier = string.IsNullOrEmpty(aliasNamespace)
+                    ? $"{schemaNamespace}.{typeIdentifier}"
+                    : $"{aliasNamespace}.{typeIdentifier}";
+            }
+            else
+            {
+                resourceTypeIdentifier = typeIdentifier;
+            }
+
+            return resourceTypeIdentifier;
         }
 
         public static readonly string CollectionPrefix = "Collection(";
