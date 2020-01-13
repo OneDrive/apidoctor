@@ -317,8 +317,16 @@ namespace ApiDoctor.Validation
             string[] items = yamlMetadata.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
             foreach (string item in items)
             {
-                string[] keyValue = item.Split(':');
-                dictionary.Add(keyValue[0].Trim(), keyValue[1].Trim());
+                try
+                {
+                    string[] keyValue = item.Split(':');
+                    dictionary.Add(keyValue[0].Trim(), keyValue[1].Trim());
+                }
+                catch (Exception ex)
+                {
+                    issues.Error(ValidationErrorCode.IncorrectYamlHeaderFormat, $"Incorrect YAML header format after `{dictionary.Keys.Last()}`");
+                    Console.WriteLine($"Error parsing YAML headers: {ex.Message.FirstLineOnly()}");
+                }
             }
 
             List<string> missingHeaders = new List<string>();
