@@ -677,7 +677,9 @@ namespace ApiDoctor.ConsoleApp
 
                 if (string.IsNullOrEmpty(method.ExpectedResponse))
                 {
-                    await TestReport.FinishTestAsync(testName, TestOutcome.Failed, "No response was paired with this request.", printFailuresOnly: options.PrintFailuresOnly);
+                    var message = "No response was paired with this request.";
+                    await TestReport.FinishTestAsync(testName, TestOutcome.Failed, message, printFailuresOnly: options.PrintFailuresOnly);
+                    methodIssues.Error(ValidationErrorCode.UnpairedRequest, message);
                     results.FailureCount++;
                     continue;
                 }

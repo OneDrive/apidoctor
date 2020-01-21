@@ -74,6 +74,7 @@ namespace ApiDoctor.Validation.Error
         MissingAccessToken,
         JsonErrorObjectExpected,
         RequestWasEmptyOrNull,
+        UnpairedRequest,
         InvalidRequestFormat,
         UnsupportedContentType,
         RewriteRequestFailure,
