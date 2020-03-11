@@ -31,6 +31,7 @@ namespace ApiDoctor.Validation.Json
     using System.Linq;
     using ApiDoctor.Validation.Error;
     using ApiDoctor.Validation.Http;
+    using ApiDoctor.Validation.OData;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
 
@@ -285,6 +286,14 @@ namespace ApiDoctor.Validation.Json
             foreach (var property in propertiesOnObject)
             {
                 missingProperties.Remove(property.Name);
+
+                if (options?.IgnorablePropertyTypes != null && property?.Type?.CustomTypeName != null)
+                {
+                    if (options.IgnorablePropertyTypes.Contains(property.Type.CustomTypeName.TypeOnly()))
+                    {
+                        continue;
+                    }
+                }
 
                 // This detects bad types, extra properties, etc.
                 if (null != options && (property.Type.IsCollection || property.Type.IsObject))
@@ -764,7 +773,7 @@ namespace ApiDoctor.Validation.Json
                     break;
                 case JTokenType.String:
                     var propValue = value.Value<string>();
-                    SimpleDataType customType = ExtensionMethods.ParseSimpleTypeString(propValue.ToLowerInvariant());
+                    SimpleDataType customType = Validation.ExtensionMethods.ParseSimpleTypeString(propValue.ToLowerInvariant());
                     ParameterDataType paramType = (customType != SimpleDataType.None) ? new ParameterDataType(customType) : ParameterDataType.String;
                     param.Type = paramType;
                     break;
