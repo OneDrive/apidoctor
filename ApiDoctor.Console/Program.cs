@@ -684,19 +684,11 @@ namespace ApiDoctor.ConsoleApp
                     continue;
                 }
 
-                var parser = new HttpParser();
-
-                try
+                HttpParser.TryParseHttpResponse(method.ExpectedResponse, out HttpResponse expectedResponse, methodIssues);
+                if (expectedResponse != null)
                 {
-                    var expectedResponse = parser.ParseHttpResponse(method.ExpectedResponse);
-
                     method.ValidateResponse(expectedResponse, null, null, methodIssues, new ValidationOptions { RelaxedStringValidation = options.RelaxStringTypeValidation ?? true });
                 }
-                catch (Exception ex)
-                {
-                    methodIssues.Error(ValidationErrorCode.ExceptionWhileValidatingMethod, method.SourceFile.DisplayName, ex);
-                }
-
                 await WriteOutErrorsAndFinishTestAsync(methodIssues, options.SilenceWarnings, "   ", "Passed.", false, testName, "Warnings detected", "Errors detected", printFailuresOnly: options.PrintFailuresOnly);
                 results.IncrementResultCount(methodIssues.Issues);
             }

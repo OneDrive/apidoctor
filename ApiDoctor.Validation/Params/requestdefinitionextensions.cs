@@ -43,26 +43,26 @@ namespace ApiDoctor.Validation.Params
         /// <param name="definition"></param>
         /// <param name="documents"></param>
         /// <returns></returns>
-        public static HttpRequest GetHttpRequest(this BasicRequestDefinition definition, DocSet documents, IServiceAccount account)
+        public static HttpRequest GetHttpRequest(this BasicRequestDefinition definition, DocSet documents, IServiceAccount account, IssueLogger issues)
         {
             HttpRequest foundRequest = null;
             if (!string.IsNullOrEmpty(definition.RawHttpRequest))
             {
-                foundRequest = ParseHttpRequest(definition.RawHttpRequest);
+                foundRequest = ParseHttpRequest(definition.RawHttpRequest, issues);
             }
             else if (!string.IsNullOrEmpty(definition.MethodName))
             {
-                foundRequest = LookupHttpRequestForMethod(definition.MethodName, documents, account);
+                foundRequest = LookupHttpRequestForMethod(definition.MethodName, documents, account, issues);
             }
             else if (!string.IsNullOrEmpty(definition.CannedRequestName))
             {
-                foundRequest = HttpRequestForCannedRequest(definition.CannedRequestName, documents, account);
+                foundRequest = HttpRequestForCannedRequest(definition.CannedRequestName, documents, account, issues);
             }
 
             return foundRequest;
         }
 
-        private static HttpRequest LookupHttpRequestForMethod(string methodName, DocSet docset, IServiceAccount account)
+        private static HttpRequest LookupHttpRequestForMethod(string methodName, DocSet docset, IServiceAccount account, IssueLogger issues)
         {
             var queryForMethod = from m in docset.Methods
                                  where m.Identifier == methodName
@@ -74,13 +74,13 @@ namespace ApiDoctor.Validation.Params
                 throw new Exception(string.Format("Failed to locate method {0} in the docset.", methodName));
             }
 
-            var request = ParseHttpRequest(foundMethod.Request);
+            var request = ParseHttpRequest(foundMethod.Request, issues);
             foundMethod.ModifyRequestForAccount(request, account);
 
             return request;
         }
 
-        private static HttpRequest HttpRequestForCannedRequest(string requestName, DocSet docset, IServiceAccount account)
+        private static HttpRequest HttpRequestForCannedRequest(string requestName, DocSet docset, IServiceAccount account, IssueLogger issues)
         {
             var queryForRequest = from m in docset.CannedRequests
                 where m.Name == requestName
@@ -91,14 +91,13 @@ namespace ApiDoctor.Validation.Params
                 throw new Exception(string.Format("Failed to find canned response {0} in the docset.", requestName));
             }
 
-            return GetHttpRequest(foundRequest, docset, account); ;
+            return GetHttpRequest(foundRequest, docset, account, issues);
 
         }
 
-        private static HttpRequest ParseHttpRequest(string rawHttpRequest)
+        private static HttpRequest ParseHttpRequest(string rawHttpRequest, IssueLogger issues)
         {
-            HttpParser parser = new HttpParser();
-            HttpRequest request = parser.ParseHttpRequest(rawHttpRequest);
+            HttpParser.TryParseHttpRequest(rawHttpRequest, out HttpRequest request, issues);
             return request;
         }
 

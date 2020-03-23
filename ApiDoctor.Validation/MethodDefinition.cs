@@ -78,10 +78,11 @@ namespace ApiDoctor.Validation
             };
             method.Title = method.Identifier;
 
+            var methodIssues = issues.For(method.Identifier);
             try
             {
-                var requestExample = new HttpParser().ParseHttpRequest(request);
-                if (!string.IsNullOrEmpty(requestExample.Body) && requestExample.Body.Contains("{"))
+                HttpParser.TryParseHttpRequest(request, out HttpRequest requestExample, methodIssues);
+                if (!string.IsNullOrEmpty(requestExample?.Body) && requestExample.Body.Contains("{"))
                 {
                     if (string.IsNullOrEmpty(annotation.ResourceType))
                     {
@@ -96,7 +97,7 @@ namespace ApiDoctor.Validation
                         body = part.Body;
                     }
 
-                    var requestBodyResource = new JsonResourceDefinition(annotation, body, source, issues);
+                    var requestBodyResource = new JsonResourceDefinition(annotation, body, source, methodIssues);
                     if (requestBodyResource.Parameters != null)
                     {
                         method.RequestBodyParameters.AddRange(requestBodyResource.Parameters);
@@ -105,7 +106,7 @@ namespace ApiDoctor.Validation
             }
             catch (Exception ex)
             {
-                issues.Warning(ValidationErrorCode.HttpParserError, $"Unable to parse request body resource for method {method.Identifier}", ex);
+                methodIssues.Warning(ValidationErrorCode.HttpParserError, $"Unable to parse request body resource: {ex.Message}");
             }
 
             return method;
@@ -220,13 +221,24 @@ namespace ApiDoctor.Validation
         /// <returns></returns>
         public async Task<ValidationResult<HttpRequest>> GenerateMethodRequestAsync(ScenarioDefinition scenario, DocSet documents, IServiceAccount primaryAccount, IServiceAccount secondaryAccount)
         {
-            var parser = new HttpParser();
-            var request = parser.ParseHttpRequest(this.Request);
+            List<ValidationError> errors = new List<ValidationError>();
+            HttpRequest request = null;
+            try
+            {
+                request = HttpParser.ParseHttpRequest(this.Request);
+            }
+            catch (Exception ex)
+            {
+                errors.Add(
+                        new ValidationError(
+                            ValidationErrorCode.HttpParserError,
+                            "GenerateMethodRequestAsync", ex.Message));
+                return new ValidationResult<HttpRequest>(null, errors);
+            }
+
             AddAccessTokenToRequest(primaryAccount.CreateCredentials(), request);
             AddTestHeaderToRequest(scenario, request);
             AddAdditionalHeadersToRequest(primaryAccount, request);
-
-            List<ValidationError> errors = new List<ValidationError>();
 
             if (null != scenario)
             {
@@ -468,24 +480,16 @@ namespace ApiDoctor.Validation
         /// </summary>
         internal void VerifyRequestFormat(IssueLogger issues)
         {
-            HttpParser parser = new HttpParser();
-            HttpRequest request;
-            try
+            HttpParser.TryParseHttpRequest(this.Request, out HttpRequest request);
+            if (request != null)
             {
-                request = parser.ParseHttpRequest(this.Request);
+                if (null != request.ContentType)
+                {
+                    ValidateContentForType(new MimeContentType(request.ContentType), request.Body, issues);
+                }
+                // Verify API requirements response
+                request.IsRequestValid(this.SourceFile.DisplayName, this.SourceFile.Parent.Requirements, issues);
             }
-            catch (Exception ex)
-            {
-                issues.Error(ValidationErrorCode.HttpParserError, "Exception while parsing HTTP request.", ex);
-                return;
-            }
-
-            if (null != request.ContentType)
-            {
-                ValidateContentForType(new MimeContentType(request.ContentType), request.Body, issues);
-            }
-
-            var verifyApiRequirementsResponse = request.IsRequestValid(this.SourceFile.DisplayName, this.SourceFile.Parent.Requirements, issues.For(this.SourceFile.DisplayName));
         }
 
         private void ValidateContentForType(MimeContentType contentType, string content, IssueLogger issues, bool validateJsonSchema = false)
@@ -607,7 +611,7 @@ namespace ApiDoctor.Validation
                 var responseValidation = actualResponse.IsResponseValid(
                     this.SourceFile.DisplayName,
                     this.SourceFile.Parent.Requirements,
-                    issues.For(this.SourceFile.DisplayName));
+                    issues);
             }
         }
 
@@ -616,11 +620,10 @@ namespace ApiDoctor.Validation
         #region Parameter Parsing
         public void SplitRequestUrl(out string relativePath, out string queryString, out string httpMethod)
         {
-            var parser = new HttpParser();
-            var request = parser.ParseHttpRequest(this.Request);
-            httpMethod = request.Method;
-
-            request.Url.SplitUrlComponents(out relativePath, out queryString);
+            HttpParser.TryParseHttpRequest(this.Request, out HttpRequest request);
+            httpMethod = request?.Method;
+            relativePath = queryString = string.Empty;
+            request?.Url.SplitUrlComponents(out relativePath, out queryString);
         }
         #endregion
 

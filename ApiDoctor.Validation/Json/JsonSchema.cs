@@ -94,12 +94,14 @@ namespace ApiDoctor.Validation.Json
         /// <returns></returns>
         public bool ValidateExpectedResponse(MethodDefinition method, IssueLogger issues)
         {
-            HttpParser parser = new HttpParser();
-            var response = parser.ParseHttpResponse(method.ExpectedResponse);
-
-            JsonExample example = new JsonExample(response.Body, method.ExpectedResponseMetadata);
-            var otherSchemas = new Dictionary<string, JsonSchema>();
-            return this.ValidateJson(example, issues, otherSchemas, null);
+            HttpParser.TryParseHttpResponse(method.ExpectedResponse, out HttpResponse response, issues);
+            if (response != null)
+            {
+                JsonExample example = new JsonExample(response.Body, method.ExpectedResponseMetadata);
+                var otherSchemas = new Dictionary<string, JsonSchema>();
+                return this.ValidateJson(example, issues, otherSchemas, null);
+            }
+            return false;
         }
 
         /// <summary>

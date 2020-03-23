@@ -985,19 +985,28 @@ namespace ApiDoctor.Validation
             }
             else
             {
-                // maybe the methods are really all the same and the dupes are just different examples
-                var distinctMethodNames = foundMethods.Select(m => new Http.HttpParser().ParseHttpRequest(m.Request).Url).Select(
-                    url =>
-                    {
-                        var method = url.Substring(url.LastIndexOf('/') + 1);
-                        var endIndex = method.IndexOfAny(new[] { '(', '?', '/' });
-                        if (endIndex != -1)
+                int distinctMethodNames = 0;
+                try
+                {
+                    // maybe the methods are really all the same and the dupes are just different examples
+                    distinctMethodNames = foundMethods.Select(m => Http.HttpParser.ParseHttpRequest(m.Request).Url).Select(
+                        url =>
                         {
-                            method = method.Substring(0, endIndex);
-                        }
+                            var method = url.Substring(url.LastIndexOf('/') + 1);
+                            var endIndex = method.IndexOfAny(new[] { '(', '?', '/' });
+                            if (endIndex != -1)
+                            {
+                                method = method.Substring(0, endIndex);
+                            }
 
-                        return method;
-                    }).Distinct().Count();
+                            return method;
+                        }).Distinct().Count();
+                }
+                catch (Exception ex)
+                {
+                    issues.Error(ValidationErrorCode.HttpParserError, $"Exception while parsing HTTP request", ex);
+                }
+                
                 if (distinctMethodNames == 1)
                 {
                     foreach (var method in foundMethods)
@@ -1189,7 +1198,7 @@ namespace ApiDoctor.Validation
                     }
                 case CodeBlockType.Request:
                     {
-                        var method = MethodDefinition.FromRequest(code.Content, annotation, this, issues.For("RequestBlock"));
+                        var method = MethodDefinition.FromRequest(code.Content, annotation, this, issues);
                         if (string.IsNullOrEmpty(method.Identifier))
                         {
                             method.Identifier = string.Format("{0} #{1}", this.DisplayName, this.requests.Count);
