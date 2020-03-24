@@ -178,6 +178,20 @@ namespace ApiDoctor.Validation
             this.bookmarks.AddRange(md.HeaderIdsInDocument);
         }
 
+        protected string GetBlockContent(Block block)
+        {
+            try
+            {
+                if (block.Content == null)
+                    return string.Empty;
+                return block.Content;
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
+
         protected virtual string PostProcessHtmlTags(string inputHtml, string tags)
         {
             TagProcessor tagProcessor = new TagProcessor(tags, this.Parent?.SourceFolderPath);
@@ -388,8 +402,10 @@ namespace ApiDoctor.Validation
         protected string PreviewOfBlockContent(Block block)
         {
             if (block == null) return string.Empty;
-            if (block.Content == null) return string.Empty;
-
+            var blockContent = GetBlockContent(block);
+            if (blockContent == string.Empty)
+                return blockContent;
+            
             const int previewLength = 35;
 
             string contentPreview = block.Content.Length > previewLength ? block.Content.Substring(0, previewLength) : block.Content;
@@ -1198,7 +1214,7 @@ namespace ApiDoctor.Validation
                     }
                 case CodeBlockType.Request:
                     {
-                        var method = MethodDefinition.FromRequest(code.Content, annotation, this, issues);
+                        var method = MethodDefinition.FromRequest(GetBlockContent(code), annotation, this, issues);
                         if (string.IsNullOrEmpty(method.Identifier))
                         {
                             method.Identifier = string.Format("{0} #{1}", this.DisplayName, this.requests.Count);
@@ -1220,11 +1236,12 @@ namespace ApiDoctor.Validation
                                 MethodDefinition pairedRequest = (from m in this.requests where m.Identifier == requestMethodName select m).FirstOrDefault();
                                 if (pairedRequest != null)
                                 {
-                                    pairedRequest.AddExpectedResponse(code.Content, annotation);
+                                    pairedRequest.AddExpectedResponse(GetBlockContent(code), annotation);
                                     responses.Add(pairedRequest);
                                 }
                                 else
                                 {
+                                    //issues.Error(ValidationErrorCode.MarkdownParserError, $"Unable to locate the corresponding request for response block: {annotation.MethodName}. Requests must be defined before a response.");
                                     detectedErrors.Add(new ValidationError(ValidationErrorCode.MarkdownParserError, this.DisplayName, "Unable to locate the corresponding request for response block: {0}. Requests must be defined before a response.", annotation.MethodName));
                                 }
                             }
@@ -1237,18 +1254,19 @@ namespace ApiDoctor.Validation
                             {
                                 try
                                 {
-                                    pairedRequest.AddExpectedResponse(code.Content, annotation);
+                                    pairedRequest.AddExpectedResponse(GetBlockContent(code), annotation);
                                     responses.Add(pairedRequest);
                                 }
                                 catch (Exception ex)
                                 {
                                     detectedErrors.Add(new ValidationError(ValidationErrorCode.MarkdownParserError, this.DisplayName, "Unable to pair response with request {0}: {1}.", annotation.MethodName, ex.Message));
+                                    //issues.Error(ValidationErrorCode.MarkdownParserError, $"Unable to pair response with request {annotation.MethodName}", ex);
                                 }
 
                             }
                             else
                             {
-                                throw new InvalidOperationException(string.Format("Unable to locate the corresponding request for response block: {0}. Requests must be defined before a response.", annotation.MethodName));
+                                issues.Error(ValidationErrorCode.MarkdownParserError, $"Unable to locate the corresponding request for response block: {annotation.MethodName}. Requests must be defined before a response.");
                             }
                         }
 

@@ -102,14 +102,14 @@ namespace ApiDoctor.Validation.Error
         public void Error(ValidationErrorCode code, string message, Exception exception = null, [CallerLineNumber]int lineNumber = 0)
         {
             LaunchDebuggerIfNeeded(lineNumber);
-            AddIfNeeded(new ValidationError(code, this.Source, message + $"\r\n{exception}"), this.errors);
+            AddIfNeeded(new ValidationError(code, this.Source, message + (exception == null ? "" : $"\r\n    {exception.Message}")), this.errors);
             this.IssuesInCurrentScope++;
         }
 
         public void Warning(ValidationErrorCode code, string message, Exception exception = null, [CallerLineNumber]int lineNumber = 0)
         {
             LaunchDebuggerIfNeeded(lineNumber);
-            AddIfNeeded(new ValidationWarning(code, this.Source, message + $"\r\n{exception}"), this.warnings);
+            AddIfNeeded(new ValidationWarning(code, this.Source, message + (exception == null ? "" : $"\r\n    {exception.Message}")), this.warnings);
             this.IssuesInCurrentScope++;
         }
 

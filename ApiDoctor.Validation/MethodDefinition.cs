@@ -106,7 +106,7 @@ namespace ApiDoctor.Validation
             }
             catch (Exception ex)
             {
-                methodIssues.Warning(ValidationErrorCode.HttpParserError, $"Unable to parse request body resource: {ex.Message}");
+                methodIssues.Warning(ValidationErrorCode.HttpParserError, "Unable to parse request body resource", ex);
             }
 
             return method;

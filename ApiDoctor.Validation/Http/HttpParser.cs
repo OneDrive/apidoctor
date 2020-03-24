@@ -161,6 +161,11 @@ namespace ApiDoctor.Validation.Http
         /// <returns></returns>
         public static HttpResponse ParseHttpResponse(string responseString)
         {
+            if (string.IsNullOrWhiteSpace(responseString))
+            {
+                throw new ArgumentException("Response was empty or whitespace only. Not a valid HTTP response.");
+            }
+
             var reader = new StringReader(responseString);
             string line;
             var mode = ParserMode.FirstLine;
@@ -228,7 +233,7 @@ namespace ApiDoctor.Validation.Http
             catch (Exception ex)
             {
                 if (issues != null)
-                    issues.Error(ValidationErrorCode.HttpParserError, $"Exception while parsing HTTP response: {ex.Message}");
+                    issues.Error(ValidationErrorCode.HttpParserError, $"Exception while parsing HTTP response", ex);
                 return false;
             }
         }

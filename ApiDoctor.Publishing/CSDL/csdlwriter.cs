@@ -713,7 +713,7 @@ namespace ApiDoctor.Publishing.CSDL
                     issues.Message($"Failed to resolve the following paths after {attempts} attempts:");
                     foreach (var kvp in pathsToRetry)
                     {
-                        issues.Warning(ValidationErrorCode.Unknown, $"Couldn't serialize request for path {kvp.Key} into EDMX: {kvp.Value.Message}");
+                        issues.Warning(ValidationErrorCode.Unknown, $"Couldn't serialize request for path {kvp.Key} into EDMX", kvp.Value);
                     }
 
                     break;

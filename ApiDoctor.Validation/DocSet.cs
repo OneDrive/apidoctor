@@ -578,7 +578,7 @@ namespace ApiDoctor.Validation
                 var responseValidation = actualResponse.IsResponseValid(
                     method.SourceFile.DisplayName,
                     method.SourceFile.Parent.Requirements,
-                    issues.For(method.SourceFile.DisplayName));
+                    issues);
             }
         }
 

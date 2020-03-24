@@ -675,11 +675,10 @@ namespace ApiDoctor.ConsoleApp
 
                 TestReport.StartTest(testName, method.SourceFile.DisplayName, skipPrintingHeader: options.PrintFailuresOnly);
 
-                if (string.IsNullOrEmpty(method.ExpectedResponse))
+                if (method.ExpectedResponse == null)
                 {
-                    var message = "No response was paired with this request.";
-                    await TestReport.FinishTestAsync(testName, TestOutcome.Failed, message, printFailuresOnly: options.PrintFailuresOnly);
-                    methodIssues.Error(ValidationErrorCode.UnpairedRequest, message);
+                    methodIssues.Error(ValidationErrorCode.UnpairedRequest, "Unable to locate the corresponding response for this method. Missing or incorrect code block annotation.");
+                    await TestReport.FinishTestAsync(testName, TestOutcome.Failed, "No response was paired with this request.", printFailuresOnly: options.PrintFailuresOnly);
                     results.FailureCount++;
                     continue;
                 }
