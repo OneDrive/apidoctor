@@ -94,7 +94,8 @@ namespace ApiDoctor.Validation.Json
         /// <returns></returns>
         public bool ValidateExpectedResponse(MethodDefinition method, IssueLogger issues)
         {
-            HttpParser.TryParseHttpResponse(method.ExpectedResponse, out HttpResponse response, issues);
+            HttpResponse response;
+            HttpParser.TryParseHttpResponse(method.ExpectedResponse, out response, issues);
             if (response != null)
             {
                 JsonExample example = new JsonExample(response.Body, method.ExpectedResponseMetadata);

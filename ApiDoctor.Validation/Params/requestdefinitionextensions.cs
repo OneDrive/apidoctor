@@ -97,7 +97,8 @@ namespace ApiDoctor.Validation.Params
 
         private static HttpRequest ParseHttpRequest(string rawHttpRequest, IssueLogger issues)
         {
-            HttpParser.TryParseHttpRequest(rawHttpRequest, out HttpRequest request, issues);
+            HttpRequest request;
+            HttpParser.TryParseHttpRequest(rawHttpRequest, out request, issues);
             return request;
         }
 

@@ -81,7 +81,8 @@ namespace ApiDoctor.Validation
             var methodIssues = issues.For(method.Identifier);
             try
             {
-                HttpParser.TryParseHttpRequest(request, out HttpRequest requestExample, methodIssues);
+                HttpRequest requestExample;
+                HttpParser.TryParseHttpRequest(request, out requestExample, methodIssues);
                 if (!string.IsNullOrEmpty(requestExample?.Body) && requestExample.Body.Contains("{"))
                 {
                     if (string.IsNullOrEmpty(annotation.ResourceType))
@@ -480,7 +481,8 @@ namespace ApiDoctor.Validation
         /// </summary>
         internal void VerifyRequestFormat(IssueLogger issues)
         {
-            HttpParser.TryParseHttpRequest(this.Request, out HttpRequest request);
+            HttpRequest request;
+            HttpParser.TryParseHttpRequest(this.Request, out request);
             if (request != null)
             {
                 if (null != request.ContentType)
@@ -620,7 +622,8 @@ namespace ApiDoctor.Validation
         #region Parameter Parsing
         public void SplitRequestUrl(out string relativePath, out string queryString, out string httpMethod)
         {
-            HttpParser.TryParseHttpRequest(this.Request, out HttpRequest request);
+            HttpRequest request;
+            HttpParser.TryParseHttpRequest(this.Request, out request);
             httpMethod = request?.Method;
             relativePath = queryString = string.Empty;
             request?.Url.SplitUrlComponents(out relativePath, out queryString);
