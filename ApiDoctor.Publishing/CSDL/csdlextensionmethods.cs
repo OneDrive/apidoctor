@@ -138,7 +138,8 @@ namespace ApiDoctor.Publishing.CSDL
 
         public static string HttpMethodVerb(this MethodDefinition method)
         {
-            HttpParser.TryParseHttpRequest(method.Request, out HttpRequest request);
+            HttpRequest request;
+            HttpParser.TryParseHttpRequest(method.Request, out request);
             return request?.Method;
         }
 

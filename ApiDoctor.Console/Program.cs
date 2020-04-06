@@ -683,7 +683,8 @@ namespace ApiDoctor.ConsoleApp
                     continue;
                 }
 
-                HttpParser.TryParseHttpResponse(method.ExpectedResponse, out HttpResponse expectedResponse, methodIssues);
+                HttpResponse expectedResponse;
+                HttpParser.TryParseHttpResponse(method.ExpectedResponse, out expectedResponse, methodIssues);
                 if (expectedResponse != null)
                 {
                     method.ValidateResponse(expectedResponse, null, null, methodIssues, new ValidationOptions { RelaxedStringValidation = options.RelaxStringTypeValidation ?? true });

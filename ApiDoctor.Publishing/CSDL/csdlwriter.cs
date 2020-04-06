@@ -500,8 +500,10 @@ namespace ApiDoctor.Publishing.CSDL
 
         private static Record GenerateHttpRequestMethodAnnotation(MethodDefinition method, IssueLogger issues)
         {
-            HttpParser.TryParseHttpRequest(method.Request, out HttpRequest request, issues);
-            HttpParser.TryParseHttpResponse(method.ExpectedResponse, out HttpResponse response, issues);
+            HttpRequest request;
+            HttpParser.TryParseHttpRequest(method.Request, out request, issues);
+            HttpResponse response;
+            HttpParser.TryParseHttpResponse(method.ExpectedResponse, out response, issues);
             var record = new Record
             {
                 PropertyValues = new List<PropertyValue>

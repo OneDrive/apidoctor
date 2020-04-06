@@ -203,7 +203,8 @@ namespace ApiDoctor.Publishing.Swagger
 
         private static SwaggerResponse ToSwaggerResponse(this MethodDefinition method, out string httpStatusCode)
         {
-            HttpParser.TryParseHttpResponse(method.ExpectedResponse, out HttpResponse response);
+            HttpResponse response;
+            HttpParser.TryParseHttpResponse(method.ExpectedResponse, out response);
 
             httpStatusCode = response.StatusCode.ToString();
 
@@ -213,7 +214,8 @@ namespace ApiDoctor.Publishing.Swagger
 
         internal static IEnumerable<ParameterDefinition> MissingRequestParameters(this MethodDefinition method, bool queryStringOnly = false)
         {
-            HttpParser.TryParseHttpRequest(method.Request, out HttpRequest request);
+            HttpRequest request;
+            HttpParser.TryParseHttpRequest(method.Request, out request);
             string urlString = request?.Url;
 
             string path, queryString;
