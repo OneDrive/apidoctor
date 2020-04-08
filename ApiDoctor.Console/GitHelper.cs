@@ -108,7 +108,6 @@ namespace ApiDoctor.ConsoleApp
         {
             var pushUrl = repoUrl.Replace("github.com", accessToken + "@github.com");
             var commandString = $"push {pushUrl} {branchName} --force";
-            Console.WriteLine("Command : "+ commandString);
             RunGitCommand(commandString, false);
         }
 

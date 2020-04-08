@@ -641,5 +641,11 @@ namespace ApiDoctor.ConsoleApp
 
         [Option("source-branch", HelpText = "The branch to create for snippet generation", Required = false)]
         public string SourceBranch { get; set; }
+
+        [Option("commit-message", HelpText = "The commit message for the changes to be committed", Required = false)]
+        public string CommitMessage { get; set; }
+
+        [Option("pull-request-title", HelpText = "The title for the Pull Request to be created", Required = false)]
+        public string PullRequestTitle { get; set; }
     }
 }

@@ -2002,14 +2002,14 @@ namespace ApiDoctor.ConsoleApp
             if (helper.ChangesPresent())
             {
                 FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"Commiting changes to disk.");
-                var commitMessage = $"Updated docs with snippets injected into docs by API doctor from branch : {branchName}";
+                var commitMessage = options.CommitMessage ?? "Updated docs by API doctor";
                 helper.CommitChanges(commitMessage);
 
                 //setup for push and pull request
                 GitHub.RepositoryUrl = helper.GetRepositoryUrl();
                 GitHub.AccessToken = options.GithubToken;
 
-                //push chages upstream
+                //push changes upstream
                 FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"Pushing changes upstream");
                 helper.PushToOrigin( GitHub.AccessToken, GitHub.RepositoryUrl, branchName);
 
@@ -2018,7 +2018,8 @@ namespace ApiDoctor.ConsoleApp
 
                 //Create the Pull request
                 FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"Creating Github Pull Request");
-                await GitHub.CreatePullRequest(branchName, targetBranch, $"API Doctor Snippet generation from branch : {branchName}", commitMessage);
+                var pullRequestTitle = options.PullRequestTitle ?? "Snippet updates by API doctor ";
+                await GitHub.CreatePullRequest(branchName, targetBranch, pullRequestTitle, commitMessage);
 
             }
             else
@@ -2089,12 +2090,18 @@ namespace ApiDoctor.ConsoleApp
                     case "FindRequestStartLine"://scan back to find the line where we can best place the http tab(start of request).
                         for (var identifierIndex = currentIndex; identifierIndex > 0; identifierIndex--)
                         {
-                            if (originalFileContents[identifierIndex].Contains("<!-- {"))
+                            if (originalFileContents[identifierIndex].Contains("<!-- {") 
+                                || originalFileContents[identifierIndex].Contains("<!--{"))
                             {
                                 requestStartLine = identifierIndex;
                                 currentIndex--;
                                 parseStatus = "FindEndOfCodeBlock";
                                 break;
+                            }
+                            if (originalFileContents[identifierIndex].Contains("```http") 
+                                && new HttpParser().ParseHttpRequest(method.Request).Method.Equals("GET"))
+                            {
+                                originalFileContents[identifierIndex] = "```msgraph-interactive";
                             }
                         }
                         break;
@@ -2118,8 +2125,9 @@ namespace ApiDoctor.ConsoleApp
                             insertionLine = currentIndex - 1;//insert new language just before end of tab area
                             parseStatus = "AdditionalTabInsertion";//exit this parse mode.
                         }
-                        if (originalFileContents[currentIndex].Contains($"# [{language}](#tab/{codeFenceString})"))
+                        if (originalFileContents[currentIndex].Contains($"(#tab/{codeFenceString})"))
                         {
+                            originalFileContents[currentIndex] = $"# [{language}](#tab/{codeFenceString})";
                             originalFileContents[currentIndex + 1] = $"[!INCLUDE [sample-code](../{relativePathSnippetsFolder}{snippetFileName})]";//update include link. Just in case.
                             includeText = "";
                         }
