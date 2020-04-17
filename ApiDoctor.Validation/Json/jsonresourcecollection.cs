@@ -53,7 +53,7 @@ namespace ApiDoctor.Validation.Json
         }
 
         /// <summary>
-        /// Validates the value of json according to an implicit schmea defined by expectedJson
+        /// Validates the value of json according to an implicit schema defined by expectedJson
         /// </summary>
         /// <returns></returns>
         public bool ValidateJsonExample(CodeBlockAnnotation expectedResponseAnnotation, string actualResponseBodyJson, IssueLogger issues, ValidationOptions options = null)

@@ -107,6 +107,9 @@ namespace ApiDoctor.Validation
         [JsonProperty("suppressions", NullValueHandling = NullValueHandling.Ignore)]
         public string[] Suppressions { get; set; }
 
+        [JsonProperty("namespace", NullValueHandling = NullValueHandling.Ignore)]
+        public string Namespace { get; set; }
+
         /// <summary>
         /// Container for any unrecognized properties when deserializing the #page.annotation class.
         /// </summary>
