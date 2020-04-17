@@ -178,6 +178,20 @@ namespace ApiDoctor.Validation
             this.bookmarks.AddRange(md.HeaderIdsInDocument);
         }
 
+        protected string GetBlockContent(Block block)
+        {
+            try
+            {
+                if (block.Content == null)
+                    return string.Empty;
+                return block.Content;
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
+
         protected virtual string PostProcessHtmlTags(string inputHtml, string tags)
         {
             TagProcessor tagProcessor = new TagProcessor(tags, this.Parent?.SourceFolderPath);
@@ -388,8 +402,10 @@ namespace ApiDoctor.Validation
         protected string PreviewOfBlockContent(Block block)
         {
             if (block == null) return string.Empty;
-            if (block.Content == null) return string.Empty;
-
+            var blockContent = GetBlockContent(block);
+            if (blockContent == string.Empty)
+                return blockContent;
+            
             const int previewLength = 35;
 
             string contentPreview = block.Content.Length > previewLength ? block.Content.Substring(0, previewLength) : block.Content;
@@ -985,19 +1001,28 @@ namespace ApiDoctor.Validation
             }
             else
             {
-                // maybe the methods are really all the same and the dupes are just different examples
-                var distinctMethodNames = foundMethods.Select(m => new Http.HttpParser().ParseHttpRequest(m.Request).Url).Select(
-                    url =>
-                    {
-                        var method = url.Substring(url.LastIndexOf('/') + 1);
-                        var endIndex = method.IndexOfAny(new[] { '(', '?', '/' });
-                        if (endIndex != -1)
+                int distinctMethodNames = 0;
+                try
+                {
+                    // maybe the methods are really all the same and the dupes are just different examples
+                    distinctMethodNames = foundMethods.Select(m => Http.HttpParser.ParseHttpRequest(m.Request).Url).Select(
+                        url =>
                         {
-                            method = method.Substring(0, endIndex);
-                        }
+                            var method = url.Substring(url.LastIndexOf('/') + 1);
+                            var endIndex = method.IndexOfAny(new[] { '(', '?', '/' });
+                            if (endIndex != -1)
+                            {
+                                method = method.Substring(0, endIndex);
+                            }
 
-                        return method;
-                    }).Distinct().Count();
+                            return method;
+                        }).Distinct().Count();
+                }
+                catch (Exception ex)
+                {
+                    issues.Error(ValidationErrorCode.HttpParserError, $"Exception while parsing HTTP request", ex);
+                }
+                
                 if (distinctMethodNames == 1)
                 {
                     foreach (var method in foundMethods)
@@ -1189,7 +1214,7 @@ namespace ApiDoctor.Validation
                     }
                 case CodeBlockType.Request:
                     {
-                        var method = MethodDefinition.FromRequest(code.Content, annotation, this, issues.For("RequestBlock"));
+                        var method = MethodDefinition.FromRequest(GetBlockContent(code), annotation, this, issues);
                         if (string.IsNullOrEmpty(method.Identifier))
                         {
                             method.Identifier = string.Format("{0} #{1}", this.DisplayName, this.requests.Count);
@@ -1211,7 +1236,7 @@ namespace ApiDoctor.Validation
                                 MethodDefinition pairedRequest = (from m in this.requests where m.Identifier == requestMethodName select m).FirstOrDefault();
                                 if (pairedRequest != null)
                                 {
-                                    pairedRequest.AddExpectedResponse(code.Content, annotation);
+                                    pairedRequest.AddExpectedResponse(GetBlockContent(code), annotation);
                                     responses.Add(pairedRequest);
                                 }
                                 else
@@ -1228,7 +1253,7 @@ namespace ApiDoctor.Validation
                             {
                                 try
                                 {
-                                    pairedRequest.AddExpectedResponse(code.Content, annotation);
+                                    pairedRequest.AddExpectedResponse(GetBlockContent(code), annotation);
                                     responses.Add(pairedRequest);
                                 }
                                 catch (Exception ex)
@@ -1239,7 +1264,7 @@ namespace ApiDoctor.Validation
                             }
                             else
                             {
-                                throw new InvalidOperationException(string.Format("Unable to locate the corresponding request for response block: {0}. Requests must be defined before a response.", annotation.MethodName));
+                                issues.Error(ValidationErrorCode.MarkdownParserError, $"Unable to locate the corresponding request for response block: {annotation.MethodName}. Requests must be defined before a response.");
                             }
                         }
 

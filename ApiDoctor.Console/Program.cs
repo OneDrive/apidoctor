@@ -675,28 +675,20 @@ namespace ApiDoctor.ConsoleApp
 
                 TestReport.StartTest(testName, method.SourceFile.DisplayName, skipPrintingHeader: options.PrintFailuresOnly);
 
-                if (string.IsNullOrEmpty(method.ExpectedResponse))
+                if (method.ExpectedResponse == null)
                 {
-                    var message = "No response was paired with this request.";
-                    await TestReport.FinishTestAsync(testName, TestOutcome.Failed, message, printFailuresOnly: options.PrintFailuresOnly);
-                    methodIssues.Error(ValidationErrorCode.UnpairedRequest, message);
+                    methodIssues.Error(ValidationErrorCode.UnpairedRequest, "Unable to locate the corresponding response for this method. Missing or incorrect code block annotation.");
+                    await TestReport.FinishTestAsync(testName, TestOutcome.Failed, "No response was paired with this request.", printFailuresOnly: options.PrintFailuresOnly);
                     results.FailureCount++;
                     continue;
                 }
 
-                var parser = new HttpParser();
-
-                try
+                HttpResponse expectedResponse;
+                HttpParser.TryParseHttpResponse(method.ExpectedResponse, out expectedResponse, methodIssues);
+                if (expectedResponse != null)
                 {
-                    var expectedResponse = parser.ParseHttpResponse(method.ExpectedResponse);
-
                     method.ValidateResponse(expectedResponse, null, null, methodIssues, new ValidationOptions { RelaxedStringValidation = options.RelaxStringTypeValidation ?? true });
                 }
-                catch (Exception ex)
-                {
-                    methodIssues.Error(ValidationErrorCode.ExceptionWhileValidatingMethod, method.SourceFile.DisplayName, ex);
-                }
-
                 await WriteOutErrorsAndFinishTestAsync(methodIssues, options.SilenceWarnings, "   ", "Passed.", false, testName, "Warnings detected", "Errors detected", printFailuresOnly: options.PrintFailuresOnly);
                 results.IncrementResultCount(methodIssues.Issues);
             }

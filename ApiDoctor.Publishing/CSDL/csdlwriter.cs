@@ -479,7 +479,7 @@ namespace ApiDoctor.Publishing.CSDL
                 {
                     try
                     {
-                        var record = GenerateHttpRequestMethodAnnotation(method);
+                        var record = GenerateHttpRequestMethodAnnotation(method, issues);
                         annotation.Collection.Records.Add(record);
                     }
                     catch (Exception ex)
@@ -498,11 +498,12 @@ namespace ApiDoctor.Publishing.CSDL
             }
         }
 
-        private static Record GenerateHttpRequestMethodAnnotation(MethodDefinition method)
+        private static Record GenerateHttpRequestMethodAnnotation(MethodDefinition method, IssueLogger issues)
         {
-            var parser = new HttpParser();
-            var request = parser.ParseHttpRequest(method.Request);
-            var response = parser.ParseHttpResponse(method.ExpectedResponse);
+            HttpRequest request;
+            HttpParser.TryParseHttpRequest(method.Request, out request, issues);
+            HttpResponse response;
+            HttpParser.TryParseHttpResponse(method.ExpectedResponse, out response, issues);
             var record = new Record
             {
                 PropertyValues = new List<PropertyValue>
@@ -559,7 +560,7 @@ namespace ApiDoctor.Publishing.CSDL
                                 {
                                     PropertyValues = new List<PropertyValue>
                                     {
-                                        new PropertyValue { Property = "ResponseCode", String  = response.StatusCode.ToString() },
+                                        new PropertyValue { Property = "ResponseCode", String  = response?.StatusCode.ToString() },
                                         new PropertyValue
                                         {
                                             Property = "Examples" ,
@@ -572,8 +573,8 @@ namespace ApiDoctor.Publishing.CSDL
                                                         Type = "Org.OData.Core.V1.InlineExample",
                                                         PropertyValues = new List<PropertyValue>
                                                         {
-                                                            new PropertyValue { Property = "InlineValue", String  = response.Body, },
-                                                            new PropertyValue { Property = "Description", String = response.ContentType },
+                                                            new PropertyValue { Property = "InlineValue", String  = response?.Body, },
+                                                            new PropertyValue { Property = "Description", String = response?.ContentType },
                                                         }
                                                     }
                                                 }
@@ -714,7 +715,7 @@ namespace ApiDoctor.Publishing.CSDL
                     issues.Message($"Failed to resolve the following paths after {attempts} attempts:");
                     foreach (var kvp in pathsToRetry)
                     {
-                        issues.Warning(ValidationErrorCode.Unknown, $"Couldn't serialize request for path {kvp.Key} into EDMX: {kvp.Value}");
+                        issues.Warning(ValidationErrorCode.Unknown, $"Couldn't serialize request for path {kvp.Key} into EDMX", kvp.Value);
                     }
 
                     break;
@@ -1011,9 +1012,9 @@ namespace ApiDoctor.Publishing.CSDL
                 {
                     throw new InvalidOperationException(
                         $"Uri path requires navigating into unknown object hierarchy: missing property '{uriPart}' on '{currentObject.TypeIdentifier}'. Possible issues:\r\n" +
-                        $"\t 1) Doc bug where '{uriPart}' isn't defined on the resource." +
-                        $"\t 2) Doc bug where '{uriPart}' is an example key and should instead be replaced with a placeholder like {{item-id}} or declared in the sampleKeys annotation." +
-                        $"\t 3) Doc bug where '{currentObject.TypeIdentifier}' is supposed to be an entity type, but is being treated as a complex because it (and its ancestors) are missing the keyProperty annotation");
+                        $"\t 1) Doc bug where '{uriPart}' isn't defined on the resource.\r\n" +
+                        $"\t 2) Doc bug where '{uriPart}' is an example key and should instead be replaced with a placeholder like {{item-id}} or declared in the sampleKeys annotation.\r\n" +
+                        $"\t 3) Doc bug where '{currentObject.TypeIdentifier}' is supposed to be an entity type, but is being treated as a complex because it (and its ancestors) are missing the keyProperty annotation.\r\n");
                 }
 
                 previousObject = currentObject;
@@ -1185,7 +1186,7 @@ namespace ApiDoctor.Publishing.CSDL
                     var path = m.RequestUriPathOnly(baseUrlsToRemove, issues);
                     if (!path.StartsWith("/"))
                     {
-                        // Ignore aboslute URI paths
+                        // Ignore absolute URI paths
                         continue;
                     }
 
