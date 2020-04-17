@@ -73,7 +73,6 @@ namespace ApiDoctor.Validation
                         RequiredTags = method.RequiredTags
                     }
                 };
-                // results.AddResult("init", new ValidationMessage(null, "No scenarios were defined for method {0}. Will request verbatim from docs.", method.Identifier), ValidationOutcome.None);
             }
 
             if (scenarios.Any() && !scenarios.Any(x => x.Enabled))

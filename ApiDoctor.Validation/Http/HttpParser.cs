@@ -67,7 +67,7 @@ namespace ApiDoctor.Validation.Http
                         var components = line.Split(' ');
 
                         if (components.Length < 2)
-                            throw new HttpParserRequestException($"Request does not contain a proper HTTP request first line. Allowed format examples: GET https://graph.microsoft.com/beta/accessReviews(id) or GET HTTP/1.1  https://graph.microsoft.com/beta/accessReviews(id)");
+                            throw new HttpParserRequestException($"Request does not contain a proper HTTP request first line. Allowed format examples: GET https://graph.microsoft.com/beta/accessReviews(id) or GET https://graph.microsoft.com/beta/accessReviews(id) HTTP/1.1");
                         if (components[0].StartsWith("HTTP/"))
                             throw new HttpParserRequestException("Request contains an HTTP response.");
 

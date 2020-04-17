@@ -53,7 +53,7 @@ namespace ApiDoctor.Validation
         private readonly List<SamplesDefinition> samples = new List<SamplesDefinition>();
         private readonly List<EnumerationDefinition> enums = new List<EnumerationDefinition>();
         private readonly List<string> bookmarks = new List<string>();
-        
+
         protected bool HasScanRun;
         protected string BasePath;
 
@@ -1248,7 +1248,6 @@ namespace ApiDoctor.Validation
                                 }
                                 else
                                 {
-                                    //issues.Error(ValidationErrorCode.MarkdownParserError, $"Unable to locate the corresponding request for response block: {annotation.MethodName}. Requests must be defined before a response.");
                                     detectedErrors.Add(new ValidationError(ValidationErrorCode.MarkdownParserError, this.DisplayName, "Unable to locate the corresponding request for response block: {0}. Requests must be defined before a response.", annotation.MethodName));
                                 }
                             }
@@ -1267,7 +1266,6 @@ namespace ApiDoctor.Validation
                                 catch (Exception ex)
                                 {
                                     detectedErrors.Add(new ValidationError(ValidationErrorCode.MarkdownParserError, this.DisplayName, "Unable to pair response with request {0}: {1}.", annotation.MethodName, ex.Message));
-                                    //issues.Error(ValidationErrorCode.MarkdownParserError, $"Unable to pair response with request {annotation.MethodName}", ex);
                                 }
 
                             }
