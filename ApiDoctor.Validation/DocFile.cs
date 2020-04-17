@@ -779,10 +779,9 @@ namespace ApiDoctor.Validation
                 - Find request with matching parameters
              */
 
-
             var elementsFoundInDocument = elements as IList<object> ?? elements.ToList();
             var foundMethods = elementsFoundInDocument.OfType<MethodDefinition>().ToList();
-            var foundTables = elementsFoundInDocument.OfType<TableDefinition>().ToList();
+            var foundTables = elementsFoundInDocument.OfType<TableDefinition>().ToList();            
             var foundResources = elementsFoundInDocument.OfType<ResourceDefinition>()
                 .Select(c => { c.Namespace = this.Namespace; return c; }).ToList();
             var foundEnums = foundTables.Where(t => t.Type == TableBlockType.EnumerationValues)
@@ -793,6 +792,21 @@ namespace ApiDoctor.Validation
             this.PostProcessResources(foundResources, foundTables, issues);
             this.PostProcessMethods(foundMethods, foundTables, issues);
             this.PostProcessEnums(foundEnums, foundTables, issues);
+        }
+
+        private string VerfifyNamespaceForResource(ResourceDefinition resource, IssueLogger issues)
+        {
+            var inferredNamespace = string.Empty;
+            if (resource != null)
+            {
+                if (resource.Name == null) return inferredNamespace;
+                inferredNamespace = resource.Name.Substring(0, resource.Name.LastIndexOf('.'));
+                if (this.Annotation?.Namespace != null && this.Annotation.Namespace != inferredNamespace)
+                {
+                    issues.Error(ValidationErrorCode.NamespaceMismatch, $"The namespace specified on page level annotation for resource {resource.Name} is incorrect.");
+                }
+            }
+            return inferredNamespace;
         }
 
         private void PostProcessAuthScopes(IList<object> foundElements)
@@ -927,6 +941,8 @@ namespace ApiDoctor.Validation
                         onlyResource.Parameters.Remove(param);
                     }
                 }
+
+                VerfifyNamespaceForResource(onlyResource, issues);
             }
         }
 
