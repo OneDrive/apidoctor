@@ -123,6 +123,7 @@ namespace ApiDoctor.Validation.Error
         DuplicateMethodIdentifier,
         DuplicateResource,
         ContentFormatException,
+        NamespaceMismatch,
 
         AmbiguousExample,
     }

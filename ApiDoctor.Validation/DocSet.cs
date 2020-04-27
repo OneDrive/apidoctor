@@ -389,7 +389,7 @@ namespace ApiDoctor.Validation
 
             var definedTypes = new HashSet<string>(
                 this.Resources.Select(r => r.Name).
-                Concat(this.Enums.Select(e => (SchemaConfig.DefaultNamespace + "." + e.TypeName).Trim('.'))).
+                Concat(this.Enums.Select(e => (e.Namespace + "." + e.TypeName).Trim('.'))).
                 Concat(new[] { "odata.error" }));
 
             foreach (var resource in this.Resources)

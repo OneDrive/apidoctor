@@ -134,6 +134,8 @@ namespace ApiDoctor.Validation
         public PageAnnotation Annotation { get; set; }
 
         public bool WriteFixesBackToDisk { get; set; }
+
+        public string Namespace { get; set; }
         #endregion
 
         #region Constructor
@@ -535,10 +537,11 @@ namespace ApiDoctor.Validation
                                 issues.AddSuppressions(this.Annotation.Suppressions);
                             }
 
-                            if (string.IsNullOrEmpty(this.Annotation.Title))
+                            if (string.IsNullOrWhiteSpace(this.Annotation.Title))
                             {
                                 this.Annotation.Title = this.OriginalMarkdownBlocks.FirstOrDefault(b => IsHeaderBlock(b, 1))?.Content;
                             }
+                            this.Namespace = this.Annotation.Namespace;
                         }
                     }
                     catch (JsonReaderException readerEx)
@@ -575,7 +578,7 @@ namespace ApiDoctor.Validation
                     previousHeaderBlock = block;
                 }
             }
-
+            this.Namespace = this.Namespace ?? DocSet.SchemaConfig?.DefaultNamespace;
             this.PostProcessFoundElements(foundElements, issues);
 
             return issues.Issues.All(x => !x.IsError);
@@ -778,14 +781,32 @@ namespace ApiDoctor.Validation
 
             var elementsFoundInDocument = elements as IList<object> ?? elements.ToList();
             var foundMethods = elementsFoundInDocument.OfType<MethodDefinition>().ToList();
-            var foundResources = elementsFoundInDocument.OfType<ResourceDefinition>().ToList();
-            var foundTables = elementsFoundInDocument.OfType<TableDefinition>().ToList();
-            var foundEnums = foundTables.Where(t => t.Type == TableBlockType.EnumerationValues).SelectMany(t => t.Rows).Cast<EnumerationDefinition>().ToList();
+            var foundTables = elementsFoundInDocument.OfType<TableDefinition>().ToList();            
+            var foundResources = elementsFoundInDocument.OfType<ResourceDefinition>()
+                .Select(c => { c.Namespace = this.Namespace; return c; }).ToList();
+            var foundEnums = foundTables.Where(t => t.Type == TableBlockType.EnumerationValues)
+                .SelectMany(t => t.Rows).Cast<EnumerationDefinition>()
+                .Select(c => { c.Namespace = this.Namespace; return c; }).ToList();
 
             this.PostProcessAuthScopes(elementsFoundInDocument);
-            PostProcessResources(foundResources, foundTables, issues);
+            this.PostProcessResources(foundResources, foundTables, issues);
             this.PostProcessMethods(foundMethods, foundTables, issues);
             this.PostProcessEnums(foundEnums, foundTables, issues);
+        }
+
+        private string VerfifyNamespaceForResource(ResourceDefinition resource, IssueLogger issues)
+        {
+            var inferredNamespace = string.Empty;
+            if (resource != null)
+            {
+                if (resource.Name == null) return inferredNamespace;
+                inferredNamespace = resource.Name.Substring(0, resource.Name.LastIndexOf('.'));
+                if (this.Annotation?.Namespace != null && this.Annotation.Namespace != inferredNamespace)
+                {
+                    issues.Error(ValidationErrorCode.NamespaceMismatch, $"The namespace specified on page level annotation for resource {resource.Name} is incorrect.");
+                }
+            }
+            return inferredNamespace;
         }
 
         private void PostProcessAuthScopes(IList<object> foundElements)
@@ -808,7 +829,7 @@ namespace ApiDoctor.Validation
             this.enums.AddRange(foundEnums.Where(e => !string.IsNullOrEmpty(e.MemberName) && !string.IsNullOrEmpty(e.TypeName)));
 
             // find all the property tables
-            //  find properties of type string that have a list of `enum`, `values`. see if they match me.
+            // find properties of type string that have a list of `enum`, `values`. see if they match me.
             foreach (var table in foundTables.Where(t => t.Type == TableBlockType.RequestObjectProperties || t.Type == TableBlockType.ResourcePropertyDescriptions))
             {
                 var rows = table.Rows.Cast<ParameterDefinition>();
@@ -920,6 +941,8 @@ namespace ApiDoctor.Validation
                         onlyResource.Parameters.Remove(param);
                     }
                 }
+
+                VerfifyNamespaceForResource(onlyResource, issues);
             }
         }
 

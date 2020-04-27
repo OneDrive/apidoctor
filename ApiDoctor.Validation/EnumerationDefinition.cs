@@ -46,5 +46,10 @@ namespace ApiDoctor.Validation
         ///   Attribute for IsFlags
         /// </summary>
         public int? NumericValue { get; set; }
+
+        /// <summary>
+        /// The namespace of the enum type e.g. microsoft.graph, microsoft.graph.callRecords
+        /// </summary>
+        public string Namespace { get; set; }
     }
 }
