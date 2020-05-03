@@ -748,7 +748,6 @@ namespace ApiDoctor.Validation
         {
             int expectedIndex = 0;
             int foundIndex = 0;
-            int multiplesFound = 0;
 
             while (expectedIndex < expectedHeaders.Count && foundIndex < foundHeaders.Count)
             {
@@ -756,48 +755,14 @@ namespace ApiDoctor.Validation
 
                 var found = foundHeaders[foundIndex];
                 var expected = expectedHeaders[expectedIndex] as ExpectedHeader;
-
-                // multiple headers expected for a header definition
-                if (expected.Multiple)
-                {
-                    if (result == DocumentHeaderValidationResult.Found)
-                    {
-                        ValidateDocumentStructure(expected.ChildHeaders, found.ChildHeaders, issues);
-                        multiplesFound++;
-                        foundIndex++;
-                        continue;
-                    }
-
-                    if (result == DocumentHeaderValidationResult.FoundInWrongCase || result == DocumentHeaderValidationResult.MisspeltDocumentHeader)
-                    {
-                        multiplesFound++;
-                        foundIndex++;
-                        continue;
-                    }
-
-                    if (result == DocumentHeaderValidationResult.RequiredDocumentHeaderMissing || result == DocumentHeaderValidationResult.OptionalDocumentHeaderMissing)
-                    {
-                        if (multiplesFound == 1)
-                        {
-                            issues.Warning(ValidationErrorCode.DocumentHeaderInWrongCase, $"Multiple headers expected but only one was found: {found.Title}");
-                        }
-
-                        if (multiplesFound > 0)
-                        {
-                            expectedIndex++;
-                            continue;
-                        }
-                        // reset the multiple headers counter
-                        multiplesFound = 0;
-                    }
-                }
-
                 switch (result)
                 {
                     case DocumentHeaderValidationResult.Found:
                         ValidateDocumentStructure(expected.ChildHeaders, found.ChildHeaders, issues);
-                        expectedIndex++;
                         foundIndex++;
+                        //if expecting multiple headers of the same pattern, do not increment expected until last header matching pattern is found
+                        if (!expected.Multiple || (expected.Multiple && foundIndex == foundHeaders.Count)) 
+                            expectedIndex++;                       
                         break;
 
                     case DocumentHeaderValidationResult.FoundInWrongCase:
@@ -839,6 +804,12 @@ namespace ApiDoctor.Validation
                     default:
                         break;
 
+                }
+
+                //if expecting multiple headers of the same pattern, increment expected when last header matching pattern is found
+                if (expected.Multiple && foundIndex == foundHeaders.Count)
+                {
+                    expectedIndex++;
                 }
             }
 
