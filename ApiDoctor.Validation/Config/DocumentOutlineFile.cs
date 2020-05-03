@@ -141,6 +141,22 @@ namespace ApiDoctor.Validation.Config
         [JsonProperty("headers"), JsonConverter(typeof(DocumentHeaderJsonConverter))]
         public new List<object> ChildHeaders { get; set; }
 
+        public ExpectedHeader Clone()
+        {
+            var header = (ExpectedHeader)this.MemberwiseClone();
+            List<object> childHeaders = new List<object>();
+            foreach (var childHeader in this.ChildHeaders)
+            {
+                if (childHeader is ExpectedHeader)
+                {
+                    childHeaders.Add(((ExpectedHeader)childHeader).Clone());
+                    continue;
+                }
+                childHeaders.Add(((ConditionalHeader)childHeader).Clone());
+            }
+            header.ChildHeaders = childHeaders;
+            return header;
+        }
     }
 
     public class ConditionalHeader
@@ -158,6 +174,23 @@ namespace ApiDoctor.Validation.Config
                 ConditionalOperator op;
                 return Enum.TryParse(this.Condition, true, out op) ? op : (ConditionalOperator?)null;
             }
+        }
+
+        public ConditionalHeader Clone()
+        {
+            var header = (ConditionalHeader)this.MemberwiseClone();
+            List<object> arguments = new List<object>();
+            foreach (var arg in this.Arguments)
+            {
+                if (arg is ExpectedHeader)
+                {
+                    arguments.Add(((ExpectedHeader)arg).Clone());
+                    continue;
+                }
+                arguments.Add(((ConditionalHeader)arg).Clone());
+            }
+            header.Arguments = arguments;
+            return header;
         }
     }
 

@@ -680,6 +680,22 @@ namespace ApiDoctor.Validation
             return issues.Issues.All(x => !x.IsError);
         }
 
+        public List<object> CopyDocumentHeaders(List<object> headers)
+        {
+            var newHeaders = new List<object>();
+
+            foreach (var header in headers)
+            {
+                if (header is ExpectedHeader)
+                {
+                    newHeaders.Add(((ExpectedHeader)header).Clone());
+                    continue;
+                }
+                newHeaders.Add(((ConditionalHeader)header).Clone());
+            }
+            return newHeaders;
+        }
+
         /// <summary>
         /// Set expected headers for doc file based on the document type as specified in YAML metadata
         /// </summary>
@@ -690,16 +706,16 @@ namespace ApiDoctor.Validation
             switch (this.DocumentPageType)
             {
                 case PageType.ApiPageType:
-                    this.ExpectedDocumentHeaders = documentOutline.ApiPageType;
+                    this.ExpectedDocumentHeaders = CopyDocumentHeaders(documentOutline.ApiPageType);
                     break;
                 case PageType.ResourcePageType:
-                    this.ExpectedDocumentHeaders = documentOutline.ResourcePageType;
+                    this.ExpectedDocumentHeaders = CopyDocumentHeaders(documentOutline.ResourcePageType);
                     break;
                 case PageType.EnumPageType:
-                    this.ExpectedDocumentHeaders = documentOutline.EnumPageType;
+                    this.ExpectedDocumentHeaders = CopyDocumentHeaders(documentOutline.EnumPageType);
                     break;
                 case PageType.ConceptualPageType:
-                    this.ExpectedDocumentHeaders = documentOutline.ConceptualPageType;
+                    this.ExpectedDocumentHeaders = CopyDocumentHeaders(documentOutline.ConceptualPageType);
                     break;
                 default:
                     this.ExpectedDocumentHeaders = new List<object>();
