@@ -541,7 +541,6 @@ namespace ApiDoctor.Validation
                             {
                                 this.Annotation.Title = this.OriginalMarkdownBlocks.FirstOrDefault(b => IsHeaderBlock(b, 1))?.Content;
                             }
-                            this.Namespace = this.Annotation.Namespace;
                         }
                     }
                     catch (JsonReaderException readerEx)
@@ -578,7 +577,8 @@ namespace ApiDoctor.Validation
                     previousHeaderBlock = block;
                 }
             }
-            this.Namespace = this.Namespace ?? DocSet.SchemaConfig?.DefaultNamespace;
+
+            this.InferNamespaceFromFoundElments(foundElements, issues);
             this.PostProcessFoundElements(foundElements, issues);
 
             return issues.Issues.All(x => !x.IsError);
@@ -794,19 +794,19 @@ namespace ApiDoctor.Validation
             this.PostProcessEnums(foundEnums, foundTables, issues);
         }
 
-        private string VerfifyNamespaceForResource(ResourceDefinition resource, IssueLogger issues)
+        private void InferNamespaceFromFoundElments(IList<object> foundElements, IssueLogger issues)
         {
-            var inferredNamespace = string.Empty;
-            if (resource != null)
+            var foundResource = foundElements.OfType<ResourceDefinition>().FirstOrDefault();
+            string inferredNamespace = null;
+            if (foundResource != null)
             {
-                if (resource.Name == null) return inferredNamespace;
-                inferredNamespace = resource.Name.Substring(0, resource.Name.LastIndexOf('.'));
+                inferredNamespace = foundResource.Name.Substring(0, foundResource.Name.LastIndexOf('.'));
                 if (this.Annotation?.Namespace != null && this.Annotation.Namespace != inferredNamespace)
                 {
-                    issues.Error(ValidationErrorCode.NamespaceMismatch, $"The namespace specified on page level annotation for resource {resource.Name} is incorrect.");
+                    issues.Error(ValidationErrorCode.NamespaceMismatch, $"The namespace specified on page level annotation for resource {foundResource.Name} is incorrect.");
                 }
             }
-            return inferredNamespace;
+            this.Namespace = this.Annotation?.Namespace ?? inferredNamespace ?? DocSet.SchemaConfig?.DefaultNamespace;
         }
 
         private void PostProcessAuthScopes(IList<object> foundElements)
@@ -941,8 +941,6 @@ namespace ApiDoctor.Validation
                         onlyResource.Parameters.Remove(param);
                     }
                 }
-
-                VerfifyNamespaceForResource(onlyResource, issues);
             }
         }
 
