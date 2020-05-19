@@ -28,15 +28,15 @@ namespace ApiDoctor.Validation
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
+    using System.Globalization;
     using System.IO;
     using System.Linq;
     using System.Text;
     using System.Text.RegularExpressions;
-    using ApiDoctor.Validation.Error;
-    using ApiDoctor.Validation.Json;
     using MarkdownDeep;
+    using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
-    using System.Globalization;
+    using ApiDoctor.Validation.Error;
     using ApiDoctor.Validation.OData.Transformation;
 
     public static class ExtensionMethods
@@ -536,7 +536,43 @@ namespace ApiDoctor.Validation
                     return false;
             }
         }
+        /// <summary>
+        /// Uses the Damerau-Levenshtein distance algorithm which calculates how different one string is from another 
+        /// </summary>
+        /// <param name="s"></param>
+        /// <param name="t"></param>
+        /// <returns></returns>
+        public static int StringDistance(this string s, string t)
+        {
+            var bounds = new { Height = s.Length + 1, Width = t.Length + 1 };
 
+            int[,] matrix = new int[bounds.Height, bounds.Width];
+
+            for (int height = 0; height < bounds.Height; height++) { matrix[height, 0] = height; };
+            for (int width = 0; width < bounds.Width; width++) { matrix[0, width] = width; };
+
+            for (int height = 1; height < bounds.Height; height++)
+            {
+                for (int width = 1; width < bounds.Width; width++)
+                {
+                    int cost = (s[height - 1] == t[width - 1]) ? 0 : 1;
+                    int insertion = matrix[height, width - 1] + 1;
+                    int deletion = matrix[height - 1, width] + 1;
+                    int substitution = matrix[height - 1, width - 1] + cost;
+
+                    int distance = Math.Min(insertion, Math.Min(deletion, substitution));
+
+                    if (height > 1 && width > 1 && s[height - 1] == t[width - 2] && s[height - 2] == t[width - 1])
+                    {
+                        distance = Math.Min(distance, matrix[height - 2, width - 2] + cost);
+                    }
+
+                    matrix[height, width] = distance;
+                }
+            }
+
+            return matrix[bounds.Height - 1, bounds.Width - 1];
+        }
 
         public static void SplitUrlComponents(this string inputUrl, out string path, out string queryString)
         {
@@ -752,6 +788,23 @@ namespace ApiDoctor.Validation
             }
 
             return null;
+        }
+
+        public static bool TryParseJson<T>(this string obj, out T result)
+        {
+            try
+            {
+                JsonSerializerSettings settings = new JsonSerializerSettings();
+                settings.MissingMemberHandling = MissingMemberHandling.Error;
+
+                result = JsonConvert.DeserializeObject<T>(obj, settings);
+                return true;
+            }
+            catch (Exception)
+            {
+                result = default(T);
+                return false;
+            }
         }
 
         /// <summary>

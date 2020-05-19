@@ -26,11 +26,10 @@
 using System;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
+using ApiDoctor.Validation;
 using ApiDoctor.Validation.Error;
 using System.Text.RegularExpressions;
 using MarkdownDeep;
-using System.Collections.Generic;
 
 namespace ApiDoctor.Validation.Tags
 {
@@ -181,6 +180,7 @@ namespace ApiDoctor.Validation.Tags
                             }
 
                             var includeContent = Preprocess(includeFile);
+                            includeContent = DocFile.RemoveYamlFrontMatter(includeContent);
 
                             writer.WriteLine(includeContent);
                         }
