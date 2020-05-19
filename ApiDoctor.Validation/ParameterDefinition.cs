@@ -147,6 +147,8 @@ namespace ApiDoctor.Validation
                         issues.Warning(ValidationErrorCode.ExpectedTypeDifferent,
                             $"Type mismatch between example and table. Parameter name: { this.Name}; example type: ({ this.Type.CustomTypeName}); table type: ({ param.Type.CustomTypeName})");
                     }
+                    // table should be authoritative.
+                    this.Type = param.Type;
                 }
                 else if (this.Type.IsCollection)
                 {
