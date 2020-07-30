@@ -1995,6 +1995,11 @@ namespace ApiDoctor.ConsoleApp
                 }
             }
 
+            if (options.SkipPublishingChanges)
+            {
+                return true;
+            }
+
             //stage any changes to git 
             helper.StageAllChanges();
 
