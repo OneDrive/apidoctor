@@ -2283,6 +2283,12 @@ namespace ApiDoctor.ConsoleApp
                 request.Url = request.Url.Replace("%3E", "%27");
             }
 
+            //replace instance " " with single quotes parameter to prevent api fails
+            if (request.Url.Contains(" "))
+            {
+                request.Url = request.Url.Replace(" ", "%20");
+            }
+
             return request;
         }
 

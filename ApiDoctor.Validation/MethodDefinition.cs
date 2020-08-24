@@ -89,7 +89,7 @@ namespace ApiDoctor.Validation
                     }
 
                     var body = requestExample.Body;
-                    if (requestExample.ContentType.StartsWith(MimeTypeMultipartRelated, StringComparison.OrdinalIgnoreCase))
+                    if (requestExample.ContentType != null && requestExample.ContentType.StartsWith(MimeTypeMultipartRelated, StringComparison.OrdinalIgnoreCase))
                     {
                         var multipartContent = new MultipartMime.MultipartMimeContent(requestExample.ContentType, body);
                         var part = multipartContent.PartWithId("<metadata>");
