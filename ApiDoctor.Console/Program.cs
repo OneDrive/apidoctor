@@ -2063,9 +2063,9 @@ namespace ApiDoctor.ConsoleApp
                               $"[!INCLUDE [sdk-documentation](../{relativePathFolder}{includeSdkFileName})]\r\n";
 
             const string includeSdkText = "<!-- markdownlint-disable MD041-->\r\n\r\n" +
-                                          "> Read the [SDK documentation](https://docs.microsoft.com/en-us/graph/sdks/sdks-overview) " +
-                                          "for details on how to [add the SDK](https://docs.microsoft.com/en-us/graph/sdks/sdk-installation) to your project and " +
-                                          "[create an authProvider](https://docs.microsoft.com/en-us/graph/sdks/choose-authentication-providers) instance.";
+                                          "> Read the [SDK documentation](https://docs.microsoft.com/graph/sdks/sdks-overview) " +
+                                          "for details on how to [add the SDK](https://docs.microsoft.com/graph/sdks/sdk-installation) to your project and " +
+                                          "[create an authProvider](https://docs.microsoft.com/graph/sdks/choose-authentication-providers) instance.";
 
             /*
                 Scan through the file to find the right line to inject a snippet.
@@ -2152,7 +2152,11 @@ namespace ApiDoctor.ConsoleApp
                     /* DUMP THE SDK LINK FILE */
                     var sdkLinkDirectory = Directory.GetParent(Path.GetDirectoryName(method.SourceFile.FullPath)) + "/" + relativePathFolder;
                     Directory.CreateDirectory(sdkLinkDirectory);
-                    File.WriteAllText(sdkLinkDirectory + "/" + includeSdkFileName, includeSdkText);
+                    // only dump a new file when it does not exist.
+                    if (!File.Exists(sdkLinkDirectory + "/" + includeSdkFileName))
+                    {
+                        File.WriteAllText(sdkLinkDirectory + "/" + includeSdkFileName, includeSdkText);
+                    }
                     break;
                 }
                 case "AdditionalTabInsertion":

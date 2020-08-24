@@ -72,7 +72,7 @@ namespace ApiDoctor.Validation.Http
 
                         string url;
                         var httpVersion = components[1].StartsWith("HTTP/") ? components[1] : "HTTP/1.1";
-                        if (components.Length > 3)
+                        if (components.Length > 3 || (components.Length == 3 && !components[2].Contains("HTTP/")))
                         {
                             //Assume Odata Uri in the form https://graph.microsoft.com/beta/riskyUsers?$filter=riskLevel eq microsoft.graph.riskLevel'medium'
                             var uri = new StringBuilder(components.Length);
