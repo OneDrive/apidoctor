@@ -627,8 +627,8 @@ namespace ApiDoctor.ConsoleApp
 
     class GenerateSnippetsOptions : BasicCheckOptions
     {
-        [Option("snippet-api-url", HelpText = "The url of the api that is queried for code snippets", Required = true)]
-        public string SnippetApiUrl { get; set; }
+        [Option("snippet-generator-path", HelpText = "Full Path to the snippet generator url", Required = true)]
+        public string SnippetGeneratorPath { get; set; }
 
         [Option("lang", HelpText = "The programming languages for snippet generation(comma separated list)", Required = true)]
         public string Language { get; set; }
