@@ -1970,7 +1970,18 @@ namespace ApiDoctor.ConsoleApp
             {
                 foreach (var lang in languages)
                 {
-                    var fileName = $"{GetSnippetPrefix(method)}---{lang}";
+                    string snippetPrefix;
+                    try
+                    {
+                        snippetPrefix = GetSnippetPrefix(method);
+                    }
+                    catch (ArgumentException)
+                    {
+                        // we don't want to process snippets that don't belong to a version
+                        continue;
+                    }
+
+                    var fileName = $"{snippetPrefix}---{lang}";
                     var fileFullPath = Path.Combine(snippetsPath, fileName);
                     FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"Reading {fileFullPath}");
 
@@ -2033,8 +2044,23 @@ namespace ApiDoctor.ConsoleApp
 
         private static string GetSnippetPrefix(MethodDefinition method)
         {
+            var displayName = method.SourceFile.DisplayName;
+            string version;
+            if (displayName.Contains("beta"))
+            {
+                version = "-beta";
+            }
+            else if (displayName.Contains("v1.0"))
+            {
+                version = "-v1";
+            }
+            else
+            {
+                throw new ArgumentException("trying to parse a snippet which doesn't belong to a particular version", nameof(method));
+            }
+
             var methodName = Regex.Replace(method.Identifier, @"[# .()\\/]", "").Replace("_", "-").ToLower();
-            return methodName + (method.SourceFile.DisplayName.Contains("beta") ? "-beta" : "-v1");
+            return methodName + version;
         }
 
         private static void WriteHttpSnippetsIntoFile(string tempDir, MethodDefinition[] methods, IssueLogger issues)
@@ -2042,6 +2068,17 @@ namespace ApiDoctor.ConsoleApp
             var parser = new HttpParser();
             foreach (var method in methods)
             {
+                string snippetPrefix;
+                try
+                {
+                    snippetPrefix = GetSnippetPrefix(method);
+                }
+                catch (ArgumentException)
+                {
+                    // we don't want to process snippets that don't belong to a version
+                    continue;
+                }
+
                 HttpRequest request;
                 try
                 {
@@ -2057,7 +2094,7 @@ namespace ApiDoctor.ConsoleApp
                 //cleanup any issues we might have with the url
                 request = PreProcessUrlForSnippetGeneration(request, method, issues);
 
-                var fileName = GetSnippetPrefix(method) + "-httpSnippet";
+                var fileName = snippetPrefix + "-httpSnippet";
                 var fileFullPath = Path.Combine(tempDir, fileName);
                 FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"writing {fileFullPath}");
 
