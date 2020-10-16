@@ -1967,12 +1967,23 @@ namespace ApiDoctor.ConsoleApp
             return true;
         }
 
+        /// <summary>
+        /// Generate snippets using snippet generator command line tool
+        /// </summary>
+        /// <param name="executablePath">path to snippet generator command line tool</param>
+        /// <param name="args">arguments to snippet generator</param>
         private static void GenerateSnippets(string executablePath, params string[] args)
         {
             var process = Process.Start(executablePath, string.Join(" ", args));
             process.WaitForExit();
         }
 
+        /// <summary>
+        /// Gets snippet prefix with method name and version information to prevent collision between different API versions
+        /// This method also eliminates http snippets that belong to a particular API version
+        /// </summary>
+        /// <param name="method">method definition</param>
+        /// <returns>prefix representing method name and version</returns>
         private static string GetSnippetPrefix(MethodDefinition method)
         {
             var displayName = method.SourceFile.DisplayName;
@@ -1994,6 +2005,12 @@ namespace ApiDoctor.ConsoleApp
             return methodName + version;
         }
 
+        /// <summary>
+        /// Writes http snippets to a temp directory so that snippet generation tool can parse them
+        /// </summary>
+        /// <param name="tempDir">Temporary directory where the http snippets are written</param>
+        /// <param name="methods">methods to be written</param>
+        /// <param name="issues">logging</param>
         private static void WriteHttpSnippetsIntoFile(string tempDir, MethodDefinition[] methods, IssueLogger issues)
         {
             var parser = new HttpParser();
