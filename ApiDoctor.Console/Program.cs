@@ -711,28 +711,6 @@ namespace ApiDoctor.ConsoleApp
             return results;
         }
 
-        private static DocFile[] GetSelectedFiles(BasicCheckOptions options, DocSet docset)
-        {
-            List<DocFile> files = new List<DocFile>();
-            if (!string.IsNullOrEmpty(options.FilesChangedFromOriginalBranch))
-            {
-                GitHelper helper = new GitHelper(options.GitExecutablePath, options.DocumentationSetPath);
-                var changedFiles = helper.FilesChangedFromBranch(options.FilesChangedFromOriginalBranch);
-
-                foreach (var filePath in changedFiles)
-                {
-                    var file = docset.LookupFileForPath(filePath);
-                    if (null != file)
-                        files.Add(file);
-                }
-            }
-            else
-            {
-                files.AddRange(docset.Files);
-            }
-            return files.ToArray();
-        }
-
         /// <summary>
         /// Parse the command line parameters into a set of methods that match the command line parameters.
         /// </summary>
@@ -1934,16 +1912,6 @@ namespace ApiDoctor.ConsoleApp
             //we are not out to validate the documents in this context.
             options.IgnoreErrors = options.IgnoreWarnings = true;
 
-            var helper = new GitHelper(options.GitExecutablePath, options.DocumentationSetPath);
-            //cleanup any changes that are unstaged/uncommited in repo
-            helper.ResetChanges();
-            helper.CleanupChanges();
-
-            var branchName = options.SourceBranch ?? "snippets-generator-pipeline";
-
-            helper.CheckoutBranch(branchName);
-            FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"Checking out new branch: {branchName}");
-
             //scan the docset and find the methods present
             var docset = docs ?? await GetDocSetAsync(options, issues);
             if (null == docset)
@@ -1953,7 +1921,6 @@ namespace ApiDoctor.ConsoleApp
             var methods = FindTestMethods(options, docset);
 
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
-            var languages = options.Language.Split(',');
 
             FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, "Generating snippets from Snippets API..");
 
@@ -1964,8 +1931,9 @@ namespace ApiDoctor.ConsoleApp
             WriteHttpSnippetsIntoFile(snippetsPath, methods, issues);
 
             GenerateSnippets(options.SnippetGeneratorPath, // executable path
-                "--SnippetsPath", snippetsPath, "--Languages", options.Language); // args
+                "--SnippetsPath", snippetsPath, "--Languages", options.Languages); // args
 
+            var languages = options.Languages.Split(',');
             foreach (var method in methods)
             {
                 foreach (var lang in languages)
@@ -1995,43 +1963,6 @@ namespace ApiDoctor.ConsoleApp
 
             // clean up
             Directory.Delete(snippetsPath, true /* recursive */);
-
-            if (options.SkipPublishingChanges)
-            {
-                return true;
-            }
-
-            //stage any changes to git 
-            helper.StageAllChanges();
-
-            //check if there is any diff to commit
-            if (helper.ChangesPresent())
-            {
-                FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"Commiting changes to disk.");
-                var commitMessage = options.CommitMessage ?? "Updated docs by API doctor";
-                helper.CommitChanges(commitMessage);
-
-                //setup for push and pull request
-                GitHub.RepositoryUrl = helper.GetRepositoryUrl();
-                GitHub.AccessToken = options.GithubToken;
-
-                //push changes upstream
-                FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"Pushing changes upstream");
-                helper.PushToOrigin( GitHub.AccessToken, GitHub.RepositoryUrl, branchName);
-
-                //if target branch is not specified, default to master
-                var targetBranch = options.TargetBranch ?? "master";
-
-                //Create the Pull request
-                FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"Creating Github Pull Request");
-                var pullRequestTitle = options.PullRequestTitle ?? "Snippet updates by API doctor ";
-                await GitHub.CreatePullRequest(branchName, targetBranch, pullRequestTitle, commitMessage);
-
-            }
-            else
-            {
-                FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, "No changes found in docs to commit/push");
-            }
 
             return true;
         }
@@ -2068,20 +1999,11 @@ namespace ApiDoctor.ConsoleApp
             var parser = new HttpParser();
             foreach (var method in methods)
             {
+                HttpRequest request;
                 string snippetPrefix;
                 try
                 {
                     snippetPrefix = GetSnippetPrefix(method);
-                }
-                catch (ArgumentException)
-                {
-                    // we don't want to process snippets that don't belong to a version
-                    continue;
-                }
-
-                HttpRequest request;
-                try
-                {
                     request = parser.ParseHttpRequest(method.Request);
                 }
                 catch (Exception e)
@@ -2096,7 +2018,7 @@ namespace ApiDoctor.ConsoleApp
 
                 var fileName = snippetPrefix + "-httpSnippet";
                 var fileFullPath = Path.Combine(tempDir, fileName);
-                FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"writing {fileFullPath}");
+                FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"Writing {fileFullPath}");
 
                 File.WriteAllText(fileFullPath, request.FullHttpText(true));
             }
