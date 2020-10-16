@@ -93,63 +93,15 @@ namespace ApiDoctor.ConsoleApp
             return null;
         }
 
-        public void CheckoutBranch(string branchName)
-        {
-            RunGitCommand($"branch { branchName }", false);
-            RunGitCommand($"checkout { branchName }", false);
-        }
 
-        public void CommitChanges(string commitMessage)
-        {
-            RunGitCommand($"commit -m \"{ commitMessage }\"", false);
-        }
-
-        public void PushToOrigin(string accessToken , string repoUrl, string branchName)
-        {
-            var pushUrl = repoUrl.Replace("github.com", accessToken + "@github.com");
-            var commandString = $"push {pushUrl} {branchName} --force";
-            RunGitCommand(commandString, false);
-        }
-
-        public string GetCurrentBranchName()
-        {
-            return RunGitCommand("rev-parse --abbrev-ref HEAD").Replace(Environment.NewLine, "");
-        }
-
-        public string StageAllChanges()
-        {
-            return RunGitCommand("add -A ", false);
-        }
-
-        public void ResetChanges()
-        {
-            RunGitCommand("reset HEAD --hard", false);
-        }
-
-        public string GetRepositoryUrl()
-        {
-            return RunGitCommand("config --get remote.origin.url").Replace(Environment.NewLine, "");
-        }
-
-        public void CleanupChanges()
-        {
-            RunGitCommand("clean -fd", false);
-        }
-
-        public bool ChangesPresent()
-        {
-            var output = RunGitCommand("status --porcelain");
-            return (!string.IsNullOrEmpty(output));
-        }
-
-        private static string RunCommand(string executable, string arguments, string workingDirectory = null, bool expectResponse = true)
+        private static string RunCommand(string executable, string arguments, string workingDirectory = null)
         {
             ProcessStartInfo parameters = new ProcessStartInfo
             {
                 CreateNoWindow = true,
                 UseShellExecute = false,
-                RedirectStandardError = expectResponse,
-                RedirectStandardOutput = expectResponse,
+                RedirectStandardError = true,
+                RedirectStandardOutput = true,
                 FileName = executable,
                 Arguments = arguments
             };
@@ -160,14 +112,10 @@ namespace ApiDoctor.ConsoleApp
             var p = Process.Start(parameters);
 
             StringBuilder sb = new StringBuilder();
-
-            if (expectResponse)
+            string currentLine = null;
+            while ((currentLine = p.StandardOutput.ReadLine()) != null)
             {
-                string currentLine = null;
-                while ((currentLine = p.StandardOutput.ReadLine()) != null)
-                {
-                    sb.AppendLine(currentLine);
-                }
+                sb.AppendLine(currentLine);
             }
 
             p.WaitForExit();
@@ -176,9 +124,9 @@ namespace ApiDoctor.ConsoleApp
 
         }
 
-        private string RunGitCommand(string arguments , bool expectResponse = true)
+        private string RunGitCommand(string arguments)
         {
-            return RunCommand(this.GitExecutablePath, arguments, this.RepoDirectoryPath ,expectResponse);
+            return RunCommand(this.GitExecutablePath, arguments, this.RepoDirectoryPath);
         }
     }
 }
