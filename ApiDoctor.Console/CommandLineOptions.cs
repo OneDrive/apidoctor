@@ -631,24 +631,6 @@ namespace ApiDoctor.ConsoleApp
         public string SnippetGeneratorPath { get; set; }
 
         [Option("lang", HelpText = "The programming languages for snippet generation(comma separated list)", Required = true)]
-        public string Language { get; set; }
-
-        [Option("skip-publishing-changes", HelpText = "Whether creating a pull request will be skipped", Required = false)]
-        public bool SkipPublishingChanges { get; set; }
-
-        [Option("github-token", HelpText = "The token needed to create pull request with github", Required = false)]
-        public string GithubToken { get; set; }
-
-        [Option("target-branch", HelpText = "The branch to target when creating a pull request", Required = false)]
-        public string TargetBranch { get; set; }
-
-        [Option("source-branch", HelpText = "The branch to create for snippet generation", Required = false)]
-        public string SourceBranch { get; set; }
-
-        [Option("commit-message", HelpText = "The commit message for the changes to be committed", Required = false)]
-        public string CommitMessage { get; set; }
-
-        [Option("pull-request-title", HelpText = "The title for the Pull Request to be created", Required = false)]
-        public string PullRequestTitle { get; set; }
+        public string Languages { get; set; }
     }
 }
