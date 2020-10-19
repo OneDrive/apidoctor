@@ -32,6 +32,7 @@ namespace ApiDoctor.ConsoleApp
     using System.Linq;
     using System.Net;
     using System.Net.Http;
+    using System.Runtime.InteropServices;
     using System.Text;
     using System.Text.RegularExpressions;
     using System.Threading.Tasks;
@@ -708,28 +709,6 @@ namespace ApiDoctor.ConsoleApp
             }
 
             return results;
-        }
-
-        private static DocFile[] GetSelectedFiles(BasicCheckOptions options, DocSet docset)
-        {
-            List<DocFile> files = new List<DocFile>();
-            if (!string.IsNullOrEmpty(options.FilesChangedFromOriginalBranch))
-            {
-                GitHelper helper = new GitHelper(options.GitExecutablePath, options.DocumentationSetPath);
-                var changedFiles = helper.FilesChangedFromBranch(options.FilesChangedFromOriginalBranch);
-
-                foreach (var filePath in changedFiles)
-                {
-                    var file = docset.LookupFileForPath(filePath);
-                    if (null != file)
-                        files.Add(file);
-                }
-            }
-            else
-            {
-                files.AddRange(docset.Files);
-            }
-            return files.ToArray();
         }
 
         /// <summary>
@@ -1924,29 +1903,14 @@ namespace ApiDoctor.ConsoleApp
         /// <returns>The success/failure of the task</returns>
         private static async Task<bool> GenerateSnippetsAsync(GenerateSnippetsOptions options, IssueLogger issues , DocSet docs = null)
         {
-            //we are not out to validate the documents in this context.
-            options.IgnoreErrors = options.IgnoreWarnings = true;
-
-            var helper = new GitHelper(options.GitExecutablePath, options.DocumentationSetPath);
-            //cleanup any changes that are unstaged/uncommited in repo
-            helper.ResetChanges();
-            helper.CleanupChanges();
-
-            var branchName = options.SourceBranch ?? "snippets-generator-pipeline";
-
-            helper.CheckoutBranch(branchName);
-            FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"Checking out new branch: {branchName}");
-
-            Uri snippetApiUri = null;
-            try
+            if (!File.Exists(options.SnippetGeneratorPath))
             {
-                snippetApiUri = new Uri(options.SnippetApiUrl);
-            }
-            catch (UriFormatException uFe)
-            {
-                FancyConsole.WriteLine(FancyConsole.ConsoleErrorColor, "Error with the provided api URL: " + uFe.Message);
+                FancyConsole.WriteLine(FancyConsole.ConsoleErrorColor, "Error with the provided snippet generator path: " + options.SnippetGeneratorPath);
                 return false;
             }
+
+            //we are not out to validate the documents in this context.
+            options.IgnoreErrors = options.IgnoreWarnings = true;
 
             //scan the docset and find the methods present
             var docset = docs ?? await GetDocSetAsync(options, issues);
@@ -1956,78 +1920,125 @@ namespace ApiDoctor.ConsoleApp
             }
             var methods = FindTestMethods(options, docset);
 
-            using (var httpClient = new HttpClient())
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+
+            FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, "Generating snippets from Snippets API..");
+
+            var guid = Guid.NewGuid().ToString();
+            var snippetsPath = Path.Combine(Environment.GetEnvironmentVariable("TEMP"), guid);
+            Directory.CreateDirectory(snippetsPath);
+
+            WriteHttpSnippetsIntoFile(snippetsPath, methods, issues);
+
+            GenerateSnippets(options.SnippetGeneratorPath, // executable path
+                "--SnippetsPath", snippetsPath, "--Languages", options.Languages); // args
+
+            var languages = options.Languages.Split(',');
+            foreach (var method in methods)
             {
-                httpClient.DefaultRequestHeaders.Add("User-Agent", "api-doctor");
-                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
-                var languages = options.Language.Split(',');
-
-                FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, "Generating snippets from Snippets API..");
-
-                var parser = new HttpParser();
-
-                foreach (var method in methods)
+                foreach (var lang in languages)
                 {
-                    HttpRequest request = null;
+                    string snippetPrefix;
                     try
                     {
-                        request = parser.ParseHttpRequest(method.Request);
+                        snippetPrefix = GetSnippetPrefix(method);
                     }
-                    catch (Exception e )
+                    catch (ArgumentException)
                     {
-                        Console.WriteLine(method.Identifier);
-                        Console.WriteLine(e.Message);
+                        // we don't want to process snippets that don't belong to a version
                         continue;
                     }
 
-                    //cleanup any issues we might have with the url
-                    request = PreProcessUrlForSnippetGeneration(request, method, issues);
+                    var fileName = $"{snippetPrefix}---{lang}";
+                    var fileFullPath = Path.Combine(snippetsPath, fileName);
+                    FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"Reading {fileFullPath}");
 
-                    foreach (var lang in languages)
+                    if (File.Exists(fileFullPath))
                     {
-                        var codeSnippet = await GetSnippetFromApiAsync(httpClient, snippetApiUri, request ,issues, lang);
-
-                        if (!string.IsNullOrEmpty(codeSnippet))
-                        {
-                            InjectSnippetIntoFile(method, codeSnippet, lang);
-                        }
+                        var codeSnippet = File.ReadAllText(fileFullPath);
+                        InjectSnippetIntoFile(method, codeSnippet, lang);
                     }
                 }
             }
 
-            //stage any changes to git 
-            helper.StageAllChanges();
+            // clean up
+            Directory.Delete(snippetsPath, true /* recursive */);
 
-            //check if there is any diff to commit
-            if (helper.ChangesPresent())
+            return true;
+        }
+
+        /// <summary>
+        /// Generate snippets using snippet generator command line tool
+        /// </summary>
+        /// <param name="executablePath">path to snippet generator command line tool</param>
+        /// <param name="args">arguments to snippet generator</param>
+        private static void GenerateSnippets(string executablePath, params string[] args)
+        {
+            var process = Process.Start(executablePath, string.Join(" ", args));
+            process.WaitForExit();
+        }
+
+        /// <summary>
+        /// Gets snippet prefix with method name and version information to prevent collision between different API versions
+        /// This method also eliminates http snippets that belong to a particular API version
+        /// </summary>
+        /// <param name="method">method definition</param>
+        /// <returns>prefix representing method name and version</returns>
+        private static string GetSnippetPrefix(MethodDefinition method)
+        {
+            var displayName = method.SourceFile.DisplayName;
+            string version;
+            if (displayName.Contains("beta"))
             {
-                FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"Commiting changes to disk.");
-                var commitMessage = options.CommitMessage ?? "Updated docs by API doctor";
-                helper.CommitChanges(commitMessage);
-
-                //setup for push and pull request
-                GitHub.RepositoryUrl = helper.GetRepositoryUrl();
-                GitHub.AccessToken = options.GithubToken;
-
-                //push changes upstream
-                FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"Pushing changes upstream");
-                helper.PushToOrigin( GitHub.AccessToken, GitHub.RepositoryUrl, branchName);
-
-                //if target branch is not specified, default to master
-                var targetBranch = options.TargetBranch ?? "master";
-
-                //Create the Pull request
-                FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"Creating Github Pull Request");
-                var pullRequestTitle = options.PullRequestTitle ?? "Snippet updates by API doctor ";
-                await GitHub.CreatePullRequest(branchName, targetBranch, pullRequestTitle, commitMessage);
-
+                version = "-beta";
+            }
+            else if (displayName.Contains("v1.0"))
+            {
+                version = "-v1";
             }
             else
             {
-                FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, "No changes found in docs to commit/push");
+                throw new ArgumentException("trying to parse a snippet which doesn't belong to a particular version", nameof(method));
             }
 
-            return true;
+            var methodName = Regex.Replace(method.Identifier, @"[# .()\\/]", "").Replace("_", "-").ToLower();
+            return methodName + version;
+        }
+
+        /// <summary>
+        /// Writes http snippets to a temp directory so that snippet generation tool can parse them
+        /// </summary>
+        /// <param name="tempDir">Temporary directory where the http snippets are written</param>
+        /// <param name="methods">methods to be written</param>
+        /// <param name="issues">logging</param>
+        private static void WriteHttpSnippetsIntoFile(string tempDir, MethodDefinition[] methods, IssueLogger issues)
+        {
+            var parser = new HttpParser();
+            foreach (var method in methods)
+            {
+                HttpRequest request;
+                string snippetPrefix;
+                try
+                {
+                    snippetPrefix = GetSnippetPrefix(method);
+                    request = parser.ParseHttpRequest(method.Request);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(method.Identifier);
+                    Console.WriteLine(e.Message);
+                    continue;
+                }
+
+                //cleanup any issues we might have with the url
+                request = PreProcessUrlForSnippetGeneration(request, method, issues);
+
+                var fileName = snippetPrefix + "-httpSnippet";
+                var fileFullPath = Path.Combine(tempDir, fileName);
+                FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"Writing {fileFullPath}");
+
+                File.WriteAllText(fileFullPath, request.FullHttpText(true));
+            }
         }
 
         /// <summary>
@@ -2180,50 +2191,6 @@ namespace ApiDoctor.ConsoleApp
             Directory.CreateDirectory(directory);//Make sure snippet file directory exists
             File.WriteAllText(directory + "/" + snippetFileName, snippetFileContents);//write snippet to file
 
-        }
-
-        /// <summary>
-        /// Makes request to the api given to obtain a code snippet for the request in the code.
-        /// </summary>
-        /// <param name="httpClient"> <see cref="HttpClient"/> Reused instance to be used to make requests that may be reduced</param>
-        /// <param name="snippetApiUri">The api endpoint giving the code snippets</param>
-        /// <param name="request">The <see cref="HttpRequest"/> found in docs needing a code snippet generated</param>
-        /// <param name="issues">IssueLogger to record any snippet generator issues</param>
-        /// <param name="language">Language to be request for snippet</param>
-        /// <returns> String of the snippet on success a null string on failure.</returns>
-        private static async Task<string> GetSnippetFromApiAsync(HttpClient httpClient, Uri snippetApiUri, HttpRequest request, IssueLogger issues,string language)
-        {
-            var requestStringFullHttpText = request.FullHttpText(true);
-            string responseFromServer = null;
-
-            try
-            {
-                var bodyString = new StringContent(requestStringFullHttpText,Encoding.UTF8, "application/http");
-                var builder = new UriBuilder(snippetApiUri);
-                var query = System.Web.HttpUtility.ParseQueryString(string.Empty);
-                query["lang"] = language;
-                builder.Query = query.ToString();
-
-                using (var httpResponseMessage = await httpClient.PostAsync(builder.Uri, bodyString))
-                {
-                    if (httpResponseMessage.IsSuccessStatusCode)
-                    {
-                        responseFromServer = await httpResponseMessage.Content.ReadAsStringAsync();
-                    }
-                    else
-                    {
-                        //Log the error for the documentation or api to be fixed.
-                        var errorReason = await httpResponseMessage.Content.ReadAsStringAsync();
-                        issues.Warning(ValidationErrorCode.ExceptionWhileValidatingMethod, $"Failure to generate snippet for request Method: {request.Method}. Request Url: {request.Url}. Reason: {errorReason} ");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"An error occured on making request to Snippet API: {ex.Message}");
-            }
-
-            return responseFromServer;
         }
 
         /// <summary>
