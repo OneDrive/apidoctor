@@ -1,38 +1,10 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{B675CF73-AA42-4A54-B5E7-FF5F155DA4A7}</ProjectGuid>
+    <TargetFramework>net5.0</TargetFramework>
     <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>ApiDoctor.Publishing</RootNamespace>
-    <AssemblyName>ApiDoctor.Publishing</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
     <RestorePackages>true</RestorePackages>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup>
-    <SignAssembly>false</SignAssembly>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
   <PropertyGroup>
     <AssemblyOriginatorKeyFile>..\ApiDoctor.Console\35MSSharedLib1024.snk</AssemblyOriginatorKeyFile>
@@ -41,47 +13,17 @@
     <DelaySign>false</DelaySign>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="CSDL\CsdlExtensionMethods.cs" />
-    <Compile Include="CSDL\CsdlWriter.cs" />
-    <Compile Include="CSDL\ObjectGraphMerger.cs" />
-    <Compile Include="CSDL\MethodCollection.cs" />
-    <Compile Include="CSDL\XmlSorter.cs" />
-    <Compile Include="Html\ApiDocsConditionalTag.cs" />
-    <Compile Include="Html\DocumentPublisherHtml.cs" />
-    <Compile Include="Html\FileTagDefinition.cs" />
-    <Compile Include="Html\HtmlMustacheWriter.cs" />
-    <Compile Include="Html\IfMatchTagDefinition.cs" />
-    <Compile Include="Html\ExtendedElseTag.cs" />
-    <Compile Include="PathExtensionMethods.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Swagger\SwaggerClasses.cs" />
-    <Compile Include="Swagger\SwaggerExtensionMethods.cs" />
-    <Compile Include="Swagger\SwaggerWriter.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\ApiDoctor.Validation\ApiDoctor.Validation.csproj">
-      <Project>{33B10320-3802-49CF-8965-3510AE66D5EC}</Project>
-      <Name>ApiDoctor.Validation</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\OSS\markdowndeep\MarkdownDeep\MarkdownDeep.csproj">
-      <Project>{1569ED47-C7C9-4261-B6F4-7445BD0F2C95}</Project>
-      <Name>MarkdownDeep</Name>
-    </ProjectReference>
+    <ProjectReference Include="..\ApiDoctor.Validation\ApiDoctor.Validation.csproj" />
+    <ProjectReference Include="..\OSS\markdowndeep\MarkdownDeep\MarkdownDeep.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\ApiDoctor.Console\35MSSharedLib1024.snk">
       <Link>35MSSharedLib1024.snk</Link>
     </None>
   </ItemGroup>
-  <ItemGroup />
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+    <PackageReference Include="mustache-sharp" Version="1.0.0" />
+    <PackageReference Include="System.Data.DataSetExtensions" Version="4.5.0" />
+  </ItemGroup>
 </Project>
