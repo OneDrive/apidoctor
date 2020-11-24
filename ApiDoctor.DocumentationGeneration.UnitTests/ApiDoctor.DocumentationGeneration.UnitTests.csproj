@@ -1,40 +1,8 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{32323786-6B69-4A7A-A5DA-DBBBF1148387}</ProjectGuid>
+    <TargetFramework>net5.0</TargetFramework>
     <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>ApiDoctor.DocumentationGeneration.UnitTests</RootNamespace>
-    <AssemblyName>ApiDoctor.DocumentationGeneration.UnitTests</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
-    <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
-    <ReferencePath>$(ProgramFiles)\Common Files\microsoft shared\VSTT\$(VisualStudioVersion)\UITestExtensionPackages</ReferencePath>
-    <IsCodedUITest>False</IsCodedUITest>
-    <TestProjectType>UnitTest</TestProjectType>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup>
-    <SignAssembly>false</SignAssembly>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
   <PropertyGroup>
     <AssemblyOriginatorKeyFile>..\ApiDoctor.Console\35MSSharedLib1024.snk</AssemblyOriginatorKeyFile>
@@ -43,33 +11,10 @@
     <DelaySign>false</DelaySign>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="System" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="DescriptionTests.cs" />
-    <Compile Include="DocumentationTestBase.cs" />
-    <Compile Include="NavigationPropertyTests.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="PropertyTests.cs" />
-    <Compile Include="ResourceRoundTripTests.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\ApiDoctor.DocumentationGeneration\ApiDoctor.DocumentationGeneration.csproj">
-      <Project>{CD27998C-4021-4299-970B-91BE877FD01B}</Project>
-      <Name>ApiDoctor.DocumentationGeneration</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\ApiDoctor.Validation.UnitTests\ApiDoctor.Validation.UnitTests.csproj">
-      <Project>{EE3453F1-FD69-406C-9BD7-0643D6E999F3}</Project>
-      <Name>ApiDoctor.Validation.UnitTests</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\ApiDoctor.Validation\ApiDoctor.Validation.csproj">
-      <Project>{33B10320-3802-49CF-8965-3510AE66D5EC}</Project>
-      <Name>ApiDoctor.Validation</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\OSS\markdowndeep\MarkdownDeep\MarkdownDeep.csproj">
-      <Project>{1569ed47-c7c9-4261-b6f4-7445bd0f2c95}</Project>
-      <Name>MarkdownDeep</Name>
-    </ProjectReference>
+    <ProjectReference Include="..\ApiDoctor.DocumentationGeneration\ApiDoctor.DocumentationGeneration.csproj" />
+    <ProjectReference Include="..\ApiDoctor.Validation.UnitTests\ApiDoctor.Validation.UnitTests.csproj" />
+    <ProjectReference Include="..\ApiDoctor.Validation\ApiDoctor.Validation.csproj" />
+    <ProjectReference Include="..\OSS\markdowndeep\MarkdownDeep\MarkdownDeep.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\ApiDoctor.Console\35MSSharedLib1024.snk">
@@ -77,7 +22,11 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.8.0" />
+    <PackageReference Include="NUnit" Version="3.12.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="3.17.0" />
+  </ItemGroup>
+  <ItemGroup>
     <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
   </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
