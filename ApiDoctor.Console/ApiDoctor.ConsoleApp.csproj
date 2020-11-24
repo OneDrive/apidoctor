@@ -1,16 +1,8 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{A6F3993F-59C6-4985-ACF1-4D837D61E98F}</ProjectGuid>
+    <TargetFramework>net5.0</TargetFramework>
     <OutputType>Exe</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>ApiDoctor.ConsoleApp</RootNamespace>
     <AssemblyName>apidoc</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
     <RestorePackages>true</RestorePackages>
     <PublishUrl>publish\</PublishUrl>
@@ -28,83 +20,25 @@
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
     <Commandlineparameters>check-docs --path /Users/dspektor/src/graphdocs2</Commandlineparameters>
     <Externalconsole>true</Externalconsole>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <PropertyGroup>
     <StartupObject>ApiDoctor.ConsoleApp.Program</StartupObject>
   </PropertyGroup>
   <PropertyGroup>
-    <SignAssembly>false</SignAssembly>
     <DelaySign>false</DelaySign>
   </PropertyGroup>
   <PropertyGroup>
     <AssemblyOriginatorKeyFile>35MSSharedLib1024.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="AppVeyor\BuildWorkerApi.cs" />
-    <Compile Include="Auth\BasicAccount.cs" />
-    <Compile Include="Auth\OAuthAccount.cs" />
-    <Compile Include="Auth\OAuthAccountException.cs" />
-    <Compile Include="Auth\OAuthTokenGenerator.cs" />
-    <Compile Include="CheckResults.cs" />
-    <Compile Include="CommandLineOptions.cs" />
-    <Compile Include="FancyConsole.cs" />
-    <Compile Include="GitHelper.cs" />
-    <Compile Include="Program.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TestReport.cs" />
-    <Compile Include="AppConfigFile.cs" />
-    <Compile Include="WildcardExtensions.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="35MSSharedLib1024.snk" />
-    <None Include="App.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\ApiDoctor.DocumentationGeneration\ApiDoctor.DocumentationGeneration.csproj">
-      <Project>{cd27998c-4021-4299-970b-91be877fd01b}</Project>
-      <Name>ApiDoctor.DocumentationGeneration</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\ApiDoctor.Publishing\ApiDoctor.Publishing.csproj">
-      <Project>{B675CF73-AA42-4A54-B5E7-FF5F155DA4A7}</Project>
-      <Name>ApiDoctor.Publishing</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\ApiDoctor.Validation\ApiDoctor.Validation.csproj">
-      <Project>{33B10320-3802-49CF-8965-3510AE66D5EC}</Project>
-      <Name>ApiDoctor.Validation</Name>
-    </ProjectReference>
+    <ProjectReference Include="..\ApiDoctor.DocumentationGeneration\ApiDoctor.DocumentationGeneration.csproj" />
+    <ProjectReference Include="..\ApiDoctor.Publishing\ApiDoctor.Publishing.csproj" />
+    <ProjectReference Include="..\ApiDoctor.Validation\ApiDoctor.Validation.csproj" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.5">
@@ -123,5 +57,10 @@
       <Install>false</Install>
     </BootstrapperPackage>
   </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+    <PackageReference Include="CommandLineParser" Version="2.8.0" />
+    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+    <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="5.2.8" />
+    <PackageReference Include="System.Data.DataSetExtensions" Version="4.5.0" />
+  </ItemGroup>
 </Project>

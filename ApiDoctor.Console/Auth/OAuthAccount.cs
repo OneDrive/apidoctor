@@ -203,9 +203,10 @@ namespace ApiDoctor.ConsoleApp.Auth
         {
             if (string.IsNullOrEmpty(this.AccessToken))
             {
-                var creds = new Microsoft.IdentityModel.Clients.ActiveDirectory.UserCredential(this.Username, this.Password);
                 var context = new Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext(this.TokenService);
-                var token = await context.AcquireTokenAsync(this.Resource, this.ClientId, creds);
+                var deviceCodeFlow = await context.AcquireDeviceCodeAsync(this.Resource, this.ClientId);
+                Console.WriteLine(deviceCodeFlow.Message);
+                var token = await context.AcquireTokenByDeviceCodeAsync(deviceCodeFlow);
                 if (null != token)
                 {
                     this.AccessToken = token.AccessToken;

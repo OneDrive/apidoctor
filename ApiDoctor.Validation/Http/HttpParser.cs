@@ -33,6 +33,7 @@ namespace ApiDoctor.Validation.Http
     using System.IO;
     using System.Text;
     using ApiDoctor.Validation.Error;
+    using Microsoft.AspNetCore.WebUtilities;
 
     public class HttpParser
     {
@@ -235,6 +236,23 @@ namespace ApiDoctor.Validation.Http
                     issues.Error(ValidationErrorCode.HttpParserError, $"Exception while parsing HTTP response", ex);
                 return false;
             }
+        }
+
+        /// <summary>
+        ///     Take query string formatted input (a=1&b=2) and return a dictionary
+        ///     of values.
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
+        public static NameValueCollection ParseQueryString(string input)
+        {
+            if (input != null && input[0] != '?') input = "?" + input;
+
+            var values = QueryHelpers.ParseQuery(input);
+            var output = new NameValueCollection();
+            foreach (var value in values)
+                output.Add(value.Key, value.Value);
+            return output;
         }
 
         private enum ParserMode
