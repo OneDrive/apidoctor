@@ -2005,7 +2005,6 @@ namespace ApiDoctor.ConsoleApp
         /// <param name="issues">logging</param>
         private static void WriteHttpSnippetsIntoFile(string tempDir, MethodDefinition[] methods, IssueLogger issues)
         {
-            var parser = new HttpParser();
             foreach (var method in methods)
             {
                 HttpRequest request;
@@ -2013,7 +2012,7 @@ namespace ApiDoctor.ConsoleApp
                 try
                 {
                     snippetPrefix = GetSnippetPrefix(method);
-                    request = parser.ParseHttpRequest(method.Request);
+                    request = HttpParser.ParseHttpRequest(method.Request);
                 }
                 catch (Exception e)
                 {
@@ -2102,7 +2101,7 @@ namespace ApiDoctor.ConsoleApp
                                 break;
                             }
                             if (originalFileContents[identifierIndex].Contains("```http") 
-                                && new HttpParser().ParseHttpRequest(method.Request).Method.Equals("GET"))
+                                && HttpParser.ParseHttpRequest(method.Request).Method.Equals("GET"))
                             {
                                 originalFileContents[identifierIndex] = "```msgraph-interactive";
                             }
