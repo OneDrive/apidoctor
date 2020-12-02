@@ -72,13 +72,17 @@ namespace ApiDoctor.Validation.Http
                             throw new HttpParserRequestException("Request contains an HTTP response.");
 
                         string url;
-                        var httpVersion = components[1].StartsWith("HTTP/") ? components[1] : "HTTP/1.1";
-                        if (components.Length > 3)
+                        var httpVersion = components.Last().StartsWith("HTTP/") ? components[1] : "HTTP/1.1";
+                        if (components.Length > 2)
                         {
                             //Assume Odata Uri in the form https://graph.microsoft.com/beta/riskyUsers?$filter=riskLevel eq microsoft.graph.riskLevel'medium'
                             var uri = new StringBuilder(components.Length);
                             for (var i = 1; i < components.Length; i++)
                             {
+                                if (components[i].Contains("HTTP"))
+                                {
+                                    continue;
+                                }
                                 uri.Append(components[i]);
                                 uri.Append(' ');
                             }
