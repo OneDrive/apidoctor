@@ -1922,8 +1922,16 @@ namespace ApiDoctor.ConsoleApp
 
             WriteHttpSnippetsIntoFile(snippetsPath, methods, issues);
 
-            GenerateSnippets(options.SnippetGeneratorPath, // executable path
-                "--SnippetsPath", snippetsPath, "--Languages", options.Languages); // args
+            if (string.IsNullOrWhiteSpace(options.CustomMetadataPath))
+            {
+                GenerateSnippets(options.SnippetGeneratorPath, // executable path
+                    "--SnippetsPath", snippetsPath, "--Languages", options.Languages); // args
+            }
+            else
+            {
+                GenerateSnippets(options.SnippetGeneratorPath, // executable path
+                    "--SnippetsPath", snippetsPath, "--Languages", options.Languages, "--CustomMetadataPath", options.CustomMetadataPath); // args
+            }
 
             var languages = options.Languages.Split(',');
             foreach (var method in methods)
