@@ -632,5 +632,8 @@ namespace ApiDoctor.ConsoleApp
 
         [Option("lang", HelpText = "The programming languages for snippet generation(comma separated list)", Required = true)]
         public string Languages { get; set; }
+
+        [Option("custom-metadata-path", HelpText = "Path to custom metadata that snippet generation can consume", Required = false)]
+        public string CustomMetadataPath { get; set; }
     }
 }
