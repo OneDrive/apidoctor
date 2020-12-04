@@ -50,6 +50,7 @@ namespace ApiDoctor.ConsoleApp
         public const string VerbPublishMetadata = "publish-edmx";
 
         public const string VerbGenerateDocs = "generate-docs";
+        public const string VerbGenerateSnippets = "generate-snippets";
     }
 
     [Verb(CommandLineOptions.VerbAbout, HelpText = "Print about information for this application.")]
@@ -596,5 +597,18 @@ namespace ApiDoctor.ConsoleApp
     {
         [Option("resource-template", HelpText = "Specifies the path to a mustache template file to use for generating documentation for resources (complex and entity types)", Required = false)]
         public string ResourceTemplateFile { get; set; }
+    }
+
+    [Verb(CommandLineOptions.VerbGenerateSnippets, HelpText = "Generate code snippets from requests in documentation")]
+    class GenerateSnippetsOptions : BasicCheckOptions
+    {
+        [Option("snippet-generator-path", HelpText = "Full Path to the snippet generator url", Required = true)]
+        public string SnippetGeneratorPath { get; set; }
+
+        [Option("lang", HelpText = "The programming languages for snippet generation(comma separated list)", Required = true)]
+        public string Languages { get; set; }
+
+        [Option("custom-metadata-path", HelpText = "Path to custom metadata that snippet generation can consume", Required = false)]
+        public string CustomMetadataPath { get; set; }
     }
 }
