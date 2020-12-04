@@ -209,6 +209,9 @@ namespace ApiDoctor.ConsoleApp
                 case CheckLinkOptions o:
                     returnSuccess = await CheckLinksAsync(o, issues);
                     break;
+                case GenerateSnippetsOptions o:
+                    returnSuccess = await GenerateSnippetsAsync(o, issues);
+                    break;
                 case BasicCheckOptions o:
                     returnSuccess = await CheckDocsAsync(o, issues);
                     break;
@@ -220,9 +223,6 @@ namespace ApiDoctor.ConsoleApp
                     break;
                 case CheckMetadataOptions o:
                     await CheckServiceMetadataAsync(o, issues);
-                    break;
-                case GenerateSnippetsOptions o:
-                    returnSuccess = await GenerateSnippetsAsync(o, issues);
                     break;
                 case AboutOptions o:
                     PrintAboutMessage();
