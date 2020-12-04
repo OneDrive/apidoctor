@@ -11,12 +11,9 @@
     <copyright>© Microsoft Corporation. All rights reserved.</copyright>
     <licenseUrl>http://msdn.microsoft.com/en-US/cc300389</licenseUrl>
     <projectUrl>http://github.com/onedrive/apidoctor</projectUrl>
-    <frameworkAssemblies>
-      <frameworkAssembly assemblyName="System" targetFramework="net45" />
-    </frameworkAssemblies>
   </metadata>
   <files>
-    <file src="bin\Release\apidoc.exe" target="tools" />
-    <file src="bin\Release\*.dll" target="tools" />
+    <file src="bin\Release\net5.0\apidoc.exe" target="tools" />
+    <file src="bin\Release\net5.0\*.dll" target="tools" />
   </files>
 </package>
