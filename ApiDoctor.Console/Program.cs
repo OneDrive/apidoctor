@@ -1918,7 +1918,7 @@ namespace ApiDoctor.ConsoleApp
             FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, "Generating snippets from Snippets API..");
 
             var guid = Guid.NewGuid().ToString();
-            var snippetsPath = Path.Combine(Environment.GetEnvironmentVariable("TEMP"), guid);
+            var snippetsPath = Path.Combine(Path.GetTempPath(), guid);
             Directory.CreateDirectory(snippetsPath);
 
             WriteHttpSnippetsIntoFile(snippetsPath, methods, issues);
