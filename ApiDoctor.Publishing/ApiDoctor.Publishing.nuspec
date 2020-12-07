@@ -12,16 +12,12 @@
         <licenseUrl>http://msdn.microsoft.com/en-US/cc300389</licenseUrl>
         <copyright>© Microsoft Corporation. All rights reserved.</copyright>
         <dependencies>
-            <group targetFramework=".NETFramework4.5">
-                <dependency id="Newtonsoft.Json" version="6.0.8" />
+            <group targetFramework="netcore50">
                 <dependency id="ApiDoctor.Validation" version="$version$" />
             </group>
         </dependencies>
-        <frameworkAssemblies>
-            <frameworkAssembly assemblyName="System" targetFramework=".NETFramework4.5" />
-        </frameworkAssemblies>
     </metadata>
     <files>
-        <file src="bin\Release\ApiDoctor.Publishing.dll" target="lib\net45\ApiDoctor.Publishing.dll" />
+        <file src="bin\Release\net5.0\ApiDoctor.Publishing.dll" target="lib\netcore50\ApiDoctor.Publishing.dll" />
     </files>
 </package>
