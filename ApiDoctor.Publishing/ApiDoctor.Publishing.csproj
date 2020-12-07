@@ -5,6 +5,7 @@
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
     <RestorePackages>true</RestorePackages>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <NuspecProperties>$(NuspecProperties);version=$(PackageVersion)</NuspecProperties>
   </PropertyGroup>
   <PropertyGroup>
     <AssemblyOriginatorKeyFile>..\ApiDoctor.Console\35MSSharedLib1024.snk</AssemblyOriginatorKeyFile>
