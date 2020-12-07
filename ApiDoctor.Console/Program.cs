@@ -77,7 +77,7 @@ namespace ApiDoctor.ConsoleApp
 
             try
             {
-                Parser.Default.ParseArguments<PrintOptions, CheckLinkOptions, BasicCheckOptions, CheckAllLinkOptions, CheckServiceOptions, PublishOptions, PublishMetadataOptions, CheckMetadataOptions, FixDocsOptions, GenerateDocsOptions, AboutOptions>(args)
+                Parser.Default.ParseArguments<PrintOptions, CheckLinkOptions, BasicCheckOptions, CheckAllLinkOptions, CheckServiceOptions, PublishOptions, PublishMetadataOptions, CheckMetadataOptions, FixDocsOptions, GenerateDocsOptions, GenerateSnippetsOptions, AboutOptions>(args)
                         .WithParsed<BaseOptions>((options) =>
                         {
                             IgnoreErrors = options.IgnoreErrors;
@@ -102,6 +102,7 @@ namespace ApiDoctor.ConsoleApp
                             (FixDocsOptions options) => RunInvokedMethodAsync(options),
                             (GenerateDocsOptions options) => RunInvokedMethodAsync(options),
                             (AboutOptions options) => RunInvokedMethodAsync(options),
+                            (GenerateSnippetsOptions options) => RunInvokedMethodAsync(options),
                             (errors) =>
                                     {
                                         FancyConsole.WriteLine(ConsoleColor.Red, "COMMAND LINE PARSE ERROR");
