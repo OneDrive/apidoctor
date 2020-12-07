@@ -22,6 +22,7 @@
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <NuspecProperties>$(NuspecProperties);version=$(PackageVersion)</NuspecProperties>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <Commandlineparameters>check-docs --path /Users/dspektor/src/graphdocs2</Commandlineparameters>
