@@ -75,37 +75,41 @@ namespace ApiDoctor.ConsoleApp
             if (args.Length > 0)
                 FancyConsole.WriteLine("Command line: " + args.ComponentsJoinedByString(" "));
 
-            string verbName = null;
-            BaseOptions verbOptions = null;
-
-            var options = new CommandLineOptions();
-            if (!Parser.Default.ParseArguments(args, options,
-              (verb, subOptions) =>
-              {
-                  // if parsing succeeds the verb name and correct instance
-                  // will be passed to onVerbCommand delegate (string,object)
-                  verbName = verb;
-                  verbOptions = (BaseOptions)subOptions;
-              }))
-            {
-                FancyConsole.WriteLine(ConsoleColor.Red, "COMMAND LINE PARSE ERROR");
-                Exit(failure: true);
-            }
-
-            IgnoreErrors = verbOptions.IgnoreErrors;
-#if DEBUG
-            if (verbOptions.AttachDebugger == 1)
-            {
-                Debugger.Launch();
-            }
-#endif
-
-            SetStateFromOptions(verbOptions);
-
-            var task = Task.Run(() => RunInvokedMethodAsync(options, verbName, verbOptions));
             try
             {
-                task.Wait();
+                Parser.Default.ParseArguments<PrintOptions, CheckLinkOptions, BasicCheckOptions, CheckAllLinkOptions, CheckServiceOptions, PublishOptions, PublishMetadataOptions, CheckMetadataOptions, FixDocsOptions, GenerateDocsOptions, GenerateSnippetsOptions, AboutOptions>(args)
+                        .WithParsed<BaseOptions>((options) =>
+                        {
+                            IgnoreErrors = options.IgnoreErrors;
+#if DEBUG
+                            if (options.AttachDebugger == 1)
+                            {
+                                Debugger.Launch();
+                            }
+#endif
+
+                            SetStateFromOptions(options);
+                        })    
+                        .MapResult(
+                            (PrintOptions options) => RunInvokedMethodAsync(options),
+                            (CheckLinkOptions options) => RunInvokedMethodAsync(options),
+                            (BasicCheckOptions options) => RunInvokedMethodAsync(options),
+                            (CheckAllLinkOptions options) => RunInvokedMethodAsync(options),
+                            (CheckServiceOptions options) => RunInvokedMethodAsync(options),
+                            (PublishOptions options) => RunInvokedMethodAsync(options),
+                            (PublishMetadataOptions options) => RunInvokedMethodAsync(options),
+                            (CheckMetadataOptions options) => RunInvokedMethodAsync(options),
+                            (FixDocsOptions options) => RunInvokedMethodAsync(options),
+                            (GenerateDocsOptions options) => RunInvokedMethodAsync(options),
+                            (AboutOptions options) => RunInvokedMethodAsync(options),
+                            (GenerateSnippetsOptions options) => RunInvokedMethodAsync(options),
+                            (errors) =>
+                                    {
+                                        FancyConsole.WriteLine(ConsoleColor.Red, "COMMAND LINE PARSE ERROR");
+                                        Exit(failure: true);
+                                        return Task.FromResult(default(BaseOptions));
+                                    })
+                        .Wait();
             }
             catch (Exception ex)
             {
@@ -166,8 +170,7 @@ namespace ApiDoctor.ConsoleApp
                     Console.WriteLine("Using configuration file: {0}", CurrentConfiguration.SourcePath);
             }
         }
-
-        private static async Task RunInvokedMethodAsync(CommandLineOptions origCommandLineOpts, string invokedVerb, BaseOptions options)
+        private static async Task RunInvokedMethodAsync(BaseOptions options)
         {
             var issues = new IssueLogger()
             {
@@ -176,11 +179,9 @@ namespace ApiDoctor.ConsoleApp
 #endif
             };
 
-            string[] missingProps;
-            if (!options.HasRequiredProperties(out missingProps))
+            if (!options.HasRequiredProperties(out var missingProps))
             {
                 issues.Error(ValidationErrorCode.MissingRequiredArguments, $"Command line is missing required arguments: {missingProps.ComponentsJoinedByString(", ")}");
-                FancyConsole.WriteLine(origCommandLineOpts.GetUsage(invokedVerb));
                 await WriteOutErrorsAndFinishTestAsync(issues, options.SilenceWarnings, printFailuresOnly: options.PrintFailuresOnly);
                 Exit(failure: true);
             }
@@ -189,42 +190,42 @@ namespace ApiDoctor.ConsoleApp
 
             bool returnSuccess = true;
 
-            switch (invokedVerb)
+            switch (options)
             {
-                case CommandLineOptions.VerbPrint:
-                    await PrintDocInformationAsync((PrintOptions)options, issues);
+                case PrintOptions o:
+                    await PrintDocInformationAsync(o, issues);
                     break;
-                case CommandLineOptions.VerbCheckLinks:
-                    returnSuccess = await CheckLinksAsync((CheckLinkOptions)options, issues);
+                case CheckAllLinkOptions o:
+                    returnSuccess = await CheckDocsAllAsync(o, issues);
                     break;
-                case CommandLineOptions.VerbDocs:
-                    returnSuccess = await CheckDocsAsync((BasicCheckOptions)options, issues);
+                case CheckServiceOptions o:
+                    returnSuccess = await CheckServiceAsync(o, issues);
                     break;
-                case CommandLineOptions.VerbCheckAll:
-                    returnSuccess = await CheckDocsAllAsync((CheckLinkOptions)options, issues);
+                case GenerateDocsOptions o:
+                    returnSuccess = await GenerateDocsAsync(o);
                     break;
-                case CommandLineOptions.VerbService:
-                    returnSuccess = await CheckServiceAsync((CheckServiceOptions)options, issues);
+                case FixDocsOptions o:
+                    returnSuccess = await FixDocsAsync(o, issues);
                     break;
-                case CommandLineOptions.VerbPublish:
-                    returnSuccess = await PublishDocumentationAsync((PublishOptions)options, issues);
+                case CheckLinkOptions o:
+                    returnSuccess = await CheckLinksAsync(o, issues);
                     break;
-                case CommandLineOptions.VerbPublishMetadata:
-                    returnSuccess = await PublishMetadataAsync((PublishMetadataOptions)options, issues);
+                case GenerateSnippetsOptions o:
+                    returnSuccess = await GenerateSnippetsAsync(o, issues);
                     break;
-                case CommandLineOptions.VerbMetadata:
-                    await CheckServiceMetadataAsync((CheckMetadataOptions)options, issues);
+                case BasicCheckOptions o:
+                    returnSuccess = await CheckDocsAsync(o, issues);
                     break;
-                case CommandLineOptions.VerbGenerateDocs:
-                    returnSuccess = await GenerateDocsAsync((GenerateDocsOptions)options);
+                case PublishOptions o:
+                    returnSuccess = await PublishDocumentationAsync(o, issues);
                     break;
-                case CommandLineOptions.VerbFix:
-                    returnSuccess = await FixDocsAsync((FixDocsOptions)options, issues);
+                case PublishMetadataOptions o:
+                    returnSuccess = await PublishMetadataAsync(o, issues);
                     break;
-                case CommandLineOptions.VerbGenerateSnippets:
-                    returnSuccess = await GenerateSnippetsAsync((GenerateSnippetsOptions)options, issues);
+                case CheckMetadataOptions o:
+                    await CheckServiceMetadataAsync(o, issues);
                     break;
-                case CommandLineOptions.VerbAbout:
+                case AboutOptions o:
                     PrintAboutMessage();
                     Exit(failure: false);
                     break;
@@ -234,7 +235,7 @@ namespace ApiDoctor.ConsoleApp
                 issues,
                 options.IgnoreWarnings,
                 indent: "  ",
-                printUnusedSuppressions: invokedVerb == CommandLineOptions.VerbCheckAll);
+                printUnusedSuppressions: options is CheckAllLinkOptions);
 
             if (returnSuccess)
             {
@@ -1917,7 +1918,7 @@ namespace ApiDoctor.ConsoleApp
             FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, "Generating snippets from Snippets API..");
 
             var guid = Guid.NewGuid().ToString();
-            var snippetsPath = Path.Combine(Environment.GetEnvironmentVariable("TEMP"), guid);
+            var snippetsPath = Path.Combine(Path.GetTempPath(), guid);
             Directory.CreateDirectory(snippetsPath);
 
             WriteHttpSnippetsIntoFile(snippetsPath, methods, issues);

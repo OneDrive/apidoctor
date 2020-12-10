@@ -1,3 +1,4 @@
 [submodule "OSS/markdowndeep"]
 	path = OSS/markdowndeep
 	url = https://github.com/OneDrive/markdowndeep.git
+	branch = master
