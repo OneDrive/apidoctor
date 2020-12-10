@@ -32,6 +32,7 @@ namespace ApiDoctor.ConsoleApp.Auth
     using System.Reflection;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Net.Http;
 
     public class OAuthAccount : IServiceAccount
     {
@@ -202,14 +203,24 @@ namespace ApiDoctor.ConsoleApp.Auth
         private async Task RedeemUsernameAndPasswordAsync()
         {
             if (string.IsNullOrEmpty(this.AccessToken))
-            {
-                var context = new Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext(this.TokenService);
-                var deviceCodeFlow = await context.AcquireDeviceCodeAsync(this.Resource, this.ClientId);
-                Console.WriteLine(deviceCodeFlow.Message);
-                var token = await context.AcquireTokenByDeviceCodeAsync(deviceCodeFlow);
-                if (null != token)
+            { // MSAL removed username/password flow in an effort to discourage people from using it in their applications
+                // it's meant to be replaced by device code flow but because we're using the tool in an unattended mode, we can't implement device code.
+                // this implement a call to the endpoint directly https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-oauth-ropc
+                using var client = new HttpClient();
+                var content = new FormUrlEncodedContent(new[]
                 {
-                    this.AccessToken = token.AccessToken;
+                    new KeyValuePair<string, string>("username", this.Username),
+                    new KeyValuePair<string, string>("password", this.Password),
+                    new KeyValuePair<string, string>("scope", this.Scopes.Aggregate((x, y) => $"{x} {y}")),
+                    new KeyValuePair<string, string>("client_id", this.ClientId),
+                    new KeyValuePair<string, string>("grant_type", "password"),
+                });
+                using var response = await client.PostAsync(this.TokenService, content); // "https://login.microsoftonline.com/common/oauth2.0/token"
+                var stringBody = await response.Content.ReadAsStringAsync();
+                var jsonContent = JsonConvert.DeserializeObject<dynamic>(stringBody);
+                if (!string.IsNullOrEmpty(jsonContent.access_token))
+                {
+                    this.AccessToken = jsonContent.access_token;
                 }
                 else
                 {
