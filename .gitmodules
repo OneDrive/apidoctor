@@ -1,4 +1,4 @@
 [submodule "OSS/markdowndeep"]
 	path = OSS/markdowndeep
-	url = https://github.com/baywet/markdowndeep.git
-	branch = feature/dotnet-core
+	url = https://github.com/OneDrive/markdowndeep.git
+	branch = master
