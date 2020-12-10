@@ -1,4 +1,4 @@
-﻿/*
+/*
  * API Doctor
  * Copyright (c) Microsoft Corporation
  * All rights reserved. 
@@ -96,16 +96,18 @@ namespace ApiDoctor.ConsoleApp
 
         private static string RunCommand(string executable, string arguments, string workingDirectory = null)
         {
-            ProcessStartInfo parameters = new ProcessStartInfo();
-            parameters.CreateNoWindow = true;
-            parameters.UseShellExecute = false;
-            parameters.RedirectStandardError = true;
-            parameters.RedirectStandardOutput = true;
-            parameters.FileName = executable;
-            parameters.Arguments = arguments;
-            if (null != workingDirectory)
-            parameters.WorkingDirectory = workingDirectory;
+            ProcessStartInfo parameters = new ProcessStartInfo
+            {
+                CreateNoWindow = true,
+                UseShellExecute = false,
+                RedirectStandardError = true,
+                RedirectStandardOutput = true,
+                FileName = executable,
+                Arguments = arguments
+            };
 
+            if (null != workingDirectory)
+                parameters.WorkingDirectory = workingDirectory;
 
             var p = Process.Start(parameters);
 
@@ -115,6 +117,8 @@ namespace ApiDoctor.ConsoleApp
             {
                 sb.AppendLine(currentLine);
             }
+
+            p.WaitForExit();
 
             return sb.ToString();
 
