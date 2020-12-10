@@ -225,9 +225,6 @@ namespace ApiDoctor.ConsoleApp
                 case CheckMetadataOptions o:
                     await CheckServiceMetadataAsync(o, issues);
                     break;
-                case GenerateSnippetsOptions o:
-                    returnSuccess = await GenerateSnippetsAsync(options, issues);
-                    break;
                 case AboutOptions o:
                     PrintAboutMessage();
                     Exit(failure: false);
