@@ -32,8 +32,8 @@ namespace ApiDoctor.Validation.Http
     using System.Globalization;
     using System.IO;
     using System.Text;
-    using System.Web;
     using ApiDoctor.Validation.Error;
+    using Microsoft.AspNetCore.WebUtilities;
 
     public class HttpParser
     {
@@ -252,7 +252,10 @@ namespace ApiDoctor.Validation.Http
         {
             if (input != null && input[0] != '?') input = "?" + input;
 
-            var output = HttpUtility.ParseQueryString(input);
+            var values = QueryHelpers.ParseQuery(input);
+            var output = new NameValueCollection();
+            foreach (var value in values)
+                output.Add(value.Key, value.Value);
             return output;
         }
 
