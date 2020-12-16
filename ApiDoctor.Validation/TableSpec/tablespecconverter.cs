@@ -287,9 +287,10 @@ namespace ApiDoctor.Validation.TableSpec
                 else if (kvp.Key.Contains("{x}"))
                 {
                     // eventually bring FriendlyWildcard into this code...
-                    var matchIndex = lastHeader.IndexOf(kvp.Key.Replace("{x} ", string.Empty));
-                    if (matchIndex != -1)
+                    var commonHeaderContent = kvp.Key.Replace("{x} ", string.Empty);
+                    if (lastHeader.EndsWith(commonHeaderContent))
                     {
+                        var matchIndex = lastHeader.LastIndexOf(commonHeaderContent);
                         var lastWord = lastHeader.Substring(0, matchIndex - 1).Split(' ').LastOrDefault();
                         if (char.IsUpper(lastWord[0]))
                         {
