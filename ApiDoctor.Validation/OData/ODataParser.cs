@@ -65,6 +65,8 @@ namespace ApiDoctor.Validation.OData
             { "Edm.Guid", "9F328426-8A81-40D1-8F35-D619AA90A12C" }
         };
 
+        private static readonly HashSet<string> examplesSet = new();
+
         #region Static EDMX -> EntityFramework methods 
         public static EntityFramework DeserializeEntityFramework(string metadataContent)
         {
@@ -248,7 +250,11 @@ namespace ApiDoctor.Validation.OData
 
             foreach (var property in ct.Properties.Where(prop => prop.Type != "Edm.Stream"))
             {
-                propertyExamples.Add(property.Name, ExampleOfType(property.Type, otherSchema));
+                if (!examplesSet.Contains(ct.BaseType))
+                {
+                    propertyExamples.Add(property.Name, ExampleOfType(property.Type, otherSchema));
+                    examplesSet.Add(ct.BaseType);
+                }
             }
 
             return propertyExamples;
