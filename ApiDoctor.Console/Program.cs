@@ -32,7 +32,6 @@ namespace ApiDoctor.ConsoleApp
     using System.Linq;
     using System.Net;
     using System.Net.Http;
-    using System.Runtime.CompilerServices;
     using System.Runtime.InteropServices;
     using System.Text;
     using System.Text.RegularExpressions;
@@ -1926,12 +1925,12 @@ namespace ApiDoctor.ConsoleApp
 
             if (string.IsNullOrWhiteSpace(options.CustomMetadataPath))
             {
-                GenerateSnippets(options.SnippetGeneratorPath, // executable path
+                await GenerateSnippets(options.SnippetGeneratorPath, // executable path
                     "--SnippetsPath", snippetsPath, "--Languages", options.Languages); // args
             }
             else
             {
-                GenerateSnippets(options.SnippetGeneratorPath, // executable path
+                await GenerateSnippets(options.SnippetGeneratorPath, // executable path
                     "--SnippetsPath", snippetsPath, "--Languages", options.Languages, "--CustomMetadataPath", options.CustomMetadataPath); // args
             }
 
