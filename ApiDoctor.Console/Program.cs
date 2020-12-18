@@ -1960,6 +1960,8 @@ namespace ApiDoctor.ConsoleApp
                         var codeSnippet = File.ReadAllText(fileFullPath);
                         InjectSnippetIntoFile(method, codeSnippet, lang);
                     }
+                    else
+                        FancyConsole.WriteLine(FancyConsole.ConsoleErrorColor, "Error: file does not exist");
                 }
             }
 
