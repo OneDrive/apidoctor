@@ -1976,10 +1976,27 @@ namespace ApiDoctor.ConsoleApp
         /// </summary>
         /// <param name="executablePath">path to snippet generator command line tool</param>
         /// <param name="args">arguments to snippet generator</param>
-        private static void GenerateSnippets(string executablePath, params string[] args)
+        private static async Task GenerateSnippets(string executablePath, params string[] args)
         {
-            var process = Process.Start(executablePath, string.Join(" ", args));
+            var startInfo = new ProcessStartInfo(executablePath, string.Join(" ", args))
+            {
+                RedirectStandardError = true,
+                RedirectStandardOutput = true,
+            };
+            var process = Process.Start(startInfo);
             process.WaitForExit();
+            var errors = await process.StandardError.ReadToEndAsync();
+            if (!string.IsNullOrEmpty(errors))
+            {
+                FancyConsole.WriteLine(FancyConsole.ConsoleErrorColor, "Error when generating code snippets!!!");
+                FancyConsole.Write(FancyConsole.ConsoleErrorColor, errors);
+            }
+            var output = await process.StandardOutput.ReadToEndAsync();
+            if(!string.IsNullOrEmpty(output))
+            {
+                FancyConsole.WriteLine(FancyConsole.ConsoleDefaultColor, "Standard output of snippets generation");
+                FancyConsole.Write(FancyConsole.ConsoleDefaultColor, output);
+            }
         }
 
         /// <summary>
