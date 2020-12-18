@@ -32,7 +32,6 @@ namespace ApiDoctor.Validation.OData
     using System.Linq;
     using System.Net;
     using System.Threading.Tasks;
-    using System.Xml.Linq;
     using Newtonsoft.Json;
     using System.Text;
     using System.Xml;
@@ -248,6 +247,12 @@ namespace ApiDoctor.Validation.OData
 
             foreach (var property in ct.Properties.Where(prop => prop.Type != "Edm.Stream"))
             {
+                var ignoredModels = metadataValidationConfigs?.IgnorableModels;
+                if (ignoredModels != null && ignoredModels.Contains(ct.Name))
+                {
+                    continue;
+                }
+
                 propertyExamples.Add(property.Name, ExampleOfType(property.Type, otherSchema));
             }
 
