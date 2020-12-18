@@ -2065,7 +2065,7 @@ namespace ApiDoctor.ConsoleApp
         /// </summary>
         /// <param name="original">The original path</param>
         /// <returns>The cleaned up result</returns>
-        private static string ReplaceWindowsByLinuxPathSepartors(string original) => original.Replace("\\", "/");
+        private static string ReplaceWindowsByLinuxPathSeparators(string original) => original.Replace("\\", "/");
 
         /// <summary>
         /// Finds the file the request is located and inserts the code snippet into the file.
@@ -2096,8 +2096,8 @@ namespace ApiDoctor.ConsoleApp
             var snippetFileName = methodString + $"-{codeFenceString}-snippets.md";
 
             var includeText = $"# [{language}](#tab/{codeFenceString})\r\n" +
-                              $"[!INCLUDE [sample-code](../{ReplaceWindowsByLinuxPathSepartors(relativePathSnippetsFolder)}{snippetFileName})]\r\n" +
-                              $"[!INCLUDE [sdk-documentation](../{ReplaceWindowsByLinuxPathSepartors(relativePathFolder)}{includeSdkFileName})]\r\n";
+                              $"[!INCLUDE [sample-code](../{ReplaceWindowsByLinuxPathSeparators(relativePathSnippetsFolder)}{snippetFileName})]\r\n" +
+                              $"[!INCLUDE [sdk-documentation](../{ReplaceWindowsByLinuxPathSeparators(relativePathFolder)}{includeSdkFileName})]\r\n";
 
             const string includeSdkText = "<!-- markdownlint-disable MD041-->\r\n\r\n" +
                                           "> Read the [SDK documentation](https://docs.microsoft.com/graph/sdks/sdks-overview) " +
@@ -2165,7 +2165,7 @@ namespace ApiDoctor.ConsoleApp
                         if (originalFileContents[currentIndex].Contains($"(#tab/{codeFenceString})"))
                         {
                             originalFileContents[currentIndex] = $"# [{language}](#tab/{codeFenceString})";
-                            originalFileContents[currentIndex + 1] = $"[!INCLUDE [sample-code](../{ReplaceWindowsByLinuxPathSepartors(relativePathSnippetsFolder)}{snippetFileName})]";//update include link. Just in case.
+                            originalFileContents[currentIndex + 1] = $"[!INCLUDE [sample-code](../{ReplaceWindowsByLinuxPathSeparators(relativePathSnippetsFolder)}{snippetFileName})]";//update include link. Just in case.
                             includeText = "";
                         }
                         break;
