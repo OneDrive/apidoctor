@@ -32,6 +32,7 @@ namespace ApiDoctor.ConsoleApp
     using System.Linq;
     using System.Net;
     using System.Net.Http;
+    using System.Runtime.CompilerServices;
     using System.Runtime.InteropServices;
     using System.Text;
     using System.Text.RegularExpressions;
@@ -2040,6 +2041,12 @@ namespace ApiDoctor.ConsoleApp
                 File.WriteAllText(fileFullPath, request.FullHttpText(true));
             }
         }
+        /// <summary>
+        /// Replaces \ by / to keep output mardown consistent accross generation OSes
+        /// </summary>
+        /// <param name="original">The original path</param>
+        /// <returns>The cleaned up result</returns>
+        private static string ReplaceWindowsByLinuxPathSepartors(string original) => original.Replace("\\", "/");
 
         /// <summary>
         /// Finds the file the request is located and inserts the code snippet into the file.
@@ -2060,18 +2067,18 @@ namespace ApiDoctor.ConsoleApp
             var parseStatus = "FindIdentifierLine";
 
             /* Useful File names and data*/
-            const string relativePathFolder = "includes/snippets/";
+            var relativePathFolder = Path.Combine("includes", "snippets");
             const string includeSdkFileName = "snippets-sdk-documentation-link.md";
             const string firstTabText = "\r\n# [HTTP](#tab/http)";
 
             var codeFenceString = language.ToLower().Replace("#", "sharp").Replace("objective-c", "objc");
-            var relativePathSnippetsFolder = relativePathFolder + codeFenceString + "/";
+            var relativePathSnippetsFolder = Path.Combine(relativePathFolder, codeFenceString);
 
             var snippetFileName = methodString + $"-{codeFenceString}-snippets.md";
 
             var includeText = $"# [{language}](#tab/{codeFenceString})\r\n" +
-                              $"[!INCLUDE [sample-code](../{relativePathSnippetsFolder}{snippetFileName})]\r\n" +
-                              $"[!INCLUDE [sdk-documentation](../{relativePathFolder}{includeSdkFileName})]\r\n";
+                              $"[!INCLUDE [sample-code](../{ReplaceWindowsByLinuxPathSepartors(relativePathSnippetsFolder)}{snippetFileName})]\r\n" +
+                              $"[!INCLUDE [sdk-documentation](../{ReplaceWindowsByLinuxPathSepartors(relativePathFolder)}{includeSdkFileName})]\r\n";
 
             const string includeSdkText = "<!-- markdownlint-disable MD041-->\r\n\r\n" +
                                           "> Read the [SDK documentation](https://docs.microsoft.com/graph/sdks/sdks-overview) " +
@@ -2139,7 +2146,7 @@ namespace ApiDoctor.ConsoleApp
                         if (originalFileContents[currentIndex].Contains($"(#tab/{codeFenceString})"))
                         {
                             originalFileContents[currentIndex] = $"# [{language}](#tab/{codeFenceString})";
-                            originalFileContents[currentIndex + 1] = $"[!INCLUDE [sample-code](../{relativePathSnippetsFolder}{snippetFileName})]";//update include link. Just in case.
+                            originalFileContents[currentIndex + 1] = $"[!INCLUDE [sample-code](../{ReplaceWindowsByLinuxPathSepartors(relativePathSnippetsFolder)}{snippetFileName})]";//update include link. Just in case.
                             includeText = "";
                         }
                         break;
@@ -2161,12 +2168,13 @@ namespace ApiDoctor.ConsoleApp
                     updatedFileContents = FileSplicer(updatedFileContents.ToArray(), requestStartLine-1, firstTabText);//inject the first tab section
 
                     /* DUMP THE SDK LINK FILE */
-                    var sdkLinkDirectory = Directory.GetParent(Path.GetDirectoryName(method.SourceFile.FullPath)) + "/" + relativePathFolder;
+                    var sdkLinkDirectory = Path.Combine(Directory.GetParent(Path.GetDirectoryName(method.SourceFile.FullPath)).FullName, relativePathFolder);
                     Directory.CreateDirectory(sdkLinkDirectory);
                     // only dump a new file when it does not exist.
-                    if (!File.Exists(sdkLinkDirectory + "/" + includeSdkFileName))
+                    var fullFileName = Path.Combine(sdkLinkDirectory, includeSdkFileName);
+                    if (!File.Exists(fullFileName))
                     {
-                        File.WriteAllText(sdkLinkDirectory + "/" + includeSdkFileName, includeSdkText);
+                        File.WriteAllText(fullFileName, includeSdkText);
                     }
                     break;
                 }
@@ -2187,9 +2195,11 @@ namespace ApiDoctor.ConsoleApp
                                       $"\r\n```{codeFenceString}\r\n" +     //code fence
                                       $"\r\n{codeSnippet}\r\n" +            //generated snippet
                                       "\r\n```";                            //closing fence
-            var directory = Directory.GetParent(Path.GetDirectoryName(method.SourceFile.FullPath)) + "/" + relativePathSnippetsFolder;
+            var directory = Path.Combine(Directory.GetParent(Path.GetDirectoryName(method.SourceFile.FullPath)).FullName, relativePathSnippetsFolder);
             Directory.CreateDirectory(directory);//Make sure snippet file directory exists
-            File.WriteAllText(directory + "/" + snippetFileName, snippetFileContents);//write snippet to file
+            var mdFilePath = Path.Combine(directory, snippetFileName);
+            FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"Writing snippet to {mdFilePath}");
+            File.WriteAllText(mdFilePath, snippetFileContents);//write snippet to file
 
         }
 
