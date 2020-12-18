@@ -286,6 +286,9 @@ namespace ApiDoctor.Validation.TableSpec
                 }
                 else if (kvp.Key.Contains("{x}"))
                 {
+                    // UPDATE: check that key matches the end of the common header content as opposed to common header content contains key.
+                    // Some header contents contains key at the beginning or middle which we are not interested in.
+
                     // eventually bring FriendlyWildcard into this code...
                     var commonHeaderContent = kvp.Key.Replace("{x} ", string.Empty);
                     if (lastHeader.EndsWith(commonHeaderContent))
