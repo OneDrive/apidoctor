@@ -1301,15 +1301,6 @@ namespace ApiDoctor.ConsoleApp
                 exitCode = ExitCodeSuccess;
             }
 
-#if DEBUG
-            Console.WriteLine("Exit code: " + exitCode);
-            if (Debugger.IsAttached)
-            {
-                Console.WriteLine();
-                Console.Write("Press any key to exit.");
-                Console.ReadKey();
-            }
-#endif
 
             Environment.Exit(exitCode);
         }
