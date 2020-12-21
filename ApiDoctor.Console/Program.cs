@@ -31,10 +31,9 @@ namespace ApiDoctor.ConsoleApp
     using System.IO;
     using System.Linq;
     using System.Net;
-    using System.Net.Http;
-    using System.Runtime.InteropServices;
     using System.Text;
     using System.Text.RegularExpressions;
+    using System.Threading;
     using System.Threading.Tasks;
     using ApiDoctor.DocumentationGeneration;
     using ApiDoctor.Validation.Config;
@@ -1925,12 +1924,12 @@ namespace ApiDoctor.ConsoleApp
 
             if (string.IsNullOrWhiteSpace(options.CustomMetadataPath))
             {
-                await GenerateSnippets(options.SnippetGeneratorPath, // executable path
+                GenerateSnippets(options.SnippetGeneratorPath, // executable path
                     "--SnippetsPath", snippetsPath, "--Languages", options.Languages); // args
             }
             else
             {
-                await GenerateSnippets(options.SnippetGeneratorPath, // executable path
+                GenerateSnippets(options.SnippetGeneratorPath, // executable path
                     "--SnippetsPath", snippetsPath, "--Languages", options.Languages, "--CustomMetadataPath", options.CustomMetadataPath); // args
             }
 
@@ -1975,27 +1974,41 @@ namespace ApiDoctor.ConsoleApp
         /// </summary>
         /// <param name="executablePath">path to snippet generator command line tool</param>
         /// <param name="args">arguments to snippet generator</param>
-        private static async Task GenerateSnippets(string executablePath, params string[] args)
+        private static void GenerateSnippets(string executablePath, params string[] args)
         {
             var startInfo = new ProcessStartInfo(executablePath, string.Join(" ", args))
             {
                 RedirectStandardError = true,
                 RedirectStandardOutput = true,
             };
-            var process = Process.Start(startInfo);
+            using var process = Process.Start(startInfo);
+            using var outputWaitHandle = new AutoResetEvent(false);
+            using var errorWaitHandle = new AutoResetEvent(false);
+            process.OutputDataReceived += (sender, e) => {
+                if (e.Data == null)
+                {
+                    outputWaitHandle.Set();
+                }
+                else
+                {
+                    FancyConsole.WriteLine(FancyConsole.ConsoleErrorColor, "Error when generating code snippets!!!");
+                    FancyConsole.Write(FancyConsole.ConsoleErrorColor, e.Data);
+                }
+            };
+            process.ErrorDataReceived += (sender, e) =>
+            {
+                if (e.Data == null)
+                {
+                    errorWaitHandle.Set();
+                }
+                else
+                {
+                    FancyConsole.Write(FancyConsole.ConsoleDefaultColor, e.Data);
+                }
+            };
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
             process.WaitForExit();
-            var errors = await process.StandardError.ReadToEndAsync();
-            if (!string.IsNullOrEmpty(errors))
-            {
-                FancyConsole.WriteLine(FancyConsole.ConsoleErrorColor, "Error when generating code snippets!!!");
-                FancyConsole.Write(FancyConsole.ConsoleErrorColor, errors);
-            }
-            var output = await process.StandardOutput.ReadToEndAsync();
-            if(!string.IsNullOrEmpty(output))
-            {
-                FancyConsole.WriteLine(FancyConsole.ConsoleDefaultColor, "Standard output of snippets generation");
-                FancyConsole.Write(FancyConsole.ConsoleDefaultColor, output);
-            }
         }
 
         /// <summary>
