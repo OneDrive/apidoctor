@@ -2099,8 +2099,8 @@ namespace ApiDoctor.ConsoleApp
             var snippetFileName = methodString + $"-{codeFenceString}-snippets.md";
 
             var includeText = $"# [{language}](#tab/{codeFenceString})\r\n" +
-                              $"[!INCLUDE [sample-code](../{ReplaceWindowsByLinuxPathSeparators(relativePathSnippetsFolder)}{snippetFileName})]\r\n" +
-                              $"[!INCLUDE [sdk-documentation](../{ReplaceWindowsByLinuxPathSeparators(relativePathFolder)}{includeSdkFileName})]\r\n";
+                              $"[!INCLUDE [sample-code](../{ReplaceWindowsByLinuxPathSeparators(Path.Combine(relativePathSnippetsFolder, snippetFileName))})]\r\n" +
+                              $"[!INCLUDE [sdk-documentation](../{ReplaceWindowsByLinuxPathSeparators(Path.Combine(relativePathFolder, includeSdkFileName))})]\r\n";
 
             const string includeSdkText = "<!-- markdownlint-disable MD041-->\r\n\r\n" +
                                           "> Read the [SDK documentation](https://docs.microsoft.com/graph/sdks/sdks-overview) " +
@@ -2168,7 +2168,7 @@ namespace ApiDoctor.ConsoleApp
                         if (originalFileContents[currentIndex].Contains($"(#tab/{codeFenceString})"))
                         {
                             originalFileContents[currentIndex] = $"# [{language}](#tab/{codeFenceString})";
-                            originalFileContents[currentIndex + 1] = $"[!INCLUDE [sample-code](../{ReplaceWindowsByLinuxPathSeparators(relativePathSnippetsFolder)}{snippetFileName})]";//update include link. Just in case.
+                            originalFileContents[currentIndex + 1] = $"[!INCLUDE [sample-code](../{ReplaceWindowsByLinuxPathSeparators(Path.Combine(relativePathSnippetsFolder, snippetFileName))})]";//update include link. Just in case.
                             includeText = "";
                         }
                         break;
