@@ -1976,7 +1976,7 @@ namespace ApiDoctor.ConsoleApp
             using var outputWaitHandle = new AutoResetEvent(false);
             using var errorWaitHandle = new AutoResetEvent(false);
             process.OutputDataReceived += (sender, e) => {
-                if (e.Data == null)
+                if (string.IsNullOrEmpty(e.Data))
                 {
                     outputWaitHandle.Set();
                 }
@@ -1988,7 +1988,7 @@ namespace ApiDoctor.ConsoleApp
             };
             process.ErrorDataReceived += (sender, e) =>
             {
-                if (e.Data == null)
+                if (string.IsNullOrEmpty(e.Data))
                 {
                     errorWaitHandle.Set();
                 }
