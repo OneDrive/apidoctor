@@ -132,7 +132,7 @@ namespace ApiDoctor.Validation.Error
     {
         protected ValidationError()
         {
-            
+
         }
 
         public ValidationError(ValidationErrorCode code, string source, string messageformat, params object[] formatParams)
@@ -141,7 +141,10 @@ namespace ApiDoctor.Validation.Error
             this.Source = source;
             try
             {
-                this.Message = string.Format(messageformat, formatParams);
+                if (formatParams.Any())
+                    this.Message = string.Format(messageformat, formatParams);
+                else
+                    this.Message = messageformat;
             }
             catch
             {
@@ -179,9 +182,9 @@ namespace ApiDoctor.Validation.Error
         /// <summary>
         /// Returns a log-ready string that includes information about the specific error/warning/message.
         /// </summary>
-        public string ErrorText 
+        public string ErrorText
         {
-            get 
+            get
             {
                 if (this.cachedErrorText == null)
                 {
