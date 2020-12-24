@@ -64,7 +64,7 @@ namespace ApiDoctor.Validation.OData
             { "Edm.Guid", "9F328426-8A81-40D1-8F35-D619AA90A12C" }
         };
 
-        private static readonly HashSet<string> vistiedProperties = new ();
+        private static readonly HashSet<string> visitedProperties = new ();
         private static readonly Dictionary<string, object> generatedExamples = new ();
 
         #region Static EDMX -> EntityFramework methods 
@@ -252,7 +252,7 @@ namespace ApiDoctor.Validation.OData
             {
                 string propertyHash = ct.Namespace + ct.Name + property.Name;
 
-                if (vistiedProperties.Contains(propertyHash))
+                if (visitedProperties.Contains(propertyHash))
                 {
                     if (generatedExamples.TryGetValue(propertyHash, out object preGeneratedExample))
                     {
@@ -261,7 +261,7 @@ namespace ApiDoctor.Validation.OData
                 }
                 else
                 {
-                    vistiedProperties.Add(propertyHash);
+                    visitedProperties.Add(propertyHash);
                     var generatedExample = ExampleOfType(property.Type, otherSchema);
                     generatedExamples.Add(propertyHash, generatedExample);
 
