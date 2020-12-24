@@ -294,23 +294,23 @@ namespace ApiDoctor.Validation.Json
             {
                 missingProperties.Remove(property.Name);
 
-                if (property?.Type?.CustomTypeName != null)
+                if (options?.IgnorablePropertyTypes != null && property?.Type?.CustomTypeName != null)
                 {
-                    if (options?.IgnorablePropertyTypes?.Contains(property.Type.CustomTypeName.TypeOnly()) == true)
+                    if (options.IgnorablePropertyTypes.Contains(property.Type.CustomTypeName.TypeOnly()))
                     {
                         continue;
                     }
+                }
 
-                    // This detects bad types, extra properties, etc.
-                    if (null != options && (property.Type.IsCollection || property.Type.IsObject))
-                    {
-                        var propertyOptions = options.CreateForProperty(property.Name);
-                        this.ValidateProperty(property, otherSchemas, issues.For(property.Name), propertyOptions);
-                    }
-                    else
-                    {
-                        this.ValidateProperty(property, otherSchemas, issues.For(property.Name), options);
-                    }
+                // This detects bad types, extra properties, etc.
+                if (null != options && (property.Type.IsCollection || property.Type.IsObject))
+                {
+                    var propertyOptions = options.CreateForProperty(property.Name);
+                    this.ValidateProperty(property, otherSchemas, issues.For(property.Name), propertyOptions);
+                }
+                else
+                {
+                    this.ValidateProperty(property, otherSchemas, issues.For(property.Name), options);
                 }
             }
 
