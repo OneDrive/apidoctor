@@ -1940,7 +1940,7 @@ namespace ApiDoctor.ConsoleApp
                         continue;
                     }
 
-                    var fileName = $"{snippetPrefix}---{lang}";
+                    var fileName = $"{snippetPrefix}---{lang.ToLowerInvariant()}";
                     var fileFullPath = Path.Combine(snippetsPath, fileName);
                     FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"Reading {fileFullPath}");
 
