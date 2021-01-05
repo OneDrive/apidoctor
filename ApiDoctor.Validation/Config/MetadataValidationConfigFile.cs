@@ -59,8 +59,8 @@ namespace ApiDoctor.Validation.Config
         [JsonProperty("aliasNamespace")]
         public string AliasNamespace { get; set; }
 
-        [JsonProperty("skipProprtiesValidation")]
-        public bool SkipProprtiesValidation { get; set; }
+        [JsonProperty("truncatedProprtiesValidation")]
+        public bool TruncatedProprtiesValidation { get; set; }
     }
 
 }

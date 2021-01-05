@@ -31,6 +31,7 @@ namespace ApiDoctor.ConsoleApp.AppVeyor
     using System.Threading.Tasks;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Converters;
+    using Newtonsoft.Json.Serialization;
 
     public class BuildWorkerApi
     {
@@ -40,7 +41,7 @@ namespace ApiDoctor.ConsoleApp.AppVeyor
         static BuildWorkerApi()
         {
             CachedJsonSettings =  new JsonSerializerSettings { DefaultValueHandling = DefaultValueHandling.Ignore, NullValueHandling = NullValueHandling.Ignore };
-            CachedJsonSettings.Converters.Add(new StringEnumConverter { CamelCaseText = true });
+            CachedJsonSettings.Converters.Add(new StringEnumConverter { NamingStrategy = new CamelCaseNamingStrategy() });
         }
 
         public BuildWorkerApi(Uri apiUrl)
