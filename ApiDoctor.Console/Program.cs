@@ -2060,8 +2060,11 @@ namespace ApiDoctor.ConsoleApp
                 var fileFullPath = Path.Combine(tempDir, fileName);
                 FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"Writing {fileFullPath}");
 
-                File.WriteAllText(fileFullPath, request.FullHttpText(true));
+                File.WriteAllText(fileFullPath, ReplaceLFbyCRLF(request.FullHttpText(true)));
             }
+        }
+        private static string ReplaceLFbyCRLF(string original) {
+            return original.Replace("\r\n", "\n").Replace("\n", "\r\n"); // we first replace CRLF by LF and then all LF by CRLF to avoid breaking any CRLF or missing any LF
         }
         /// <summary>
         /// Replaces \ by / to keep output mardown consistent accross generation OSes
