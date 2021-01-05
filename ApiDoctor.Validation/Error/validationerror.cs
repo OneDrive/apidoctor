@@ -126,6 +126,7 @@ namespace ApiDoctor.Validation.Error
         NamespaceMismatch,
 
         AmbiguousExample,
+        MissingMetadataBlock
     }
 
     public class ValidationError
