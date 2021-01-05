@@ -125,7 +125,8 @@ namespace ApiDoctor.Validation
 
         public DocSet()
         {
-            this.SourceFolderPath = Path.GetTempPath();
+            this.SourceFolderPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName().Split(".", StringSplitOptions.RemoveEmptyEntries).First());
+            Directory.CreateDirectory(this.SourceFolderPath);
             this.LoadRequirements();
             this.LoadTestScenarios();
             this.LoadTableParser();

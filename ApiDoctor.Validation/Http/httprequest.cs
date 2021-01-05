@@ -296,7 +296,7 @@ namespace ApiDoctor.Validation.Http
                 sb.Append(this.Url);
             }
             sb.Append(" ");
-            sb.AppendLine("HTTP/1.1");
+            sb.Append("HTTP/1.1\r\n"); // On linux the AppendLine is going to be serialized with only LF, which is not HTTP valid and causes issues for parsing later on. https://tools.ietf.org/html/rfc7230#section-3
             foreach (string header in this.Headers.AllKeys)
             {
                 if (!showFullAuthorizationHeader && header.Equals("authorization", StringComparison.OrdinalIgnoreCase) && this.Headers[header].Length > 30)
@@ -308,9 +308,9 @@ namespace ApiDoctor.Validation.Http
                     sb.AppendFormat("{0}: {1}", header, this.Headers[header]);
                 }
 
-                sb.AppendLine();
+                sb.Append("\r\n");
             }
-            sb.AppendLine();
+            sb.Append("\r\n");
             if (this.BodyBytes != null)
             {
                 sb.Append("... binary content ...");
@@ -322,6 +322,14 @@ namespace ApiDoctor.Validation.Http
 
             return sb.ToString();
         }
+        /// <summary>
+        /// Adds missing CR characters to the snippet
+        /// On linux the snippet is going to be serialized with only LF, which is not HTTP valid and causes issues for parsing later on.
+        /// https://tools.ietf.org/html/rfc7230#section-3
+        /// </summary>
+        /// <param name="original">The original string</param>
+        /// <returns>The orginal string with CR if they were missing</returns>
+        private static string AddMissingCR(string original) => original.Contains('\r') ? original : original.Replace("\n", "\r\n");
 
 
         public async Task<HttpResponse> GetResponseAsync(IServiceAccount account, IssueLogger issues, int retryCount = 0)
