@@ -2228,6 +2228,8 @@ namespace ApiDoctor.ConsoleApp
 
         }
 
+        private const string graphHostName = "graph.microsoft.com";
+        private const string hostHeaderKey = "Host";
         /// <summary>
         /// Finds the file the request is located and inserts the code snippet into the file.
         /// </summary>
@@ -2239,18 +2241,24 @@ namespace ApiDoctor.ConsoleApp
             //Version 1.1 of HTTP protocol MUST specify the host header
             if (request.HttpVersion.Equals("HTTP/1.1"))
             {
-                if ((request.Headers.Get("Host") == null) || (request.Headers.Get("host") == null))
+                if (!request.Headers.AllKeys.Contains(hostHeaderKey) || string.IsNullOrEmpty(request.Headers[hostHeaderKey]))
                 {
                     try
                     {
                         var testUri = new Uri(request.Url);
                         request.Url = testUri.PathAndQuery;
-                        request.Headers.Add("Host", testUri.Host);
+                        if(request.Headers.AllKeys.Contains(hostHeaderKey))
+                            request.Headers[hostHeaderKey] = testUri.Host;
+                        else
+                            request.Headers.Add(hostHeaderKey, testUri.Host);
                     }
                     catch (UriFormatException)
                     {
                         //cant determine host. Relative url with no host header
-                        request.Headers.Add("Host", "graph.microsoft.com");
+                        if(request.Headers.AllKeys.Contains(hostHeaderKey))
+                            request.Headers[hostHeaderKey] = graphHostName;
+                        else
+                            request.Headers.Add(hostHeaderKey, graphHostName);
                     }
                 }
             }
