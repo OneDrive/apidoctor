@@ -2251,6 +2251,13 @@ namespace ApiDoctor.ConsoleApp
                             request.Headers[hostHeaderKey] = testUri.Host;
                         else
                             request.Headers.Add(hostHeaderKey, testUri.Host);
+                        
+                        if(string.IsNullOrEmpty(request.Headers[hostHeaderKey])) {
+                            if(request.Headers.AllKeys.Contains(hostHeaderKey))
+                                request.Headers[hostHeaderKey] = graphHostName;
+                            else
+                                request.Headers.Add(hostHeaderKey, graphHostName);
+                        }
                     }
                     catch (UriFormatException)
                     {
