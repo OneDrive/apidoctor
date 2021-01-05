@@ -89,7 +89,7 @@ namespace ApiDoctor.Validation.Http
             var reqs = requirements.HttpResponse;
 
             var responseMimeType = new MultipartMime.MimeContentType(response.ContentType);
-            if (reqs.ContentTypes != null && null != responseMimeType 
+            if (reqs.ContentTypes != null && null != responseMimeType.MimeType 
                 && !reqs.ContentTypes.Contains(responseMimeType.MimeType))
             {
                 issues.Warning(ValidationErrorCode.InvalidContentType, $"Response Content-Type header value is not in the supported list of content-types: {response.ContentType}");

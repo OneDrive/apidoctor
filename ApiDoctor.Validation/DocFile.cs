@@ -134,6 +134,8 @@ namespace ApiDoctor.Validation
         public PageAnnotation Annotation { get; set; }
 
         public bool WriteFixesBackToDisk { get; set; }
+
+        public string Namespace { get; set; }
         #endregion
 
         #region Constructor
@@ -176,6 +178,20 @@ namespace ApiDoctor.Validation
             this.OriginalMarkdownBlocks = md.Blocks;
             this.MarkdownLinks = new List<ILinkInfo>(md.FoundLinks);
             this.bookmarks.AddRange(md.HeaderIdsInDocument);
+        }
+
+        protected string GetBlockContent(Block block)
+        {
+            try
+            {
+                if (block.Content == null)
+                    return string.Empty;
+                return block.Content;
+            }
+            catch
+            {
+                return string.Empty;
+            }
         }
 
         protected virtual string PostProcessHtmlTags(string inputHtml, string tags)
@@ -317,8 +333,16 @@ namespace ApiDoctor.Validation
             string[] items = yamlMetadata.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
             foreach (string item in items)
             {
-                string[] keyValue = item.Split(':');
-                dictionary.Add(keyValue[0].Trim(), keyValue[1].Trim());
+                try
+                {
+                    string[] keyValue = item.Split(':');
+                    dictionary.Add(keyValue[0].Trim(), keyValue[1].Trim());
+                }
+                catch (Exception ex)
+                {
+                    issues.Error(ValidationErrorCode.IncorrectYamlHeaderFormat, $"Incorrect YAML header format after `{dictionary.Keys.Last()}`");
+                    Console.WriteLine($"Error parsing YAML headers: {ex.Message.FirstLineOnly()}");
+                }
             }
 
             List<string> missingHeaders = new List<string>();
@@ -327,9 +351,10 @@ namespace ApiDoctor.Validation
                 string value;
                 if (dictionary.TryGetValue(header, out value))
                 {
-                    if (string.IsNullOrEmpty(value))
+                    value = value.Replace("\"", string.Empty);
+                    if (string.IsNullOrWhiteSpace(value))
                     {
-                        issues.Error(ValidationErrorCode.RequiredYamlHeaderMissing, $"Missing value for YAML header: {header}");
+                        issues.Warning(ValidationErrorCode.RequiredYamlHeaderMissing, $"Missing value for YAML header: {header}");
                     }
                 }
                 else
@@ -379,8 +404,10 @@ namespace ApiDoctor.Validation
         protected string PreviewOfBlockContent(Block block)
         {
             if (block == null) return string.Empty;
-            if (block.Content == null) return string.Empty;
-
+            var blockContent = GetBlockContent(block);
+            if (blockContent == string.Empty)
+                return blockContent;
+            
             const int previewLength = 35;
 
             string contentPreview = block.Content.Length > previewLength ? block.Content.Substring(0, previewLength) : block.Content;
@@ -524,7 +551,7 @@ namespace ApiDoctor.Validation
                                 issues.AddSuppressions(this.Annotation.Suppressions);
                             }
 
-                            if (string.IsNullOrEmpty(this.Annotation.Title))
+                            if (string.IsNullOrWhiteSpace(this.Annotation.Title))
                             {
                                 this.Annotation.Title = this.OriginalMarkdownBlocks.FirstOrDefault(b => IsHeaderBlock(b, 1))?.Content;
                             }
@@ -565,6 +592,7 @@ namespace ApiDoctor.Validation
                 }
             }
 
+            this.InferNamespaceFromFoundElments(foundElements, issues);
             this.PostProcessFoundElements(foundElements, issues);
 
             return issues.Issues.All(x => !x.IsError);
@@ -767,14 +795,32 @@ namespace ApiDoctor.Validation
 
             var elementsFoundInDocument = elements as IList<object> ?? elements.ToList();
             var foundMethods = elementsFoundInDocument.OfType<MethodDefinition>().ToList();
-            var foundResources = elementsFoundInDocument.OfType<ResourceDefinition>().ToList();
-            var foundTables = elementsFoundInDocument.OfType<TableDefinition>().ToList();
-            var foundEnums = foundTables.Where(t => t.Type == TableBlockType.EnumerationValues).SelectMany(t => t.Rows).Cast<EnumerationDefinition>().ToList();
+            var foundTables = elementsFoundInDocument.OfType<TableDefinition>().ToList();            
+            var foundResources = elementsFoundInDocument.OfType<ResourceDefinition>()
+                .Select(c => { c.Namespace = this.Namespace; return c; }).ToList();
+            var foundEnums = foundTables.Where(t => t.Type == TableBlockType.EnumerationValues)
+                .SelectMany(t => t.Rows).Cast<EnumerationDefinition>()
+                .Select(c => { c.Namespace = this.Namespace; return c; }).ToList();
 
             this.PostProcessAuthScopes(elementsFoundInDocument);
-            PostProcessResources(foundResources, foundTables, issues);
+            this.PostProcessResources(foundResources, foundTables, issues);
             this.PostProcessMethods(foundMethods, foundTables, issues);
             this.PostProcessEnums(foundEnums, foundTables, issues);
+        }
+
+        private void InferNamespaceFromFoundElments(IList<object> foundElements, IssueLogger issues)
+        {
+            var foundResource = foundElements.OfType<ResourceDefinition>().FirstOrDefault();
+            string inferredNamespace = null;
+            if (foundResource != null)
+            {
+                inferredNamespace = foundResource.Name.Substring(0, foundResource.Name.LastIndexOf('.'));
+                if (this.Annotation?.Namespace != null && this.Annotation.Namespace != inferredNamespace)
+                {
+                    issues.Error(ValidationErrorCode.NamespaceMismatch, $"The namespace specified on page level annotation for resource {foundResource.Name} is incorrect.");
+                }
+            }
+            this.Namespace = this.Annotation?.Namespace ?? inferredNamespace ?? DocSet.SchemaConfig?.DefaultNamespace;
         }
 
         private void PostProcessAuthScopes(IList<object> foundElements)
@@ -797,7 +843,7 @@ namespace ApiDoctor.Validation
             this.enums.AddRange(foundEnums.Where(e => !string.IsNullOrEmpty(e.MemberName) && !string.IsNullOrEmpty(e.TypeName)));
 
             // find all the property tables
-            //  find properties of type string that have a list of `enum`, `values`. see if they match me.
+            // find properties of type string that have a list of `enum`, `values`. see if they match me.
             foreach (var table in foundTables.Where(t => t.Type == TableBlockType.RequestObjectProperties || t.Type == TableBlockType.ResourcePropertyDescriptions))
             {
                 var rows = table.Rows.Cast<ParameterDefinition>();
@@ -990,19 +1036,28 @@ namespace ApiDoctor.Validation
             }
             else
             {
-                // maybe the methods are really all the same and the dupes are just different examples
-                var distinctMethodNames = foundMethods.Select(m => new Http.HttpParser().ParseHttpRequest(m.Request).Url).Select(
-                    url =>
-                    {
-                        var method = url.Substring(url.LastIndexOf('/') + 1);
-                        var endIndex = method.IndexOfAny(new[] { '(', '?', '/' });
-                        if (endIndex != -1)
+                int distinctMethodNames = 0;
+                try
+                {
+                    // maybe the methods are really all the same and the dupes are just different examples
+                    distinctMethodNames = foundMethods.Select(m => Http.HttpParser.ParseHttpRequest(m.Request).Url).Select(
+                        url =>
                         {
-                            method = method.Substring(0, endIndex);
-                        }
+                            var method = url.Substring(url.LastIndexOf('/') + 1);
+                            var endIndex = method.IndexOfAny(new[] { '(', '?', '/' });
+                            if (endIndex != -1)
+                            {
+                                method = method.Substring(0, endIndex);
+                            }
 
-                        return method;
-                    }).Distinct().Count();
+                            return method;
+                        }).Distinct().Count();
+                }
+                catch (Exception ex)
+                {
+                    issues.Error(ValidationErrorCode.HttpParserError, $"Exception while parsing HTTP request", ex);
+                }
+                
                 if (distinctMethodNames == 1)
                 {
                     foreach (var method in foundMethods)
@@ -1194,7 +1249,7 @@ namespace ApiDoctor.Validation
                     }
                 case CodeBlockType.Request:
                     {
-                        var method = MethodDefinition.FromRequest(code.Content, annotation, this, issues.For("RequestBlock"));
+                        var method = MethodDefinition.FromRequest(GetBlockContent(code), annotation, this, issues);
                         if (string.IsNullOrEmpty(method.Identifier))
                         {
                             method.Identifier = string.Format("{0} #{1}", this.DisplayName, this.requests.Count);
@@ -1216,7 +1271,7 @@ namespace ApiDoctor.Validation
                                 MethodDefinition pairedRequest = (from m in this.requests where m.Identifier == requestMethodName select m).FirstOrDefault();
                                 if (pairedRequest != null)
                                 {
-                                    pairedRequest.AddExpectedResponse(code.Content, annotation);
+                                    pairedRequest.AddExpectedResponse(GetBlockContent(code), annotation);
                                     responses.Add(pairedRequest);
                                 }
                                 else
@@ -1233,7 +1288,7 @@ namespace ApiDoctor.Validation
                             {
                                 try
                                 {
-                                    pairedRequest.AddExpectedResponse(code.Content, annotation);
+                                    pairedRequest.AddExpectedResponse(GetBlockContent(code), annotation);
                                     responses.Add(pairedRequest);
                                 }
                                 catch (Exception ex)
@@ -1244,7 +1299,7 @@ namespace ApiDoctor.Validation
                             }
                             else
                             {
-                                throw new InvalidOperationException(string.Format("Unable to locate the corresponding request for response block: {0}. Requests must be defined before a response.", annotation.MethodName));
+                                issues.Error(ValidationErrorCode.MarkdownParserError, $"Unable to locate the corresponding request for response block: {annotation.MethodName}. Requests must be defined before a response.");
                             }
                         }
 

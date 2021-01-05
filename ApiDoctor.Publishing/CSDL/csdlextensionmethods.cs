@@ -42,6 +42,8 @@ namespace ApiDoctor.Publishing.CSDL
 
         public static string RequestUriPathOnly(this MethodDefinition method, string[] baseUrlsToRemove, IssueLogger issues)
         {
+            if (string.IsNullOrWhiteSpace(method.Request)) return string.Empty;
+
             var path = method.Request.FirstLineOnly().TextBetweenCharacters(' ', '?').TrimEnd('/');
 
             if (baseUrlsToRemove != null)
@@ -136,10 +138,9 @@ namespace ApiDoctor.Publishing.CSDL
 
         public static string HttpMethodVerb(this MethodDefinition method)
         {
-            HttpParser parser = new HttpParser();
-            var request = parser.ParseHttpRequest(method.Request);
-            return request.Method;
-
+            HttpRequest request;
+            HttpParser.TryParseHttpRequest(method.Request, out request);
+            return request?.Method;
         }
 
         internal static void AppendWithCondition(this System.Text.StringBuilder sb, bool condition, string text, string prefixIfExistingContent = null)

@@ -121,9 +121,10 @@ namespace ApiDoctor.Validation.Params
             
             // Get the HttpRequest, either from MethodName or by parsing HttpRequest
             HttpRequest request;
+            var issues = new IssueLogger();
             try
             {
-                request = this.GetHttpRequest(documents, account);
+                request = this.GetHttpRequest(documents, account, issues);
             }
             catch (Exception ex)
             {
@@ -151,7 +152,6 @@ namespace ApiDoctor.Validation.Params
 
             try
             {
-                var issues = new IssueLogger();
                 var response = await request.GetResponseAsync(account, issues);
 
                 errors.AddRange(issues.Issues);

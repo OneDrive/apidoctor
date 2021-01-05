@@ -23,33 +23,45 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-namespace ApiDoctor.Validation
+namespace ApiDoctor.Validation.Config
 {
-    public class EnumerationDefinition : ItemDefinition
+    using Newtonsoft.Json;
+
+    public class MetadataValidationConfigFile : ConfigFile
     {
-        /// <summary>
-        /// Enumerated member name
-        /// </summary>
-        public string MemberName { get; set; }
+        [JsonProperty("metadata-validation-configs")]
+        public MetadataValidationConfigs MetadataValidationConfigs { get;set;}
 
-        /// <summary>
-        /// Enumerated type name
-        /// </summary>
-        public string TypeName { get; set; }
-
-        /// <summary>
-        ///   Attribute for IsFlags
-        /// </summary>
-        public bool IsFlags { get; set; }
-
-        /// <summary>
-        ///   Attribute for IsFlags
-        /// </summary>
-        public int? NumericValue { get; set; }
-
-        /// <summary>
-        /// The namespace of the enum type e.g. microsoft.graph, microsoft.graph.callRecords
-        /// </summary>
-        public string Namespace { get; set; }
+        public override bool IsValid
+        {
+            get
+            {
+                return this.MetadataValidationConfigs != null;
+            }
+        }
     }
+
+    public class MetadataValidationConfigs
+    {
+        [JsonProperty("modelConfigs")]
+        public ModelConfigs ModelConfigs { get;set;}
+
+        [JsonProperty("ignorableModels")]
+        public string[] IgnorableModels { get; set; }
+
+    }
+
+    public class ModelConfigs
+    {
+        [JsonProperty("validateNamespace")]
+        public bool ValidateNamespace { get;set;}
+
+        [JsonProperty("aliasNamespace")]
+        public string AliasNamespace { get; set; }
+
+        [JsonProperty("truncatedProprtiesValidation")]
+        public bool TruncatedProprtiesValidation { get; set; }
+    }
+
 }
+

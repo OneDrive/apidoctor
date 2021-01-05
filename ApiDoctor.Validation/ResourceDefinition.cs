@@ -123,6 +123,11 @@ namespace ApiDoctor.Validation
         /// <value>The sourceFile file.</value>
         public DocFile SourceFile {get; protected set;}
 
+        /// <summary>
+        /// The namespace of the resource e.g. microsoft.graph, microsoft.graph.callRecords
+        /// </summary>
+        public string Namespace { get; set; }
+
         public bool HasOrInheritsProperty(string name)
         {
             if (this.Parameters != null && this.Parameters.Any(p => p.Name == name))

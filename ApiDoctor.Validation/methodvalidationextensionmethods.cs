@@ -73,7 +73,6 @@ namespace ApiDoctor.Validation
                         RequiredTags = method.RequiredTags
                     }
                 };
-//                results.AddResult("init", new ValidationMessage(null, "No scenarios were defined for method {0}. Will request verbatim from docs.", method.Identifier), ValidationOutcome.None);
             }
 
             if (scenarios.Any() && !scenarios.Any(x => x.Enabled))
@@ -189,16 +188,13 @@ namespace ApiDoctor.Validation
                 actionName,
                 new ValidationMessage(null, "Generated Method HTTP Request:\r\n{0}", requestPreview.FullHttpText()));
 
-            HttpParser parser = new HttpParser();
+            var issues = new IssueLogger();
             HttpResponse expectedResponse = null;
             if (!string.IsNullOrEmpty(method.ExpectedResponse))
-            {
-                expectedResponse = parser.ParseHttpResponse(method.ExpectedResponse);
-            }
+                HttpParser.TryParseHttpResponse(method.ExpectedResponse, out expectedResponse, issues);
 
             // Execute the actual tested method (the result of the method preview call, which made the test-setup requests)
             startTicks = DateTimeOffset.UtcNow.Ticks;
-            var issues = new IssueLogger();
             var actualResponse = await requestPreview.GetResponseAsync(primaryAccount, issues);
             TimeSpan actualMethodDuration = new TimeSpan(DateTimeOffset.UtcNow.Ticks - startTicks);
 
@@ -230,9 +226,7 @@ namespace ApiDoctor.Validation
             else
                 results.SetOutcome(actionName, ValidationOutcome.Passed);
         }
-
     }
-
 
     public class ValidationResults
     {

@@ -32,12 +32,12 @@ namespace ApiDoctor.Validation.OData
     using System.Linq;
     using System.Net;
     using System.Threading.Tasks;
-    using System.Xml.Linq;
     using Newtonsoft.Json;
     using System.Text;
     using System.Xml;
     using System.Xml.Serialization;
     using ApiDoctor.Validation.Error;
+    using ApiDoctor.Validation.Config;
 
     /// <summary>
     /// Converts OData input into json examples which can be validated against our 
@@ -59,9 +59,13 @@ namespace ApiDoctor.Validation.OData
             { "Edm.SByte", -12 },
             { "Edm.DateTime", "2014-01-01T00:00:00Z" },
             { "Edm.DateTimeOffset", "2014-01-01T00:00:00Z" },
+            { "Edm.Duration", "P3Y3M3DT1H3M3S" },
             { "Edm.Time", "00:00:00Z" },
             { "Edm.Guid", "9F328426-8A81-40D1-8F35-D619AA90A12C" }
         };
+
+        private static readonly HashSet<string> visitedProperties = new ();
+        private static readonly Dictionary<string, object> generatedExamples = new ();
 
         #region Static EDMX -> EntityFramework methods 
         public static EntityFramework DeserializeEntityFramework(string metadataContent)
@@ -187,57 +191,102 @@ namespace ApiDoctor.Validation.OData
         /// </summary>
         /// <param name="schemas"></param>
         /// <returns></returns>
-        public static List<ResourceDefinition> GenerateResourcesFromSchemas(IEnumerable<Schema> schemas, IssueLogger issues)
+        public static List<ResourceDefinition> GenerateResourcesFromSchemas(IEnumerable<Schema> schemas, IssueLogger issues, MetadataValidationConfigs metadataValidationConfigs = null)
         {
             List<ResourceDefinition> resources = new List<ResourceDefinition>();
             
             foreach (var schema in schemas)
             {
-                resources.AddRange(CreateResourcesFromSchema(schema, schemas, issues));
+                resources.AddRange(CreateResourcesFromSchema(schema, schemas, issues, metadataValidationConfigs));
             }
 
             return resources;
         }
 
-        private static IEnumerable<ResourceDefinition> CreateResourcesFromSchema(Schema schema, IEnumerable<Schema> otherSchema, IssueLogger issues)
+        private static IEnumerable<ResourceDefinition> CreateResourcesFromSchema(Schema schema, IEnumerable<Schema> otherSchema, IssueLogger issues, MetadataValidationConfigs metadataValidationConfigs)
         {
             List<ResourceDefinition> resources = new List<ResourceDefinition>();
 
-            resources.AddRange(from ct in schema.ComplexTypes select ResourceDefinitionFromType(schema, otherSchema, ct, issues));
-            resources.AddRange(from et in schema.EntityTypes select ResourceDefinitionFromType(schema, otherSchema, et, issues));
+            resources.AddRange(from ct in schema.ComplexTypes select ResourceDefinitionFromType(schema, otherSchema, ct, issues, metadataValidationConfigs));
+            resources.AddRange(from et in schema.EntityTypes select ResourceDefinitionFromType(schema, otherSchema, et, issues, metadataValidationConfigs));
 
             return resources;
         }
 
-        private static ResourceDefinition ResourceDefinitionFromType(Schema schema, IEnumerable<Schema> otherSchema, ComplexType ct, IssueLogger issues)
+        private static ResourceDefinition ResourceDefinitionFromType(Schema schema, IEnumerable<Schema> otherSchema, ComplexType ct, IssueLogger issues, MetadataValidationConfigs metadataValidationConfigs)
         {
-            var annotation = new CodeBlockAnnotation() { ResourceType = string.Concat(schema.Namespace, ".", ct.Name), BlockType = CodeBlockType.Resource };
-            var json = BuildJsonExample(ct, otherSchema);
+            var resourceType = BuildResourceTypeIdentifer(
+                schema.Namespace,
+                metadataValidationConfigs?.ModelConfigs?.AliasNamespace,
+                ct.Name,
+                metadataValidationConfigs?.ModelConfigs?.ValidateNamespace);
+
+            var annotation = new CodeBlockAnnotation() { ResourceType = resourceType, BlockType = CodeBlockType.Resource };
+            var json = BuildJsonExample(ct, otherSchema, metadataValidationConfigs);
             ResourceDefinition rd = new JsonResourceDefinition(annotation, json, null, issues);
             return rd;
         }
 
-        public static string BuildJsonExample(ComplexType ct, IEnumerable<Schema> otherSchema)
+        public static string BuildJsonExample(ComplexType ct, IEnumerable<Schema> otherSchema, MetadataValidationConfigs metadataValidationConfigs = null)
         {
-            Dictionary<string, object> dict = BuildDictionaryExample(ct, otherSchema);
+            Dictionary<string, object> dict = BuildDictionaryExample(ct, otherSchema, metadataValidationConfigs);
             return JsonConvert.SerializeObject(dict, Newtonsoft.Json.Formatting.Indented);
         }
 
-        private static Dictionary<string, object> BuildDictionaryExample(ComplexType ct, IEnumerable<Schema> otherSchema)
+        private static Dictionary<string, object> BuildDictionaryExample(ComplexType ct, IEnumerable<Schema> otherSchema, MetadataValidationConfigs metadataValidationConfigs = null)
         {
             Dictionary<string, object> propertyExamples = new Dictionary<string, object>();
 
             if (!string.IsNullOrWhiteSpace(ct.Namespace))
             {
-                propertyExamples.Add("@odata.type", $"{ct.Namespace}.{ct.TypeIdentifier}");
+                var resourceType = BuildResourceTypeIdentifer(
+                    ct.Namespace,
+                    metadataValidationConfigs?.ModelConfigs?.AliasNamespace,
+                    ct.TypeIdentifier,
+                    metadataValidationConfigs?.ModelConfigs?.ValidateNamespace);
+
+                propertyExamples.Add("@odata.type", resourceType);
             }
 
             foreach (var property in ct.Properties.Where(prop => prop.Type != "Edm.Stream"))
             {
-                propertyExamples.Add(property.Name, ExampleOfType(property.Type, otherSchema));
+                string propertyHash = ct.Namespace + ct.Name + property.Name;
+
+                if (visitedProperties.Contains(propertyHash))
+                {
+                    if (generatedExamples.TryGetValue(propertyHash, out object preGeneratedExample))
+                    {
+                        propertyExamples.Add(property.Name, preGeneratedExample);
+                    }
+                }
+                else
+                {
+                    visitedProperties.Add(propertyHash);
+                    var generatedExample = ExampleOfType(property.Type, otherSchema);
+                    generatedExamples.Add(propertyHash, generatedExample);
+
+                    propertyExamples.Add(property.Name, generatedExample);
+                }
             }
 
             return propertyExamples;
+        }
+
+        private static string BuildResourceTypeIdentifer(string schemaNamespace, string aliasNamespace, string typeIdentifier, bool? validateNamespace)
+        {
+            string resourceTypeIdentifier;
+            if (validateNamespace == true)
+            {
+                resourceTypeIdentifier = string.IsNullOrEmpty(aliasNamespace)
+                    ? $"{schemaNamespace}.{typeIdentifier}"
+                    : $"{aliasNamespace}.{typeIdentifier}";
+            }
+            else
+            {
+                resourceTypeIdentifier = typeIdentifier;
+            }
+
+            return resourceTypeIdentifier;
         }
 
         public static readonly string CollectionPrefix = "Collection(";

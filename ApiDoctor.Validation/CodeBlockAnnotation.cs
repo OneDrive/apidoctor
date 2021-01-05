@@ -475,21 +475,13 @@ namespace ApiDoctor.Validation
         {
             if (codeBlock.CodeLanguage == "http")
             {
-                // See if this is an HTTP request or HTTP response
-                Http.HttpParser parser = new Http.HttpParser();
-                try
-                {
-                    parser.ParseHttpRequest(codeBlock.Content);
+                Http.HttpRequest request;
+                if (Http.HttpParser.TryParseHttpRequest(codeBlock.Content, out request))
                     return CodeBlockType.Request;
-                }
-                catch { }
 
-                try
-                {
-                    parser.ParseHttpResponse(codeBlock.Content);
+                Http.HttpResponse response;
+                if (Http.HttpParser.TryParseHttpResponse(codeBlock.Content, out response))
                     return CodeBlockType.Response;
-                }
-                catch { }
 
                 try
                 {

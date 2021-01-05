@@ -69,6 +69,13 @@ namespace ApiDoctor.Validation.Json
         public string[] RequiredPropertyNames { get; set; }
 
         /// <summary>
+        /// A list of models types that we don't need to validate. 
+        /// If the type of the model doesn't exist,
+        /// we don't need to validate the model properties.
+        /// </summary>
+        public string[] IgnorablePropertyTypes { get; set; }
+
+        /// <summary>
         /// For collection results, what is the name of the property that 
         /// includes the collection. Defaults to 'value'.
         /// </summary>

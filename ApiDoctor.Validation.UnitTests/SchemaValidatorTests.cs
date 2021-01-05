@@ -165,11 +165,10 @@ namespace ApiDoctor.Validation.UnitTests
 
             docSet.ResourceCollection.RegisterJsonResource(testFile.Resources.First());
 
-            HttpParser parser = new HttpParser();
             var testMethod = testFile.Requests.First();
 
-            var expectedResponse = parser.ParseHttpResponse(testMethod.ExpectedResponse);
-            var actualResponse = parser.ParseHttpResponse(testMethod.ActualResponse);
+            var expectedResponse = HttpParser.ParseHttpResponse(testMethod.ExpectedResponse);
+            var actualResponse = HttpParser.ParseHttpResponse(testMethod.ActualResponse);
 
             testMethod.ValidateResponse(actualResponse, expectedResponse, null, issues);
 
@@ -191,11 +190,10 @@ namespace ApiDoctor.Validation.UnitTests
 
             docSet.ResourceCollection.RegisterJsonResource(testFile.Resources.First());
 
-            HttpParser parser = new HttpParser();
             var testMethod = testFile.Requests.First();
 
-            var expectedResponse = parser.ParseHttpResponse(testMethod.ExpectedResponse);
-            var actualResponse = parser.ParseHttpResponse(testMethod.ActualResponse);
+            var expectedResponse = HttpParser.ParseHttpResponse(testMethod.ExpectedResponse);
+            var actualResponse = HttpParser.ParseHttpResponse(testMethod.ActualResponse);
 
             testMethod.ValidateResponse(actualResponse, expectedResponse, null, issues);
 
@@ -215,11 +213,10 @@ namespace ApiDoctor.Validation.UnitTests
 
             docSet.ResourceCollection.RegisterJsonResource(testFile.Resources.First());
 
-            HttpParser parser = new HttpParser();
             var testMethod = testFile.Requests.First();
 
-            var expectedResponse = parser.ParseHttpResponse(testMethod.ExpectedResponse);
-            var actualResponse = parser.ParseHttpResponse(testMethod.ActualResponse);
+            var expectedResponse = HttpParser.ParseHttpResponse(testMethod.ExpectedResponse);
+            var actualResponse = HttpParser.ParseHttpResponse(testMethod.ActualResponse);
 
             testMethod.ValidateResponse(actualResponse, expectedResponse, null, issues);
 
