@@ -374,7 +374,7 @@ namespace ApiDoctor.Validation
                     value = char.ToLowerInvariant(value[0]) + value.Substring(1);
                 }
 
-                if (value.IndexOf('.') == -1 && !string.IsNullOrEmpty(config?.DefaultNamespace))
+                if (!string.IsNullOrEmpty(config?.DefaultNamespace) && !value.Contains(config.DefaultNamespace))
                 {
                     value = config.DefaultNamespace + "." + value;
                 }

@@ -32,7 +32,8 @@ namespace ApiDoctor.Validation.Http
     using System.Globalization;
     using System.IO;
     using System.Text;
-    using System.Web;
+    using ApiDoctor.Validation.Error;
+    using Microsoft.AspNetCore.WebUtilities;
 
     public class HttpParser
     {
@@ -41,11 +42,11 @@ namespace ApiDoctor.Validation.Http
         /// </summary>
         /// <param name="requestString"></param>
         /// <returns></returns>
-        public HttpRequest ParseHttpRequest(string requestString)
+        public static HttpRequest ParseHttpRequest(string requestString)
         {
             if (string.IsNullOrWhiteSpace(requestString))
             {
-                throw new ArgumentException("requestString was empty or whitespace only. Not a valid HTTP request.");
+                throw new ArgumentException("Request was empty or whitespace only. Not a valid HTTP request.");
             }
 
             var mode = ParserMode.FirstLine;
@@ -66,18 +67,22 @@ namespace ApiDoctor.Validation.Http
                         var components = line.Split(' ');
 
                         if (components.Length < 2)
-                            throw new HttpParserRequestException("RequestString does not contain a proper HTTP request first line.");
+                            throw new HttpParserRequestException($"Request does not contain a proper HTTP request first line. Allowed format examples: GET https://graph.microsoft.com/beta/accessReviews(id) or GET https://graph.microsoft.com/beta/accessReviews(id) HTTP/1.1");
                         if (components[0].StartsWith("HTTP/"))
-                            throw new HttpParserRequestException("RequestString contains an HTTP response.");
+                            throw new HttpParserRequestException("Request contains an HTTP response.");
 
                         string url;
-                        var httpVersion = components[1].StartsWith("HTTP/") ? components[1] : "HTTP/1.1";
-                        if (components.Length > 3)
+                        var httpVersion = components.Skip(1).First().StartsWith("HTTP/") ? components[1] : "HTTP/1.1";
+                        if (components.Length > 2)
                         {
                             //Assume Odata Uri in the form https://graph.microsoft.com/beta/riskyUsers?$filter=riskLevel eq microsoft.graph.riskLevel'medium'
                             var uri = new StringBuilder(components.Length);
                             for (var i = 1; i < components.Length; i++)
                             {
+                                if (components[i].Contains("HTTP"))
+                                {
+                                    continue;
+                                }
                                 uri.Append(components[i]);
                                 uri.Append(' ');
                             }
@@ -106,7 +111,8 @@ namespace ApiDoctor.Validation.Http
                         // Parse each header
                         var split = line.IndexOf(": ", StringComparison.Ordinal);
                         if (split < 1)
-                            throw new ArgumentException("requestString contains an invalid header definition");
+                            throw new ArgumentException(
+                                    $"Request contains an invalid HTTP header definition: \"{line}\". Missing whitespace between the headers and body?");
 
                         var headerName = line.Substring(0, split);
                         var headerValue = line.Substring(split + 1);
@@ -130,12 +136,40 @@ namespace ApiDoctor.Validation.Http
         }
 
         /// <summary>
+        ///     Returns true if request string has been successfully parsed, otherwise false
+        /// </summary>
+        /// <param name="requestString"></param>
+        /// <param name="request"></param>
+        /// <param name="issues"></param>
+        /// <returns></returns>
+        public static bool TryParseHttpRequest(string requestString, out HttpRequest request, IssueLogger issues = null)
+        {
+            request = null;
+            try
+            {
+                request = ParseHttpRequest(requestString);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                if (issues != null)
+                    issues.Error(ValidationErrorCode.HttpParserError, $"Exception while parsing HTTP request", ex);
+                return false;
+            }
+        }
+
+        /// <summary>
         ///     Convert a raw HTTP response into an HttpResponse instance.
         /// </summary>
         /// <param name="responseString"></param>
         /// <returns></returns>
-        public HttpResponse ParseHttpResponse(string responseString)
+        public static HttpResponse ParseHttpResponse(string responseString)
         {
+            if (string.IsNullOrWhiteSpace(responseString))
+            {
+                throw new ArgumentException("Response was empty or whitespace only. Not a valid HTTP response.");
+            }
+
             var reader = new StringReader(responseString);
             string line;
             var mode = ParserMode.FirstLine;
@@ -149,7 +183,7 @@ namespace ApiDoctor.Validation.Http
                         var components = line.Split(' ');
                         if (components.Length < 3)
                             throw new ArgumentException(
-                                "responseString does not contain a proper HTTP request first line.");
+                                "Response does not contain a proper HTTP response first line. Allowed format example: HTTP/1.1 200 OK");
 
                         response.HttpVersion = components[0];
                         response.StatusCode = int.Parse(components[1]);
@@ -169,7 +203,7 @@ namespace ApiDoctor.Validation.Http
                         var split = line.IndexOf(": ", StringComparison.Ordinal);
                         if (split < 1)
                             throw new ArgumentException(
-                                $"Request contains an invalid header definition: \"{line}\". Missing whitespace between the headers and body?");
+                                $"Response contains an invalid header definition: \"{line}\". Missing whitespace between the headers and body?");
 
                         var headerName = line.Substring(0, split);
                         var headerValue = line.Substring(split + 1);
@@ -185,6 +219,28 @@ namespace ApiDoctor.Validation.Http
             return response;
         }
 
+        /// <summary>
+        ///     Returns true if response string has been successfully parsed, otherwise false
+        /// </summary>
+        /// <param name="responseString"></param>
+        /// <param name="response"></param>
+        /// <param name="issues"></param>
+        /// <returns></returns>
+        public static bool TryParseHttpResponse(string responseString, out HttpResponse response, IssueLogger issues = null)
+        {
+            response = null;
+            try
+            {
+                response = ParseHttpResponse(responseString);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                if (issues != null)
+                    issues.Error(ValidationErrorCode.HttpParserError, $"Exception while parsing HTTP response", ex);
+                return false;
+            }
+        }
 
         /// <summary>
         ///     Take query string formatted input (a=1&b=2) and return a dictionary
@@ -196,7 +252,10 @@ namespace ApiDoctor.Validation.Http
         {
             if (input != null && input[0] != '?') input = "?" + input;
 
-            var output = HttpUtility.ParseQueryString(input);
+            var values = QueryHelpers.ParseQuery(input);
+            var output = new NameValueCollection();
+            foreach (var value in values)
+                output.Add(value.Key, value.Value);
             return output;
         }
 

@@ -48,6 +48,7 @@ namespace ApiDoctor.Validation.Tags
         private static Regex DivFormat = new Regex(@"\[(!div (([\w]*=""[\w]*"")\s*)*)\s*\]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static Regex VideoFormat = new Regex(@"\[!VIDEO ((https]?):\/)?\/?([^:\/\s]+)((\/\w+)*\/)([\w\-\.]+[^#?\s]+)(.*)?(#[\w\-]+)?\]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static Regex CodeSnippetFormat = new Regex(@"\[!(code)(-)(\w*)\[(\w*)\]\((.*\))\]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static Regex TabHeaderFormat = new Regex(@"#\s\[[#-/.\w]+\]\(#tab\/([-/.\w]+)\)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         private Action<ValidationError> LogMessage = null;
 
@@ -213,6 +214,11 @@ namespace ApiDoctor.Validation.Tags
                         continue;
                     }
 
+                    if (IsDocFxTabHeader(nextLine))
+                    {
+                        LogMessage(new ValidationMessage(string.Concat(sourceFile.Name, ":", lineNumber), "Removing docfx tab header"));
+                        continue;
+                    }
                     writer.WriteLine(nextLine);
                 }
 
@@ -390,7 +396,20 @@ namespace ApiDoctor.Validation.Tags
 
             return false;
         }
+        /// <summary>
+        /// Checks if the line contains any of the docfx tab header format text.
+        /// </summary>
+        /// <param name="text"></param>
+        /// <returns></returns>
+        private static bool IsDocFxTabHeader(string text)
+        {
+            if (text.Contains("tab/"))
+            {
+                return TabHeaderFormat.IsMatch(text);
+            }
 
+            return false;
+        }
         /// <summary>
         /// 
         /// </summary>

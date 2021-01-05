@@ -1,191 +1,33 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{33B10320-3802-49CF-8965-3510AE66D5EC}</ProjectGuid>
+    <TargetFramework>net5.0</TargetFramework>
     <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>ApiDoctor.Validation</RootNamespace>
-    <AssemblyName>ApiDoctor.Validation</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
     <RestorePackages>true</RestorePackages>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <NuspecProperties>$(NuspecProperties);version=$(PackageVersion)</NuspecProperties>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>..\ApiDoctor.Console\35MSSharedLib1024.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
+  <PropertyGroup>
+    <DelaySign>false</DelaySign>
+    <SignAssembly>false</SignAssembly>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Runtime.Serialization" />
-    <Reference Include="System.Web" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
-    <Reference Include="Newtonsoft.Json">
-      <HintPath>..\packages\Newtonsoft.Json.6.0.8\lib\net45\Newtonsoft.Json.dll</HintPath>
-    </Reference>
-    <Reference Include="WindowsBase" />
+    <None Include="..\ApiDoctor.Console\35MSSharedLib1024.snk">
+      <Link>35MSSharedLib1024.snk</Link>
+    </None>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AuthenicationCredentials.cs" />
-    <Compile Include="AuthScopeDefinition.cs" />
-    <Compile Include="CodeBlockAnnotation.cs" />
-    <Compile Include="Config\DocumentOutlineFile.cs" />
-    <Compile Include="Config\LinkValidationConfigFile.cs" />
-    <Compile Include="DocFile.cs" />
-    <Compile Include="DocSet.cs" />
-    <Compile Include="EnumerationDefinition.cs" />
-    <Compile Include="ErrorDefinition.cs" />
-    <Compile Include="Error\IssueLogger.cs" />
-    <Compile Include="ExampleDefinition.cs" />
-    <Compile Include="ExtensionMethods.cs" />
-    <Compile Include="HttpLog\HttpLogGenerator.cs" />
-    <Compile Include="Http\HttpParser.cs" />
-    <Compile Include="Http\HttpParserRequestException.cs" />
-    <Compile Include="Http\HttpRequest.cs" />
-    <Compile Include="Http\HttpResponse.cs" />
-    <Compile Include="IServiceAccount.cs" />
-    <Compile Include="Json\JsonExample.cs" />
-    <Compile Include="Json\JsonRewriter.cs" />
-    <Compile Include="Json\ValidationOptions.cs" />
-    <Compile Include="Logging.cs" />
-    <Compile Include="MetadataTransforms.cs" />
-    <Compile Include="MethodValidationExtensionMethods.cs" />
-    <Compile Include="MultipartMime\MimeContentType.cs" />
-    <Compile Include="MultipartMime\MultipartMimeContent.cs" />
-    <Compile Include="ObjectGraph\ExtensionMethods.cs" />
-    <Compile Include="ObjectGraph\ObjectGraphMerger.cs" />
-    <Compile Include="OData\Annotations.cs" />
-    <Compile Include="OData\DataServices.cs" />
-    <Compile Include="OData\EntityFramework.cs" />
-    <Compile Include="OData\EnumType.cs" />
-    <Compile Include="OData\IOdataAnnotatable.cs" />
-    <Compile Include="OData\IODataNamedElement.cs" />
-    <Compile Include="OData\IODataNavigable.cs" />
-    <Compile Include="OData\SchemaValidation.cs" />
-    <Compile Include="OData\SortCollectionsHelper.cs" />
-    <Compile Include="OData\Key.cs" />
-    <Compile Include="OData\PropertyRef.cs" />
-    <Compile Include="OData\PropertyValue.cs" />
-    <Compile Include="OData\Record.cs" />
-    <Compile Include="OData\Singleton.cs" />
-    <Compile Include="OData\Transformation\ITransformable.cs" />
-    <Compile Include="OData\Transformation\PublishSchemaChangesConfig.cs" />
-    <Compile Include="OData\Transformation\SchemaConfigFile.cs" />
-    <Compile Include="OData\Transformation\TransformationHelper.cs" />
-    <Compile Include="OData\XmlBackedObject.cs" />
-    <Compile Include="OData\XmlParseHelper.cs" />
-    <Compile Include="PageAnnotation.cs" />
-    <Compile Include="ParameterDataType.cs" />
-    <Compile Include="ParameterDefinition.cs" />
-    <Compile Include="Params\CSharpEval.cs" />
-    <Compile Include="Params\PlaceholderValueNotFoundException.cs" />
-    <Compile Include="Properties\Resources.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Resources.resx</DependentUpon>
-    </Compile>
-    <Compile Include="SamplesDefinition.cs" />
-    <Compile Include="ScenarioExtensionMethods.cs" />
-    <Compile Include="SingleOrArrayConverter.cs" />
-    <Compile Include="SupplementalFile.cs" />
-    <Compile Include="TableSpec\TableDefinition.cs" />
-    <Compile Include="TableSpec\TableParserConfig.cs" />
-    <Compile Include="Tags\TagProcessor.cs" />
-    <Compile Include="ValidationConfig.cs" />
-    <Compile Include="StringSuggestions.cs" />
-    <Compile Include="Writers\MarkdownPublisher.cs.cs" />
-    <Compile Include="Writers\DocumentPublisher.cs" />
-    <Compile Include="ItemDefinition.cs" />
-    <Compile Include="OData\Action.cs" />
-    <Compile Include="OData\Annotation.cs" />
-    <Compile Include="OData\ComplexType.cs" />
-    <Compile Include="OData\EntityContainer.cs" />
-    <Compile Include="OData\EntitySet.cs" />
-    <Compile Include="OData\EntityType.cs" />
-    <Compile Include="OData\ExtensionMethods.cs" />
-    <Compile Include="OData\Function.cs" />
-    <Compile Include="OData\NavigationProperty.cs" />
-    <Compile Include="OData\ODataParser.cs" />
-    <Compile Include="OData\Parameter.cs" />
-    <Compile Include="OData\Property.cs" />
-    <Compile Include="OData\ReturnType.cs" />
-    <Compile Include="OData\Schema.cs" />
-    <Compile Include="OData\Term.cs" />
-    <Compile Include="Params\BasicRequestDefinition.cs" />
-    <Compile Include="Params\RequestDefinitionExtensions.cs" />
-    <Compile Include="Params\TestSetupRequestDefinition.cs" />
-    <Compile Include="Params\PlaceholderValue.cs" />
-    <Compile Include="Scenarios.cs" />
-    <Compile Include="SchemaBuildException.cs" />
-    <Compile Include="TableSpec\TableSpecConverter.cs" />
-    <Compile Include="Error\ValidationError.cs" />
-    <Compile Include="Json\JsonSchema.cs" />
-    <Compile Include="Json\JsonResourceCollection.cs" />
-    <Compile Include="MethodDefinition.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ResourceDefinition.cs" />
-    <Compile Include="Params\ScenarioDefinition.cs" />
-    <Compile Include="Json\JsonPath.cs" />
-    <Compile Include="Error\ValidationMessage.cs" />
-    <Compile Include="Error\ValidationResult.cs" />
-    <Compile Include="Error\ValidationWarning.cs" />
-    <Compile Include="Writers\OutlinePublisher.cs" />
-    <Compile Include="BackoffHelper.cs" />
-    <Compile Include="Config\ConfigFile.cs" />
-    <Compile Include="Config\ApiRequirementsFile.cs" />
-    <Compile Include="Http\HttpValidationExtensionMethods.cs" />
-    <Compile Include="Writers\IPublishOptions.cs" />
+    <ProjectReference Include="..\OSS\markdowndeep\MarkdownDeep\MarkdownDeep.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
-    <None Include="TableSpec\TableAndHeaderConfig.json" />
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-    <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
-    </PropertyGroup>
-    <Error Condition="!Exists('$(SolutionDir)\.nuget\NuGet.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(SolutionDir)\.nuget\NuGet.targets'))" />
-  </Target>
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
-  <ItemGroup>
-    <EmbeddedResource Include="Properties\Resources.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\OSS\markdowndeep\MarkdownDeep\MarkdownDeep.csproj">
-      <Project>{1569ED47-C7C9-4261-B6F4-7445BD0F2C95}</Project>
-      <Name>MarkdownDeep</Name>
-    </ProjectReference>
+    <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="2.2.0" />
+    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+    <PackageReference Include="System.CodeDom" Version="5.0.0" />
+    <PackageReference Include="System.Data.DataSetExtensions" Version="4.5.0" />
+    <PackageReference Include="System.IO.Packaging" Version="5.0.0" />
   </ItemGroup>
 </Project>

@@ -7,14 +7,6 @@ namespace ApiDoctor.Validation.UnitTests
     [TestFixture]
     public class HttpParserTests
     {
-        [SetUp]
-        public void Setup()
-        {
-            httpParser = new HttpParser();
-        }
-
-        private HttpParser httpParser;
-
         public static string FullHttpRequest => Resources.ExampleRequest;
 
 
@@ -24,7 +16,7 @@ namespace ApiDoctor.Validation.UnitTests
             "https://graph.microsoft.com/beta/riskyUsers?$filter=riskLevel eq microsoft.graph.riskLevel'medium'")]
         public void ParseOdataUrl(string odataUrl, string actualUrl)
         {
-            var request = httpParser.ParseHttpRequest(odataUrl);
+            var request = HttpParser.ParseHttpRequest(odataUrl);
             Assert.AreEqual(actualUrl, request.Url, "Parsed Url should be equal to request header url");
         }
 
@@ -34,7 +26,7 @@ namespace ApiDoctor.Validation.UnitTests
             "HTTP/2.0")]
         public void HttpVersionShouldBeRespected(string odataUrl, string httpVersion)
         {
-            var request = httpParser.ParseHttpRequest(odataUrl);
+            var request = HttpParser.ParseHttpRequest(odataUrl);
             Assert.AreEqual(httpVersion, request.HttpVersion, "When HttpVersion is specified, should be respected");
         }
 
@@ -43,7 +35,7 @@ namespace ApiDoctor.Validation.UnitTests
             @"GET https://graph.microsoft.com/beta/riskyUsers?$filter=riskLevel eq microsoft.graph.riskLevel'medium'")]
         public void HttpVersionShouldDefaultToHttp1(string odataUrl)
         {
-            var request = httpParser.ParseHttpRequest(odataUrl);
+            var request = HttpParser.ParseHttpRequest(odataUrl);
             Assert.AreEqual("HTTP/1.1", request.HttpVersion, "When HttpVersion is not specified, default to HTTP/1.1");
         }
 
@@ -51,7 +43,7 @@ namespace ApiDoctor.Validation.UnitTests
         public void ParseHttpRequest()
         {
             var exampleRequest = FullHttpRequest;
-            var parsedRequest = httpParser.ParseHttpRequest(exampleRequest);
+            var parsedRequest = HttpParser.ParseHttpRequest(exampleRequest);
             Assert.NotNull(parsedRequest);
         }
 
@@ -61,7 +53,7 @@ namespace ApiDoctor.Validation.UnitTests
             "GET")]
         public void ParseOdataMethod(string odataUrl, string method)
         {
-            var request = httpParser.ParseHttpRequest(odataUrl);
+            var request = HttpParser.ParseHttpRequest(odataUrl);
             Assert.AreEqual(method, request.Method, "Parsed Method should be equal to request header method");
         }
     }

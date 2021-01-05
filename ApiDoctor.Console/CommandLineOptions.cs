@@ -50,47 +50,11 @@ namespace ApiDoctor.ConsoleApp
         public const string VerbPublishMetadata = "publish-edmx";
 
         public const string VerbGenerateDocs = "generate-docs";
-
-        [VerbOption(VerbPrint, HelpText = "Print files, resources, and methods discovered in the documentation.")]
-        public PrintOptions PrintVerbOptions { get; set; }
-
-        [VerbOption(VerbCheckLinks, HelpText = "Verify links in the documentation aren't broken.")]
-        public CheckLinkOptions CheckLinksVerb { get; set; }
-
-        [VerbOption(VerbDocs, HelpText = "Check for errors in the documentation (resources + examples).")]
-        public BasicCheckOptions CheckDocsVerb { get; set; }
-
-        [VerbOption(VerbCheckAll, HelpText = "Check for errors in the documentation (links + resources + examples)")]
-        public CheckLinkOptions CheckAllVerbs { get; set; }
-
-        [VerbOption(VerbService, HelpText = "Check for errors between the documentation and service.")]
-        public CheckServiceOptions CheckServiceVerb { get; set; }
-
-        [VerbOption(VerbPublish, HelpText = "Publish a version of the documentation, optionally converting it into other formats.")]
-        public PublishOptions PublishVerb { get; set; }
-
-        [VerbOption(VerbPublishMetadata, HelpText = "Publish or update metadata based on information in the docset.")]
-        public PublishMetadataOptions EdmxPublishVerb { get; set; }
-
-        [VerbOption(VerbMetadata, HelpText = "Check service CSDL metadata against documentation.")]
-        public CheckMetadataOptions CheckMetadataVerb { get; set; }
-
-        [VerbOption(VerbFix, HelpText = "Fix documentation based on input CSDL.")]
-        public FixDocsOptions FixDocsVerb { get; set; }
-
-        [VerbOption(VerbGenerateDocs, HelpText = "Generate documentation from an CSDL model")]
-        public GenerateDocsOptions GenerateDocsVerb { get; set; }
-
-        [VerbOption(VerbAbout, HelpText = "Print about information for this application.")]
-        public BaseOptions AboutVerb { get; set; }
-
-        [HelpVerbOption]
-        public string GetUsage(string verb)
-        {
-            return HelpText.AutoBuild(this, verb);
-        }
+        public const string VerbGenerateSnippets = "generate-snippets";
     }
 
+    [Verb(CommandLineOptions.VerbAbout, HelpText = "Print about information for this application.")]
+    class AboutOptions : BaseOptions { }
     class BaseOptions
     {
 
@@ -117,7 +81,8 @@ namespace ApiDoctor.ConsoleApp
 
 
 
-        public Dictionary<string, string> PageParameterDict {
+        public Dictionary<string, string> PageParameterDict
+        {
             get
             {
                 if (string.IsNullOrEmpty(AdditionalPageParameters))
@@ -178,6 +143,7 @@ namespace ApiDoctor.ConsoleApp
         }
     }
 
+    [Verb(CommandLineOptions.VerbMetadata, HelpText = "Check service CSDL metadata against documentation.")]
     class CheckMetadataOptions : DocSetOptions
     {
         [Option("metadata", HelpText = "Path or URL for the service metadata CSDL")]
@@ -185,6 +151,7 @@ namespace ApiDoctor.ConsoleApp
 
     }
 
+    [Verb(CommandLineOptions.VerbFix, HelpText = "Fix documentation based on input CSDL.")]
     class FixDocsOptions : CheckMetadataOptions
     {
         [Option("fixbasetypes", HelpText = "Set base types")]
@@ -218,6 +185,7 @@ namespace ApiDoctor.ConsoleApp
         }
     }
 
+    [Verb(CommandLineOptions.VerbPrint, HelpText = "Print files, resources, and methods discovered in the documentation.")]
     class PrintOptions : DocSetOptions
     {
         [Option("files", HelpText = "Print the files discovered as part of the documentation")]
@@ -249,35 +217,41 @@ namespace ApiDoctor.ConsoleApp
         }
     }
 
-    class CheckLinkOptions : BasicCheckOptions {
-        [Option("orphan-page-warning", HelpText="Print a warning for each page without any incoming links.")]
+    [Verb(CommandLineOptions.VerbCheckLinks, HelpText = "Verify links in the documentation aren't broken.")]
+    class CheckLinkOptions : BasicCheckOptions
+    {
+        [Option("orphan-page-warning", HelpText = "Print a warning for each page without any incoming links.")]
         public bool IncludeOrphanPageWarning { get; set; }
     }
+    [Verb(CommandLineOptions.VerbCheckAll, HelpText = "Check for errors in the documentation (links + resources + examples)")]
+    class CheckAllLinkOptions : CheckLinkOptions { }
 
+    [Verb(CommandLineOptions.VerbDocs, HelpText = "Check for errors in the documentation (resources + examples).")]
     class BasicCheckOptions : DocSetOptions
     {
-        [Option('m', "method", HelpText = "Name of the method to test. If omitted, all defined methods are tested.", MutuallyExclusiveSet="fileOrMethod")]
+        [Option('m', "method", HelpText = "Name of the method to test. If omitted, all defined methods are tested.", SetName = "fileOrMethod")]
         public string MethodName { get; set; }
 
-        [Option("file", HelpText="Name of the files to test. Wildcard(*) is allowed. If missing, methods across all files are tested.", MutuallyExclusiveSet="fileOrMethod")]
+        [Option("file", HelpText = "Name of the files to test. Wildcard(*) is allowed. If missing, methods across all files are tested.", SetName = "fileOrMethod")]
         public string FileName { get; set; }
 
-        [Option("force-all", HelpText="Force all defined scenarios to be executed, even if disabled.")]
+        [Option("force-all", HelpText = "Force all defined scenarios to be executed, even if disabled.")]
         public bool ForceAllScenarios { get; set; }
 
         [Option("relax-string-validation", HelpText = "Relax the validation of JSON string properties.")]
         public bool? RelaxStringTypeValidation { get; set; }
 
-        [Option("changes-since-branch-only", HelpText="Only perform validation on files changed since the specified branch.")]
+        [Option("changes-since-branch-only", HelpText = "Only perform validation on files changed since the specified branch.")]
         public string FilesChangedFromOriginalBranch { get; set; }
 
-        [Option("git-path", HelpText="Path to the git executable. Required for changes-since-branch-only.")]
+        [Option("git-path", HelpText = "Path to the git executable. Required for changes-since-branch-only.")]
         public string GitExecutablePath { get; set; }
 
         [Option("link-case-match", HelpText = "Require the CaSe of relative links within the content to match the filenames.")]
         public bool RequireFilenameCaseMatch { get; set; }
     }
 
+    [Verb(CommandLineOptions.VerbService, HelpText = "Check for errors between the documentation and service.")]
     class CheckServiceOptions : BasicCheckOptions
     {
         private const string AccessTokenArgument = "access-token";
@@ -305,19 +279,19 @@ namespace ApiDoctor.ConsoleApp
 
         // 2. Using environment variables for oauth properties - auto-detected
         // 3. Using an accounts file - auto-detected
-        [Option("account", HelpText="Specify the name of an account in the account configuration file. If omitted all enabled accounts will be used.")]
+        [Option("account", HelpText = "Specify the name of an account in the account configuration file. If omitted all enabled accounts will be used.")]
         public string AccountName { get; set; }
 
-        [Option("secondary-account", HelpText="Specify the name of a secondary account in the account configuration file.")]
+        [Option("secondary-account", HelpText = "Specify the name of a secondary account in the account configuration file.")]
         public string SecondaryAccountName { get; set; }
 
-        [Option("pause", HelpText="Pause between method requests.")]
+        [Option("pause", HelpText = "Pause between method requests.")]
         public bool PauseBetweenRequests { get; set; }
 
         [Option("headers", HelpText = "Additional headers to add to requests to the service. For example If-Match: *")]
         public string AdditionalHeaders { get; set; }
 
-        [Option("odata-metadata", HelpText="Set the odata.metadata level in the accept header.", DefaultValue=null)]
+        [Option("odata-metadata", HelpText = "Set the odata.metadata level in the accept header.", Default = null)]
         public string ODataMetadataLevel { get; set; }
 
         public List<IServiceAccount> FoundAccounts { get; set; }
@@ -325,18 +299,18 @@ namespace ApiDoctor.ConsoleApp
         [Option("branch-name")]
         public string BranchName { get; set; }
 
-        [Option("parallel", HelpText = "Run service tests in parallel.", DefaultValue = false)]
+        [Option("parallel", HelpText = "Run service tests in parallel.", Default = false)]
         public bool ParallelTests { get; set; }
 
         [Option("username", HelpText = "Provide a username for basic authentication.")]
         public string Username { get; set; }
-        [Option("password", HelpText="Provide a password for basic authentication.")]
+        [Option("password", HelpText = "Provide a password for basic authentication.")]
         public string Password { get; set; }
 
-        [Option(HttpLoggerArgument, HelpText="Create an HTTP Session archive at the specify path.")]
+        [Option(HttpLoggerArgument, HelpText = "Create an HTTP Session archive at the specify path.")]
         public string HttpLoggerOutputPath { get; set; }
 
-        [Option(IgnoreRequiredScopesArgument, HelpText="Disable checking accounts for required scopes before calling methods")]
+        [Option(IgnoreRequiredScopesArgument, HelpText = "Disable checking accounts for required scopes before calling methods")]
         public bool IgnoreRequiredScopes { get; set; }
 
         [Option(ProvidedScopesArgument, HelpText = "Comma separated list of scopes provided for the command line account")]
@@ -439,21 +413,22 @@ namespace ApiDoctor.ConsoleApp
 
     }
 
+    [Verb(CommandLineOptions.VerbPublishMetadata, HelpText = "Publish or update metadata based on information in the docset.")]
     class PublishMetadataOptions : DocSetOptions
     {
         [Option("output", Required = true, HelpText = "Folder for the output metadata file.")]
         public string OutputDirectory { get; set; }
 
-        [Option("source", HelpText="Source metadata input file.")]
+        [Option("source", HelpText = "Source metadata input file.")]
         public string SourceMetadataPath { get; set; }
 
-        [Option("merge-with", HelpText= "Specify a second metadata input file to merge with the first.")]
+        [Option("merge-with", HelpText = "Specify a second metadata input file to merge with the first.")]
         public string SecondSourceMetadataPath { get; set; }
 
         [Option("compare-to", HelpText = "Specify a metadata input file to sort and compare with the published output. Both will be output to {name}-sorted.edmx")]
         public string CompareToMetadataPath { get; set; }
 
-        [Option("format", DefaultValue=MetadataFormat.Default, HelpText="Specify the input and output formats for metadata.")]
+        [Option("format", Default = MetadataFormat.Default, HelpText = "Specify the input and output formats for metadata.")]
         public MetadataFormat DataFormat { get; set; }
 
         [Option("namespaces", HelpText = "Specify the namespaces that are included when publishing Edmx. Semicolon separated values.")]
@@ -462,7 +437,7 @@ namespace ApiDoctor.ConsoleApp
         [Option("sort", HelpText = "Sort the output. This is supported for EDMX publishing currently.")]
         public bool SortOutput { get; set; }
 
-        [Option("transform", HelpText="Apply a named publishSchemaChanges transformation to the output file.")]
+        [Option("transform", HelpText = "Apply a named publishSchemaChanges transformation to the output file.")]
         public string TransformOutput { get; set; }
 
         [Option("version", HelpText = "Specify a version to generate the output file for. By default elements from all versions are included in the output.")]
@@ -474,7 +449,7 @@ namespace ApiDoctor.ConsoleApp
         [Option("keep-unrecognized-objects-from-compare-to", HelpText = "By default, we drop any extra elements that the 'compare-to' file has. When this is true, we keep them.")]
         public bool KeepUnrecognizedObjects { get; set; }
 
-        [Option("annotations", DefaultValue = AnnotationOptions.None, HelpText = "Specify whether and how to output annotations.")]
+        [Option("annotations", Default = AnnotationOptions.None, HelpText = "Specify whether and how to output annotations.")]
         public AnnotationOptions Annotations { get; set; }
 
         [Option("validate", HelpText = "Perform validation on the resulting schema to check for errors.")]
@@ -512,63 +487,65 @@ namespace ApiDoctor.ConsoleApp
         }
     }
 
+    [Verb(CommandLineOptions.VerbPublish, HelpText = "Publish a version of the documentation, optionally converting it into other formats.")]
     class PublishOptions : DocSetOptions, IPublishOptions
     {
-        [Option("output", Required=true, HelpText="Output directory for sanitized documentation.")]
+        [Option("output", Required = true, HelpText = "Output directory for sanitized documentation.")]
         public string OutputDirectory { get; set; }
 
-        [Option("format", DefaultValue=PublishFormat.Markdown, HelpText="Format of the output documentation. Possiblev values are html, markdown, mustache, jsontoc, swagger, and edmx.")]
+        [Option("format", Default = PublishFormat.Markdown, HelpText = "Format of the output documentation. Possiblev values are html, markdown, mustache, jsontoc, swagger, and edmx.")]
         public PublishFormat Format { get; set; }
 
         [Option("template", HelpText = "Specify the folder where output template files are located.")]
         public string TemplatePath { get; set; }
 
-        [Option("template-filename", HelpText="Override the default template filename.", DefaultValue = "template.htm")]
+        [Option("template-filename", HelpText = "Override the default template filename.", Default = "template.htm")]
         public string TemplateFilename { get; set; }
 
-        [Option("file-ext", HelpText="Override the default output file extension.", DefaultValue = ".htm")]
+        [Option("file-ext", HelpText = "Override the default output file extension.", Default = ".htm")]
         public string OutputExtension { get; set; }
 
         [Option("line-ending",
-            DefaultValue=LineEndings.Default,
-            HelpText="Change the line endings for output files. Values: default, windows, unix, or macintosh")]
+            Default = LineEndings.Default,
+            HelpText = "Change the line endings for output files. Values: default, windows, unix, or macintosh")]
         public LineEndings LineEndings { get; set; }
 
         [Option("files", HelpText = "Specify a particular source file that should be published, semicolon separated.")]
         public string SourceFiles { get; set; }
 
-        [Option("toc", HelpText="Specify the relative path to the output folder where the TOC should be written.")]
+        [Option("toc", HelpText = "Specify the relative path to the output folder where the TOC should be written.")]
         public string TableOfContentsOutputRelativePath
         {
             get; set;
         }
 
-        public string[] FilesToPublish {
-            get { return (this.SourceFiles ?? string.Empty).Split(new char[] {';'}, StringSplitOptions.RemoveEmptyEntries); }
+        public string[] FilesToPublish
+        {
+            get { return (this.SourceFiles ?? string.Empty).Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries); }
             set { this.SourceFiles = value.ComponentsJoinedByString(";"); }
         }
 
-        [Option("allow-unsafe-html", HelpText="Allows HTML tags in the markdown source to be passed through to the output markdown.")]
+        [Option("allow-unsafe-html", HelpText = "Allows HTML tags in the markdown source to be passed through to the output markdown.")]
         public bool AllowUnsafeHtmlContentInMarkdown { get; set; }
 
-        [Option("respect-ordered-lists", HelpText="Respect the start values of ordered lists when converting to HTML. By default OL's start at 1 always.")]
+        [Option("respect-ordered-lists", HelpText = "Respect the start values of ordered lists when converting to HTML. By default OL's start at 1 always.")]
         public bool RespectOrderedListValues { get; set; }
 
         #region Swagger2 output controls
 
-        [Option("swagger-title", DefaultValue=null, HelpText="Title to include in the published documentation")]
+        [Option("swagger-title", Default = null, HelpText = "Title to include in the published documentation")]
         public string Title { get; set; }
-        
-        [Option("swagger-description", DefaultValue = null, HelpText = "Description to include in the published documentation")]
+
+        [Option("swagger-description", Default = null, HelpText = "Description to include in the published documentation")]
         public string Description { get; set; }
-        
-        [Option("swagger-version", DefaultValue=null, HelpText="Api Version information to include in documentation")]
+
+        [Option("swagger-version", Default = null, HelpText = "Api Version information to include in documentation")]
         public string Version { get; set; }
 
         [Option("swagger-auth-scope", HelpText = "Override the auth scope detection with a default auth scope on every method")]
         public string AuthScopeDefault { get; set; }
 
-        [Option("template-format", HelpText = "For EDMX publishing, only publish a single schema in CSDL format instead of the full EDMX.", DefaultValue = MetadataFormat.Default)]
+        [Option("template-format", HelpText = "For EDMX publishing, only publish a single schema in CSDL format instead of the full EDMX.", Default = MetadataFormat.Default)]
         public MetadataFormat TemplateFormat { get; set; }
 
 
@@ -615,9 +592,23 @@ namespace ApiDoctor.ConsoleApp
         }
     }
 
+    [Verb(CommandLineOptions.VerbGenerateDocs, HelpText = "Generate documentation from an CSDL model")]
     class GenerateDocsOptions : CheckMetadataOptions
     {
         [Option("resource-template", HelpText = "Specifies the path to a mustache template file to use for generating documentation for resources (complex and entity types)", Required = false)]
         public string ResourceTemplateFile { get; set; }
+    }
+
+    [Verb(CommandLineOptions.VerbGenerateSnippets, HelpText = "Generate code snippets from requests in documentation")]
+    class GenerateSnippetsOptions : BasicCheckOptions
+    {
+        [Option("snippet-generator-path", HelpText = "Full Path to the snippet generator url", Required = true)]
+        public string SnippetGeneratorPath { get; set; }
+
+        [Option("lang", HelpText = "The programming languages for snippet generation(comma separated list)", Required = true)]
+        public string Languages { get; set; }
+
+        [Option("custom-metadata-path", HelpText = "Path to custom metadata that snippet generation can consume", Required = false)]
+        public string CustomMetadataPath { get; set; }
     }
 }

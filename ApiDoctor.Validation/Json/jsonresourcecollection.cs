@@ -53,7 +53,7 @@ namespace ApiDoctor.Validation.Json
         }
 
         /// <summary>
-        /// Validates the value of json according to an implicit schmea defined by expectedJson
+        /// Validates the value of json according to an implicit schema defined by expectedJson
         /// </summary>
         /// <returns></returns>
         public bool ValidateJsonExample(CodeBlockAnnotation expectedResponseAnnotation, string actualResponseBodyJson, IssueLogger issues, ValidationOptions options = null)
@@ -194,10 +194,12 @@ namespace ApiDoctor.Validation.Json
 
             // If we didn't get an options, create a new one with some defaults provided by the annotation
             options = options ?? new ValidationOptions();
-            options.AllowTruncatedResponses = (inputJson.Annotation ?? new CodeBlockAnnotation()).TruncatedResult;
+
+            var annotationTruncated = (inputJson.Annotation ?? new CodeBlockAnnotation()).TruncatedResult;
+            options.AllowTruncatedResponses = annotationTruncated || options.AllowTruncatedResponses;
             options.CollectionPropertyName = collectionPropertyName;
 
-            return schema.ValidateJson(inputJson, issues, this.registeredSchema, options, expectedJson);
+            return schema.ValidateJson(inputJson, issues, this.registeredSchema, options, expectedJson, schemaExample: true);
         }
 
         internal void RegisterJsonResources(IEnumerable<ResourceDefinition> resources)

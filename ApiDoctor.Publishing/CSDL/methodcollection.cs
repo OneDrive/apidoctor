@@ -86,9 +86,9 @@ namespace ApiDoctor.Publishing.CSDL
                 foreach (Validation.MethodDefinition method in this)
                 {
                     if (null == dataType)
-                        dataType = method.ExpectedResponseMetadata.Type;
+                        dataType = method.ExpectedResponseMetadata?.Type;
                     else
-                        dataType = Validation.ParameterDataType.ChooseBest(method.ExpectedResponseMetadata.Type, dataType);
+                        dataType = Validation.ParameterDataType.ChooseBest(method.ExpectedResponseMetadata?.Type, dataType);
                 }
 
                 return dataType;
