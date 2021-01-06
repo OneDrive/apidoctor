@@ -2246,18 +2246,13 @@ namespace ApiDoctor.ConsoleApp
                     try
                     {
                         var testUri = new Uri(request.Url);
-                        request.Url = testUri.PathAndQuery;
+                        request.Url = WebUtility.UrlDecode(testUri.PathAndQuery);
+                        var hostName = string.IsNullOrEmpty(testUri.Host) ? graphHostName : testUri.Host;
+
                         if(request.Headers.AllKeys.Contains(hostHeaderKey))
-                            request.Headers[hostHeaderKey] = testUri.Host;
+                            request.Headers[hostHeaderKey] = hostName;
                         else
-                            request.Headers.Add(hostHeaderKey, testUri.Host);
-                        
-                        if(string.IsNullOrEmpty(request.Headers[hostHeaderKey])) {
-                            if(request.Headers.AllKeys.Contains(hostHeaderKey))
-                                request.Headers[hostHeaderKey] = graphHostName;
-                            else
-                                request.Headers.Add(hostHeaderKey, graphHostName);
-                        }
+                            request.Headers.Add(hostHeaderKey, hostName);
                     }
                     catch (UriFormatException)
                     {
