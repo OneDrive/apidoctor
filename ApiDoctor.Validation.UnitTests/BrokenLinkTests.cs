@@ -85,7 +85,6 @@ This link goes [up one level](../anotherfile.md)
             Assert.IsTrue(realErrors.First().Code == ValidationErrorCode.MissingLinkSourceId);
         }
 
-
         [Test]
         public void BrokenLinkNotFound()
         {
@@ -149,6 +148,27 @@ This link goes [up one level](../anotherfile.md)
             Assert.AreEqual(2, issues.Issues.WarningsOrErrorsOnly().Count());
             Assert.IsTrue(issues.Issues.Any(i => i.Code == ValidationErrorCode.MissingLinkSourceId));
             Assert.IsTrue(issues.Issues.Any(i => i.Code == ValidationErrorCode.LinkDestinationNotFound));
+        }
+
+        [Test]
+        public void UpperCaseUrlsTreatedAsBroken()
+        {
+            string markdown =
+                @"# Test file
+[Basic Link with Uppercase](http://www.Microsoft.Com/).
+[ID-based link with Uppercase][Microsoft]
+[Up one level with Uppercase](../GET-USER.md)
+
+[microsoft with uppercase]: http://www.microsoFt.com
+";
+            TestableDocFile file = new TestableDocFile(markdown);
+            var issues = new IssueLogger();
+
+            Assert.IsTrue(file.Scan(string.Empty, issues));
+            Assert.IsEmpty(issues.Issues.WarningsOrErrorsOnly());
+
+            Assert.IsFalse(file.ValidateNoBrokenLinks(false, issues, true));
+            Assert.IsNotEmpty(issues.Issues.WarningsOrErrorsOnly());
         }
     }
 
