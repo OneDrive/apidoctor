@@ -1967,12 +1967,13 @@ namespace ApiDoctor.ConsoleApp
         /// <param name="args">arguments to snippet generator</param>
         private static void GenerateSnippets(string executablePath, params string[] args)
         {
-            var startInfo = new ProcessStartInfo(executablePath, string.Join(" ", args))
-            {
-                RedirectStandardError = true,
-                RedirectStandardOutput = true,
+            using var process = new Process{
+                StartInfo = new ProcessStartInfo(executablePath, string.Join(" ", args))
+                {
+                    RedirectStandardError = true,
+                    RedirectStandardOutput = true,
+                }
             };
-            using var process = Process.Start(startInfo);
             using var outputWaitHandle = new AutoResetEvent(false);
             using var errorWaitHandle = new AutoResetEvent(false);
             process.OutputDataReceived += (sender, e) => {
@@ -1997,6 +1998,7 @@ namespace ApiDoctor.ConsoleApp
                     FancyConsole.Write(FancyConsole.ConsoleDefaultColor, e.Data);
                 }
             };
+            process.Start();
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();
             process.WaitForExit();
