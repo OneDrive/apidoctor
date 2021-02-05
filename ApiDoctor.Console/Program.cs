@@ -2310,7 +2310,7 @@ namespace ApiDoctor.ConsoleApp
         {
             IEnumerable<ResourceDefinition> docResourceQuery = shouldValidateNamespace == true
                 ? from dr in documentedResources
-                  where dr.Name == resource.Name || (!string.IsNullOrEmpty(dr.SourceFile?.Annotation?.Namespace) && dr.Name == dr.SourceFile.Annotation.Namespace + "." + resource.Name.TypeOnly())
+                  where dr.Name == resource.Name || (!string.IsNullOrEmpty(dr.SourceFile?.Namespace) && dr.Name == dr.SourceFile?.Namespace + "." + resource.Name.TypeOnly())
                   select dr
 
                 : from dr in documentedResources
