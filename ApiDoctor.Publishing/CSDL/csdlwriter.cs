@@ -1327,7 +1327,7 @@ namespace ApiDoctor.Publishing.CSDL
             }
             else if (docNavigationProps.Any())
             {
-                issues.Error(ValidationErrorCode.ExpectedTypeDifferent, $"Resource {schemaType.Name} has documented navigation properties, but we thought it was a complex type!");
+                issues.Warning(ValidationErrorCode.ExpectedTypeDifferent, $"Resource {schemaType.Name} has documented navigation properties, but we thought it was a complex type!");
             }
 
             if (schemaType.BaseType != docResource.BaseType)
