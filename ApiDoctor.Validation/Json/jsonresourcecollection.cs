@@ -152,7 +152,7 @@ namespace ApiDoctor.Validation.Json
             JsonSchema schema;
             if (string.IsNullOrEmpty(resourceType))
             {
-                issues.Error(ValidationErrorCode.ResponseResourceTypeMissing, "Resource type was null or missing, so we assume there is no response to validate.");
+                issues.Error(ValidationErrorCode.ResponseResourceTypeMissing, "Resource type was null or missing in response metadata, so we assume there is no response to validate.");
                 schema = JsonSchema.EmptyResponseSchema;
             }
             else if (!this.registeredSchema.TryGetValue(resourceType, out schema) && !string.IsNullOrEmpty(jsonStringForFallbackIfMissingResource))
