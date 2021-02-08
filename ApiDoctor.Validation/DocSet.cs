@@ -37,6 +37,7 @@ namespace ApiDoctor.Validation
     using ApiDoctor.Validation.Json;
     using ApiDoctor.Validation.OData.Transformation;
     using ApiDoctor.Validation.Params;
+    using ApiDoctor.Validation.TableSpec;
     using Newtonsoft.Json;
 
     public class DocSet
@@ -100,7 +101,9 @@ namespace ApiDoctor.Validation
 
         public LinkValidationConfigFile LinkValidationConfig { get; private set; }
 
-        internal TableSpec.TableSpecConverter TableParser { get; private set; }
+        public TableParserConfigFile TableParserConfig { get; private set; }
+
+        internal TableSpecConverter TableParser { get; private set; }
         #endregion
 
         #region Constructors
@@ -207,6 +210,7 @@ namespace ApiDoctor.Validation
             if (null != tableParserConfig)
             {
                 Console.WriteLine("Using table definitions from: {0}", tableParserConfig.SourcePath);
+                this.TableParserConfig = tableParserConfig;
                 this.TableParser = new TableSpec.TableSpecConverter(tableParserConfig.TableDefinitions);
             }
             else
