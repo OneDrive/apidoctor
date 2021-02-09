@@ -1325,10 +1325,6 @@ namespace ApiDoctor.Publishing.CSDL
             {
                 MergePropertiesIntoSchema(schemaEntity.Name, schemaEntity.NavigationProperties, docNavigationProps, edmx, generateNewElements, issues.For(schemaEntity.Name), schemaEntity.Contributors);
             }
-            else if (docNavigationProps.Any())
-            {
-                issues.Warning(ValidationErrorCode.ExpectedTypeDifferent, $"Resource {schemaType.Name} has documented navigation properties, but we thought it was a complex type!");
-            }
 
             if (schemaType.BaseType != docResource.BaseType)
             {
