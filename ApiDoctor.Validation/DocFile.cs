@@ -334,10 +334,9 @@ namespace ApiDoctor.Validation
                     string[] keyValue = item.Split(':');
                     dictionary.Add(keyValue[0].Trim(), keyValue[1].Trim());
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     issues.Error(ValidationErrorCode.IncorrectYamlHeaderFormat, $"Incorrect YAML header format after `{dictionary.Keys.Last()}`");
-                    Console.WriteLine($"Error parsing YAML headers: {ex.Message.FirstLineOnly()}");
                 }
             }
 
