@@ -272,7 +272,7 @@ namespace ApiDoctor.Validation.Json
                         childType.ValidateContainerObject(obj, options, otherSchemas, issues);
                         return;
                     }
-                    else if (!typeName.TypeOnly().IEquals(this.ResourceName.TypeOnly()))
+                    else if (this.ResourceName != null && !typeName.TypeOnly().IEquals(this.ResourceName.TypeOnly()))
                     {
                         issues.Warning(ValidationErrorCode.ResourceTypeNotFound, $"unrecognized type declaration {typeName}");
                     }
