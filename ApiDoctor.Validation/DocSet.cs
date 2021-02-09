@@ -396,10 +396,16 @@ namespace ApiDoctor.Validation
             foreach (var resource in this.Resources)
             {
                 var resourceIssues = issues.For(resource.Name);
-                if (!string.IsNullOrEmpty(resource.BaseType) && !definedTypes.Contains(resource.BaseType))
+                if (!string.IsNullOrWhiteSpace(resource.BaseType) && !definedTypes.Contains(resource.BaseType))
                 {
                     resourceIssues.Error(ValidationErrorCode.ResourceTypeNotFound,
                         $"Referenced base type {resource.BaseType} in resource {resource.Name} is not defined in the doc set!");
+                }
+
+                if (resource.BaseType != null && resource.BaseType.Trim().Length == 0)
+                {
+                    resourceIssues.Error(ValidationErrorCode.EmptyResourceBaseType,
+                        $"Missing value for referenced base type in resource {resource.Name}");
                 }
 
                 foreach (var param in resource.Parameters)
