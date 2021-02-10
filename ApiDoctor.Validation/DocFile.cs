@@ -32,13 +32,9 @@ namespace ApiDoctor.Validation
     using System.Linq;
     using ApiDoctor.Validation.Error;
     using ApiDoctor.Validation.TableSpec;
-    using ApiDoctor.Validation.OData.Transformation;
     using Tags;
     using MarkdownDeep;
     using Newtonsoft.Json;
-    using System.Threading.Tasks;
-    using ApiDoctor.Validation.OData;
-    using Newtonsoft.Json.Linq;
 
 
     /// <summary>
@@ -577,7 +573,7 @@ namespace ApiDoctor.Validation
                 }
             }
 
-            this.InferNamespaceFromFoundElments(foundElements, issues);
+            this.InferNamespaceFromFoundElements(foundElements, issues);
             this.PostProcessFoundElements(foundElements, issues);
 
             return issues.Issues.All(x => !x.IsError);
@@ -793,7 +789,7 @@ namespace ApiDoctor.Validation
             this.PostProcessEnums(foundEnums, foundTables, issues);
         }
 
-        private void InferNamespaceFromFoundElments(IList<object> foundElements, IssueLogger issues)
+        private void InferNamespaceFromFoundElements(IList<object> foundElements, IssueLogger issues)
         {
             var foundResource = foundElements.OfType<ResourceDefinition>().FirstOrDefault();
             string inferredNamespace = null;
@@ -826,6 +822,19 @@ namespace ApiDoctor.Validation
         {
             // add all the enum values
             this.enums.AddRange(foundEnums.Where(e => !string.IsNullOrEmpty(e.MemberName) && !string.IsNullOrEmpty(e.TypeName)));
+
+            // if we thought it was a table of type EnumerationValues, it probably holds enum values. 
+            // throw error if member name is null which could mean a wrong column name
+            foreach (var enumType in foundEnums.Where(e => string.IsNullOrEmpty(e.MemberName) && !string.IsNullOrEmpty(e.TypeName))
+                .Select(x => new { x.TypeName, x.Namespace}).Distinct())
+            {
+                var possibleHeaderNames = this.Parent?.TableParserConfig?.TableDefinitions.Rules
+                    .Where(r => r.Type == "EnumerationDefinition").SelectMany(r => r.ColumnNames["memberName"]) .ToList();
+
+                issues.Error(ValidationErrorCode.ParameterParserError,
+                    $"Failed to parse enumeration values for type {enumType.Namespace}.{enumType.TypeName}. " +
+                    $"Table requires a column header named one of the following: {string.Join(", ", possibleHeaderNames ?? new List<string>())}");
+            }
 
             // find all the property tables
             // find properties of type string that have a list of `enum`, `values`. see if they match me.
