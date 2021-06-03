@@ -1099,7 +1099,7 @@ namespace ApiDoctor.Publishing.CSDL
                         var entitySet = new EntitySet
                         {
                             Name = name,
-                            EntityType = methodCollection.ResponseType.ODataResourceName(),
+                            EntityType = methodCollection.ResponseType?.ODataResourceName(),
                             SourceMethods = methodCollection,
                         };
 
