@@ -2138,8 +2138,7 @@ namespace ApiDoctor.ConsoleApp
                                 parseStatus = "FindEndOfCodeBlock";
                                 break;
                             }
-                            if (originalFileContents[identifierIndex].Contains("```http") 
-                                && HttpParser.ParseHttpRequest(method.Request).Method.Equals("GET"))
+                            if (originalFileContents[identifierIndex].Contains("```http"))
                             {
                                 originalFileContents[identifierIndex] = "```msgraph-interactive";
                             }
