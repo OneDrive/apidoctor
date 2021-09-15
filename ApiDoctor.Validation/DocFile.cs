@@ -795,7 +795,9 @@ namespace ApiDoctor.Validation
             string inferredNamespace = null;
             if (foundResource != null)
             {
-                inferredNamespace = foundResource.Name.Substring(0, foundResource.Name.LastIndexOf('.'));
+                if (foundResource.Name.Contains('.')) { 
+                    inferredNamespace = foundResource.Name.Substring(0, foundResource.Name.LastIndexOf('.'));
+                }
                 if (this.Annotation?.Namespace != null && this.Annotation.Namespace != inferredNamespace)
                 {
                     issues.Error(ValidationErrorCode.NamespaceMismatch, $"The namespace specified on page level annotation for resource {foundResource.Name} is incorrect.");
