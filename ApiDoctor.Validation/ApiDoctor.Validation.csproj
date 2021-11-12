@@ -28,6 +28,6 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="System.CodeDom" Version="5.0.0" />
     <PackageReference Include="System.Data.DataSetExtensions" Version="4.5.0" />
-    <PackageReference Include="System.IO.Packaging" Version="5.0.0" />
+    <PackageReference Include="System.IO.Packaging" Version="6.0.0" />
   </ItemGroup>
 </Project>
