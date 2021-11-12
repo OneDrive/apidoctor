@@ -10,6 +10,7 @@
         <description>Toolkit to enable validation of markdown-based documentation.</description>
         <releaseNotes>Check http://github.com/onedrive/apidoctor for details.</releaseNotes>
         <licenseUrl>http://msdn.microsoft.com/en-US/cc300389</licenseUrl>
+        <projectUrl>http://github.com/onedrive/apidoctor</projectUrl>
         <copyright>© Microsoft Corporation. All rights reserved.</copyright>
         <dependencies>
             <group targetFramework="netcore50">
