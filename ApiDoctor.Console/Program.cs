@@ -1854,7 +1854,7 @@ namespace ApiDoctor.ConsoleApp
                         {
                             RelaxedStringValidation = true,
                             IgnorablePropertyTypes = metadataValidationConfigs?.IgnorableModels,
-                            AllowTruncatedResponses = modelConfigs?.SkipProprtiesValidation ?? false
+                            AllowTruncatedResponses = modelConfigs?.TruncatedProprtiesValidation ?? false
                         }
                     );
                 }
@@ -2004,10 +2004,7 @@ namespace ApiDoctor.ConsoleApp
             process.WaitForExit();
         }
 
-        /// <summary>
         /// Gets snippet prefix with method name and version information to prevent collision between different API versions
-        /// This method also eliminates http snippets that belong to a particular API version
-        /// </summary>
         /// <param name="method">method definition</param>
         /// <returns>prefix representing method name and version</returns>
         private static string GetSnippetPrefix(MethodDefinition method)
@@ -2321,15 +2318,15 @@ namespace ApiDoctor.ConsoleApp
             return true;
         }
 
-        private static ResourceDefinition GetResoureDocumentation(ResourceDefinition resource, ResourceDefinition[] documentedResources, bool? shouldValidateNameSpace)
+        private static ResourceDefinition GetResoureDocumentation(ResourceDefinition resource, ResourceDefinition[] documentedResources, bool? shouldValidateNamespace)
         {
-            IEnumerable<ResourceDefinition> docResourceQuery = (shouldValidateNameSpace == false)
+            IEnumerable<ResourceDefinition> docResourceQuery = shouldValidateNamespace == true
                 ? from dr in documentedResources
-                  where dr.Name.TypeOnly() == resource.Name.TypeOnly()
+                  where dr.Name == resource.Name || (!string.IsNullOrEmpty(dr.SourceFile?.Namespace) && dr.Name == dr.SourceFile?.Namespace + "." + resource.Name.TypeOnly())
                   select dr
 
                 : from dr in documentedResources
-                  where dr.Name == resource.Name
+                  where dr.Name.TypeOnly() == resource.Name.TypeOnly()
                   select dr
                 ;
 

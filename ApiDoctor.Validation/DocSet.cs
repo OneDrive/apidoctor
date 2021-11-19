@@ -37,6 +37,7 @@ namespace ApiDoctor.Validation
     using ApiDoctor.Validation.Json;
     using ApiDoctor.Validation.OData.Transformation;
     using ApiDoctor.Validation.Params;
+    using ApiDoctor.Validation.TableSpec;
     using Newtonsoft.Json;
 
     public class DocSet
@@ -100,7 +101,9 @@ namespace ApiDoctor.Validation
 
         public LinkValidationConfigFile LinkValidationConfig { get; private set; }
 
-        internal TableSpec.TableSpecConverter TableParser { get; private set; }
+        public TableParserConfigFile TableParserConfig { get; private set; }
+
+        internal TableSpecConverter TableParser { get; private set; }
         #endregion
 
         #region Constructors
@@ -207,6 +210,7 @@ namespace ApiDoctor.Validation
             if (null != tableParserConfig)
             {
                 Console.WriteLine("Using table definitions from: {0}", tableParserConfig.SourcePath);
+                this.TableParserConfig = tableParserConfig;
                 this.TableParser = new TableSpec.TableSpecConverter(tableParserConfig.TableDefinitions);
             }
             else
@@ -396,10 +400,16 @@ namespace ApiDoctor.Validation
             foreach (var resource in this.Resources)
             {
                 var resourceIssues = issues.For(resource.Name);
-                if (!string.IsNullOrEmpty(resource.BaseType) && !definedTypes.Contains(resource.BaseType))
+                if (!string.IsNullOrWhiteSpace(resource.BaseType) && !definedTypes.Contains(resource.BaseType))
                 {
                     resourceIssues.Error(ValidationErrorCode.ResourceTypeNotFound,
                         $"Referenced base type {resource.BaseType} in resource {resource.Name} is not defined in the doc set!");
+                }
+
+                if (resource.BaseType != null && resource.BaseType.Trim().Length == 0)
+                {
+                    resourceIssues.Error(ValidationErrorCode.EmptyResourceBaseType,
+                        $"Missing value for referenced base type in resource {resource.Name}");
                 }
 
                 foreach (var param in resource.Parameters)

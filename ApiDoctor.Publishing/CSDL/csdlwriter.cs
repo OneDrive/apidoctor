@@ -1099,7 +1099,7 @@ namespace ApiDoctor.Publishing.CSDL
                         var entitySet = new EntitySet
                         {
                             Name = name,
-                            EntityType = methodCollection.ResponseType.ODataResourceName(),
+                            EntityType = methodCollection.ResponseType?.ODataResourceName(),
                             SourceMethods = methodCollection,
                         };
 
@@ -1324,10 +1324,6 @@ namespace ApiDoctor.Publishing.CSDL
             if (schemaEntity != null)
             {
                 MergePropertiesIntoSchema(schemaEntity.Name, schemaEntity.NavigationProperties, docNavigationProps, edmx, generateNewElements, issues.For(schemaEntity.Name), schemaEntity.Contributors);
-            }
-            else if (docNavigationProps.Any())
-            {
-                issues.Error(ValidationErrorCode.ExpectedTypeDifferent, $"Resource {schemaType.Name} has documented navigation properties, but we thought it was a complex type!");
             }
 
             if (schemaType.BaseType != docResource.BaseType)

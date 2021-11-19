@@ -114,17 +114,20 @@ namespace ApiDoctor.Validation.Json
         /// <param name="options"></param>
         /// <param name="expectedJson"></param>
         /// <returns>True if validation was successful, otherwise false.</returns>
-        public bool ValidateJson(JsonExample jsonInput, IssueLogger issues, Dictionary<string, JsonSchema> otherSchemas, ValidationOptions options, JsonExample expectedJson = null)
+        public bool ValidateJson(JsonExample jsonInput, IssueLogger issues, Dictionary<string, JsonSchema> otherSchemas, ValidationOptions options, JsonExample expectedJson = null, bool schemaExample = false)
         {
             JContainer obj;
             try
             {
+                if (string.IsNullOrWhiteSpace(jsonInput.JsonData))
+                    throw new Exception("Expected json string was empty or whitespace only.");
+
                 var settings = new JsonSerializerSettings { DateParseHandling = DateParseHandling.None, NullValueHandling = NullValueHandling.Include, DefaultValueHandling = DefaultValueHandling.Include };
                 obj = (JContainer)JsonConvert.DeserializeObject(jsonInput.JsonData, settings);
             }
             catch (Exception ex)
             {
-                issues.Error(ValidationErrorCode.JsonParserException, $"Failed to parse json string: {jsonInput.JsonData}.", ex);
+                issues.Error(ValidationErrorCode.JsonParserException, $"Failed to parse json string: {jsonInput.JsonData.Trim()}", ex);
                 return false;
             }
 
@@ -135,19 +138,23 @@ namespace ApiDoctor.Validation.Json
             // Check for an error response
             try
             {
-                dynamic errorObject = obj["error"];
-                if (null != errorObject && !expectErrorObject)
+                // If it's a generated example from the EDMX, we should skip error look-up, since any properties with error type will throw here.
+                if (!schemaExample)
                 {
-                    string code = errorObject.code;
-                    string message = errorObject.message;
+                    dynamic errorObject = obj["error"];
+                    if (null != errorObject && !expectErrorObject)
+                    {
+                        string code = errorObject.code;
+                        string message = errorObject.message;
 
-                    issues.Error(ValidationErrorCode.JsonErrorObject, $"Error response received. Code: {code}, Message: {message}");
-                    return false;
-                }
-                else if (expectErrorObject && null == errorObject)
-                {
-                    issues.Error(ValidationErrorCode.JsonErrorObjectExpected, "Expected an error object response, but didn't receive one.");
-                    return false;
+                        issues.Error(ValidationErrorCode.JsonErrorObject, $"Error response received. Code: {code}, Message: {message}");
+                        return false;
+                    }
+                    else if (expectErrorObject && null == errorObject)
+                    {
+                        issues.Error(ValidationErrorCode.JsonErrorObjectExpected, "Expected an error object response, but didn't receive one.");
+                        return false;
+                    }
                 }
             }
             catch (Exception ex)
@@ -268,7 +275,7 @@ namespace ApiDoctor.Validation.Json
                         childType.ValidateContainerObject(obj, options, otherSchemas, issues);
                         return;
                     }
-                    else if (!typeName.IEquals(this.ResourceName))
+                    else if (this.ResourceName != null && !typeName.TypeOnly().IEquals(this.ResourceName.TypeOnly()))
                     {
                         issues.Warning(ValidationErrorCode.ResourceTypeNotFound, $"unrecognized type declaration {typeName}");
                     }

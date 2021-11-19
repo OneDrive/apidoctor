@@ -104,6 +104,7 @@ namespace ApiDoctor.Validation.Error
         ExpectationConditionFailed,
         NoDocumentsFound,
         MissingResourceName,
+        EmptyResourceBaseType,
         UnsupportedLanguage,
         AllScenariosDisabled,
         ExceptionWhileValidatingMethod,
