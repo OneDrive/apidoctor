@@ -23,6 +23,8 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+using ApiDoctor.Validation.Error;
+
 namespace ApiDoctor.Validation.UnitTests
 {
     public class DocFileForTesting : DocFile
@@ -37,7 +39,7 @@ namespace ApiDoctor.Validation.UnitTests
             this.Parent = parent;
         }
 
-        protected override string GetContentsOfFile(string tags)
+        protected override string GetContentsOfFile(string tags, IssueLogger issueLogger)
         {
             return this.contentsOfFile;
         }

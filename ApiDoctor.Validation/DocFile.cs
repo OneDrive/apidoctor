@@ -197,12 +197,12 @@ namespace ApiDoctor.Validation
             return tagProcessor.PostProcess(inputHtml, fileInfo, null);
         }
 
-        protected virtual string GetContentsOfFile(string tags)
+        protected virtual string GetContentsOfFile(string tags, IssueLogger issues)
         {
             // Preprocess file content
             FileInfo docFile = new FileInfo(this.FullPath);
             TagProcessor tagProcessor = new TagProcessor(tags, Parent.SourceFolderPath);
-            return tagProcessor.Preprocess(docFile);
+            return tagProcessor.Preprocess(docFile, issues);
         }
 
         /// <summary>
@@ -241,8 +241,8 @@ namespace ApiDoctor.Validation
         {
             try
             {
-                string fileContents = this.GetContentsOfFile(tags);
-                fileContents = this.ParseAndRemoveYamlFrontMatter(fileContents, issues);
+                string fileContents = this.GetContentsOfFile(tags, issues);
+                fileContents = ParseAndRemoveYamlFrontMatter(fileContents, issues);
                 return fileContents;
             }
             catch (Exception ex)
@@ -256,7 +256,7 @@ namespace ApiDoctor.Validation
         /// Parses the file contents and removes yaml front matter from the markdown.
         /// </summary>
         /// <param name="contents">Contents.</param>
-        private string ParseAndRemoveYamlFrontMatter(string contents, IssueLogger issues)
+        internal static string ParseAndRemoveYamlFrontMatter(string contents, IssueLogger issues)
         {
             const string YamlFrontMatterHeader = "---";
             using (StringReader reader = new StringReader(contents))
@@ -323,7 +323,7 @@ namespace ApiDoctor.Validation
             }
         }
 
-        private void ParseYamlMetadata(string yamlMetadata, IssueLogger issues)
+        internal static void ParseYamlMetadata(string yamlMetadata, IssueLogger issues)
         {
             Dictionary<string, string> dictionary = new Dictionary<string, string>();
             string[] items = yamlMetadata.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
@@ -402,7 +402,7 @@ namespace ApiDoctor.Validation
             var blockContent = GetBlockContent(block);
             if (blockContent == string.Empty)
                 return blockContent;
-            
+
             const int previewLength = 35;
 
             string contentPreview = block.Content.Length > previewLength ? block.Content.Substring(0, previewLength) : block.Content;
@@ -446,12 +446,14 @@ namespace ApiDoctor.Validation
         /// Convert blocks of text found inside the markdown file into things we know how to work
         /// with (methods, resources, examples, etc).
         /// </summary>
-        /// <param name="errors"></param>
+        /// <param name="issues"></param>
         /// <returns></returns>
         protected bool ParseMarkdownBlocks(IssueLogger issues)
         {
             string methodTitle = null;
             string methodDescription = null;
+            List<string> methodDescriptionsData = new List<string>();
+            List<string> titlesData = new List<string>();
 
             Block previousHeaderBlock = null;
 
@@ -486,6 +488,7 @@ namespace ApiDoctor.Validation
                     }
                     else if (IsHeaderBlock(previousHeaderBlock))
                     {
+                        methodDescriptionsData.Add(block.Content);
                         methodDescription = block.Content;
                         issues.Message($"Found description: {methodDescription}");
                     }
@@ -776,7 +779,7 @@ namespace ApiDoctor.Validation
 
             var elementsFoundInDocument = elements as IList<object> ?? elements.ToList();
             var foundMethods = elementsFoundInDocument.OfType<MethodDefinition>().ToList();
-            var foundTables = elementsFoundInDocument.OfType<TableDefinition>().ToList();            
+            var foundTables = elementsFoundInDocument.OfType<TableDefinition>().ToList();
             var foundResources = elementsFoundInDocument.OfType<ResourceDefinition>()
                 .Select(c => { c.Namespace = this.Namespace; return c; }).ToList();
             var foundEnums = foundTables.Where(t => t.Type == TableBlockType.EnumerationValues)
@@ -795,7 +798,8 @@ namespace ApiDoctor.Validation
             string inferredNamespace = null;
             if (foundResource != null)
             {
-                if (foundResource.Name.Contains('.')) { 
+                if (foundResource.Name.Contains('.'))
+                {
                     inferredNamespace = foundResource.Name.Substring(0, foundResource.Name.LastIndexOf('.'));
                 }
                 if (this.Annotation?.Namespace != null && this.Annotation.Namespace != inferredNamespace)
@@ -828,10 +832,10 @@ namespace ApiDoctor.Validation
             // if we thought it was a table of type EnumerationValues, it probably holds enum values. 
             // throw error if member name is null which could mean a wrong column name
             foreach (var enumType in foundEnums.Where(e => string.IsNullOrEmpty(e.MemberName) && !string.IsNullOrEmpty(e.TypeName))
-                .Select(x => new { x.TypeName, x.Namespace}).Distinct())
+                .Select(x => new { x.TypeName, x.Namespace }).Distinct())
             {
                 var possibleHeaderNames = this.Parent?.TableParserConfig?.TableDefinitions.Rules
-                    .Where(r => r.Type == "EnumerationDefinition").SelectMany(r => r.ColumnNames["memberName"]) .ToList();
+                    .Where(r => r.Type == "EnumerationDefinition").SelectMany(r => r.ColumnNames["memberName"]).ToList();
 
                 issues.Error(ValidationErrorCode.ParameterParserError,
                     $"Failed to parse enumeration values for type {enumType.Namespace}.{enumType.TypeName}. " +
@@ -1053,7 +1057,7 @@ namespace ApiDoctor.Validation
                 {
                     issues.Error(ValidationErrorCode.HttpParserError, $"Exception while parsing HTTP request", ex);
                 }
-                
+
                 if (distinctMethodNames == 1)
                 {
                     foreach (var method in foundMethods)

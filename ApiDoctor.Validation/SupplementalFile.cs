@@ -46,7 +46,7 @@ namespace ApiDoctor.Validation
         {
         }
 
-        protected override string GetContentsOfFile(string tags)
+        protected override string GetContentsOfFile(string tags, IssueLogger issues)
         {
             return File.ReadAllText(Path.Combine(this.FullPath));
         }
@@ -55,7 +55,7 @@ namespace ApiDoctor.Validation
         {
             try
             {
-                var content = this.GetContentsOfFile(tags);
+                var content = this.GetContentsOfFile(tags, issues);
                 var xd = XDocument.Parse(content);
                 this.MarkdownLinks = AllAttribues(xd.Root).
                     Where(a => LikelyUrlAttributes.Contains(a.Name.ToString()) && !string.IsNullOrEmpty(a.Value)).
