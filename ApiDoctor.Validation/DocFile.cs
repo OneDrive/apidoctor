@@ -473,7 +473,7 @@ namespace ApiDoctor.Validation
                 }
 
                 // Capture h1 and/or p element to be used as the title and description for items on this page
-                if (IsHeaderBlock(block))
+                if (block.BlockType == BlockType.h1)
                 {
                     methodTitle = block.Content;
                     methodDescription = null;       // Clear this because we don't want new title + old description
@@ -486,10 +486,10 @@ namespace ApiDoctor.Validation
                         issues.Warning(ValidationErrorCode.MissingHeaderBlock,
                             $"Paragraph text found before a valid header: {block.Content.Substring(0, Math.Min(block.Content.Length, 20))}...");
                     }
-                    else if (IsHeaderBlock(previousHeaderBlock))
+                    else if (previousHeaderBlock.BlockType == BlockType.h1)
                     {
                         methodDescriptionsData.Add(block.Content);
-                        methodDescription = block.Content;
+                        methodDescription = string.Join(" ", methodDescriptionsData.Skip(1));
                         issues.Message($"Found description: {methodDescription}");
                     }
                 }
@@ -518,6 +518,8 @@ namespace ApiDoctor.Validation
 
                                 if (!foundElements.Contains(definition))
                                 {
+                                    definition.Title = string.Join(" ", definition.Title, methodTitle);
+                                    definition.Description = string.Join(" ", definition.Description, methodTitle);
                                     foundElements.Add(definition);
                                 }
                             }

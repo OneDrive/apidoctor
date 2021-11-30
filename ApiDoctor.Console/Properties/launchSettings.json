@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "ApiDoctor.ConsoleApp": {
+      "commandName": "Project",
+      "commandLineArgs": "check-all --path M:\\\\microsoft-graph-docs\\\\api-reference\\\\v1.0 --ignore-warnings"
+    }
+  }
+}

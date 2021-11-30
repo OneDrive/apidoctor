@@ -265,7 +265,12 @@ namespace ApiDoctor.ConsoleApp
             var checkLinksResult = await CheckLinksAsync(options, issues, docset);
             var checkDocsResults = await CheckDocsAsync(options, issues, docset);
 
-            var publishOptions = new PublishMetadataOptions();
+            var publishOptions = new PublishMetadataOptions
+            {
+                OutputDirectory = "M:\\metadata\\generatedMetadata",
+                DataFormat = Publishing.CSDL.MetadataFormat.EdmxOutput,
+                Annotations = Publishing.CSDL.AnnotationOptions.Independent
+            };
             var publishResult = await PublishMetadataAsync(publishOptions, issues, docset);
 
             return checkLinksResult && checkDocsResults && publishResult;

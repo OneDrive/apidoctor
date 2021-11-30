@@ -1,68 +1,75 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
-    <IsPackable>true</IsPackable>
-    <OutputType>Exe</OutputType>
-    <AssemblyName>apidoc</AssemblyName>
-    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
-    <RestorePackages>true</RestorePackages>
-    <IsWebBootstrapper>false</IsWebBootstrapper>
-    <PublishUrl>publish\</PublishUrl>
-    <Install>true</Install>
-    <InstallFrom>Disk</InstallFrom>
-    <UpdateEnabled>false</UpdateEnabled>
-    <UpdateMode>Foreground</UpdateMode>
-    <UpdateInterval>7</UpdateInterval>
-    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
-    <UpdatePeriodically>false</UpdatePeriodically>
-    <UpdateRequired>false</UpdateRequired>
-    <MapFileExtensions>true</MapFileExtensions>
-    <ApplicationRevision>0</ApplicationRevision>
-    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
-    <UseApplicationTrust>false</UseApplicationTrust>
-    <BootstrapperEnabled>true</BootstrapperEnabled>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <NuspecProperties>$(NuspecProperties);version=$(PackageVersion)</NuspecProperties>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <Commandlineparameters>check-docs --path /Users/dspektor/src/graphdocs2</Commandlineparameters>
-    <Externalconsole>true</Externalconsole>
-  </PropertyGroup>
-  <PropertyGroup>
-    <StartupObject>ApiDoctor.ConsoleApp.Program</StartupObject>
-  </PropertyGroup>
-  <PropertyGroup>
-    <DelaySign>false</DelaySign>
-    <SignAssembly>false</SignAssembly>
-  </PropertyGroup>
-  <PropertyGroup>
-    <AssemblyOriginatorKeyFile>35MSSharedLib1024.snk</AssemblyOriginatorKeyFile>
-  </PropertyGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\ApiDoctor.DocumentationGeneration\ApiDoctor.DocumentationGeneration.csproj" />
-    <ProjectReference Include="..\ApiDoctor.Publishing\ApiDoctor.Publishing.csproj" />
-    <ProjectReference Include="..\ApiDoctor.Validation\ApiDoctor.Validation.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <BootstrapperPackage Include=".NETFramework,Version=v4.5">
-      <Visible>False</Visible>
-      <ProductName>Microsoft .NET Framework 4.5 %28x86 and x64%29</ProductName>
-      <Install>true</Install>
-    </BootstrapperPackage>
-    <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
-      <Visible>False</Visible>
-      <ProductName>.NET Framework 3.5 SP1 Client Profile</ProductName>
-      <Install>false</Install>
-    </BootstrapperPackage>
-    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
-      <Visible>False</Visible>
-      <ProductName>.NET Framework 3.5 SP1</ProductName>
-      <Install>false</Install>
-    </BootstrapperPackage>
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="CommandLineParser" Version="2.8.0" />
-    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
-    <PackageReference Include="System.Data.DataSetExtensions" Version="4.5.0" />
-  </ItemGroup>
+	<PropertyGroup>
+		<ServerGarbageCollection>true</ServerGarbageCollection>
+		<ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
+		<RetainVMGarbageCollection>true</RetainVMGarbageCollection>
+		<Deterministic>true</Deterministic>
+		<TieredCompilation>true</TieredCompilation>
+		<TieredCompilationQuickJit>true</TieredCompilationQuickJit>
+		<TieredCompilationQuickJitForLoops>true</TieredCompilationQuickJitForLoops>
+		<TargetFramework>net5.0</TargetFramework>
+		<IsPackable>true</IsPackable>
+		<OutputType>Exe</OutputType>
+		<AssemblyName>apidoc</AssemblyName>
+		<SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
+		<RestorePackages>true</RestorePackages>
+		<IsWebBootstrapper>false</IsWebBootstrapper>
+		<PublishUrl>publish\</PublishUrl>
+		<Install>true</Install>
+		<InstallFrom>Disk</InstallFrom>
+		<UpdateEnabled>false</UpdateEnabled>
+		<UpdateMode>Foreground</UpdateMode>
+		<UpdateInterval>7</UpdateInterval>
+		<UpdateIntervalUnits>Days</UpdateIntervalUnits>
+		<UpdatePeriodically>false</UpdatePeriodically>
+		<UpdateRequired>false</UpdateRequired>
+		<MapFileExtensions>true</MapFileExtensions>
+		<ApplicationRevision>0</ApplicationRevision>
+		<ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+		<UseApplicationTrust>false</UseApplicationTrust>
+		<BootstrapperEnabled>true</BootstrapperEnabled>
+		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+		<NuspecProperties>$(NuspecProperties);version=$(PackageVersion)</NuspecProperties>
+	</PropertyGroup>
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+		<Commandlineparameters>check-docs --path /Users/dspektor/src/graphdocs2</Commandlineparameters>
+		<Externalconsole>true</Externalconsole>
+	</PropertyGroup>
+	<PropertyGroup>
+		<StartupObject>ApiDoctor.ConsoleApp.Program</StartupObject>
+	</PropertyGroup>
+	<PropertyGroup>
+		<DelaySign>false</DelaySign>
+		<SignAssembly>false</SignAssembly>
+	</PropertyGroup>
+	<PropertyGroup>
+		<AssemblyOriginatorKeyFile>35MSSharedLib1024.snk</AssemblyOriginatorKeyFile>
+	</PropertyGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\ApiDoctor.DocumentationGeneration\ApiDoctor.DocumentationGeneration.csproj" />
+		<ProjectReference Include="..\ApiDoctor.Publishing\ApiDoctor.Publishing.csproj" />
+		<ProjectReference Include="..\ApiDoctor.Validation\ApiDoctor.Validation.csproj" />
+	</ItemGroup>
+	<ItemGroup>
+		<BootstrapperPackage Include=".NETFramework,Version=v4.5">
+			<Visible>False</Visible>
+			<ProductName>Microsoft .NET Framework 4.5 %28x86 and x64%29</ProductName>
+			<Install>true</Install>
+		</BootstrapperPackage>
+		<BootstrapperPackage Include="Microsoft.Net.Client.3.5">
+			<Visible>False</Visible>
+			<ProductName>.NET Framework 3.5 SP1 Client Profile</ProductName>
+			<Install>false</Install>
+		</BootstrapperPackage>
+		<BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+			<Visible>False</Visible>
+			<ProductName>.NET Framework 3.5 SP1</ProductName>
+			<Install>false</Install>
+		</BootstrapperPackage>
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="CommandLineParser" Version="2.8.0" />
+		<PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+		<PackageReference Include="System.Data.DataSetExtensions" Version="4.5.0" />
+	</ItemGroup>
 </Project>
