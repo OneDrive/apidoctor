@@ -1854,7 +1854,7 @@ namespace ApiDoctor.ConsoleApp
                         {
                             RelaxedStringValidation = true,
                             IgnorablePropertyTypes = metadataValidationConfigs?.IgnorableModels,
-                            AllowTruncatedResponses = modelConfigs?.TruncatedProprtiesValidation ?? false
+                            AllowTruncatedResponses = modelConfigs?.TruncatedPropertiesValidation ?? false
                         }
                     );
                 }
