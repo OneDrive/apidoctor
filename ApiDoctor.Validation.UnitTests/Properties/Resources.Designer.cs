@@ -19,7 +19,7 @@ namespace ApiDoctor.Validation.UnitTests.Properties {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
@@ -99,6 +99,38 @@ namespace ApiDoctor.Validation.UnitTests.Properties {
         internal static string ExampleResources {
             get {
                 return ResourceManager.GetString("ExampleResources", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to ---
+        ///title: &quot;example resource&quot;
+        ///description: &quot;Represents an example resource&quot;
+        ///author: &quot;apidoctor&quot;
+        ///ms.localizationpriority: high
+        ///ms.prod: &quot;users&quot;
+        ///doc_type: resourcePageType
+        ///---
+        ///
+        ///# example resource type
+        ///
+        ///Namespace: microsoft.graph
+        ///
+        ///Represents a Resource
+        ///
+        ///## Resource with ISO 8601 timestamp, URL, and enumerated values.
+        ///
+        ///&lt;!-- { &quot;blockType&quot;: &quot;resource&quot;, &quot;@odata.type&quot;: &quot;example.resource&quot; } --&gt;
+        ///```json
+        ///{
+        ///	&quot;year&quot;: 1234,
+        ///	&quot;downloadUrl&quot;: &quot;url&quot;,
+        ///	&quot;createdDateTime&quot;: &quot;timestamp&quot;,
+        ///	&quot;season&quot;: &quot;summer  [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string ExampleResourceWithYamlFrontMatter {
+            get {
+                return ResourceManager.GetString("ExampleResourceWithYamlFrontMatter", resourceCulture);
             }
         }
         

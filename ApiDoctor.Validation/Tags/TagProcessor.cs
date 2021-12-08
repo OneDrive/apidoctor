@@ -183,8 +183,8 @@ namespace ApiDoctor.Validation.Tags
 
                             // Include Files can have Yaml Front Matter as well.
                             var includeContent = Preprocess(includeFile, issues);
-                            var cleanedUpContent = DocFile.ParseAndRemoveYamlFrontMatter(includeContent, issues);
-                            writer.WriteLine(cleanedUpContent);
+                            var (_, processedContent) = DocFile.ParseAndRemoveYamlFrontMatter(includeContent, issues);
+                            writer.WriteLine(processedContent);
                         }
                         else
                         {

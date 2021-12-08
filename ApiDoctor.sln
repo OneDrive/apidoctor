@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30717.126
+# Visual Studio Version 17
+VisualStudioVersion = 17.1.31911.260
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Content", "Content", "{464F5D09-2636-459F-96C9-C968FF4CA7B5}"
 	ProjectSection(SolutionItems) = preProject
@@ -20,17 +20,17 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MarkdownDeep", "OSS\markdow
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft", "Microsoft", "{7C7E72AE-EC3D-4EB9-B919-165F794C4902}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiDoctor.Validation", "ApiDoctor.Validation\ApiDoctor.Validation.csproj", "{33B10320-3802-49CF-8965-3510AE66D5EC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ApiDoctor.Validation", "ApiDoctor.Validation\ApiDoctor.Validation.csproj", "{33B10320-3802-49CF-8965-3510AE66D5EC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiDoctor.ConsoleApp", "ApiDoctor.Console\ApiDoctor.ConsoleApp.csproj", "{A6F3993F-59C6-4985-ACF1-4D837D61E98F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ApiDoctor.ConsoleApp", "ApiDoctor.Console\ApiDoctor.ConsoleApp.csproj", "{A6F3993F-59C6-4985-ACF1-4D837D61E98F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiDoctor.Validation.UnitTests", "ApiDoctor.Validation.UnitTests\ApiDoctor.Validation.UnitTests.csproj", "{EE3453F1-FD69-406C-9BD7-0643D6E999F3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ApiDoctor.Validation.UnitTests", "ApiDoctor.Validation.UnitTests\ApiDoctor.Validation.UnitTests.csproj", "{EE3453F1-FD69-406C-9BD7-0643D6E999F3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiDoctor.Publishing", "ApiDoctor.Publishing\ApiDoctor.Publishing.csproj", "{B675CF73-AA42-4A54-B5E7-FF5F155DA4A7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ApiDoctor.Publishing", "ApiDoctor.Publishing\ApiDoctor.Publishing.csproj", "{B675CF73-AA42-4A54-B5E7-FF5F155DA4A7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiDoctor.DocumentationGeneration", "ApiDoctor.DocumentationGeneration\ApiDoctor.DocumentationGeneration.csproj", "{CD27998C-4021-4299-970B-91BE877FD01B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ApiDoctor.DocumentationGeneration", "ApiDoctor.DocumentationGeneration\ApiDoctor.DocumentationGeneration.csproj", "{CD27998C-4021-4299-970B-91BE877FD01B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiDoctor.DocumentationGeneration.UnitTests", "ApiDoctor.DocumentationGeneration.UnitTests\ApiDoctor.DocumentationGeneration.UnitTests.csproj", "{32323786-6B69-4A7A-A5DA-DBBBF1148387}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ApiDoctor.DocumentationGeneration.UnitTests", "ApiDoctor.DocumentationGeneration.UnitTests\ApiDoctor.DocumentationGeneration.UnitTests.csproj", "{32323786-6B69-4A7A-A5DA-DBBBF1148387}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

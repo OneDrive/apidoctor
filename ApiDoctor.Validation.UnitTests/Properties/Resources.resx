@@ -124,6 +124,9 @@
   <data name="ExampleResources" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\test-docs\ExampleResources.md;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
   </data>
+  <data name="ExampleResourceWithYamlFrontMatter" type="System.Resources.ResXFileRef, System.Windows.Forms">
+	  <value>..\test-docs\YamlFrontMatter\ExampleResourceWithYamlFrontMatter.md;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
   <data name="ExampleValidateResponse" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\test-docs\ExampleValidateResponse.md;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
   </data>

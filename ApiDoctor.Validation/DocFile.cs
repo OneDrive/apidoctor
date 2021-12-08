@@ -223,7 +223,7 @@ namespace ApiDoctor.Validation
                 issues.Error(ValidationErrorCode.ErrorOpeningFile, $"Error reading file contents.", ioex);
                 return false;
             }
-            catch (Exception ex)
+            catch (Exception ex)                                                                                                         
             {
                 issues.Error(ValidationErrorCode.ErrorReadingFile, $"Error reading file contents.", ex);
                 return false;
@@ -242,8 +242,9 @@ namespace ApiDoctor.Validation
             try
             {
                 string fileContents = this.GetContentsOfFile(tags, issues);
-                fileContents = ParseAndRemoveYamlFrontMatter(fileContents, issues);
-                return fileContents;
+                var (yamlFrontMatter, processedContent) = ParseAndRemoveYamlFrontMatter(fileContents, issues);
+                ParseYamlMetadata(yamlFrontMatter, issues);
+                return processedContent;
             }
             catch (Exception ex)
             {
@@ -256,70 +257,66 @@ namespace ApiDoctor.Validation
         /// Parses the file contents and removes yaml front matter from the markdown.
         /// </summary>
         /// <param name="contents">Contents.</param>
-        internal static string ParseAndRemoveYamlFrontMatter(string contents, IssueLogger issues)
+        internal static (string YamlFrontMatter, string ProcessedContent) ParseAndRemoveYamlFrontMatter(string contents, IssueLogger issues)
         {
             const string YamlFrontMatterHeader = "---";
-            using (StringReader reader = new StringReader(contents))
+            using var reader = new StringReader(contents);
+            var currentLine = reader.ReadLine();
+            var frontMatter = new System.Text.StringBuilder();
+            var currentState = YamlFrontMatterDetectionState.NotDetected;
+            while (currentLine != null && currentState != YamlFrontMatterDetectionState.SecondTokenFound)
             {
-                string currentLine = reader.ReadLine();
-                System.Text.StringBuilder frontMatter = new System.Text.StringBuilder();
-                YamlFrontMatterDetectionState currentState = YamlFrontMatterDetectionState.NotDetected;
-                while (currentLine != null && currentState != YamlFrontMatterDetectionState.SecondTokenFound)
+                var trimmedCurrentLine = currentLine.Trim();
+                switch (currentState)
                 {
-                    string trimmedCurrentLine = currentLine.Trim();
-                    switch (currentState)
-                    {
-                        case YamlFrontMatterDetectionState.NotDetected:
-                            if (!string.IsNullOrWhiteSpace(trimmedCurrentLine) && trimmedCurrentLine != YamlFrontMatterHeader)
+                    case YamlFrontMatterDetectionState.NotDetected:
+                        if (!string.IsNullOrWhiteSpace(trimmedCurrentLine) && trimmedCurrentLine != YamlFrontMatterHeader)
+                        {
+                            var requiredYamlHeaders = DocSet.SchemaConfig.RequiredYamlHeaders;
+                            if (requiredYamlHeaders.Any())
                             {
-                                var requiredYamlHeaders = DocSet.SchemaConfig.RequiredYamlHeaders;
-                                if (requiredYamlHeaders.Any())
-                                {
-                                    issues.Error(ValidationErrorCode.RequiredYamlHeaderMissing, $"Missing required YAML headers: {requiredYamlHeaders.ComponentsJoinedByString(", ")}");
-                                }
+                                issues.Error(ValidationErrorCode.RequiredYamlHeaderMissing, $"Missing required YAML headers: {requiredYamlHeaders.ComponentsJoinedByString(", ")}");
+                            }
 
-                                // This file doesn't have YAML front matter, so we just return the full contents of the file
-                                return contents;
-                            }
-                            else if (trimmedCurrentLine == YamlFrontMatterHeader)
-                            {
-                                currentState = YamlFrontMatterDetectionState.FirstTokenFound;
-                            }
-                            break;
-                        case YamlFrontMatterDetectionState.FirstTokenFound:
-                            if (trimmedCurrentLine == YamlFrontMatterHeader)
-                            {
-                                // Found the end of the YAML front matter, so move to the final state
-                                currentState = YamlFrontMatterDetectionState.SecondTokenFound;
-                            }
-                            else
-                            {
-                                // Store the YAML data into our header
-                                frontMatter.AppendLine(currentLine);
-                            }
-                            break;
+                            // This file doesn't have YAML front matter, so we just return the full contents of the file
+                            return (YamlFrontMatter: null, ProcessedContent: contents);
+                        }
+                        else if (trimmedCurrentLine == YamlFrontMatterHeader)
+                        {
+                            currentState = YamlFrontMatterDetectionState.FirstTokenFound;
+                        }
+                        break;
+                    case YamlFrontMatterDetectionState.FirstTokenFound:
+                        if (trimmedCurrentLine == YamlFrontMatterHeader)
+                        {
+                            // Found the end of the YAML front matter, so move to the final state
+                            currentState = YamlFrontMatterDetectionState.SecondTokenFound;
+                        }
+                        else
+                        {
+                            // Store the YAML data into our header
+                            frontMatter.AppendLine(currentLine);
+                        }
+                        break;
 
-                        case YamlFrontMatterDetectionState.SecondTokenFound:
-                            break;
-                    }
-
-                    if (currentState != YamlFrontMatterDetectionState.SecondTokenFound)
-                    {
-                        currentLine = reader.ReadLine();
-                    }
+                    case YamlFrontMatterDetectionState.SecondTokenFound:
+                        break;
                 }
 
-                if (currentState == YamlFrontMatterDetectionState.SecondTokenFound)
+                if (currentState != YamlFrontMatterDetectionState.SecondTokenFound)
                 {
-                    // Parse YAML metadata
-                    ParseYamlMetadata(frontMatter.ToString(), issues);
-                    return reader.ReadToEnd();
+                    currentLine = reader.ReadLine();
                 }
-                else
-                {
-                    // Something went wrong along the way, so we just return the full file
-                    return contents;
-                }
+            }
+
+            if (currentState == YamlFrontMatterDetectionState.SecondTokenFound)
+            {
+                return (YamlFrontMatter: frontMatter.ToString(), ProcessedContent: reader.ReadToEnd());
+            }
+            else
+            {
+                // Something went wrong along the way, so we just return the full file
+                return (YamlFrontMatter: null, ProcessedContent: contents);
             }
         }
 
@@ -518,8 +515,6 @@ namespace ApiDoctor.Validation
 
                                 if (!foundElements.Contains(definition))
                                 {
-                                    definition.Title = string.Join(" ", definition.Title, methodTitle);
-                                    definition.Description = string.Join(" ", definition.Description, methodTitle);
                                     foundElements.Add(definition);
                                 }
                             }
