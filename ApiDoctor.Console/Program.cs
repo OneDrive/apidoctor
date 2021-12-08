@@ -1859,7 +1859,7 @@ namespace ApiDoctor.ConsoleApp
                         {
                             RelaxedStringValidation = true,
                             IgnorablePropertyTypes = metadataValidationConfigs?.IgnorableModels,
-                            AllowTruncatedResponses = modelConfigs?.TruncatedProprtiesValidation ?? false
+                            AllowTruncatedResponses = modelConfigs?.TruncatedPropertiesValidation ?? false
                         }
                     );
                 }
@@ -1945,7 +1945,7 @@ namespace ApiDoctor.ConsoleApp
                         continue;
                     }
 
-                    var fileName = $"{snippetPrefix}---{lang}";
+                    var fileName = $"{snippetPrefix}---{lang.ToLowerInvariant()}";
                     var fileFullPath = Path.Combine(snippetsPath, fileName);
                     FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"Reading {fileFullPath}");
 
@@ -1972,12 +1972,13 @@ namespace ApiDoctor.ConsoleApp
         /// <param name="args">arguments to snippet generator</param>
         private static void GenerateSnippets(string executablePath, params string[] args)
         {
-            var startInfo = new ProcessStartInfo(executablePath, string.Join(" ", args))
-            {
-                RedirectStandardError = true,
-                RedirectStandardOutput = true,
+            using var process = new Process{
+                StartInfo = new ProcessStartInfo(executablePath, string.Join(" ", args))
+                {
+                    RedirectStandardError = true,
+                    RedirectStandardOutput = true,
+                }
             };
-            using var process = Process.Start(startInfo);
             using var outputWaitHandle = new AutoResetEvent(false);
             using var errorWaitHandle = new AutoResetEvent(false);
             process.OutputDataReceived += (sender, e) => {
@@ -2002,15 +2003,13 @@ namespace ApiDoctor.ConsoleApp
                     FancyConsole.Write(FancyConsole.ConsoleDefaultColor, e.Data);
                 }
             };
+            process.Start();
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();
             process.WaitForExit();
         }
 
-        /// <summary>
         /// Gets snippet prefix with method name and version information to prevent collision between different API versions
-        /// This method also eliminates http snippets that belong to a particular API version
-        /// </summary>
         /// <param name="method">method definition</param>
         /// <returns>prefix representing method name and version</returns>
         private static string GetSnippetPrefix(MethodDefinition method)
@@ -2065,8 +2064,11 @@ namespace ApiDoctor.ConsoleApp
                 var fileFullPath = Path.Combine(tempDir, fileName);
                 FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"Writing {fileFullPath}");
 
-                File.WriteAllText(fileFullPath, request.FullHttpText(true));
+                File.WriteAllText(fileFullPath, ReplaceLFbyCRLF(request.FullHttpText(true)));
             }
+        }
+        private static string ReplaceLFbyCRLF(string original) {
+            return original.Replace("\r\n", "\n").Replace("\n", "\r\n"); // we first replace CRLF by LF and then all LF by CRLF to avoid breaking any CRLF or missing any LF
         }
         /// <summary>
         /// Replaces \ by / to keep output mardown consistent accross generation OSes
@@ -2230,6 +2232,8 @@ namespace ApiDoctor.ConsoleApp
 
         }
 
+        private const string graphHostName = "graph.microsoft.com";
+        private const string hostHeaderKey = "Host";
         /// <summary>
         /// Finds the file the request is located and inserts the code snippet into the file.
         /// </summary>
@@ -2241,18 +2245,26 @@ namespace ApiDoctor.ConsoleApp
             //Version 1.1 of HTTP protocol MUST specify the host header
             if (request.HttpVersion.Equals("HTTP/1.1"))
             {
-                if ((request.Headers.Get("Host") == null) || (request.Headers.Get("host") == null))
+                if (!request.Headers.AllKeys.Contains(hostHeaderKey) || string.IsNullOrEmpty(request.Headers[hostHeaderKey]))
                 {
                     try
                     {
                         var testUri = new Uri(request.Url);
-                        request.Url = testUri.PathAndQuery;
-                        request.Headers.Add("Host", testUri.Host);
+                        request.Url = WebUtility.UrlDecode(testUri.PathAndQuery);
+                        var hostName = string.IsNullOrEmpty(testUri.Host) ? graphHostName : testUri.Host;
+
+                        if(request.Headers.AllKeys.Contains(hostHeaderKey))
+                            request.Headers[hostHeaderKey] = hostName;
+                        else
+                            request.Headers.Add(hostHeaderKey, hostName);
                     }
                     catch (UriFormatException)
                     {
                         //cant determine host. Relative url with no host header
-                        request.Headers.Add("Host", "graph.microsoft.com");
+                        if(request.Headers.AllKeys.Contains(hostHeaderKey))
+                            request.Headers[hostHeaderKey] = graphHostName;
+                        else
+                            request.Headers.Add(hostHeaderKey, graphHostName);
                     }
                 }
             }
