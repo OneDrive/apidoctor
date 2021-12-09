@@ -223,7 +223,7 @@ namespace ApiDoctor.Validation
                 issues.Error(ValidationErrorCode.ErrorOpeningFile, $"Error reading file contents.", ioex);
                 return false;
             }
-            catch (Exception ex)                                                                                                         
+            catch (Exception ex)
             {
                 issues.Error(ValidationErrorCode.ErrorReadingFile, $"Error reading file contents.", ex);
                 return false;
@@ -243,7 +243,11 @@ namespace ApiDoctor.Validation
             {
                 string fileContents = this.GetContentsOfFile(tags, issues);
                 var (yamlFrontMatter, processedContent) = ParseAndRemoveYamlFrontMatter(fileContents, issues);
-                ParseYamlMetadata(yamlFrontMatter, issues);
+                // Only Parse Yaml metadata if its present.
+                if (!string.IsNullOrWhiteSpace(yamlFrontMatter))
+                {
+                    ParseYamlMetadata(yamlFrontMatter, issues);
+                }
                 return processedContent;
             }
             catch (Exception ex)
@@ -450,7 +454,6 @@ namespace ApiDoctor.Validation
             string methodTitle = null;
             string methodDescription = null;
             List<string> methodDescriptionsData = new List<string>();
-            List<string> titlesData = new List<string>();
 
             Block previousHeaderBlock = null;
 
