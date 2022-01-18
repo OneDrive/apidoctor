@@ -176,11 +176,12 @@ namespace ApiDoctor.Validation
         public string[] RequiredTags { get; set; }
         #endregion
 
-        public void AddExpectedResponse(string rawResponse, CodeBlockAnnotation annotation)
+        public void AddExpectedResponse(string rawResponse, CodeBlockAnnotation annotation, IssueLogger issues)
         {
             if (this.ExpectedResponse != null)
             {
-                throw new InvalidOperationException("An expected response was already added to this request.");
+                issues.Error(ValidationErrorCode.ExtraResponseFound, "An expected response was already added to this request.");
+                return;
             }
 
             this.ExpectedResponse = rawResponse;

@@ -125,6 +125,7 @@ namespace ApiDoctor.Validation.Error
         DuplicateResource,
         ContentFormatException,
         NamespaceMismatch,
+        ExtraResponseFound,
 
         AmbiguousExample,
     }

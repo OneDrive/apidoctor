@@ -1267,7 +1267,7 @@ namespace ApiDoctor.Validation
                                 MethodDefinition pairedRequest = (from m in this.requests where m.Identifier == requestMethodName select m).FirstOrDefault();
                                 if (pairedRequest != null)
                                 {
-                                    pairedRequest.AddExpectedResponse(GetBlockContent(code), annotation);
+                                    pairedRequest.AddExpectedResponse(GetBlockContent(code), annotation, issues);
                                     responses.Add(pairedRequest);
                                 }
                                 else
@@ -1284,7 +1284,7 @@ namespace ApiDoctor.Validation
                             {
                                 try
                                 {
-                                    pairedRequest.AddExpectedResponse(GetBlockContent(code), annotation);
+                                    pairedRequest.AddExpectedResponse(GetBlockContent(code), annotation, issues);
                                     responses.Add(pairedRequest);
                                 }
                                 catch (Exception ex)
