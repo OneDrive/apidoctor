@@ -33,9 +33,9 @@ namespace ApiDoctor.Validation.Http
     using System.IO;
     using System.Text;
     using ApiDoctor.Validation.Error;
-    using Microsoft.AspNetCore.WebUtilities;
+	using System.Web;
 
-    public class HttpParser
+	public class HttpParser
     {
         /// <summary>
         ///     Converts a raw HTTP request into an HttpWebRequest instance.
@@ -252,11 +252,7 @@ namespace ApiDoctor.Validation.Http
         {
             if (input != null && input[0] != '?') input = "?" + input;
 
-            var values = QueryHelpers.ParseQuery(input);
-            var output = new NameValueCollection();
-            foreach (var value in values)
-                output.Add(value.Key, value.Value);
-            return output;
+            return HttpUtility.ParseQueryString(input);
         }
 
         private enum ParserMode
