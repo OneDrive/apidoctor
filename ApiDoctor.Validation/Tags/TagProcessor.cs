@@ -70,8 +70,9 @@ namespace ApiDoctor.Validation.Tags
         /// Loads Markdown content from a file and removes unwanted content in preparation for passing to MarkdownDeep converter.
         /// </summary>
         /// <param name="sourceFile">The file containing the Markdown contents to preprocess.</param>
+        /// <param name="issues"></param>
         /// <returns>The preprocessed contents of the file.</returns>
-        public string Preprocess(FileInfo sourceFile)
+        public string Preprocess(FileInfo sourceFile, IssueLogger issues)
         {
             using (var writer = new StringWriter())
             using (var reader = new StreamReader(sourceFile.OpenRead()))
@@ -180,9 +181,10 @@ namespace ApiDoctor.Validation.Tags
                                 continue;
                             }
 
-                            var includeContent = Preprocess(includeFile);
-
-                            writer.WriteLine(includeContent);
+                            // Include Files can have Yaml Front Matter as well.
+                            var includeContent = Preprocess(includeFile, issues);
+                            var (_, processedContent) = DocFile.ParseAndRemoveYamlFrontMatter(includeContent, issues);
+                            writer.WriteLine(processedContent);
                         }
                         else
                         {

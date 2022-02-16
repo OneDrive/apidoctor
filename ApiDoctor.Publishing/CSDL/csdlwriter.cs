@@ -23,21 +23,23 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+using System.Text.RegularExpressions;
+
 namespace ApiDoctor.Publishing.CSDL
 {
-    using ApiDoctor.Validation;
-    using ApiDoctor.Validation.Writers;
+    using Validation;
+    using Validation.Writers;
     using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Text;
     using System.Threading.Tasks;
-    using ApiDoctor.Validation.OData;
+    using Validation.OData;
     using Validation.Config;
     using Validation.OData.Transformation;
-    using ApiDoctor.Validation.Http;
+    using Validation.Http;
     using System.IO;
-    using ApiDoctor.Validation.Error;
+    using Validation.Error;
 
     public class CsdlWriter : DocumentPublisher
     {
@@ -111,7 +113,7 @@ namespace ApiDoctor.Publishing.CSDL
                 var outputFullName = GenerateOutputFileFullName(options.SourceMetadataPath, outputFolder, outputFilenameSuffix);
                 Console.WriteLine($"Publishing metadata to {outputFullName}");
 
-                using (var writer = System.IO.File.CreateText(outputFullName))
+                using (var writer = File.CreateText(outputFullName))
                 {
                     await writer.WriteAsync(xmlData);
                     await writer.FlushAsync();
@@ -126,7 +128,7 @@ namespace ApiDoctor.Publishing.CSDL
 
         private string GenerateOutputFileFullName(string templateFilename, string outputFolderPath, string filenameSuffix)
         {
-            var outputDir = new System.IO.DirectoryInfo(outputFolderPath);
+            var outputDir = new DirectoryInfo(outputFolderPath);
             outputDir.Create();
 
             filenameSuffix = filenameSuffix ?? "";
@@ -134,14 +136,14 @@ namespace ApiDoctor.Publishing.CSDL
             string filename = null;
             if (!string.IsNullOrEmpty(templateFilename))
             {
-                filename = $"{System.IO.Path.GetFileNameWithoutExtension(templateFilename)}{filenameSuffix}{System.IO.Path.GetExtension(templateFilename)}";
+                filename = $"{Path.GetFileNameWithoutExtension(templateFilename)}{filenameSuffix}{Path.GetExtension(templateFilename)}";
             }
             else
             {
                 filename = $"metadata{filenameSuffix}.xml";
             }
 
-            var outputFullName = System.IO.Path.Combine(outputDir.FullName, filename);
+            var outputFullName = Path.Combine(outputDir.FullName, filename);
             return outputFullName;
         }
 
@@ -154,12 +156,12 @@ namespace ApiDoctor.Publishing.CSDL
             {
                 try
                 {
-                    if (!System.IO.File.Exists(sourcePath))
+                    if (!File.Exists(sourcePath))
                     {
-                        throw new System.IO.FileNotFoundException($"Unable to locate source file: {sourcePath}");
+                        throw new FileNotFoundException($"Unable to locate source file: {sourcePath}");
                     }
 
-                    using (System.IO.FileStream stream = new System.IO.FileStream(sourcePath, System.IO.FileMode.Open, System.IO.FileAccess.Read))
+                    using (FileStream stream = new FileStream(sourcePath, FileMode.Open, FileAccess.Read))
                     {
                         if (options.Formats.HasFlag(MetadataFormat.EdmxInput))
                         {
@@ -194,7 +196,27 @@ namespace ApiDoctor.Publishing.CSDL
                     return null;
                 }
             }
+            this.AddSourceMethods(edmx, DocSet.SchemaConfig.BaseUrls, issues);
+            foreach (var schema in edmx.DataServices.Schemas)
+            {
+                var annotationsMap = schema.Annotations.ToDictionary(an => an.Target);
+                foreach (var container in schema.EntityContainers)
+                {
+                    var prefix = schema.Namespace + "." + container.Name;
+                    foreach (var entitySet in container.EntitySets)
+                    {
+                        var annotationName = prefix + "/" + entitySet.Name;
+                        AddRestrictionAnnotations(annotationsMap, entitySet.SourceMethods as MethodCollection, annotationName, issues.For(annotationName));
+                    }
 
+                    foreach (var singleton in container.Singletons)
+                    {
+                        var annotationName = prefix + "/" + singleton.Name;
+                        AddRestrictionAnnotations(annotationsMap, singleton.SourceMethods as MethodCollection, annotationName, issues.For(annotationName));
+                    }
+                }
+                schema.Annotations = annotationsMap.Values.ToList();
+            }
             bool generateNewElements = (generateFromDocs == null && !options.SkipMetadataGeneration) || (generateFromDocs.HasValue && generateFromDocs.Value);
 
             // Add resources 
@@ -417,7 +439,6 @@ namespace ApiDoctor.Publishing.CSDL
                     }
                 }
             }
-
             return edmx;
         }
 
@@ -462,6 +483,118 @@ namespace ApiDoctor.Publishing.CSDL
             }
         }
 
+        private static void AddRestrictionAnnotations(Dictionary<string, Annotations> annotationsMap,
+            MethodCollection methods,
+            string target,
+            IssueLogger issues)
+        {
+            if (methods != null)
+            {
+                var annotatable = new Property();
+                AddRestrictionAnnotations(annotatable, methods, issues);
+                MergeAnnotations(target, annotatable, annotationsMap);
+            }
+        }
+        private static void AddRestrictionAnnotations(IODataAnnotatable annotatable, MethodCollection sourceMethod, IssueLogger issues)
+        {
+            foreach (var method in sourceMethod)
+            {
+                var verb = method.HttpMethodVerb();
+                switch (verb)
+                {
+                    case "GET":
+                        if (method.HttpRequest.Url.Contains("{", StringComparison.OrdinalIgnoreCase) && method.HttpRequest.Url.Contains("}", StringComparison.OrdinalIgnoreCase))
+                        {
+                            AddReadByKeyRestriction(annotatable, method);
+                        }
+                        else
+                        {
+                            AddRestrictionAnnotation(annotatable, method, Term.ReadRestrictionTerm);
+                        }
+                        break;
+                    case "POST":
+                        AddRestrictionAnnotation(annotatable, method, Term.InsertRestrictionsTerm);
+                        break;
+                    case "PUT":
+                        AddRestrictionAnnotation(annotatable, method, Term.UpdateRestrictions);
+                        break;
+                    case "PATCH":
+                        AddRestrictionAnnotation(annotatable, method, Term.UpdateRestrictions);
+                        break;
+                    case "DELETE":
+                        AddRestrictionAnnotation(annotatable, method, Term.DeleteRestrictions);
+                        break;
+                    default:
+                        issues.Error(ValidationErrorCode.HttpMethodOutOfRange, "HttpMethod Verb Out of Range");
+                        break;
+
+                }
+            }
+        }
+
+        private static PropertyValue GetNestedRestriction(MethodDefinition sourceMethod, string propertyRestriction = Term.ReadByKeyRestrictionsTerm)
+        {
+            var propertyValue = new PropertyValue
+            {
+                Property = propertyRestriction,
+                Records = new List<Record>()
+                {
+                    new()
+                    {
+                        PropertyValues = GetDescriptionPropertyValues(sourceMethod)
+                    }
+                }
+            };
+            return propertyValue;
+        }
+
+        private static List<PropertyValue> GetDescriptionPropertyValues(MethodDefinition sourceMethod)
+        {
+            var descriptionPropertyValues = new List<PropertyValue>()
+            {
+                new() {Property = "LongDescription", String = sourceMethod.Description.ToStringClean(),},
+                new() {Property = "Description", String = sourceMethod.Title}
+            };
+            return descriptionPropertyValues;
+        }
+
+        private static void AddReadByKeyRestriction(IODataAnnotatable annotatable, MethodDefinition sourceMethod)
+        {
+            var readRestriction = annotatable.Annotation.FirstOrDefault(annotation => annotation.Term == Term.ReadRestrictionTerm);
+            if (readRestriction != null)
+            {
+                var propertyValue = readRestriction.Records
+                    .SelectMany(c => c.PropertyValues)
+                    .FirstOrDefault(x => x.Property == Term.ReadByKeyRestrictionsTerm);
+                if (propertyValue == null)
+                {
+                    readRestriction.Records[0].PropertyValues.Add(GetNestedRestriction(sourceMethod));
+                }
+            }
+            else
+            {
+                AddRestrictionAnnotation(annotatable, sourceMethod, Term.ReadRestrictionTerm);
+                AddReadByKeyRestriction(annotatable, sourceMethod);
+            }
+        }
+        private static void AddRestrictionAnnotation(IODataAnnotatable annotatable, MethodDefinition sourceMethod, string restriction)
+        {
+            if (!annotatable.Annotation.Exists(x => x.Term == restriction))
+            {
+                var annotation = new Annotation
+                {
+                    Term = restriction,
+                    Records = new List<Record>()
+                    {
+                        new()
+                        {
+                            PropertyValues = GetDescriptionPropertyValues(sourceMethod)
+                        }
+                    }
+                };
+                annotatable.Annotation.Add(annotation);
+            }
+        }
         private static void AddHttpRequestsAnnotations(IODataAnnotatable annotatable, MethodCollection methods, IssueLogger issues)
         {
             if (methods != null)
@@ -1066,9 +1199,10 @@ namespace ApiDoctor.Publishing.CSDL
         }
 
         // EntitySet is something in the format of /name/{var}
-        private readonly static System.Text.RegularExpressions.Regex EntitySetPathRegEx = new System.Text.RegularExpressions.Regex(@"^\/(\w*)\/{var}$");
+        private readonly static System.Text.RegularExpressions.Regex EntitySetPathRegEx = new System.Text.RegularExpressions.Regex(@"\/(\w*)\/{var}$", RegexOptions.Compiled);
         // Singleton is something in the format of /name
-        private readonly static System.Text.RegularExpressions.Regex SingletonPathRegEx = new System.Text.RegularExpressions.Regex(@"^\/(\w*)$");
+        private readonly static System.Text.RegularExpressions.Regex SingletonPathRegEx = new System.Text.RegularExpressions.Regex(@"\/(\w*)$", RegexOptions.Compiled);
+        private readonly static System.Text.RegularExpressions.Regex FullSingletonPathRegEx = new System.Text.RegularExpressions.Regex(@"\/(\w*)", RegexOptions.Compiled);
 
         /// <summary>
         /// Parse the URI paths for methods defined in the documentation and construct an entity container that contains these
@@ -1157,7 +1291,141 @@ namespace ApiDoctor.Publishing.CSDL
             defaultSchema.EntityContainers.Add(container);
         }
 
-        private Dictionary<string, MethodCollection> cachedUniqueRequestPaths { get; set; }
+        private void AddSourceMethods(EntityFramework edmx, string[] baseUrlsToRemove, IssueLogger issues)
+        {
+            Dictionary<string, MethodCollection> uniqueRequestPaths = GetUniqueRequestPaths(baseUrlsToRemove, issues);
+            var resourcePaths = uniqueRequestPaths.Keys.OrderBy(x => x).ToArray();
+
+            foreach (var path in resourcePaths)
+            {
+                try
+                {
+                    var methodCollection = uniqueRequestPaths[path];
+                    if (EntitySetPathRegEx.IsMatch(path))
+                    {
+                        var name = EntitySetPathRegEx.Match(path).Groups[1].Value;
+                        var currentEntitySet = edmx.DataServices.Schemas.SelectMany(c => c.EntityContainers)
+                            .SelectMany(c => c.EntitySets)
+                            .FirstOrDefault(c => c.Name == name);
+                        if (currentEntitySet != null)
+                        {
+                            if (currentEntitySet.SourceMethods != null)
+                            {
+                                var sourceMethods = (MethodCollection)currentEntitySet.SourceMethods;
+                                foreach (var sourceMethod in sourceMethods)
+                                {
+                                    sourceMethod.SplitRequestUrl(out var relativePath, out var queryString,
+                                        out var httpMethod);
+
+                                    foreach (var currentSourceMethod in methodCollection)
+                                    {
+                                        currentSourceMethod.SplitRequestUrl(out var secondRelativePath,
+                                            out var secondQueryString, out var secondMethod);
+                                        if (relativePath != secondRelativePath &&
+                                            queryString != secondQueryString &&
+                                            httpMethod != secondMethod)
+                                        {
+                                            sourceMethods.Add(currentSourceMethod);
+                                        }
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                currentEntitySet.SourceMethods = methodCollection;
+                            }
+                        }
+                    }
+                    else if (SingletonPathRegEx.IsMatch(path))
+                    {
+                        var allSections = FullSingletonPathRegEx.Matches(path);
+                        foreach (var section in allSections)
+                        {
+
+                        }
+                        var name = FullSingletonPathRegEx.Match(path).Groups[1].Value;
+                        // Before we declare this a singleton, see if any other paths that have the same root match the entity set regex
+                        var query = (from p in resourcePaths
+                                     where p.StartsWith(path + "/") && EntitySetPathRegEx.IsMatch(p)
+                                     select p);
+                        if (query.Any())
+                        {
+                            // If there's a similar resource path that matches the entity, we don't declare a singleton.
+                            var currentEntitySet = edmx.DataServices.Schemas.SelectMany(c => c.EntityContainers)
+                                .SelectMany(c => c.EntitySets)
+                                .FirstOrDefault(c => c.Name == name);
+                            if (currentEntitySet != null)
+                            {
+                                if (currentEntitySet.SourceMethods != null)
+                                {
+                                    var sourceMethods = (MethodCollection)currentEntitySet.SourceMethods;
+                                    foreach (var sourceMethod in sourceMethods)
+                                    {
+                                        sourceMethod.SplitRequestUrl(out var relativePath, out var queryString,
+                                            out var httpMethod);
+                                        foreach (var currentSourceMethod in methodCollection)
+                                        {
+                                            currentSourceMethod.SplitRequestUrl(out var secondRelativePath,
+                                                out var secondQueryString, out var secondMethod);
+                                            if (relativePath != secondRelativePath &&
+                                                queryString != secondQueryString &&
+                                                httpMethod != secondMethod)
+                                            {
+                                                sourceMethods.Add(currentSourceMethod);
+                                            }
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    currentEntitySet.SourceMethods = methodCollection;
+                                }
+                            }
+                        }
+
+                        var currentSingleton = edmx.DataServices.Schemas.SelectMany(c => c.EntityContainers)
+                            .SelectMany(c => c.Singletons)
+                            .FirstOrDefault(c => c.Name == name);
+                        if (currentSingleton != null)
+                        {
+                            if (currentSingleton.SourceMethods != null)
+                            {
+                                var sourceMethods = (MethodCollection)currentSingleton.SourceMethods;
+                                foreach (var sourceMethod in sourceMethods)
+                                {
+                                    sourceMethod.SplitRequestUrl(out var relativePath, out var queryString,
+                                        out var httpMethod);
+
+                                    foreach (var currentSourceMethod in methodCollection)
+                                    {
+                                        currentSourceMethod.SplitRequestUrl(out var secondRelativePath,
+                                            out var secondQueryString, out var secondMethod);
+                                        if (relativePath != secondRelativePath &&
+                                            queryString != secondQueryString &&
+                                            httpMethod != secondMethod)
+                                        {
+                                            sourceMethods.Add(currentSourceMethod);
+                                        }
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                currentSingleton.SourceMethods = methodCollection;
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    issues.Error(ValidationErrorCode.Unknown, $"BuildEntityContainer: error in path {path}", ex);
+                }
+            }
+        }
+        private Dictionary<string, MethodCollection> cachedUniqueRequestPaths
+        {
+            get; set;
+        }
 
         /// <summary>
         /// Return a dictionary of the unique request paths in the
@@ -1422,6 +1690,14 @@ namespace ApiDoctor.Publishing.CSDL
                     Name = resource.Name.TypeOnly(),
                     Namespace = resource.Name.NamespaceOnly(),
                     OpenType = resource.OriginalMetadata.IsOpenType,
+                    Annotation = new List<Annotation>
+                    {
+                        new()
+                        {
+                            Term = Term.DescriptionTerm,
+                            String = resource.Description
+                        }
+                    }
                 };
 
                 if (resource.ResolvedBaseTypeReference == null ||
@@ -1446,6 +1722,14 @@ namespace ApiDoctor.Publishing.CSDL
                     Name = resource.Name.TypeOnly(),
                     Namespace = resource.Name.NamespaceOnly(),
                     OpenType = resource.OriginalMetadata.IsOpenType,
+                    Annotation = new List<Annotation>()
+                    {
+                        new()
+                        {
+                            Term = Term.DescriptionTerm,
+                            String = resource.Description,
+                        }
+                    }
                 };
 
                 schema.ComplexTypes.Add(type);
@@ -1557,21 +1841,66 @@ namespace ApiDoctor.Publishing.CSDL
 
     public class CsdlWriterOptions
     {
-        public string OutputDirectoryPath { get; set; }
-        public string SourceMetadataPath { get; set; }
-        public string MergeWithMetadataPath { get; set; }
-        public MetadataFormat Formats { get; set; }
-        public string[] Namespaces { get; set; }
-        public bool Sort { get; set; }
-        public string TransformOutput { get; set; }
-        public string DocumentationSetPath { get; set; }
-        public string Version { get; set; }
-        public bool SkipMetadataGeneration { get; set; }
-        public AnnotationOptions Annotations { get; set; }
-        public bool ValidateSchema { get; set; }
-        public bool AttributesOnNewLines { get; set; }
-        public string EntityContainerName { get; set; }
-        public bool ShowSources { get; set; }
+        public string OutputDirectoryPath
+        {
+            get; set;
+        }
+        public string SourceMetadataPath
+        {
+            get; set;
+        }
+        public string MergeWithMetadataPath
+        {
+            get; set;
+        }
+        public MetadataFormat Formats
+        {
+            get; set;
+        }
+        public string[] Namespaces
+        {
+            get; set;
+        }
+        public bool Sort
+        {
+            get; set;
+        }
+        public string TransformOutput
+        {
+            get; set;
+        }
+        public string DocumentationSetPath
+        {
+            get; set;
+        }
+        public string Version
+        {
+            get; set;
+        }
+        public bool SkipMetadataGeneration
+        {
+            get; set;
+        }
+        public AnnotationOptions Annotations
+        {
+            get; set;
+        }
+        public bool ValidateSchema
+        {
+            get; set;
+        }
+        public bool AttributesOnNewLines
+        {
+            get; set;
+        }
+        public string EntityContainerName
+        {
+            get; set;
+        }
+        public bool ShowSources
+        {
+            get; set;
+        }
     }
 
     [Flags]

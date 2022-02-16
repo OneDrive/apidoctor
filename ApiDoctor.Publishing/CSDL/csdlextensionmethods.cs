@@ -30,6 +30,7 @@ namespace ApiDoctor.Publishing.CSDL
     using System.Collections.Generic;
     using System.Reflection;
     using System.Text;
+    using System.Text.RegularExpressions;
     using Validation.Http;
     using Validation.OData;
     using Validation.OData.Transformation;
@@ -39,7 +40,7 @@ namespace ApiDoctor.Publishing.CSDL
 
     internal static class CsdlExtensionMethods
     {
-
+        private static readonly Regex GuidRegex = new(@"[0-9a-fA-F\-]{32,36}", RegexOptions.Compiled);
         public static string RequestUriPathOnly(this MethodDefinition method, string[] baseUrlsToRemove, IssueLogger issues)
         {
             if (string.IsNullOrWhiteSpace(method.Request)) return string.Empty;
@@ -72,6 +73,7 @@ namespace ApiDoctor.Publishing.CSDL
             }
 
             // Normalize variables in the request path
+            path = GuidRegex.Replace(path, "{var}");
             path = path.ReplaceTextBetweenCharacters('{', '}', "var");
 
             if (method.RequestMetadata.SampleKeys != null)
@@ -188,9 +190,5 @@ namespace ApiDoctor.Publishing.CSDL
 
 
         }
-
-
-
-
     }
 }
