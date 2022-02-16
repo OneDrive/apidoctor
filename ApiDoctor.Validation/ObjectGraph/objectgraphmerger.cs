@@ -1,11 +1,11 @@
-﻿using Microsoft.AspNetCore.WebUtilities;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using System.Web;
 
 namespace ApiDoctor.Validation.Utility
 {
@@ -359,10 +359,10 @@ namespace ApiDoctor.Validation.Utility
         private static Dictionary<object, object> ParseEquivalentValues(string equivalentValues)
         {
             var output = new Dictionary<object, object>();
-            if (equivalentValues != null)
+            if (!string.IsNullOrEmpty(equivalentValues))
             {
-                var values = QueryHelpers.ParseQuery(equivalentValues);
-                foreach (var key in values.Keys)
+                var values = HttpUtility.ParseQueryString(equivalentValues);
+                foreach (var key in values.AllKeys)
                 {
                     output[key] = values[key];
                 }
