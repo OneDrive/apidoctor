@@ -31,10 +31,9 @@ namespace ApiDoctor.Validation.Params
     using Microsoft.CSharp;
     using System.CodeDom.Compiler;
     using System.Collections.Generic;
-    using System.Runtime.Versioning;
+
     internal static class CSharpEval
     {
-        [UnsupportedOSPlatform("ios")]
         public static string Evaluate(string code, IReadOnlyDictionary<string, string> values)
         {
             if (!code.EndsWith(";"))
@@ -80,7 +79,6 @@ namespace ApiDoctor.Validation.Params
             }
         }
 
-        [UnsupportedOSPlatform("ios")]
         private static Assembly GenerateAssembly(string code)
         {
             CSharpCodeProvider provider = new CSharpCodeProvider();
