@@ -34,6 +34,7 @@ namespace ApiDoctor.Validation.Params
     using System.Runtime.Versioning;
     internal static class CSharpEval
     {
+        [UnsupportedOSPlatform("ios")]
         public static string Evaluate(string code, IReadOnlyDictionary<string, string> values)
         {
             if (!code.EndsWith(";"))
