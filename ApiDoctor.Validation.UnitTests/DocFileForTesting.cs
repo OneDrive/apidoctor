@@ -25,6 +25,7 @@
 
 namespace ApiDoctor.Validation.UnitTests
 {
+    using Error;
     public class DocFileForTesting : DocFile
     {
         private readonly string contentsOfFile;
@@ -37,7 +38,7 @@ namespace ApiDoctor.Validation.UnitTests
             this.Parent = parent;
         }
 
-        protected override string GetContentsOfFile(string tags)
+        protected override string GetContentsOfFile(string tags, IssueLogger issues = default)
         {
             return this.contentsOfFile;
         }
