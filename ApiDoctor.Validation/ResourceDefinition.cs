@@ -27,6 +27,7 @@ namespace ApiDoctor.Validation
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.IO;
     using System.Linq;
     using ApiDoctor.Validation.Error;
@@ -178,7 +179,9 @@ namespace ApiDoctor.Validation
         {
             try
             {
-                var inputObject = JsonConvert.DeserializeObject(this.OriginalExampleText);
+                var settings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.All, MaxDepth = 256 };
+                var jsonSerializer = JsonSerializer.Create(settings);
+                var inputObject = JsonConvert.DeserializeObject<JObject>(this.OriginalExampleText, settings).ToObject(typeof(object), jsonSerializer);
 
                 JObject parsedObject = this.SourceJObject = inputObject as JObject;
                 if (parsedObject == null)
