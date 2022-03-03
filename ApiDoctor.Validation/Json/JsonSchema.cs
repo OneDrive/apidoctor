@@ -122,7 +122,7 @@ namespace ApiDoctor.Validation.Json
                 if (string.IsNullOrWhiteSpace(jsonInput.JsonData))
                     throw new Exception("Expected json string was empty or whitespace only.");
 
-                var settings = new JsonSerializerSettings { DateParseHandling = DateParseHandling.None, NullValueHandling = NullValueHandling.Include, DefaultValueHandling = DefaultValueHandling.Include };
+                var settings = new JsonSerializerSettings { DateParseHandling = DateParseHandling.None, NullValueHandling = NullValueHandling.Include, DefaultValueHandling = DefaultValueHandling.Include, TypeNameHandling = TypeNameHandling.All, MaxDepth = 256 };
                 obj = (JContainer)JsonConvert.DeserializeObject(jsonInput.JsonData, settings);
             }
             catch (Exception ex)
