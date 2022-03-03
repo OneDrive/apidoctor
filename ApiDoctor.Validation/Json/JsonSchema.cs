@@ -27,7 +27,6 @@ namespace ApiDoctor.Validation.Json
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics;
     using System.Globalization;
     using System.Linq;
     using ApiDoctor.Validation.Error;
