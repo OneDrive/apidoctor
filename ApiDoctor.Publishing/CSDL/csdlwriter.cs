@@ -62,7 +62,8 @@ namespace ApiDoctor.Publishing.CSDL
 
             if (!string.IsNullOrEmpty(options.MergeWithMetadataPath))
             {
-                EntityFramework secondFramework = CreateEntityFrameworkFromDocs(issues, options.MergeWithMetadataPath, generateFromDocs: false);
+                EntityFramework secondFramework =
+                    CreateEntityFrameworkFromDocs(issues, options.MergeWithMetadataPath, generateFromDocs: false);
                 framework = framework.MergeWith(secondFramework);
                 outputFilenameSuffix += "-merged";
             }
@@ -70,13 +71,16 @@ namespace ApiDoctor.Publishing.CSDL
             // Step 1a: Apply an transformations that may be defined in the documentation
             if (!string.IsNullOrEmpty(options.TransformOutput))
             {
-                PublishSchemaChangesConfigFile transformations = DocSet.TryLoadConfigurationFiles<PublishSchemaChangesConfigFile>(options.DocumentationSetPath).Where(x => x.SchemaChanges.TransformationName == options.TransformOutput).FirstOrDefault();
+                PublishSchemaChangesConfigFile transformations = DocSet
+                    .TryLoadConfigurationFiles<PublishSchemaChangesConfigFile>(options.DocumentationSetPath)
+                    .Where(x => x.SchemaChanges.TransformationName == options.TransformOutput).FirstOrDefault();
                 if (null == transformations)
                 {
-                    throw new KeyNotFoundException($"Unable to locate a transformation set named {options.TransformOutput}. Aborting.");
+                    throw new KeyNotFoundException(
+                        $"Unable to locate a transformation set named {options.TransformOutput}. Aborting.");
                 }
 
-                string[] versionsToPublish = options.Version?.Split(new char[] { ',', ' ' });
+                string[] versionsToPublish = options.Version?.Split(new char[] {',', ' '});
                 framework.ApplyTransformation(transformations.SchemaChanges, versionsToPublish);
                 if (!string.IsNullOrEmpty(options.Version))
                 {
@@ -103,14 +107,16 @@ namespace ApiDoctor.Publishing.CSDL
             }
             else if (options.Formats.HasFlag(MetadataFormat.SchemaOutput))
             {
-                xmlData = ODataParser.Serialize<Schema>(framework.DataServices.Schemas.First(), options.AttributesOnNewLines);
+                xmlData = ODataParser.Serialize<Schema>(framework.DataServices.Schemas.First(),
+                    options.AttributesOnNewLines);
             }
 
             // Step 3: Write the XML to disk
 
             if (!string.IsNullOrEmpty(outputFolder))
             {
-                var outputFullName = GenerateOutputFileFullName(options.SourceMetadataPath, outputFolder, outputFilenameSuffix);
+                var outputFullName =
+                    GenerateOutputFileFullName(options.SourceMetadataPath, outputFolder, outputFilenameSuffix);
                 Console.WriteLine($"Publishing metadata to {outputFullName}");
 
                 using (var writer = File.CreateText(outputFullName))
@@ -126,7 +132,8 @@ namespace ApiDoctor.Publishing.CSDL
             }
         }
 
-        private string GenerateOutputFileFullName(string templateFilename, string outputFolderPath, string filenameSuffix)
+        private string GenerateOutputFileFullName(string templateFilename, string outputFolderPath,
+            string filenameSuffix)
         {
             var outputDir = new DirectoryInfo(outputFolderPath);
             outputDir.Create();
@@ -136,7 +143,8 @@ namespace ApiDoctor.Publishing.CSDL
             string filename = null;
             if (!string.IsNullOrEmpty(templateFilename))
             {
-                filename = $"{Path.GetFileNameWithoutExtension(templateFilename)}{filenameSuffix}{Path.GetExtension(templateFilename)}";
+                filename =
+                    $"{Path.GetFileNameWithoutExtension(templateFilename)}{filenameSuffix}{Path.GetExtension(templateFilename)}";
             }
             else
             {
@@ -147,7 +155,8 @@ namespace ApiDoctor.Publishing.CSDL
             return outputFullName;
         }
 
-        public EntityFramework CreateEntityFrameworkFromDocs(IssueLogger issues, string sourcePath = null, bool? generateFromDocs = null)
+        public EntityFramework CreateEntityFrameworkFromDocs(IssueLogger issues, string sourcePath = null,
+            bool? generateFromDocs = null)
         {
             sourcePath = sourcePath ?? options.SourceMetadataPath;
 
@@ -175,9 +184,11 @@ namespace ApiDoctor.Publishing.CSDL
                         }
                         else
                         {
-                            throw new InvalidOperationException("Source file was specified but no format for source file was provided.");
+                            throw new InvalidOperationException(
+                                "Source file was specified but no format for source file was provided.");
                         }
                     }
+
                     if (options.Namespaces != null && options.Namespaces.Any())
                     {
                         var schemas = edmx.DataServices.Schemas.ToArray();
@@ -196,38 +207,21 @@ namespace ApiDoctor.Publishing.CSDL
                     return null;
                 }
             }
-            this.AddSourceMethods(edmx, DocSet.SchemaConfig.BaseUrls, issues);
-            foreach (var schema in edmx.DataServices.Schemas)
-            {
-                var annotationsMap = schema.Annotations.ToDictionary(an => an.Target);
-                foreach (var container in schema.EntityContainers)
-                {
-                    var prefix = schema.Namespace + "." + container.Name;
-                    foreach (var entitySet in container.EntitySets)
-                    {
-                        var annotationName = prefix + "/" + entitySet.Name;
-                        AddRestrictionAnnotations(annotationsMap, entitySet.SourceMethods as MethodCollection, annotationName, issues.For(annotationName));
-                    }
 
-                    foreach (var singleton in container.Singletons)
-                    {
-                        var annotationName = prefix + "/" + singleton.Name;
-                        AddRestrictionAnnotations(annotationsMap, singleton.SourceMethods as MethodCollection, annotationName, issues.For(annotationName));
-                    }
-                }
-                schema.Annotations = annotationsMap.Values.ToList();
-            }
-            bool generateNewElements = (generateFromDocs == null && !options.SkipMetadataGeneration) || (generateFromDocs.HasValue && generateFromDocs.Value);
+            bool generateNewElements = (generateFromDocs == null && !options.SkipMetadataGeneration) ||
+                                       (generateFromDocs.HasValue && generateFromDocs.Value);
 
             // Add resources 
             if (Documents.Files.Any())
             {
                 foreach (var resource in this.Documents.Resources)
                 {
-                    var targetSchema = FindOrCreateSchemaForNamespace(resource.Name.NamespaceOnly(), edmx, generateNewElements: generateNewElements);
+                    var targetSchema = FindOrCreateSchemaForNamespace(resource.Name.NamespaceOnly(), edmx,
+                        generateNewElements: generateNewElements);
                     if (targetSchema != null)
                     {
-                        AddResourceToSchema(targetSchema, resource, edmx, issues, generateNewElements: generateNewElements);
+                        AddResourceToSchema(targetSchema, resource, edmx, issues,
+                            generateNewElements: generateNewElements);
                     }
                 }
 
@@ -241,7 +235,9 @@ namespace ApiDoctor.Publishing.CSDL
                     this.ProcessRestRequestPaths(edmx, DocSet.SchemaConfig.BaseUrls, issues);
 
                     // add enums to the default schema
-                    var defaultSchema = edmx.DataServices.Schemas.FirstOrDefault(s => s.Namespace == DocSet.SchemaConfig.DefaultNamespace);
+                    var defaultSchema =
+                        edmx.DataServices.Schemas.FirstOrDefault(s =>
+                            s.Namespace == DocSet.SchemaConfig.DefaultNamespace);
                     foreach (var enumDefinition in Documents.Enums.GroupBy(e => e.TypeName))
                     {
                         var enumType = new EnumType
@@ -251,7 +247,9 @@ namespace ApiDoctor.Publishing.CSDL
                                 new EnumMember
                                 {
                                     Name = e.MemberName,
-                                    Value = e.NumericValue.HasValue ? e.NumericValue.GetValueOrDefault().ToString() : null
+                                    Value = e.NumericValue.HasValue
+                                        ? e.NumericValue.GetValueOrDefault().ToString()
+                                        : null
                                 }).ToList(),
                             IsFlags = enumDefinition.FirstOrDefault().IsFlags,
                         };
@@ -301,8 +299,11 @@ namespace ApiDoctor.Publishing.CSDL
                             }
                         }
 
-                        Dictionary<string, ODataCapabilities> capabilitiesPerProperty = new Dictionary<string, ODataCapabilities>();
-                        foreach (var annotation in complex.Contributors.Where(c => c.OriginalMetadata?.OdataAnnotations != null).SelectMany(c => c.OriginalMetadata.OdataAnnotations))
+                        Dictionary<string, ODataCapabilities> capabilitiesPerProperty =
+                            new Dictionary<string, ODataCapabilities>();
+                        foreach (var annotation in complex.Contributors
+                                     .Where(c => c.OriginalMetadata?.OdataAnnotations != null)
+                                     .SelectMany(c => c.OriginalMetadata.OdataAnnotations))
                         {
                             if (annotation?.Capabilities != null)
                             {
@@ -313,14 +314,15 @@ namespace ApiDoctor.Publishing.CSDL
                                     continue;
                                 }
 
-                                annotation.Capabilities.MergeWith(capabilities, issues.For(complex.Name + "/annotations"));
+                                annotation.Capabilities.MergeWith(capabilities,
+                                    issues.For(complex.Name + "/annotations"));
                             }
                         }
 
                         foreach (var kvp in capabilitiesPerProperty)
                         {
                             var capabilities = kvp.Value;
-                            var property = new Property { Name = kvp.Key, Annotation = new List<Annotation>() };
+                            var property = new Property {Name = kvp.Key, Annotation = new List<Annotation>()};
 
                             TryAddAnnotation(property, "ChangeTracking", "Supported", capabilities.ChangeTracking);
                             TryAddAnnotation(property, "Org.OData.Core.V1.Computed", null, capabilities.Computed);
@@ -349,13 +351,13 @@ namespace ApiDoctor.Publishing.CSDL
                                     annotation.Records.Add(new Record
                                     {
                                         PropertyValues = new List<PropertyValue>
+                                        {
+                                            new PropertyValue
                                             {
-                                                new PropertyValue
-                                                {
-                                                    Property ="Referenceable",
-                                                    Bool = capabilities.Referenceable.GetValueOrDefault(),
-                                                },
-                                            }
+                                                Property = "Referenceable",
+                                                Bool = capabilities.Referenceable.GetValueOrDefault(),
+                                            },
+                                        }
                                     });
                                 }
 
@@ -364,15 +366,16 @@ namespace ApiDoctor.Publishing.CSDL
                                     annotation.Records.Add(new Record
                                     {
                                         PropertyValues = new List<PropertyValue>
+                                        {
+                                            new PropertyValue
                                             {
-                                                new PropertyValue
-                                                {
-                                                    Property ="Navigability",
-                                                    EnumMember = string.IsNullOrEmpty(capabilities.Navigability)
-                                                        ? string.Empty
-                                                        : ("Org.OData.Capabilities.V1.NavigationType/" + capabilities.Navigability)
-                                                },
-                                            }
+                                                Property = "Navigability",
+                                                EnumMember = string.IsNullOrEmpty(capabilities.Navigability)
+                                                    ? string.Empty
+                                                    : ("Org.OData.Capabilities.V1.NavigationType/" +
+                                                       capabilities.Navigability)
+                                            },
+                                        }
                                     });
                                 }
 
@@ -404,24 +407,28 @@ namespace ApiDoctor.Publishing.CSDL
                             foreach (var entitySet in container.EntitySets)
                             {
                                 var annotationName = prefix + "/" + entitySet.Name;
-                                AddHttpRequestsAnnotations(annotationsMap, entitySet.SourceMethods as MethodCollection, annotationName, issues.For(annotationName));
+                                AddHttpRequestsAnnotations(annotationsMap, entitySet.SourceMethods as MethodCollection,
+                                    annotationName, issues.For(annotationName));
                             }
 
                             foreach (var singleton in container.Singletons)
                             {
                                 var annotationName = prefix + "/" + singleton.Name;
-                                AddHttpRequestsAnnotations(annotationsMap, singleton.SourceMethods as MethodCollection, annotationName, issues.For(annotationName));
+                                AddHttpRequestsAnnotations(annotationsMap, singleton.SourceMethods as MethodCollection,
+                                    annotationName, issues.For(annotationName));
                             }
                         }
 
                         foreach (var operation in schema.Actions.Cast<ActionOrFunctionBase>().Concat(schema.Functions))
                         {
                             var target =
-                                (operation.Parameters.FirstOrDefault(p => p.Name.IEquals("bindingParameter")).Type ?? schema.Namespace) +
+                                (operation.Parameters.FirstOrDefault(p => p.Name.IEquals("bindingParameter")).Type ??
+                                 schema.Namespace) +
                                 "/" +
                                 operation.Name;
 
-                            AddHttpRequestsAnnotations(annotationsMap, operation.SourceMethods as MethodCollection, target, issues.For(target));
+                            AddHttpRequestsAnnotations(annotationsMap, operation.SourceMethods as MethodCollection,
+                                target, issues.For(target));
                         }
                     }
 
@@ -439,8 +446,63 @@ namespace ApiDoctor.Publishing.CSDL
                     }
                 }
             }
+
+            this.AddSourceMethods(edmx, DocSet.SchemaConfig.BaseUrls, issues);
+            foreach (var schema in edmx.DataServices.Schemas)
+            {
+                var annotationsMap = schema.Annotations.ToDictionary(an => an.Target);
+                foreach (var container in schema.EntityContainers)
+                {
+                    var prefix = schema.Namespace + "." + container.Name;
+                    foreach (var entitySet in container.EntitySets)
+                    {
+                        var annotationName = prefix + "/" + entitySet.Name;
+                        AddRestrictionAnnotations(annotationsMap, edmx, entitySet,
+                            entitySet.SourceMethods as MethodCollection,
+                            annotationName, issues.For(annotationName));
+                    }
+
+                    foreach (var singleton in container.Singletons)
+                    {
+                        var annotationName = prefix + "/" + singleton.Name;
+                        var sourceMethods = singleton.SourceMethods as MethodCollection;
+                        AddRestrictionAnnotations(annotationsMap, edmx, singleton,
+                            singleton.SourceMethods as MethodCollection,
+                            annotationName, issues.For(annotationName));
+                    }
+                }
+
+                schema.Annotations = annotationsMap.Values.ToList();
+            }
+
             return edmx;
         }
+
+        // private void AddRestrictionAnnotations(Dictionary<string, Annotations> annotationsMap, EntitySet entitySet,
+        //     MethodCollection entitySetSourceMethods, string annotationName, IssueLogger @for)
+        // {
+        //     if (entitySetSourceMethods != null)
+        //     {
+        //         var annotatable = new Property();
+        //
+        //         var fixedTarget = AddRestrictionAnnotations(annotatable, entitySet, entitySetSourceMethods,
+        //             annotationName, @for);
+        //         MergeAnnotations(fixedTarget, annotatable, annotationsMap);
+        //     }
+        // }
+        //
+        // private void AddRestrictionAnnotations(Dictionary<string, Annotations> annotationsMap, Singleton singleton,
+        //     MethodCollection singletonSourceMathods, string annotationName, IssueLogger @for)
+        // {
+        //     if (singletonSourceMathods != null)
+        //     {
+        //         var annotatable = new Property();
+        //
+        //         var fixedTarget = AddRestrictionAnnotations(annotatable, singleton, singletonSourceMathods,
+        //             annotationName, @for);
+        //         MergeAnnotations(fixedTarget, annotatable, annotationsMap);
+        //     }
+        // }
 
         private static void TryAddAnnotation(Property annotatable, string term, string property, bool? value)
         {
@@ -459,7 +521,7 @@ namespace ApiDoctor.Publishing.CSDL
                         {
                             PropertyValues = new List<PropertyValue>
                             {
-                                new PropertyValue { Property=property, Bool = value.GetValueOrDefault()},
+                                new PropertyValue {Property = property, Bool = value.GetValueOrDefault()},
                             }
                         }
                     };
@@ -473,7 +535,8 @@ namespace ApiDoctor.Publishing.CSDL
             }
         }
 
-        private static void AddHttpRequestsAnnotations(Dictionary<string, Annotations> annotationsMap, MethodCollection methods, string target, IssueLogger issues)
+        private static void AddHttpRequestsAnnotations(Dictionary<string, Annotations> annotationsMap,
+            MethodCollection methods, string target, IssueLogger issues)
         {
             if (methods != null)
             {
@@ -484,6 +547,8 @@ namespace ApiDoctor.Publishing.CSDL
         }
 
         private static void AddRestrictionAnnotations(Dictionary<string, Annotations> annotationsMap,
+            EntityFramework edmx,
+            EntitySet entitySet,
             MethodCollection methods,
             string target,
             IssueLogger issues)
@@ -491,19 +556,69 @@ namespace ApiDoctor.Publishing.CSDL
             if (methods != null)
             {
                 var annotatable = new Property();
-                AddRestrictionAnnotations(annotatable, methods, issues);
-                MergeAnnotations(target, annotatable, annotationsMap);
+
+                var fixedTarget = AddRestrictionAnnotations(annotatable, edmx, entitySet, methods, target, issues);
+                MergeAnnotations(fixedTarget, annotatable, annotationsMap);
             }
         }
-        private static void AddRestrictionAnnotations(IODataAnnotatable annotatable, MethodCollection sourceMethod, IssueLogger issues)
+
+        private static void AddRestrictionAnnotations(Dictionary<string, Annotations> annotationsMap,
+            EntityFramework edmx,
+            Singleton singleton,
+            MethodCollection methods,
+            string target,
+            IssueLogger issues)
         {
+            if (methods != null)
+            {
+                var annotatable = new Property();
+
+                var fixedTarget = AddRestrictionAnnotations(annotatable, edmx, singleton, methods, target, issues);
+                MergeAnnotations(fixedTarget, annotatable, annotationsMap);
+            }
+        }
+
+        private static string AddRestrictionAnnotations(IODataAnnotatable annotatable,
+            EntityFramework entityFramework,
+            EntitySet entitySet,
+            MethodCollection sourceMethod,
+            string target,
+            IssueLogger issues)
+        {
+            var count = 0;
+            var stringBuilder = new StringBuilder(target);
             foreach (var method in sourceMethod)
             {
+                var navigationProperty = entitySet.NavigationPropertyBinding;
+
+                count++;
+                var url = method.RequestUriPathOnly(DocSet.SchemaConfig.BaseUrls, issues);
+                var matches = EntitySetPathRegEx.Matches(url);
+                if (matches[0].Groups[1].Value != entitySet.Name)
+                {
+                    continue;
+                }
+
                 var verb = method.HttpMethodVerb();
+                foreach (var navProp in navigationProperty)
+                {
+                    if (matches is {Count: > 1})
+                    {
+                        var value = matches[1]?.Groups[1]?.Value;
+                        var nullOrWhiteSpace = !string.IsNullOrWhiteSpace(value);
+                        if (nullOrWhiteSpace && value == navProp.Path)
+                        {
+                            stringBuilder.Append('/');
+                            stringBuilder.Append(navProp.Path);
+                        }
+                    }
+                }
+
                 switch (verb)
                 {
                     case "GET":
-                        if (method.HttpRequest.Url.Contains("{", StringComparison.OrdinalIgnoreCase) && method.HttpRequest.Url.Contains("}", StringComparison.OrdinalIgnoreCase))
+                        if (method.Request.FirstLineOnly().Contains("{", StringComparison.OrdinalIgnoreCase) &&
+                            method.Request.FirstLineOnly().Contains("}", StringComparison.OrdinalIgnoreCase))
                         {
                             AddReadByKeyRestriction(annotatable, method);
                         }
@@ -511,46 +626,112 @@ namespace ApiDoctor.Publishing.CSDL
                         {
                             AddRestrictionAnnotation(annotatable, method, Term.ReadRestrictionTerm);
                         }
-                        break;
+
+                        continue;
                     case "POST":
                         AddRestrictionAnnotation(annotatable, method, Term.InsertRestrictionsTerm);
-                        break;
+                        continue;
                     case "PUT":
                         AddRestrictionAnnotation(annotatable, method, Term.UpdateRestrictions);
-                        break;
+                        continue;
                     case "PATCH":
                         AddRestrictionAnnotation(annotatable, method, Term.UpdateRestrictions);
-                        break;
+                        continue;
                     case "DELETE":
                         AddRestrictionAnnotation(annotatable, method, Term.DeleteRestrictions);
-                        break;
+                        continue;
                     default:
                         issues.Error(ValidationErrorCode.HttpMethodOutOfRange, "HttpMethod Verb Out of Range");
-                        break;
-
+                        continue;
                 }
             }
+
+            return stringBuilder.ToString();
         }
 
-        private static PropertyValue GetNestedRestriction(MethodDefinition sourceMethod, string propertyRestriction = Term.ReadByKeyRestrictionsTerm)
+        private static string AddRestrictionAnnotations(IODataAnnotatable annotatable, EntityFramework entityFramework,
+            Singleton singleton,
+            MethodCollection sourceMethod,
+            string target, IssueLogger issues)
+        {
+            var count = 0;
+            var stringBuilder = new StringBuilder(target);
+            foreach (var method in sourceMethod)
+            {
+                var navigationProperty = singleton.NavigationPropertyBinding;
+
+                count++;
+                var url = method.RequestUriPathOnly(DocSet.SchemaConfig.BaseUrls, issues);
+                var matches = FullSingletonPathRegEx.Matches(url);
+                if (matches[0].Groups[1].Value != singleton.Name)
+                {
+                    continue;
+                }
+
+                var verb = method.HttpMethodVerb();
+                foreach (var navProp in navigationProperty)
+                {
+                    if (matches is {Count: > 1})
+                    {
+                        var value = matches[1]?.Groups[1]?.Value;
+                        var nullOrWhiteSpace = !string.IsNullOrWhiteSpace(value);
+                        if (nullOrWhiteSpace && value == navProp.Path)
+                        {
+                            stringBuilder.Append("/");
+                            stringBuilder.Append(navProp.Path);
+                        }
+                    }
+                }
+
+                switch (verb)
+                {
+                    case "GET":
+                        if (method.Request.FirstLineOnly().Contains("{", StringComparison.OrdinalIgnoreCase) &&
+                            method.Request.FirstLineOnly().Contains("}", StringComparison.OrdinalIgnoreCase))
+                        {
+                            AddReadByKeyRestriction(annotatable, method);
+                        }
+                        else
+                        {
+                            AddRestrictionAnnotation(annotatable, method, Term.ReadRestrictionTerm);
+                        }
+
+                        continue;
+                    case "POST":
+                        AddRestrictionAnnotation(annotatable, method, Term.InsertRestrictionsTerm);
+                        continue;
+                    case "PUT":
+                        AddRestrictionAnnotation(annotatable, method, Term.UpdateRestrictions);
+                        continue;
+                    case "PATCH":
+                        AddRestrictionAnnotation(annotatable, method, Term.UpdateRestrictions);
+                        continue;
+                    case "DELETE":
+                        AddRestrictionAnnotation(annotatable, method, Term.DeleteRestrictions);
+                        continue;
+                    default:
+                        issues.Error(ValidationErrorCode.HttpMethodOutOfRange, "HttpMethod Verb Out of Range");
+                        continue;
+                }
+            }
+
+            return stringBuilder.ToString();
+        }
+
+        private static PropertyValue GetNestedRestriction(MethodDefinition sourceMethod,
+            string propertyRestriction = Term.ReadByKeyRestrictionsTerm)
         {
             var propertyValue = new PropertyValue
             {
                 Property = propertyRestriction,
-                Records = new List<Record>()
-                {
-                    new()
-                    {
-                        PropertyValues = GetDescriptionPropertyValues(sourceMethod)
-                    }
-                }
+                Records = new List<Record> {new() {PropertyValues = GetDescriptionPropertyValues(sourceMethod)}}
             };
             return propertyValue;
         }
 
         private static List<PropertyValue> GetDescriptionPropertyValues(MethodDefinition sourceMethod)
         {
-            var descriptionPropertyValues = new List<PropertyValue>()
+            var descriptionPropertyValues = new List<PropertyValue>
             {
                 new() {Property = "LongDescription", String = sourceMethod.Description.ToStringClean(),},
                 new() {Property = "Description", String = sourceMethod.Title}
@@ -560,7 +741,8 @@ namespace ApiDoctor.Publishing.CSDL
 
         private static void AddReadByKeyRestriction(IODataAnnotatable annotatable, MethodDefinition sourceMethod)
         {
-            var readRestriction = annotatable.Annotation.FirstOrDefault(annotation => annotation.Term == Term.ReadRestrictionTerm);
+            var readRestriction =
+                annotatable.Annotation.FirstOrDefault(annotation => annotation.Term == Term.ReadRestrictionTerm);
             if (readRestriction != null)
             {
                 var propertyValue = readRestriction.Records
@@ -577,7 +759,9 @@ namespace ApiDoctor.Publishing.CSDL
                 AddReadByKeyRestriction(annotatable, sourceMethod);
             }
         }
-        private static void AddRestrictionAnnotation(IODataAnnotatable annotatable, MethodDefinition sourceMethod, string restriction)
+
+        private static void AddRestrictionAnnotation(IODataAnnotatable annotatable, MethodDefinition sourceMethod,
+            string restriction)
         {
             if (!annotatable.Annotation.Exists(x => x.Term == restriction))
             {
@@ -586,26 +770,22 @@ namespace ApiDoctor.Publishing.CSDL
                     Term = restriction,
                     Records = new List<Record>()
                     {
-                        new()
-                        {
-                            PropertyValues = GetDescriptionPropertyValues(sourceMethod)
-                        }
-                    }
+                        new() {PropertyValues = GetDescriptionPropertyValues(sourceMethod)}
+                    },
                 };
                 annotatable.Annotation.Add(annotation);
             }
         }
-        private static void AddHttpRequestsAnnotations(IODataAnnotatable annotatable, MethodCollection methods, IssueLogger issues)
+
+        private static void AddHttpRequestsAnnotations(IODataAnnotatable annotatable, MethodCollection methods,
+            IssueLogger issues)
         {
             if (methods != null)
             {
                 var annotation = new Annotation
                 {
                     Term = "Org.OData.Core.V1.HttpRequests",
-                    Collection = new RecordCollection
-                    {
-                        Records = new List<Record>(),
-                    }
+                    Collection = new RecordCollection {Records = new List<Record>(),}
                 };
 
                 foreach (var method in methods)
@@ -641,28 +821,32 @@ namespace ApiDoctor.Publishing.CSDL
             {
                 PropertyValues = new List<PropertyValue>
                 {
-                    new PropertyValue
-                    {
-                        Property = "Description",
-                        String = method.Description.ToStringClean(),
-                    },
-                    new PropertyValue { Property = "MethodDescription", String = method.Title },
-                    new PropertyValue { Property = "MethodType", String = method.HttpMethodVerb()},
+                    new PropertyValue {Property = "Description", String = method.Description.ToStringClean(),},
+                    new PropertyValue {Property = "MethodDescription", String = method.Title},
+                    new PropertyValue {Property = "MethodType", String = method.HttpMethodVerb()},
                     new PropertyValue
                     {
                         Property = "CustomHeaders",
                         Collection = new RecordCollection
                         {
-                            Records = (method.Parameters?.Where(p=>p.Location == ParameterLocation.Header)?.Select(p =>
-                                new Record
-                                {
-                                    PropertyValues = new List<PropertyValue>
+                            Records = (method.Parameters?.Where(p => p.Location == ParameterLocation.Header)?.Select(
+                                p =>
+                                    new Record
                                     {
-                                        new PropertyValue { Property = "Name", String = p.Name },
-                                        new PropertyValue { Property = "Description", String = p.Description.ToStringClean() },
-                                        new PropertyValue { Property = "Required", Bool = p.Required.GetValueOrDefault() },
-                                    }
-                                }))?.ToList()
+                                        PropertyValues = new List<PropertyValue>
+                                        {
+                                            new PropertyValue {Property = "Name", String = p.Name},
+                                            new PropertyValue
+                                            {
+                                                Property = "Description",
+                                                String = p.Description.ToStringClean()
+                                            },
+                                            new PropertyValue
+                                            {
+                                                Property = "Required", Bool = p.Required.GetValueOrDefault()
+                                            },
+                                        }
+                                    }))?.ToList()
                         },
                     },
                     new PropertyValue
@@ -670,16 +854,23 @@ namespace ApiDoctor.Publishing.CSDL
                         Property = "CustomQueryOptions",
                         Collection = new RecordCollection
                         {
-                            Records = (method.Parameters?.Where(p=>p.Location == ParameterLocation.QueryString)?.Select(p =>
-                                new Record
-                                {
-                                    PropertyValues = new List<PropertyValue>
+                            Records = (method.Parameters?.Where(p => p.Location == ParameterLocation.QueryString)
+                                ?.Select(p =>
+                                    new Record
                                     {
-                                        new PropertyValue { Property = "Name", String = p.Name },
-                                        new PropertyValue { Property = "Description", String = p.Type.ToStringClean() },
-                                        new PropertyValue { Property = "Required", Bool = p.Required.GetValueOrDefault() },
-                                    }
-                                }))?.ToList()
+                                        PropertyValues = new List<PropertyValue>
+                                        {
+                                            new PropertyValue {Property = "Name", String = p.Name},
+                                            new PropertyValue
+                                            {
+                                                Property = "Description", String = p.Type.ToStringClean()
+                                            },
+                                            new PropertyValue
+                                            {
+                                                Property = "Required", Bool = p.Required.GetValueOrDefault()
+                                            },
+                                        }
+                                    }))?.ToList()
                         },
                     },
                     new PropertyValue
@@ -693,22 +884,43 @@ namespace ApiDoctor.Publishing.CSDL
                                 {
                                     PropertyValues = new List<PropertyValue>
                                     {
-                                        new PropertyValue { Property = "ResponseCode", String  = response?.StatusCode.ToString() },
                                         new PropertyValue
                                         {
-                                            Property = "Examples" ,
+                                            Property = "ResponseCode", String = response?.StatusCode.ToString()
+                                        },
+                                        new PropertyValue
+                                        {
+                                            Property = "Examples",
                                             Collection = new RecordCollection
                                             {
                                                 Records = new List<Record>
                                                 {
                                                     new Record
                                                     {
-                                                        Type = "Org.OData.Core.V1.InlineExample",
-                                                        PropertyValues = new List<PropertyValue>
-                                                        {
-                                                            new PropertyValue { Property = "InlineValue", String  = response?.Body, },
-                                                            new PropertyValue { Property = "Description", String = response?.ContentType },
-                                                        }
+                                                        Type =
+                                                            "Org.OData.Core.V1.InlineExample",
+                                                        PropertyValues =
+                                                            new List<PropertyValue>
+                                                            {
+                                                                new
+                                                                    PropertyValue
+                                                                    {
+                                                                        Property =
+                                                                            "InlineValue",
+                                                                        String =
+                                                                            response
+                                                                                ?.Body,
+                                                                    },
+                                                                new
+                                                                    PropertyValue
+                                                                    {
+                                                                        Property =
+                                                                            "Description",
+                                                                        String =
+                                                                            response
+                                                                                ?.ContentType
+                                                                    },
+                                                            }
                                                     }
                                                 }
                                             }
@@ -723,16 +935,21 @@ namespace ApiDoctor.Publishing.CSDL
                         Property = "SecuritySchemes",
                         Collection = new RecordCollection
                         {
-                            Records = (method?.SourceFile?.AuthScopes?.Where(scp=>scp?.Scope != null && !scp.Scope.IContains("not supported")).Select(scp =>
+                            Records = (method?.SourceFile?.AuthScopes?.Where(scp =>
+                                scp?.Scope != null && !scp.Scope.IContains("not supported")).Select(scp =>
                                 new Record
                                 {
                                     PropertyValues = new List<PropertyValue>
                                     {
-                                        new PropertyValue { Property = "AuthorizationSchemeName", String = scp.Title },
+                                        new PropertyValue {Property = "AuthorizationSchemeName", String = scp.Title},
                                         new PropertyValue
                                         {
                                             Property = "RequiredScopes",
-                                            Collection = new RecordCollection { Strings = scp.Scope?.Split(new[] {',',';',' ' }, StringSplitOptions.RemoveEmptyEntries).ToList() }
+                                            Collection = new RecordCollection
+                                            {
+                                                Strings = scp.Scope?.Split(new[] {',', ';', ' '},
+                                                    StringSplitOptions.RemoveEmptyEntries).ToList()
+                                            }
                                         }
                                     }
                                 }))?.ToList()
@@ -744,7 +961,8 @@ namespace ApiDoctor.Publishing.CSDL
             return record;
         }
 
-        private static void MergeAnnotations(string fullName, IODataAnnotatable annotatable, Dictionary<string, Annotations> schemaLevelAnnotations)
+        private static void MergeAnnotations(string fullName, IODataAnnotatable annotatable,
+            Dictionary<string, Annotations> schemaLevelAnnotations)
         {
             if (annotatable.Annotation?.Count > 0)
             {
@@ -753,8 +971,10 @@ namespace ApiDoctor.Publishing.CSDL
                 {
                     foreach (var annotation in annotatable.Annotation)
                     {
-                        var existingAnnotation = annotations.AnnotationList.FirstOrDefault(a => a.Term == annotation.Term);
-                        if (existingAnnotation != null && annotation.Collection != null && annotation.Collection.Records?.Count > 0)
+                        var existingAnnotation =
+                            annotations.AnnotationList.FirstOrDefault(a => a.Term == annotation.Term);
+                        if (existingAnnotation != null && annotation.Collection != null &&
+                            annotation.Collection.Records?.Count > 0)
                         {
                             if (existingAnnotation.Collection == null)
                             {
@@ -778,8 +998,7 @@ namespace ApiDoctor.Publishing.CSDL
                 {
                     schemaLevelAnnotations[fullName] = new Annotations
                     {
-                        Target = fullName,
-                        AnnotationList = annotatable.Annotation,
+                        Target = fullName, AnnotationList = annotatable.Annotation,
                     };
                 }
 
@@ -795,7 +1014,8 @@ namespace ApiDoctor.Publishing.CSDL
         private void ProcessRestRequestPaths(EntityFramework edmx, string[] baseUrlsToRemove, IssueLogger issues)
         {
             Dictionary<string, MethodCollection> uniqueRequestPaths = GetUniqueRequestPaths(baseUrlsToRemove, issues);
-            List<string> pathsToProcess = uniqueRequestPaths.Keys.OrderBy(p => p.Count(c => c == '/')).ThenBy(p => p).ToList();
+            List<string> pathsToProcess =
+                uniqueRequestPaths.Keys.OrderBy(p => p.Count(c => c == '/')).ThenBy(p => p).ToList();
 
             for (int attempts = 1; attempts < 10 && pathsToProcess.Count > 0; attempts++)
             {
@@ -814,7 +1034,8 @@ namespace ApiDoctor.Publishing.CSDL
                             !string.IsNullOrEmpty(requestTarget.Name) &&
                             requestTarget.QualifiedType != null)
                         {
-                            CreateNewActionOrFunction(edmx, methodCollection, requestTarget.Name, requestTarget.QualifiedType, issues.For(requestTarget.Name));
+                            CreateNewActionOrFunction(edmx, methodCollection, requestTarget.Name,
+                                requestTarget.QualifiedType, issues.For(requestTarget.Name));
                         }
                         else if (requestTarget.Classification == ODataTargetClassification.EntityType)
                         {
@@ -848,7 +1069,8 @@ namespace ApiDoctor.Publishing.CSDL
                     issues.Message($"Failed to resolve the following paths after {attempts} attempts:");
                     foreach (var kvp in pathsToRetry)
                     {
-                        issues.Warning(ValidationErrorCode.Unknown, $"Couldn't serialize request for path {kvp.Key} into EDMX", kvp.Value);
+                        issues.Warning(ValidationErrorCode.Unknown,
+                            $"Couldn't serialize request for path {kvp.Key} into EDMX", kvp.Value);
                     }
 
                     break;
@@ -856,7 +1078,8 @@ namespace ApiDoctor.Publishing.CSDL
             }
         }
 
-        private void AppendToNavigationProperty(EntityFramework edmx, ODataTargetInfo navigationProperty, MethodCollection methods, IssueLogger issues)
+        private void AppendToNavigationProperty(EntityFramework edmx, ODataTargetInfo navigationProperty,
+            MethodCollection methods, IssueLogger issues)
         {
             EntityType parentType = edmx.ResourceWithIdentifier<EntityType>(navigationProperty.QualifiedType);
 
@@ -872,7 +1095,8 @@ namespace ApiDoctor.Publishing.CSDL
                 sb.AppendWithCondition(methods.PostAllowed, "POST", seperator);
                 sb.AppendWithCondition(methods.PutAllowed, "PUT", seperator);
                 sb.AppendWithCondition(methods.DeleteAllowed, "DELETE", seperator);
-                issues.Message($"Collection '{navigationProperty.QualifiedType + "/" + navigationProperty.Name}' supports: ({sb})");
+                issues.Message(
+                    $"Collection '{navigationProperty.QualifiedType + "/" + navigationProperty.Name}' supports: ({sb})");
             }
             else
             {
@@ -886,7 +1110,8 @@ namespace ApiDoctor.Publishing.CSDL
         /// </summary>
         /// <param name="requestTarget"></param>
         /// <param name="methodCollection"></param>
-        private void AppendToEntityType(EntityFramework edmx, ODataTargetInfo requestTarget, MethodCollection methodCollection)
+        private void AppendToEntityType(EntityFramework edmx, ODataTargetInfo requestTarget,
+            MethodCollection methodCollection)
         {
             StringBuilder sb = new StringBuilder();
             const string seperator = ", ";
@@ -920,7 +1145,8 @@ namespace ApiDoctor.Publishing.CSDL
                 }
                 else
                 {
-                    issues.Warning(ValidationErrorCode.Unknown, $"Don't know what to do with {name}; it's not a function");
+                    issues.Warning(ValidationErrorCode.Unknown,
+                        $"Don't know what to do with {name}; it's not a function");
                 }
 
                 return;
@@ -942,7 +1168,9 @@ namespace ApiDoctor.Publishing.CSDL
 
             if (this.options.ShowSources)
             {
-                target.SourceFiles = string.Join(";", new HashSet<string>(methodCollection.Select(m => m.SourceFile).Select(f => Path.GetFileName(f.FullPath)).ToList()));
+                target.SourceFiles = string.Join(";",
+                    new HashSet<string>(methodCollection.Select(m => m.SourceFile)
+                        .Select(f => Path.GetFileName(f.FullPath)).ToList()));
             }
 
             if (this.options.Annotations.HasFlag(AnnotationOptions.HttpRequests))
@@ -954,15 +1182,17 @@ namespace ApiDoctor.Publishing.CSDL
 
             target.Name = name.TypeOnly();
             target.IsBound = true;
-            target.Parameters.Add(new Parameter { Name = "bindingParameter", Type = boundToType, IsNullable = false });
-            foreach (var param in methodCollection.Where(m => m.HttpMethodVerb() == "POST").SelectMany(m => m.RequestBodyParameters))
+            target.Parameters.Add(new Parameter {Name = "bindingParameter", Type = boundToType, IsNullable = false});
+            foreach (var param in methodCollection.Where(m => m.HttpMethodVerb() == "POST")
+                         .SelectMany(m => m.RequestBodyParameters))
             {
                 try
                 {
                     var existingParam = target.Parameters.FirstOrDefault(p => p.Name.IEquals(param.Name));
                     if (existingParam != null)
                     {
-                        existingParam.Type = ParameterDataType.ChooseBest(existingParam.Type, param.Type.ODataResourceName());
+                        existingParam.Type =
+                            ParameterDataType.ChooseBest(existingParam.Type, param.Type.ODataResourceName());
                     }
                     else
                     {
@@ -977,7 +1207,8 @@ namespace ApiDoctor.Publishing.CSDL
                 }
                 catch (Exception ex)
                 {
-                    issues.Error(ValidationErrorCode.Unknown, $"Exception when adding parameter {param.Name} with type {param.Type}", ex);
+                    issues.Error(ValidationErrorCode.Unknown,
+                        $"Exception when adding parameter {param.Name} with type {param.Type}", ex);
                     throw;
                 }
             }
@@ -990,7 +1221,8 @@ namespace ApiDoctor.Publishing.CSDL
                 foreach (var param in pathParameters.Where(p => !string.IsNullOrEmpty(p)))
                 {
                     var paramName = param.Split('=')[0];
-                    var matchingParamDef = methodCollection.SelectMany(m => m.Parameters).FirstOrDefault(p => p.Name == paramName);
+                    var matchingParamDef = methodCollection.SelectMany(m => m.Parameters)
+                        .FirstOrDefault(p => p.Name == paramName);
                     if (matchingParamDef == null)
                     {
                         issues.Error(ValidationErrorCode.Unknown,
@@ -1019,18 +1251,23 @@ namespace ApiDoctor.Publishing.CSDL
                 {
                     // note: this is very rough and brittle. only intended for limited use right now.
                     // if there are other sample calling patterns for this function, create bindings for them too.
-                    foreach (var sample in methodCollection.SelectMany(mc => mc.SourceFile.Samples).SelectMany(s => s.Samples))
+                    foreach (var sample in methodCollection.SelectMany(mc => mc.SourceFile.Samples)
+                                 .SelectMany(s => s.Samples))
                     {
                         if (sample.EndsWith(")") && sample.Contains("("))
                         {
-                            var overloadName = target.ParameterizedName.ReplaceTextBetweenCharacters('(', ')', sample.TextBetweenCharacters('(', ')'));
-                            CreateNewActionOrFunction(edmx, methodCollection, overloadName, boundToType, issues, recursing: true);
+                            var overloadName =
+                                target.ParameterizedName.ReplaceTextBetweenCharacters('(', ')',
+                                    sample.TextBetweenCharacters('(', ')'));
+                            CreateNewActionOrFunction(edmx, methodCollection, overloadName, boundToType, issues,
+                                recursing: true);
                         }
                         else if (sample.EndsWith(target.Name))
                         {
                             // overload with no parameters
                             var overloadName = target.Name;
-                            CreateNewActionOrFunction(edmx, methodCollection, overloadName, boundToType, issues, recursing: true);
+                            CreateNewActionOrFunction(edmx, methodCollection, overloadName, boundToType, issues,
+                                recursing: true);
                         }
                     }
                 }
@@ -1038,21 +1275,28 @@ namespace ApiDoctor.Publishing.CSDL
 
             if (methodCollection.ResponseType != null)
             {
-                target.ReturnType = new ReturnType { Type = methodCollection.ResponseType.ODataResourceName(), Nullable = false };
+                target.ReturnType = new ReturnType
+                {
+                    Type = methodCollection.ResponseType.ODataResourceName(), Nullable = false
+                };
                 var targetAction = target as Validation.OData.Action;
                 if (targetAction != null &&
-                    target.Parameters.FirstOrDefault(p => p.Name == "bindingParameter")?.Type?.StartsWith("Collection(") == false)
+                    target.Parameters.FirstOrDefault(p => p.Name == "bindingParameter")?.Type
+                        ?.StartsWith("Collection(") == false)
                 {
                     targetAction.EntitySetPath = "bindingParameter";
                 }
             }
 
-            var schemaName = name.HasNamespace() ? name.NamespaceOnly() : edmx.DataServices.Schemas.FirstOrDefault()?.Namespace;
+            var schemaName = name.HasNamespace()
+                ? name.NamespaceOnly()
+                : edmx.DataServices.Schemas.FirstOrDefault()?.Namespace;
             var schema = FindOrCreateSchemaForNamespace(schemaName, edmx, true);
 
             // first see if this action or function is already bound to a base type with the same params.
             // if so, this definition is redundant.
-            foreach (var existingFunction in schema.Functions.Cast<ActionOrFunctionBase>().Concat(schema.Actions).ToList())
+            foreach (var existingFunction in schema.Functions.Cast<ActionOrFunctionBase>().Concat(schema.Actions)
+                         .ToList())
             {
                 if (existingFunction.CanSubstituteFor(target, edmx))
                 {
@@ -1091,15 +1335,17 @@ namespace ApiDoctor.Publishing.CSDL
         /// <param name="requestMethod"></param>
         /// <param name="edmx"></param>
         /// <returns></returns>
-        private static ODataTargetInfo ParseRequestTargetType(string requestPath, MethodCollection requestMethodCollection, EntityFramework edmx, IssueLogger issues)
+        private static ODataTargetInfo ParseRequestTargetType(string requestPath,
+            MethodCollection requestMethodCollection, EntityFramework edmx, IssueLogger issues)
         {
-            string[] requestParts = requestPath.Substring(1).Split(new char[] { '/' });
+            string[] requestParts = requestPath.Substring(1).Split(new char[] {'/'});
 
             EntityContainer entryPoint = (from s in edmx.DataServices.Schemas
-                                          where s.EntityContainers.Count > 0
-                                          select s.EntityContainers.FirstOrDefault()).SingleOrDefault();
+                where s.EntityContainers.Count > 0
+                select s.EntityContainers.FirstOrDefault()).SingleOrDefault();
 
-            if (entryPoint == null) throw new InvalidOperationException("Couldn't locate an EntityContainer to begin target resolution");
+            if (entryPoint == null)
+                throw new InvalidOperationException("Couldn't locate an EntityContainer to begin target resolution");
 
             IODataNavigable currentObject = entryPoint;
             IODataNavigable previousObject = null;
@@ -1114,11 +1360,13 @@ namespace ApiDoctor.Publishing.CSDL
                 {
                     try
                     {
-                        nextObject = currentObject.NavigateByEntityTypeKey(edmx, issues.For($"ExampleRequest_{string.Join("/", requestParts.Take(i + 1))}"));
+                        nextObject = currentObject.NavigateByEntityTypeKey(edmx,
+                            issues.For($"ExampleRequest_{string.Join("/", requestParts.Take(i + 1))}"));
                     }
                     catch (Exception ex)
                     {
-                        throw new NotSupportedException("Unable to navigation into EntityType by key: " + currentObject.TypeIdentifier + " (" + ex.Message + ")");
+                        throw new NotSupportedException("Unable to navigation into EntityType by key: " +
+                                                        currentObject.TypeIdentifier + " (" + ex.Message + ")");
                     }
                 }
                 else
@@ -1156,8 +1404,7 @@ namespace ApiDoctor.Publishing.CSDL
 
             var response = new ODataTargetInfo
             {
-                Name = requestParts.Last(),
-                QualifiedType = edmx.LookupIdentifierForType(currentObject)
+                Name = requestParts.Last(), QualifiedType = edmx.LookupIdentifierForType(currentObject)
             };
 
             if (currentObject is EntityType)
@@ -1192,17 +1439,26 @@ namespace ApiDoctor.Publishing.CSDL
             }
             else
             {
-                throw new NotSupportedException(string.Format("Unhandled object type: {0}", currentObject.GetType().Name));
+                throw new NotSupportedException(string.Format("Unhandled object type: {0}",
+                    currentObject.GetType().Name));
             }
 
             return response;
         }
 
         // EntitySet is something in the format of /name/{var}
-        private readonly static System.Text.RegularExpressions.Regex EntitySetPathRegEx = new System.Text.RegularExpressions.Regex(@"\/(\w*)\/{var}$", RegexOptions.Compiled);
+        private readonly static System.Text.RegularExpressions.Regex EntitySetPathRegEx =
+            new System.Text.RegularExpressions.Regex(@"\/(\w*)\/{var}$", RegexOptions.Compiled);
+
         // Singleton is something in the format of /name
-        private readonly static System.Text.RegularExpressions.Regex SingletonPathRegEx = new System.Text.RegularExpressions.Regex(@"\/(\w*)$", RegexOptions.Compiled);
-        private readonly static System.Text.RegularExpressions.Regex FullSingletonPathRegEx = new System.Text.RegularExpressions.Regex(@"\/(\w*)", RegexOptions.Compiled);
+        private readonly static System.Text.RegularExpressions.Regex SingletonPathRegEx =
+            new System.Text.RegularExpressions.Regex(@"\/(\w*)$", RegexOptions.Compiled);
+
+        private readonly static System.Text.RegularExpressions.Regex FullSingletonPathRegEx =
+            new System.Text.RegularExpressions.Regex(@"\/(\w*)", RegexOptions.Compiled);
+
+        private readonly static System.Text.RegularExpressions.Regex SingletonPathRegEx2 =
+            new System.Text.RegularExpressions.Regex(@"^\/(\w*)$");
 
         /// <summary>
         /// Parse the URI paths for methods defined in the documentation and construct an entity container that contains these
@@ -1239,7 +1495,8 @@ namespace ApiDoctor.Publishing.CSDL
 
                         if (this.options.Annotations.HasFlag(AnnotationOptions.HttpRequests))
                         {
-                            AddHttpRequestsAnnotations(entitySet, methodCollection, issues.For(path + "/HttpRequestsAnnotations"));
+                            AddHttpRequestsAnnotations(entitySet, methodCollection,
+                                issues.For(path + "/HttpRequestsAnnotations"));
                         }
 
                         container.EntitySets.Add(entitySet);
@@ -1247,7 +1504,9 @@ namespace ApiDoctor.Publishing.CSDL
                     else if (SingletonPathRegEx.IsMatch(path))
                     {
                         // Before we declare this a singleton, see if any other paths that have the same root match the entity set regex
-                        var query = (from p in resourcePaths where p.StartsWith(path + "/") && EntitySetPathRegEx.IsMatch(p) select p);
+                        var query = (from p in resourcePaths
+                            where p.StartsWith(path + "/") && EntitySetPathRegEx.IsMatch(p)
+                            select p);
                         if (query.Any())
                         {
                             // If there's a similar resource path that matches the entity, we don't declare a singleton.
@@ -1264,7 +1523,8 @@ namespace ApiDoctor.Publishing.CSDL
 
                         if (this.options.Annotations.HasFlag(AnnotationOptions.HttpRequests))
                         {
-                            AddHttpRequestsAnnotations(singleton, methodCollection, issues.For(path + "/HttpRequestsAnnotations"));
+                            AddHttpRequestsAnnotations(singleton, methodCollection,
+                                issues.For(path + "/HttpRequestsAnnotations"));
                         }
 
                         container.Singletons.Add(singleton);
@@ -1279,7 +1539,8 @@ namespace ApiDoctor.Publishing.CSDL
             Schema defaultSchema;
             if (DocSet.SchemaConfig.DefaultNamespace != null)
             {
-                defaultSchema = edmx.DataServices.Schemas.Single(s => s.Namespace.IEquals(DocSet.SchemaConfig.DefaultNamespace));
+                defaultSchema =
+                    edmx.DataServices.Schemas.Single(s => s.Namespace.IEquals(DocSet.SchemaConfig.DefaultNamespace));
             }
             else
             {
@@ -1303,7 +1564,8 @@ namespace ApiDoctor.Publishing.CSDL
                     var methodCollection = uniqueRequestPaths[path];
                     if (EntitySetPathRegEx.IsMatch(path))
                     {
-                        var name = EntitySetPathRegEx.Match(path).Groups[1].Value;
+                        var matches = EntitySetPathRegEx.Matches(path);
+                        var name = matches[0].Groups[1].Value;
                         var currentEntitySet = edmx.DataServices.Schemas.SelectMany(c => c.EntityContainers)
                             .SelectMany(c => c.EntitySets)
                             .FirstOrDefault(c => c.Name == name);
@@ -1338,51 +1600,8 @@ namespace ApiDoctor.Publishing.CSDL
                     }
                     else if (SingletonPathRegEx.IsMatch(path))
                     {
-                        var allSections = FullSingletonPathRegEx.Matches(path);
-                        foreach (var section in allSections)
-                        {
-
-                        }
-                        var name = FullSingletonPathRegEx.Match(path).Groups[1].Value;
-                        // Before we declare this a singleton, see if any other paths that have the same root match the entity set regex
-                        var query = (from p in resourcePaths
-                                     where p.StartsWith(path + "/") && EntitySetPathRegEx.IsMatch(p)
-                                     select p);
-                        if (query.Any())
-                        {
-                            // If there's a similar resource path that matches the entity, we don't declare a singleton.
-                            var currentEntitySet = edmx.DataServices.Schemas.SelectMany(c => c.EntityContainers)
-                                .SelectMany(c => c.EntitySets)
-                                .FirstOrDefault(c => c.Name == name);
-                            if (currentEntitySet != null)
-                            {
-                                if (currentEntitySet.SourceMethods != null)
-                                {
-                                    var sourceMethods = (MethodCollection)currentEntitySet.SourceMethods;
-                                    foreach (var sourceMethod in sourceMethods)
-                                    {
-                                        sourceMethod.SplitRequestUrl(out var relativePath, out var queryString,
-                                            out var httpMethod);
-                                        foreach (var currentSourceMethod in methodCollection)
-                                        {
-                                            currentSourceMethod.SplitRequestUrl(out var secondRelativePath,
-                                                out var secondQueryString, out var secondMethod);
-                                            if (relativePath != secondRelativePath &&
-                                                queryString != secondQueryString &&
-                                                httpMethod != secondMethod)
-                                            {
-                                                sourceMethods.Add(currentSourceMethod);
-                                            }
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    currentEntitySet.SourceMethods = methodCollection;
-                                }
-                            }
-                        }
-
+                        var matches = FullSingletonPathRegEx.Matches(path);
+                        var name = matches[0].Groups[1].Value;
                         var currentSingleton = edmx.DataServices.Schemas.SelectMany(c => c.EntityContainers)
                             .SelectMany(c => c.Singletons)
                             .FirstOrDefault(c => c.Name == name);
@@ -1414,6 +1633,40 @@ namespace ApiDoctor.Publishing.CSDL
                                 currentSingleton.SourceMethods = methodCollection;
                             }
                         }
+                        else
+                        {
+                            var currentEntitySet = edmx.DataServices.Schemas.SelectMany(c => c.EntityContainers)
+                                .SelectMany(c => c.EntitySets)
+                                .FirstOrDefault(c => c.Name == name);
+                            if (currentEntitySet != null)
+                            {
+                                if (currentEntitySet.SourceMethods != null)
+                                {
+                                    var sourceMethods = (MethodCollection)currentEntitySet.SourceMethods;
+                                    foreach (var sourceMethod in sourceMethods)
+                                    {
+                                        sourceMethod.SplitRequestUrl(out var relativePath, out var queryString,
+                                            out var httpMethod);
+
+                                        foreach (var currentSourceMethod in methodCollection)
+                                        {
+                                            currentSourceMethod.SplitRequestUrl(out var secondRelativePath,
+                                                out var secondQueryString, out var secondMethod);
+                                            if (relativePath != secondRelativePath &&
+                                                queryString != secondQueryString &&
+                                                httpMethod != secondMethod)
+                                            {
+                                                sourceMethods.Add(currentSourceMethod);
+                                            }
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    currentEntitySet.SourceMethods = methodCollection;
+                                }
+                            }
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -1422,9 +1675,11 @@ namespace ApiDoctor.Publishing.CSDL
                 }
             }
         }
+
         private Dictionary<string, MethodCollection> cachedUniqueRequestPaths
         {
-            get; set;
+            get;
+            set;
         }
 
         /// <summary>
@@ -1432,7 +1687,8 @@ namespace ApiDoctor.Publishing.CSDL
         /// documentation and the method definitions that defined them.
         /// </summary>
         /// <returns></returns>
-        private Dictionary<string, MethodCollection> GetUniqueRequestPaths(string[] baseUrlsToRemove, IssueLogger issues)
+        private Dictionary<string, MethodCollection> GetUniqueRequestPaths(string[] baseUrlsToRemove,
+            IssueLogger issues)
         {
             if (cachedUniqueRequestPaths == null)
             {
@@ -1472,13 +1728,16 @@ namespace ApiDoctor.Publishing.CSDL
                     {
                         uniqueRequestPaths.Add(path, new MethodCollection());
                     }
+
                     uniqueRequestPaths[path].Add(m);
 
-                    issues.Message($"{path} :: {m.RequestMetadata.ResourceType} --> {m.ExpectedResponseMetadata?.ResourceType}");
+                    issues.Message(
+                        $"{path} :: {m.RequestMetadata.ResourceType} --> {m.ExpectedResponseMetadata?.ResourceType}");
                 }
 
                 cachedUniqueRequestPaths = uniqueRequestPaths;
             }
+
             return cachedUniqueRequestPaths;
         }
 
@@ -1488,7 +1747,8 @@ namespace ApiDoctor.Publishing.CSDL
         /// <param name="ns"></param>
         /// <param name="edmx"></param>
         /// <returns></returns>
-        private Schema FindOrCreateSchemaForNamespace(string ns, EntityFramework edmx, bool overrideNamespaceFilter = false, bool generateNewElements = true)
+        private Schema FindOrCreateSchemaForNamespace(string ns, EntityFramework edmx,
+            bool overrideNamespaceFilter = false, bool generateNewElements = true)
         {
             // Check to see if this is a namespace that should be exported.
             if (!overrideNamespaceFilter && options.Namespaces != null && !options.Namespaces.Contains(ns))
@@ -1502,15 +1762,15 @@ namespace ApiDoctor.Publishing.CSDL
             }
 
             var matchingSchema = (from s in edmx.DataServices.Schemas
-                                  where s.Namespace == ns
-                                  select s).FirstOrDefault();
+                where s.Namespace == ns
+                select s).FirstOrDefault();
 
             if (null != matchingSchema)
                 return matchingSchema;
 
             if (generateNewElements)
             {
-                var newSchema = new Schema() { Namespace = ns };
+                var newSchema = new Schema() {Namespace = ns};
                 edmx.DataServices.Schemas.Add(newSchema);
                 return newSchema;
             }
@@ -1538,7 +1798,8 @@ namespace ApiDoctor.Publishing.CSDL
             // If that didn't work, look for a complex type that matches
             if (type == null)
             {
-                var existingComplexType = (from e in schema.ComplexTypes where e.Name == typeName select e).SingleOrDefault();
+                var existingComplexType =
+                    (from e in schema.ComplexTypes where e.Name == typeName select e).SingleOrDefault();
                 if (existingComplexType != null)
                 {
                     type = existingComplexType;
@@ -1552,14 +1813,18 @@ namespace ApiDoctor.Publishing.CSDL
             }
             else if (null == type)
             {
-                issues.Error(ValidationErrorCode.ResourceTypeNotFound, $"Type {resource.Name} was in the documentation but not found in the schema.");
+                issues.Error(ValidationErrorCode.ResourceTypeNotFound,
+                    $"Type {resource.Name} was in the documentation but not found in the schema.");
             }
 
             if (null != type)
             {
-                LogIfDifferent(type.Name, resource.Name.TypeOnly(), issues, $"Schema type {type.Name} is different than the documentation name {resource.Name.TypeOnly()}.");
-                LogIfDifferent(type.OpenType, resource.OriginalMetadata.IsOpenType, issues, $"Schema type {type.Name} has a different OpenType value {type.OpenType} than the documentation {resource.OriginalMetadata.IsOpenType}.");
-                LogIfDifferent(type.BaseType, resource.OriginalMetadata.BaseType, issues, $"Schema type {type.Name} has a different BaseType value {type.BaseType} than the documentation {resource.OriginalMetadata.BaseType}.");
+                LogIfDifferent(type.Name, resource.Name.TypeOnly(), issues,
+                    $"Schema type {type.Name} is different than the documentation name {resource.Name.TypeOnly()}.");
+                LogIfDifferent(type.OpenType, resource.OriginalMetadata.IsOpenType, issues,
+                    $"Schema type {type.Name} has a different OpenType value {type.OpenType} than the documentation {resource.OriginalMetadata.IsOpenType}.");
+                LogIfDifferent(type.BaseType, resource.OriginalMetadata.BaseType, issues,
+                    $"Schema type {type.Name} has a different BaseType value {type.BaseType} than the documentation {resource.OriginalMetadata.BaseType}.");
 
                 AddDocPropertiesToSchemaResource(type, resource, edmx, generateNewElements, issues);
             }
@@ -1573,30 +1838,33 @@ namespace ApiDoctor.Publishing.CSDL
             IssueLogger issues)
         {
             var docProps = (from p in docResource.Parameters
-                            where !p.IsNavigatable &&
-                                  !p.Name.StartsWith("@") &&
-                                  (docResource.ResolvedBaseTypeReference == null ||
-                                   !docResource.ResolvedBaseTypeReference.HasOrInheritsProperty(p.Name))
-                            select p).ToList();
-            MergePropertiesIntoSchema(schemaType.Name, schemaType.Properties, docProps, edmx, generateNewElements, issues.For(schemaType.Name), schemaType.Contributors);
+                where !p.IsNavigatable &&
+                      !p.Name.StartsWith("@") &&
+                      (docResource.ResolvedBaseTypeReference == null ||
+                       !docResource.ResolvedBaseTypeReference.HasOrInheritsProperty(p.Name))
+                select p).ToList();
+            MergePropertiesIntoSchema(schemaType.Name, schemaType.Properties, docProps, edmx, generateNewElements,
+                issues.For(schemaType.Name), schemaType.Contributors);
 
             var schemaEntity = schemaType as EntityType;
 
             var docNavigationProps = (from p in docResource.Parameters
-                                      where p.IsNavigatable &&
-                                            !p.Name.StartsWith("@") &&
-                                            (docResource.ResolvedBaseTypeReference == null ||
-                                             !docResource.ResolvedBaseTypeReference.HasOrInheritsProperty(p.Name))
-                                      select p);
+                where p.IsNavigatable &&
+                      !p.Name.StartsWith("@") &&
+                      (docResource.ResolvedBaseTypeReference == null ||
+                       !docResource.ResolvedBaseTypeReference.HasOrInheritsProperty(p.Name))
+                select p);
 
             if (schemaEntity != null)
             {
-                MergePropertiesIntoSchema(schemaEntity.Name, schemaEntity.NavigationProperties, docNavigationProps, edmx, generateNewElements, issues.For(schemaEntity.Name), schemaEntity.Contributors);
+                MergePropertiesIntoSchema(schemaEntity.Name, schemaEntity.NavigationProperties, docNavigationProps,
+                    edmx, generateNewElements, issues.For(schemaEntity.Name), schemaEntity.Contributors);
             }
 
             if (schemaType.BaseType != docResource.BaseType)
             {
-                issues.Warning(ValidationErrorCode.Unknown, $"Resource {schemaType.Name} has multiple declarations with mismatched BaseTypes.");
+                issues.Warning(ValidationErrorCode.Unknown,
+                    $"Resource {schemaType.Name} has multiple declarations with mismatched BaseTypes.");
 
                 if (schemaType.BaseType == null)
                 {
@@ -1604,14 +1872,18 @@ namespace ApiDoctor.Publishing.CSDL
                 }
             }
 
-            if (schemaType.OpenType != docResource.OriginalMetadata?.IsOpenType && docResource.OriginalMetadata?.IsOpenType == true)
+            if (schemaType.OpenType != docResource.OriginalMetadata?.IsOpenType &&
+                docResource.OriginalMetadata?.IsOpenType == true)
             {
-                issues.Warning(ValidationErrorCode.Unknown, $"Resource { schemaType.Name} has multiple declarations with mismatched OpenType declarations.");
+                issues.Warning(ValidationErrorCode.Unknown,
+                    $"Resource {schemaType.Name} has multiple declarations with mismatched OpenType declarations.");
                 schemaType.OpenType = true;
             }
 
-            var docInstanceAnnotations = (from p in docResource.Parameters where p.Name != null && p.Name.StartsWith("@") select p);
-            MergeInstanceAnnotationsAndRecordTerms(schemaType.Name, docInstanceAnnotations, docResource, edmx, generateNewElements);
+            var docInstanceAnnotations =
+                (from p in docResource.Parameters where p.Name != null && p.Name.StartsWith("@") select p);
+            MergeInstanceAnnotationsAndRecordTerms(schemaType.Name, docInstanceAnnotations, docResource, edmx,
+                generateNewElements);
 
             schemaType.Contributors.Add(docResource);
         }
@@ -1633,11 +1905,16 @@ namespace ApiDoctor.Publishing.CSDL
                 if (documentedProperties.TryGetValue(schemaProp.Name, out documentedVersion))
                 {
                     // Compare / update schema with data from documentation
-                    var docProp = ConvertParameterToProperty<Property>(typeName, documentedVersion, issues.For(schemaProp.Name));
-                    LogIfDifferent(schemaProp.Nullable, docProp.Nullable, issues, $"Type {typeName}: Property {docProp.Name} has a different nullable value than documentation.");
-                    LogIfDifferent(schemaProp.TargetEntityType, docProp.TargetEntityType, issues, $"Type {typeName}: Property {docProp.Name} has a different target entity type than documentation.");
-                    LogIfDifferent(schemaProp.Type, docProp.Type, issues, $"Type {typeName}: Property {docProp.Name} has a different Type value than documentation ({schemaProp.Type},{docProp.Type}).");
-                    LogIfDifferent(schemaProp.Unicode, docProp.Unicode, issues, $"Type {typeName}: Property {docProp.Name} has a different unicode value than documentation ({schemaProp.Unicode},{docProp.Unicode}).");
+                    var docProp =
+                        ConvertParameterToProperty<Property>(typeName, documentedVersion, issues.For(schemaProp.Name));
+                    LogIfDifferent(schemaProp.Nullable, docProp.Nullable, issues,
+                        $"Type {typeName}: Property {docProp.Name} has a different nullable value than documentation.");
+                    LogIfDifferent(schemaProp.TargetEntityType, docProp.TargetEntityType, issues,
+                        $"Type {typeName}: Property {docProp.Name} has a different target entity type than documentation.");
+                    LogIfDifferent(schemaProp.Type, docProp.Type, issues,
+                        $"Type {typeName}: Property {docProp.Name} has a different Type value than documentation ({schemaProp.Type},{docProp.Type}).");
+                    LogIfDifferent(schemaProp.Unicode, docProp.Unicode, issues,
+                        $"Type {typeName}: Property {docProp.Name} has a different unicode value than documentation ({schemaProp.Unicode},{docProp.Unicode}).");
                     documentedProperties.Remove(documentedVersion.Name);
 
                     AddDescriptionAnnotation(typeName, schemaProp, documentedVersion, issues);
@@ -1665,11 +1942,12 @@ namespace ApiDoctor.Publishing.CSDL
             }
         }
 
-        private static void LogIfDifferent(object schemaValue, object documentationValue, IssueLogger issues, string errorString)
+        private static void LogIfDifferent(object schemaValue, object documentationValue, IssueLogger issues,
+            string errorString)
         {
             if ((schemaValue == null && documentationValue != null) ||
-                 (schemaValue != null && documentationValue == null) ||
-                 (schemaValue != null && documentationValue != null && !schemaValue.Equals(documentationValue)))
+                (schemaValue != null && documentationValue == null) ||
+                (schemaValue != null && documentationValue != null && !schemaValue.Equals(documentationValue)))
             {
                 issues.Warning(ValidationErrorCode.Unknown, errorString);
             }
@@ -1692,25 +1970,21 @@ namespace ApiDoctor.Publishing.CSDL
                     OpenType = resource.OriginalMetadata.IsOpenType,
                     Annotation = new List<Annotation>
                     {
-                        new()
-                        {
-                            Term = Term.DescriptionTerm,
-                            String = resource.Description
-                        }
+                        new() {Term = Term.DescriptionTerm, String = resource.Description}
                     }
                 };
 
                 if (resource.ResolvedBaseTypeReference == null ||
                     entityKey != resource.ResolvedBaseTypeReference.ExplicitOrInheritedKeyPropertyName)
                 {
-                    entity.Key = new Key { PropertyRef = new PropertyRef { Name = entityKey } };
+                    entity.Key = new Key {PropertyRef = new PropertyRef {Name = entityKey}};
                 }
 
                 entity.NavigationProperties = (from p in resource.Parameters
-                                               where p.IsNavigatable &&
-                                                    (resource.ResolvedBaseTypeReference == null ||
-                                                    !resource.HasOrInheritsProperty(p.Name))
-                                               select ConvertParameterToProperty<NavigationProperty>(entity.Name, p, issues.For(p.Name))).ToList();
+                    where p.IsNavigatable &&
+                          (resource.ResolvedBaseTypeReference == null ||
+                           !resource.HasOrInheritsProperty(p.Name))
+                    select ConvertParameterToProperty<NavigationProperty>(entity.Name, p, issues.For(p.Name))).ToList();
                 schema.EntityTypes.Add(entity);
                 type = entity;
             }
@@ -1724,11 +1998,7 @@ namespace ApiDoctor.Publishing.CSDL
                     OpenType = resource.OriginalMetadata.IsOpenType,
                     Annotation = new List<Annotation>()
                     {
-                        new()
-                        {
-                            Term = Term.DescriptionTerm,
-                            String = resource.Description,
-                        }
+                        new() {Term = Term.DescriptionTerm, String = resource.Description,}
                     }
                 };
 
@@ -1741,7 +2011,9 @@ namespace ApiDoctor.Publishing.CSDL
             return type;
         }
 
-        private void MergeInstanceAnnotationsAndRecordTerms(string typeName, IEnumerable<ParameterDefinition> annotations, ResourceDefinition containedResource, EntityFramework edmx, bool generateNewElements)
+        private void MergeInstanceAnnotationsAndRecordTerms(string typeName,
+            IEnumerable<ParameterDefinition> annotations, ResourceDefinition containedResource, EntityFramework edmx,
+            bool generateNewElements)
         {
             foreach (var prop in annotations)
             {
@@ -1749,13 +2021,20 @@ namespace ApiDoctor.Publishing.CSDL
                 var ns = qualifiedName.NamespaceOnly();
                 var localName = qualifiedName.TypeOnly();
 
-                Term term = new Term { Name = localName, AppliesTo = containedResource.Name, Type = prop.Type.ODataResourceName() };
+                Term term = new Term
+                {
+                    Name = localName, AppliesTo = containedResource.Name, Type = prop.Type.ODataResourceName()
+                };
                 if (!string.IsNullOrEmpty(prop.Description))
                 {
-                    term.Annotations.Add(new Annotation { Term = Term.LongDescriptionTerm, String = prop.Description.ToStringClean() });
+                    term.Annotations.Add(new Annotation
+                    {
+                        Term = Term.LongDescriptionTerm, String = prop.Description.ToStringClean()
+                    });
                 }
 
-                var targetSchema = FindOrCreateSchemaForNamespace(ns, edmx, overrideNamespaceFilter: true, generateNewElements: generateNewElements);
+                var targetSchema = FindOrCreateSchemaForNamespace(ns, edmx, overrideNamespaceFilter: true,
+                    generateNewElements: generateNewElements);
                 if (null != targetSchema)
                 {
                     targetSchema.Terms.Add(term);
@@ -1763,7 +2042,8 @@ namespace ApiDoctor.Publishing.CSDL
             }
         }
 
-        private T ConvertParameterToProperty<T>(string typeName, ParameterDefinition param, IssueLogger issues) where T : Property, new()
+        private T ConvertParameterToProperty<T>(string typeName, ParameterDefinition param, IssueLogger issues)
+            where T : Property, new()
         {
             var prop = new T()
             {
@@ -1797,19 +2077,20 @@ namespace ApiDoctor.Publishing.CSDL
                 }
 
                 // Check to see if there already is a term with Description
-                var descriptionTerm = targetProperty.Annotation.Where(t => t.Term == termForDescription).FirstOrDefault();
+                var descriptionTerm =
+                    targetProperty.Annotation.Where(t => t.Term == termForDescription).FirstOrDefault();
                 if (descriptionTerm != null)
                 {
-                    LogIfDifferent(descriptionTerm.String, sourceParameter.Description, issues, $"Type {typeName} has a different value for term '{termForDescription}' than the documentation.");
+                    LogIfDifferent(descriptionTerm.String, sourceParameter.Description, issues,
+                        $"Type {typeName} has a different value for term '{termForDescription}' than the documentation.");
                 }
                 else
                 {
                     targetProperty.Annotation.Add(
-                    new Annotation()
-                    {
-                        Term = termForDescription,
-                        String = sourceParameter.Description.ToStringClean(),
-                    });
+                        new Annotation()
+                        {
+                            Term = termForDescription, String = sourceParameter.Description.ToStringClean(),
+                        });
                 }
             }
         }
@@ -1843,63 +2124,92 @@ namespace ApiDoctor.Publishing.CSDL
     {
         public string OutputDirectoryPath
         {
-            get; set;
+            get;
+            set;
         }
+
         public string SourceMetadataPath
         {
-            get; set;
+            get;
+            set;
         }
+
         public string MergeWithMetadataPath
         {
-            get; set;
+            get;
+            set;
         }
+
         public MetadataFormat Formats
         {
-            get; set;
+            get;
+            set;
         }
+
         public string[] Namespaces
         {
-            get; set;
+            get;
+            set;
         }
+
         public bool Sort
         {
-            get; set;
+            get;
+            set;
         }
+
         public string TransformOutput
         {
-            get; set;
+            get;
+            set;
         }
+
         public string DocumentationSetPath
         {
-            get; set;
+            get;
+            set;
         }
+
         public string Version
         {
-            get; set;
+            get;
+            set;
         }
+
         public bool SkipMetadataGeneration
         {
-            get; set;
+            get;
+            set;
         }
+
         public AnnotationOptions Annotations
         {
-            get; set;
+            get;
+            set;
         }
+
         public bool ValidateSchema
         {
-            get; set;
+            get;
+            set;
         }
+
         public bool AttributesOnNewLines
         {
-            get; set;
+            get;
+            set;
         }
+
         public string EntityContainerName
         {
-            get; set;
+            get;
+            set;
         }
+
         public bool ShowSources
         {
-            get; set;
+            get;
+            set;
         }
     }
 
