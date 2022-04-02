@@ -390,7 +390,6 @@ namespace ApiDoctor.Validation.Tags
         /// <returns></returns>
         private static bool IsDocFxVideoLine(string text)
         {
-            var upperNextLine = text.ToUpper();
             if (text.ToUpper().Contains("VIDEO"))
             {
                 return VideoFormat.IsMatch(text);
@@ -434,7 +433,7 @@ namespace ApiDoctor.Validation.Tags
             {
                 var relativePath = Path.ChangeExtension(m.Groups[1].Value, "md");
 
-                var fullPathToIncludeFile = string.Empty;
+                string fullPathToIncludeFile;
 
                 if (Path.IsPathRooted(relativePath))
                 {
