@@ -25,16 +25,14 @@
 
 namespace ApiDoctor.Validation.OData
 {
-    using Newtonsoft.Json;
     using System.Collections.Generic;
     using System.Xml.Serialization;
     using Transformation;
-    using System;
     using Utility;
 
     [XmlRoot("EntitySet", Namespace = ODataParser.EdmNamespace)]
     [Mergable(CollectionIdentifier = "Name")]
-    public class EntitySet : XmlBackedTransformableObject, IODataAnnotatable
+    public class EntitySet : XmlBackedTransformableObject, IODataAnnotatable, ISet
     {
         public EntitySet()
         {

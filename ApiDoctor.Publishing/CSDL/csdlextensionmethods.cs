@@ -190,5 +190,34 @@ namespace ApiDoctor.Publishing.CSDL
 
 
         }
+
+        private static ISet GetISet(this EntityFramework edmx, 
+            string name, 
+            Func<EntityContainer, IEnumerable<ISet>> funcSelector)
+        {
+            var currentEntitySet = edmx.DataServices.Schemas.SelectMany(c => c.EntityContainers)
+                .SelectMany(funcSelector)
+                .FirstOrDefault(c => c.Name == name);
+            return currentEntitySet;
+        }
+        internal static void AddSetSourceMethods(this EntityFramework edmx,
+            MethodCollection methodCollection,
+            Func<EntityContainer, IEnumerable<ISet>> selector,
+            string name)
+        {
+            var currentSet = edmx.GetISet(name, selector);
+            if (currentSet != null)
+
+                if (currentSet.SourceMethods != null)
+                {
+                    var sourceMethods = (MethodCollection)currentSet.SourceMethods;
+                    var differences = methodCollection.Except(sourceMethods).ToList();
+                    sourceMethods.AddRange(differences);
+                }
+                else
+                {
+                    currentSet.SourceMethods = methodCollection;
+                }
+        }
     }
 }
