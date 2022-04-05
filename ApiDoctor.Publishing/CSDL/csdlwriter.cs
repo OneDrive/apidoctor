@@ -522,12 +522,12 @@ namespace ApiDoctor.Publishing.CSDL
         {
             if (methods != null)
             {
-                var directTargets = AddRestrictionAnnotations(set, methods, target, issues);
-                foreach (var (key, value) in directTargets)
+                var targetsAndAnnotations = AddRestrictionAnnotations(set, methods, target, issues);
+                foreach (var (currentTarget, oDataAnnotatables) in targetsAndAnnotations)
                 {
-                    foreach (var property in value)
+                    foreach (var oDataAnnotatable in oDataAnnotatables)
                     {
-                        MergeAnnotations(key, property, annotationsMap);
+                        MergeAnnotations(currentTarget, oDataAnnotatable, annotationsMap);
                     }
                 }
             }
@@ -539,52 +539,35 @@ namespace ApiDoctor.Publishing.CSDL
             IssueLogger issues) where T : ISet
         {
             var targets = new Dictionary<string, List<IODataAnnotatable>>();
-            var annotatable = set as IODataAnnotatable;
+
             foreach (var method in sourceMethod)
             {
-                var navigationProperty = set.NavigationPropertyBinding;
                 var url = method.RequestUriPathOnly(DocSet.SchemaConfig.BaseUrls, issues);
                 var matches = FullSingletonPathRegEx.Matches(url);
                 if (matches is { Count: > 0 } && matches[0].Groups[1].Value != set.Name)
                 {
                     continue;
                 }
-
-
                 var stringBuilder = new StringBuilder(target);
-                if (set.NavigationPropertyBinding.Any())
+                foreach (var match in matches.Skip(1))
                 {
-                    foreach (var navProp in navigationProperty)
+                    var value = match.Groups[1]?.Value;
+                    if (!string.IsNullOrWhiteSpace(value))
                     {
-                        if (matches is { Count: > 1 })
-                        {
-                            var value = matches[1]?.Groups[1]?.Value;
-                            var nullOrWhiteSpace = !string.IsNullOrWhiteSpace(value);
-                            if (nullOrWhiteSpace && value == navProp.Path)
-                            {
-                                stringBuilder.Append('/');
-                                stringBuilder.Append(navProp.Path);
-                            }
-                        }
+                        stringBuilder.Append('/');
+                        stringBuilder.Append(value);
                     }
                 }
-                else
+                IODataAnnotatable annotatable = new Property();
+                var path = stringBuilder.ToString();
+                if (path.Equals(target, StringComparison.OrdinalIgnoreCase))
                 {
-                    foreach (var match in matches.Skip(1))
-                    {
-                        var value = match.Groups[1]?.Value;
-                        if (!string.IsNullOrWhiteSpace(value))
-                        {
-                            stringBuilder.Append('/');
-                            stringBuilder.Append(value);
-                        }
-                    }
+                    annotatable = (IODataAnnotatable)set;
                 }
                 var verb = method.HttpMethodVerb();
                 switch (verb)
                 {
-                    case "GET" when method.Request.FirstLineOnly().Contains("{", StringComparison.OrdinalIgnoreCase) &&
-                                    method.Request.FirstLineOnly().Contains("}", StringComparison.OrdinalIgnoreCase):
+                    case "GET" when url.EndsWith("}", StringComparison.OrdinalIgnoreCase):
                         AddReadByKeyRestriction(annotatable, method);
                         break;
                     case "GET":
@@ -604,18 +587,17 @@ namespace ApiDoctor.Publishing.CSDL
                         issues.Error(ValidationErrorCode.HttpMethodOutOfRange, "HttpMethod Verb Out of Range");
                         break;
                 }
-
-                var exists = targets.TryGetValue(stringBuilder.ToString(), out var propertiesList);
+                var key = stringBuilder.ToString();
+                var exists = targets.TryGetValue(key, out var annotationsList);
                 if (exists)
                 {
-                    propertiesList.Add(annotatable);
+                    annotationsList.Add(annotatable);
                 }
                 else
                 {
-                    targets.Add(stringBuilder.ToString(), new List<IODataAnnotatable> { annotatable });
+                    targets.Add(key, new List<IODataAnnotatable> { annotatable });
                 }
             }
-
             return targets;
         }
 
@@ -872,7 +854,6 @@ namespace ApiDoctor.Publishing.CSDL
 
             return record;
         }
-
         private static void MergeAnnotations(string fullName, IODataAnnotatable annotatable,
             Dictionary<string, Annotations> schemaLevelAnnotations)
         {
