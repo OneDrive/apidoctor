@@ -48,6 +48,7 @@ namespace ApiDoctor.Validation
         private readonly List<ExampleDefinition> examples = new List<ExampleDefinition>();
         private readonly List<SamplesDefinition> samples = new List<SamplesDefinition>();
         private readonly List<EnumerationDefinition> enums = new List<EnumerationDefinition>();
+        private readonly List<IgnoredDefinition> ignoredBlocks = new List<IgnoredDefinition>();
         private readonly List<string> bookmarks = new List<string>();
 
         protected bool HasScanRun;
@@ -82,6 +83,11 @@ namespace ApiDoctor.Validation
         public MethodDefinition[] Requests
         {
             get { return this.requests.ToArray(); }
+        }
+
+        public IgnoredDefinition[] IgnoredBlocks
+        {
+            get { return this.ignoredBlocks.ToArray(); }
         }
 
         public ExampleDefinition[] Examples { get { return this.examples.ToArray(); } }
@@ -1315,7 +1321,18 @@ namespace ApiDoctor.Validation
                     }
                 case CodeBlockType.Ignored:
                     {
-                        return null;
+                        // there are ignored blocks that are not example requests e.g. HTTP request description before the examples
+                        // those blocks don't have a method name, they only have blockType:ignored in the metadata JSON
+                        if (annotation.MethodName != null)
+                        {
+                            var ignored = new IgnoredDefinition(annotation, code.Content, this);
+                            this.ignoredBlocks.Add(ignored);
+                            return new List<ItemDefinition>(new ItemDefinition[] { ignored });
+                        }
+                        else
+                        {
+                            return null;
+                        }
                     }
                 case CodeBlockType.SimulatedResponse:
                     {

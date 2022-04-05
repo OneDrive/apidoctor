@@ -76,7 +76,7 @@ namespace ApiDoctor.ConsoleApp
 
             try
             {
-                Parser.Default.ParseArguments<PrintOptions, CheckLinkOptions, BasicCheckOptions, CheckAllLinkOptions, CheckServiceOptions, PublishOptions, PublishMetadataOptions, CheckMetadataOptions, FixDocsOptions, GenerateDocsOptions, GenerateSnippetsOptions, AboutOptions>(args)
+                Parser.Default.ParseArguments<PrintOptions, CheckLinkOptions, BasicCheckOptions, CheckAllLinkOptions, CheckServiceOptions, PublishOptions, PublishMetadataOptions, CheckMetadataOptions, FixDocsOptions, GenerateDocsOptions, GenerateSnippetsOptions, FindIgnoredBlocksOptions, AboutOptions>(args)
                         .WithParsed<BaseOptions>((options) =>
                         {
                             IgnoreErrors = options.IgnoreErrors;
@@ -102,6 +102,7 @@ namespace ApiDoctor.ConsoleApp
                             (GenerateDocsOptions options) => RunInvokedMethodAsync(options),
                             (AboutOptions options) => RunInvokedMethodAsync(options),
                             (GenerateSnippetsOptions options) => RunInvokedMethodAsync(options),
+                            (FindIgnoredBlocksOptions options) => RunInvokedMethodAsync(options),
                             (errors) =>
                                     {
                                         FancyConsole.WriteLine(ConsoleColor.Red, "COMMAND LINE PARSE ERROR");
@@ -211,6 +212,9 @@ namespace ApiDoctor.ConsoleApp
                     break;
                 case GenerateSnippetsOptions o:
                     returnSuccess = await GenerateSnippetsAsync(o, issues);
+                    break;
+                case FindIgnoredBlocksOptions o:
+                    returnSuccess = await FindIgnoredBlocksAsync(o, issues);
                     break;
                 case BasicCheckOptions o:
                     returnSuccess = await CheckDocsAsync(o, issues);
@@ -1875,6 +1879,42 @@ namespace ApiDoctor.ConsoleApp
 
             results.PrintToConsole();
             return !results.WereFailures;
+        }
+
+        /// <summary>
+        /// Find ignored blocks
+        /// </summary>
+        /// <param name="options"></param>
+        /// <param name="issues"></param>
+        /// <param name="docs"></param>
+        /// <returns>The success/failure of the task</returns>
+        private static async Task<bool> FindIgnoredBlocksAsync(FindIgnoredBlocksOptions options, IssueLogger issues, DocSet docs = null)
+        {
+            //we are not out to validate the documents in this context.
+            options.IgnoreErrors = options.IgnoreWarnings = true;
+
+            //scan the docset and find the methods present
+            var docset = docs ?? await GetDocSetAsync(options, issues);
+            if (null == docset)
+            {
+                return false;
+            }
+
+            foreach (var docFile in docset.Files)
+            {
+                if (docFile.IgnoredBlocks.Length == 0)
+                {
+                    continue;
+                }
+
+                FancyConsole.WriteLine(docFile.FullPath);
+                foreach (var block in docFile.IgnoredBlocks)
+                {
+                    FancyConsole.WriteLine("    " + string.Join(" ", block.Metadata.MethodName));
+                }
+            }
+
+            return true;
         }
 
         /// <summary>

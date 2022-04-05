@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "ApiDoctor.ConsoleApp": {
+      "commandName": "Project",
+      "commandLineArgs": "find-ignored-blocks --path C:\\github\\microsoft-graph-docs"
+    }
+  }
+}
