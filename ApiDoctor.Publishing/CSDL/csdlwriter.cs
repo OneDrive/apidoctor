@@ -23,8 +23,6 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using System.Text.RegularExpressions;
-
 namespace ApiDoctor.Publishing.CSDL
 {
     using Validation;
@@ -35,7 +33,6 @@ namespace ApiDoctor.Publishing.CSDL
     using System.Text;
     using System.Threading.Tasks;
     using Validation.OData;
-    using Validation.Config;
     using Validation.OData.Transformation;
     using Validation.Http;
     using System.IO;
@@ -62,8 +59,7 @@ namespace ApiDoctor.Publishing.CSDL
 
             if (!string.IsNullOrEmpty(options.MergeWithMetadataPath))
             {
-                EntityFramework secondFramework =
-                    CreateEntityFrameworkFromDocs(issues, options.MergeWithMetadataPath, generateFromDocs: false);
+                EntityFramework secondFramework = CreateEntityFrameworkFromDocs(issues, options.MergeWithMetadataPath, generateFromDocs: false);
                 framework = framework.MergeWith(secondFramework);
                 outputFilenameSuffix += "-merged";
             }
@@ -76,8 +72,7 @@ namespace ApiDoctor.Publishing.CSDL
                     .Where(x => x.SchemaChanges.TransformationName == options.TransformOutput).FirstOrDefault();
                 if (null == transformations)
                 {
-                    throw new KeyNotFoundException(
-                        $"Unable to locate a transformation set named {options.TransformOutput}. Aborting.");
+                    throw new KeyNotFoundException($"Unable to locate a transformation set named {options.TransformOutput}. Aborting.");
                 }
 
                 string[] versionsToPublish = options.Version?.Split(new char[] { ',', ' ' });
@@ -107,16 +102,14 @@ namespace ApiDoctor.Publishing.CSDL
             }
             else if (options.Formats.HasFlag(MetadataFormat.SchemaOutput))
             {
-                xmlData = ODataParser.Serialize<Schema>(framework.DataServices.Schemas.First(),
-                    options.AttributesOnNewLines);
+                xmlData = ODataParser.Serialize<Schema>(framework.DataServices.Schemas.First(), options.AttributesOnNewLines);
             }
 
             // Step 3: Write the XML to disk
 
             if (!string.IsNullOrEmpty(outputFolder))
             {
-                var outputFullName =
-                    GenerateOutputFileFullName(options.SourceMetadataPath, outputFolder, outputFilenameSuffix);
+                var outputFullName = GenerateOutputFileFullName(options.SourceMetadataPath, outputFolder, outputFilenameSuffix);
                 Console.WriteLine($"Publishing metadata to {outputFullName}");
 
                 using (var writer = File.CreateText(outputFullName))
@@ -132,8 +125,7 @@ namespace ApiDoctor.Publishing.CSDL
             }
         }
 
-        private string GenerateOutputFileFullName(string templateFilename, string outputFolderPath,
-            string filenameSuffix)
+        private string GenerateOutputFileFullName(string templateFilename, string outputFolderPath, string filenameSuffix)
         {
             var outputDir = new DirectoryInfo(outputFolderPath);
             outputDir.Create();
@@ -143,8 +135,7 @@ namespace ApiDoctor.Publishing.CSDL
             string filename = null;
             if (!string.IsNullOrEmpty(templateFilename))
             {
-                filename =
-                    $"{Path.GetFileNameWithoutExtension(templateFilename)}{filenameSuffix}{Path.GetExtension(templateFilename)}";
+                filename = $"{Path.GetFileNameWithoutExtension(templateFilename)}{filenameSuffix}{Path.GetExtension(templateFilename)}";
             }
             else
             {
@@ -235,9 +226,7 @@ namespace ApiDoctor.Publishing.CSDL
                     this.ProcessRestRequestPaths(edmx, DocSet.SchemaConfig.BaseUrls, issues);
 
                     // add enums to the default schema
-                    var defaultSchema =
-                        edmx.DataServices.Schemas.FirstOrDefault(s =>
-                            s.Namespace == DocSet.SchemaConfig.DefaultNamespace);
+                    var defaultSchema = edmx.DataServices.Schemas.FirstOrDefault(s => s.Namespace == DocSet.SchemaConfig.DefaultNamespace);
                     foreach (var enumDefinition in Documents.Enums.GroupBy(e => e.TypeName))
                     {
                         var enumType = new EnumType
@@ -247,9 +236,7 @@ namespace ApiDoctor.Publishing.CSDL
                                 new EnumMember
                                 {
                                     Name = e.MemberName,
-                                    Value = e.NumericValue.HasValue
-                                        ? e.NumericValue.GetValueOrDefault().ToString()
-                                        : null
+                                    Value = e.NumericValue.HasValue ? e.NumericValue.GetValueOrDefault().ToString() : null
                                 }).ToList(),
                             IsFlags = enumDefinition.FirstOrDefault().IsFlags,
                         };
@@ -407,15 +394,13 @@ namespace ApiDoctor.Publishing.CSDL
                             foreach (var entitySet in container.EntitySets)
                             {
                                 var annotationName = prefix + "/" + entitySet.Name;
-                                AddHttpRequestsAnnotations(annotationsMap, entitySet.SourceMethods as MethodCollection,
-                                    annotationName, issues.For(annotationName));
+                                AddHttpRequestsAnnotations(annotationsMap, entitySet.SourceMethods as MethodCollection, annotationName, issues.For(annotationName));
                             }
 
                             foreach (var singleton in container.Singletons)
                             {
                                 var annotationName = prefix + "/" + singleton.Name;
-                                AddHttpRequestsAnnotations(annotationsMap, singleton.SourceMethods as MethodCollection,
-                                    annotationName, issues.For(annotationName));
+                                AddHttpRequestsAnnotations(annotationsMap, singleton.SourceMethods as MethodCollection, annotationName, issues.For(annotationName));
                             }
                         }
 
@@ -503,8 +488,7 @@ namespace ApiDoctor.Publishing.CSDL
             }
         }
 
-        private static void AddHttpRequestsAnnotations(Dictionary<string, Annotations> annotationsMap,
-            MethodCollection methods, string target, IssueLogger issues)
+        private static void AddHttpRequestsAnnotations(Dictionary<string, Annotations> annotationsMap, MethodCollection methods, string target, IssueLogger issues)
         {
             if (methods != null)
             {
@@ -514,11 +498,7 @@ namespace ApiDoctor.Publishing.CSDL
             }
         }
 
-        private static void AddRestrictionAnnotations<T>(Dictionary<string, Annotations> annotationsMap,
-            T set,
-            MethodCollection methods,
-            string target,
-            IssueLogger issues) where T : ISet
+        private static void AddRestrictionAnnotations(Dictionary<string, Annotations> annotationsMap, ISet set, MethodCollection methods, string target, IssueLogger issues)
         {
             if (methods != null)
             {
@@ -533,13 +513,9 @@ namespace ApiDoctor.Publishing.CSDL
             }
         }
 
-        private static Dictionary<string, List<IODataAnnotatable>> AddRestrictionAnnotations<T>(T set,
-            MethodCollection sourceMethod,
-            string target,
-            IssueLogger issues) where T : ISet
+        private static Dictionary<string, List<IODataAnnotatable>> AddRestrictionAnnotations(ISet set, MethodCollection sourceMethod, string target, IssueLogger issues)
         {
             var targets = new Dictionary<string, List<IODataAnnotatable>>();
-
             foreach (var method in sourceMethod)
             {
                 var url = method.RequestUriPathOnly(DocSet.SchemaConfig.BaseUrls, issues);
@@ -588,6 +564,7 @@ namespace ApiDoctor.Publishing.CSDL
                         break;
                 }
                 var key = stringBuilder.ToString();
+                
                 var exists = targets.TryGetValue(key, out var annotationsList);
                 if (exists)
                 {
@@ -601,8 +578,7 @@ namespace ApiDoctor.Publishing.CSDL
             return targets;
         }
 
-        private static PropertyValue GetNestedRestriction(MethodDefinition sourceMethod,
-            string propertyRestriction = Term.ReadByKeyRestrictionsTerm)
+        private static PropertyValue GetNestedRestriction(MethodDefinition sourceMethod, string propertyRestriction = Term.ReadByKeyRestrictionsTerm)
         {
             var propertyValue = new PropertyValue
             {
@@ -671,8 +647,7 @@ namespace ApiDoctor.Publishing.CSDL
             }
         }
 
-        private static void AddHttpRequestsAnnotations(IODataAnnotatable annotatable, MethodCollection methods,
-            IssueLogger issues)
+        private static void AddHttpRequestsAnnotations(IODataAnnotatable annotatable, MethodCollection methods, IssueLogger issues)
         {
             if (methods != null)
             {
@@ -854,8 +829,7 @@ namespace ApiDoctor.Publishing.CSDL
 
             return record;
         }
-        private static void MergeAnnotations(string fullName, IODataAnnotatable annotatable,
-            Dictionary<string, Annotations> schemaLevelAnnotations)
+        private static void MergeAnnotations(string fullName, IODataAnnotatable annotatable, Dictionary<string, Annotations> schemaLevelAnnotations)
         {
             if (annotatable.Annotation?.Count > 0)
             {
@@ -972,8 +946,7 @@ namespace ApiDoctor.Publishing.CSDL
             }
         }
 
-        private void AppendToNavigationProperty(EntityFramework edmx, ODataTargetInfo navigationProperty,
-            MethodCollection methods, IssueLogger issues)
+        private void AppendToNavigationProperty(EntityFramework edmx, ODataTargetInfo navigationProperty, MethodCollection methods, IssueLogger issues)
         {
             EntityType parentType = edmx.ResourceWithIdentifier<EntityType>(navigationProperty.QualifiedType);
 
@@ -1004,8 +977,7 @@ namespace ApiDoctor.Publishing.CSDL
         /// </summary>
         /// <param name="requestTarget"></param>
         /// <param name="methodCollection"></param>
-        private void AppendToEntityType(EntityFramework edmx, ODataTargetInfo requestTarget,
-            MethodCollection methodCollection)
+        private void AppendToEntityType(EntityFramework edmx, ODataTargetInfo requestTarget, MethodCollection methodCollection)
         {
             StringBuilder sb = new StringBuilder();
             const string seperator = ", ";
