@@ -633,7 +633,50 @@ namespace ApiDoctor.Publishing.CSDL
 
             return record;
         }
+        private static void FixUpAnnotations(string fullName, IODataAnnotatable annotatable, Dictionary<string, Annotations> schemaLevelAnnotations)
+        {
+            if (annotatable.Annotation?.Count > 0)
+            {
+                Annotations annotations;
+                if (schemaLevelAnnotations.TryGetValue(fullName, out annotations))
+                {
+                    foreach (var annotation in annotatable.Annotation)
+                    {
+                        var existingAnnotation = annotations.AnnotationList.FirstOrDefault(a => a.Term == annotation.Term);
+                        if (existingAnnotation != null && annotation.Collection != null && annotation.Collection.Records?.Count > 0)
+                        {
+                            if (existingAnnotation.Collection == null)
+                            {
+                                existingAnnotation.Collection = new RecordCollection();
+                            }
 
+                            if (existingAnnotation.Collection.Records == null)
+                            {
+                                existingAnnotation.Collection.Records = new List<Record>();
+                            }
+                            existingAnnotation.Collection.Records.AddRange(annotation.Collection.Records);
+                        }
+                        else
+                        {
+                            if (existingAnnotation == null)
+                            {
+                                annotations.AnnotationList.Add(annotation);
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    schemaLevelAnnotations[fullName] = new Annotations
+                    {
+                        Target = fullName,
+                        AnnotationList = annotatable.Annotation,
+                    };
+                }
+
+                annotatable.Annotation = null;
+            }
+        }
         private static void MergeAnnotations(string fullName, IODataAnnotatable annotatable, Dictionary<string, Annotations> schemaLevelAnnotations)
         {
             if (annotatable.Annotation?.Count > 0)
@@ -1089,9 +1132,9 @@ namespace ApiDoctor.Publishing.CSDL
         }
 
         // EntitySet is something in the format of /name/{var}
-        private static readonly System.Text.RegularExpressions.Regex EntitySetPathRegEx = new (@"^\/(\w*)\/{var}$", System.Text.RegularExpressions.RegexOptions.Compiled);
-        // Singleton is something in the format of /name
-        private static readonly System.Text.RegularExpressions.Regex SingletonPathRegEx = new (@"^\/(\w*)$", System.Text.RegularExpressions.RegexOptions.Compiled);
+        private static readonly System.Text.RegularExpressions.Regex EntitySetPathRegEx = new (@"\/(\w*)\/{var}$", System.Text.RegularExpressions.RegexOptions.Compiled);
+        // Singleton is something in the format of /name or /root/child/subChild where root is the singleton
+        private static readonly System.Text.RegularExpressions.Regex SingletonPathRegEx = new (@"\/(\w*)$", System.Text.RegularExpressions.RegexOptions.Compiled);
         private static readonly System.Text.RegularExpressions.Regex FullSingletonPathRegEx = new(@"\/(\w*)", System.Text.RegularExpressions.RegexOptions.Compiled);
 
         /// <summary>
@@ -1624,9 +1667,9 @@ namespace ApiDoctor.Publishing.CSDL
                 var targetsAndAnnotations = AddRestrictionAnnotations(set, methods, target, issues);
                 foreach (var (currentTarget, oDataAnnotatables) in targetsAndAnnotations)
                 {
-                    foreach (var oDataAnnotatable in oDataAnnotatables)
+                    foreach (var oDataAnnotatable in oDataAnnotatables.Distinct())
                     {
-                        MergeAnnotations(currentTarget, oDataAnnotatable, annotationsMap);
+                        FixUpAnnotations(currentTarget, oDataAnnotatable, annotationsMap);
                     }
                 }
             }
@@ -1635,6 +1678,7 @@ namespace ApiDoctor.Publishing.CSDL
         private static Dictionary<string, List<IODataAnnotatable>> AddRestrictionAnnotations(ISet set, MethodCollection sourceMethod, string target, IssueLogger issues)
         {
             var targets = new Dictionary<string, List<IODataAnnotatable>>();
+
             foreach (var method in sourceMethod)
             {
                 var url = method.RequestUriPathOnly(DocSet.SchemaConfig.BaseUrls, issues);
@@ -1683,7 +1727,6 @@ namespace ApiDoctor.Publishing.CSDL
                         break;
                 }
                 var key = stringBuilder.ToString();
-                
                 var exists = targets.TryGetValue(key, out var annotationsList);
                 if (exists)
                 {
