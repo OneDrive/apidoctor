@@ -40,7 +40,7 @@ namespace ApiDoctor.Publishing.CSDL
 
     internal static class CsdlExtensionMethods
     {
-        private static readonly Regex GuidRegex = new(@"[0-9a-fA-F\-]{32,36}", RegexOptions.Compiled);
+        private static readonly Regex GuidRegex = new(@"[0-9a-f\-]{32,36}", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         public static string RequestUriPathOnly(this MethodDefinition method, string[] baseUrlsToRemove, IssueLogger issues)
         {
             if (string.IsNullOrWhiteSpace(method.Request)) return string.Empty;
