@@ -208,9 +208,8 @@ namespace ApiDoctor.Publishing.CSDL
             var currentSet = edmx.GetISet(name, selector);
             if (currentSet != null)
 
-                if (currentSet.SourceMethods != null)
+                if (currentSet.SourceMethods is MethodCollection sourceMethods)
                 {
-                    var sourceMethods = (MethodCollection)currentSet.SourceMethods;
                     var differences = methodCollection.Except(sourceMethods).ToList();
                     sourceMethods.AddRange(differences);
                 }
