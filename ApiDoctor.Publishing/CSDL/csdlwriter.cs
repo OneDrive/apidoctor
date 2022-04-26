@@ -637,8 +637,7 @@ namespace ApiDoctor.Publishing.CSDL
         {
             if (annotatable.Annotation?.Count > 0)
             {
-                Annotations annotations;
-                if (schemaLevelAnnotations.TryGetValue(fullName, out annotations))
+                if (schemaLevelAnnotations.TryGetValue(fullName, out Annotations annotations))
                 {
                     foreach (var annotation in annotatable.Annotation)
                     {
