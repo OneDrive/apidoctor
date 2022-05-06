@@ -31,6 +31,7 @@ namespace ApiDoctor.Validation.Params
     using Microsoft.CSharp;
     using System.CodeDom.Compiler;
     using System.Collections.Generic;
+
     internal static class CSharpEval
     {
         public static string Evaluate(string code, IReadOnlyDictionary<string, string> values)

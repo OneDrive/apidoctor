@@ -30,6 +30,7 @@ namespace ApiDoctor.Publishing.CSDL
     using System.Collections.Generic;
     using System.Reflection;
     using System.Text;
+    using System.Text.RegularExpressions;
     using Validation.Http;
     using Validation.OData;
     using Validation.OData.Transformation;
@@ -39,7 +40,7 @@ namespace ApiDoctor.Publishing.CSDL
 
     internal static class CsdlExtensionMethods
     {
-
+        private static readonly Regex GuidRegex = new(@"[0-9a-f\-]{32,36}", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         public static string RequestUriPathOnly(this MethodDefinition method, string[] baseUrlsToRemove, IssueLogger issues)
         {
             if (string.IsNullOrWhiteSpace(method.Request)) return string.Empty;
@@ -72,6 +73,7 @@ namespace ApiDoctor.Publishing.CSDL
             }
 
             // Normalize variables in the request path
+            path = GuidRegex.Replace(path, "{var}");
             path = path.ReplaceTextBetweenCharacters('{', '}', "var");
 
             if (method.RequestMetadata.SampleKeys != null)
@@ -189,8 +191,32 @@ namespace ApiDoctor.Publishing.CSDL
 
         }
 
+        private static ISet GetISet(this EntityFramework edmx, 
+            string name, 
+            Func<EntityContainer, IEnumerable<ISet>> funcSelector)
+        {
+            var currentEntitySet = edmx.DataServices.Schemas.SelectMany(c => c.EntityContainers)
+                .SelectMany(funcSelector)
+                .FirstOrDefault(c => c.Name == name);
+            return currentEntitySet;
+        }
+        internal static void AddSetSourceMethods(this EntityFramework edmx,
+            MethodCollection methodCollection,
+            Func<EntityContainer, IEnumerable<ISet>> selector,
+            string name)
+        {
+            var currentSet = edmx.GetISet(name, selector);
+            if (currentSet != null)
 
-
-
+                if (currentSet.SourceMethods is MethodCollection sourceMethods)
+                {
+                    var differences = methodCollection.Except(sourceMethods).ToList();
+                    sourceMethods.AddRange(differences);
+                }
+                else
+                {
+                    currentSet.SourceMethods = methodCollection;
+                }
+        }
     }
 }

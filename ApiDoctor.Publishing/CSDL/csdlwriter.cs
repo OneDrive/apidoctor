@@ -417,10 +417,33 @@ namespace ApiDoctor.Publishing.CSDL
                     }
                 }
             }
+            this.AddSourceMethods(edmx, DocSet.SchemaConfig.BaseUrls, issues);
+            foreach (var schema in edmx.DataServices.Schemas)
+            {
+                var annotationsMap = schema.Annotations.ToDictionary(an => an.Target);
+                foreach (var container in schema.EntityContainers)
+                {
+                    var prefix = schema.Namespace + "." + container.Name;
+                    foreach (var entitySet in container.EntitySets)
+                    {
+                        var annotationName = prefix + "/" + entitySet.Name;
+                        AddRestrictionAnnotations(annotationsMap, entitySet,
+                            entitySet.SourceMethods as MethodCollection,
+                            annotationName, issues.For(annotationName));
+                    }
 
+                    foreach (var singleton in container.Singletons)
+                    {
+                        var annotationName = prefix + "/" + singleton.Name;
+                        AddRestrictionAnnotations(annotationsMap, singleton,
+                            singleton.SourceMethods as MethodCollection,
+                            annotationName, issues.For(annotationName));
+                    }
+                }
+                schema.Annotations = annotationsMap.Values.ToList();
+            }
             return edmx;
         }
-
         private static void TryAddAnnotation(Property annotatable, string term, string property, bool? value)
         {
             if (value.HasValue)
@@ -610,7 +633,49 @@ namespace ApiDoctor.Publishing.CSDL
 
             return record;
         }
+        private static void FixUpAnnotations(string fullName, IODataAnnotatable annotatable, Dictionary<string, Annotations> schemaLevelAnnotations)
+        {
+            if (annotatable.Annotation?.Count > 0)
+            {
+                if (schemaLevelAnnotations.TryGetValue(fullName, out Annotations annotations))
+                {
+                    foreach (var annotation in annotatable.Annotation)
+                    {
+                        var existingAnnotation = annotations.AnnotationList.FirstOrDefault(a => a.Term == annotation.Term);
+                        if (existingAnnotation != null && annotation.Collection != null && annotation.Collection.Records?.Count > 0)
+                        {
+                            if (existingAnnotation.Collection == null)
+                            {
+                                existingAnnotation.Collection = new RecordCollection();
+                            }
 
+                            if (existingAnnotation.Collection.Records == null)
+                            {
+                                existingAnnotation.Collection.Records = new List<Record>();
+                            }
+                            existingAnnotation.Collection.Records.AddRange(annotation.Collection.Records);
+                        }
+                        else
+                        {
+                            if (existingAnnotation == null)
+                            {
+                                annotations.AnnotationList.Add(annotation);
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    schemaLevelAnnotations[fullName] = new Annotations
+                    {
+                        Target = fullName,
+                        AnnotationList = annotatable.Annotation,
+                    };
+                }
+
+                annotatable.Annotation = null;
+            }
+        }
         private static void MergeAnnotations(string fullName, IODataAnnotatable annotatable, Dictionary<string, Annotations> schemaLevelAnnotations)
         {
             if (annotatable.Annotation?.Count > 0)
@@ -1066,9 +1131,10 @@ namespace ApiDoctor.Publishing.CSDL
         }
 
         // EntitySet is something in the format of /name/{var}
-        private readonly static System.Text.RegularExpressions.Regex EntitySetPathRegEx = new System.Text.RegularExpressions.Regex(@"^\/(\w*)\/{var}$");
-        // Singleton is something in the format of /name
-        private readonly static System.Text.RegularExpressions.Regex SingletonPathRegEx = new System.Text.RegularExpressions.Regex(@"^\/(\w*)$");
+        private static readonly System.Text.RegularExpressions.Regex EntitySetPathRegEx = new (@"\/(\w*)\/{var}$", System.Text.RegularExpressions.RegexOptions.Compiled);
+        // Singleton is something in the format of /name or /root/child/subChild where root is the singleton
+        private static readonly System.Text.RegularExpressions.Regex SingletonPathRegEx = new (@"\/(\w*)$", System.Text.RegularExpressions.RegexOptions.Compiled);
+        private static readonly System.Text.RegularExpressions.Regex FullSingletonPathRegEx = new(@"\/(\w*)", System.Text.RegularExpressions.RegexOptions.Compiled);
 
         /// <summary>
         /// Parse the URI paths for methods defined in the documentation and construct an entity container that contains these
@@ -1124,7 +1190,7 @@ namespace ApiDoctor.Publishing.CSDL
                         var singleton = new Singleton
                         {
                             Name = name,
-                            Type = methodCollection.ResponseType.ODataResourceName(),
+                            Type = methodCollection.ResponseType?.ODataResourceName(),
                             SourceMethods = methodCollection,
                         };
 
@@ -1550,6 +1616,197 @@ namespace ApiDoctor.Publishing.CSDL
             public int GetHashCode(EnumerationDefinition obj)
             {
                 return obj?.MemberName.GetHashCode() ?? 0;
+            }
+        }
+        private static void AddEntitySourceMethods(EntityFramework edmx, MethodCollection methodCollection, string path)
+        {
+            if (EntitySetPathRegEx.IsMatch(path))
+            {
+                var matches = EntitySetPathRegEx.Matches(path);
+                var name = matches[0].Groups[1].Value;
+                edmx.AddSetSourceMethods(methodCollection, x => x.EntitySets, name);
+            }
+        }
+
+        private static void AddSingletonSourceMethods(EntityFramework edmx, MethodCollection methodCollection, string path)
+        {
+            if (SingletonPathRegEx.IsMatch(path))
+            {
+                var matches = FullSingletonPathRegEx.Matches(path);
+                var name = matches[0].Groups[1].Value;
+                edmx.AddSetSourceMethods(methodCollection, x => x.Singletons, name);
+                edmx.AddSetSourceMethods(methodCollection, x => x.EntitySets, name);
+            }
+        }
+
+        private void AddSourceMethods(EntityFramework edmx, string[] baseUrlsToRemove, IssueLogger issues)
+        {
+            Dictionary<string, MethodCollection> uniqueRequestPaths = GetUniqueRequestPaths(baseUrlsToRemove, issues);
+            var resourcePaths = uniqueRequestPaths.Keys.OrderBy(x => x).ToArray();
+
+            foreach (var path in resourcePaths)
+            {
+                try
+                {
+                    var methodCollection = uniqueRequestPaths[path];
+                    AddEntitySourceMethods(edmx, methodCollection, path);
+                    AddSingletonSourceMethods(edmx, methodCollection, path);
+                }
+                catch (Exception ex)
+                {
+                    issues.Error(ValidationErrorCode.Unknown, $"BuildEntityContainer: error in path {path}", ex);
+                }
+            }
+        }
+        
+        private static void AddRestrictionAnnotations(Dictionary<string, Annotations> annotationsMap, ISet set, MethodCollection methods, string target, IssueLogger issues)
+        {
+            if (methods != null)
+            {
+                var targetsAndAnnotations = AddRestrictionAnnotations(set, methods, target, issues);
+                foreach (var (currentTarget, oDataAnnotatables) in targetsAndAnnotations)
+                {
+                    foreach (var oDataAnnotatable in oDataAnnotatables.Distinct())
+                    {
+                        FixUpAnnotations(currentTarget, oDataAnnotatable, annotationsMap);
+                    }
+                }
+            }
+        }
+
+        private static Dictionary<string, List<IODataAnnotatable>> AddRestrictionAnnotations(ISet set, MethodCollection sourceMethod, string target, IssueLogger issues)
+        {
+            var targets = new Dictionary<string, List<IODataAnnotatable>>();
+
+            foreach (var method in sourceMethod)
+            {
+                var url = method.RequestUriPathOnly(DocSet.SchemaConfig.BaseUrls, issues);
+                var matches = FullSingletonPathRegEx.Matches(url);
+                if (matches is { Count: > 0 } && matches[0].Groups[1].Value != set.Name)
+                {
+                    continue;
+                }
+                var stringBuilder = new StringBuilder(target);
+                foreach (var match in matches.Skip(1))
+                {
+                    var value = match.Groups[1]?.Value;
+                    if (!string.IsNullOrWhiteSpace(value))
+                    {
+                        stringBuilder.Append('/');
+                        stringBuilder.Append(value);
+                    }
+                }
+                IODataAnnotatable annotatable = new Property();
+                var path = stringBuilder.ToString();
+                if (path.Equals(target, StringComparison.OrdinalIgnoreCase))
+                {
+                    annotatable = (IODataAnnotatable)set;
+                }
+                var verb = method.HttpMethodVerb();
+                switch (verb)
+                {
+                    case "GET" when url.EndsWith("}", StringComparison.OrdinalIgnoreCase):
+                        AddReadByKeyRestriction(annotatable, method);
+                        break;
+                    case "GET":
+                        AddRestrictionAnnotation(annotatable, method, Term.ReadRestrictionTerm);
+                        break;
+                    case "POST":
+                        AddRestrictionAnnotation(annotatable, method, Term.InsertRestrictionsTerm);
+                        break;
+                    case "PUT":
+                    case "PATCH":
+                        AddRestrictionAnnotation(annotatable, method, Term.UpdateRestrictions);
+                        break;
+                    case "DELETE":
+                        AddRestrictionAnnotation(annotatable, method, Term.DeleteRestrictions);
+                        break;
+                    default:
+                        issues.Error(ValidationErrorCode.HttpMethodOutOfRange, "HttpMethod Verb Out of Range");
+                        break;
+                }
+                var key = stringBuilder.ToString();
+                var exists = targets.TryGetValue(key, out var annotationsList);
+                if (exists)
+                {
+                    annotationsList.Add(annotatable);
+                }
+                else
+                {
+                    targets.Add(key, new List<IODataAnnotatable> { annotatable });
+                }
+            }
+            return targets;
+        }
+
+        private static PropertyValue GetNestedRestriction(MethodDefinition sourceMethod, string propertyRestriction = Term.ReadByKeyRestrictionsTerm)
+        {
+            var propertyValue = new PropertyValue
+            {
+                Property = propertyRestriction,
+                Records = new List<Record> { new() { PropertyValues = GetDescriptionPropertyValues(sourceMethod) } }
+            };
+            return propertyValue;
+        }
+
+        private static List<PropertyValue> GetDescriptionPropertyValues(MethodDefinition sourceMethod)
+        {
+            var descriptionPropertyValues = new List<PropertyValue>
+            {
+                new() {Property = "Description", String = sourceMethod.Title},
+                new() {Property = "LongDescription", String = sourceMethod.Description.ToStringClean()}
+            };
+            return descriptionPropertyValues;
+        }
+
+        private static void AddReadByKeyRestriction(IODataAnnotatable annotatable, MethodDefinition sourceMethod)
+        {
+            annotatable.Annotation ??= new List<Annotation>();
+            var readRestriction =
+                annotatable.Annotation.FirstOrDefault(annotation => annotation.Term == Term.ReadRestrictionTerm);
+            if (readRestriction != null)
+            {
+                var propertyValue = readRestriction.Records
+                    .SelectMany(c => c.PropertyValues)
+                    .FirstOrDefault(x => x.Property == Term.ReadByKeyRestrictionsTerm);
+                if (propertyValue == null)
+                {
+                    readRestriction.Records[0].PropertyValues.Add(GetNestedRestriction(sourceMethod));
+                }
+            }
+            else
+            {
+                AddRestrictionAnnotation(annotatable, sourceMethod, Term.ReadRestrictionTerm);
+                AddReadByKeyRestriction(annotatable, sourceMethod);
+            }
+        }
+
+        private static void AddRestrictionAnnotation(IODataAnnotatable annotatable, MethodDefinition sourceMethod,
+            string restriction)
+        {
+            annotatable.Annotation ??= new List<Annotation>();
+            var existingAnnotation = annotatable.Annotation.FirstOrDefault(x => x.Term == restriction);
+            var property = GetDescriptionPropertyValues(sourceMethod);
+            var record = new Record { PropertyValues = property };
+            if (existingAnnotation == null)
+            {
+                existingAnnotation = new Annotation
+                {
+                    Term = restriction,
+                    Records = new List<Record> { record }
+                };
+                annotatable.Annotation.Add(existingAnnotation);
+            }
+            else
+            {
+                var currentRecord = existingAnnotation.Records[0];
+                foreach (var propertyValue in property)
+                {
+                    if (!currentRecord.PropertyValues.Exists(c => c.Property == propertyValue.Property))
+                    {
+                        currentRecord.PropertyValues.Add(propertyValue);
+                    }
+                }
             }
         }
     }
