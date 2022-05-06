@@ -1190,7 +1190,7 @@ namespace ApiDoctor.Publishing.CSDL
                         var singleton = new Singleton
                         {
                             Name = name,
-                            Type = methodCollection.ResponseType.ODataResourceName(),
+                            Type = methodCollection.ResponseType?.ODataResourceName(),
                             SourceMethods = methodCollection,
                         };
 
@@ -1761,6 +1761,7 @@ namespace ApiDoctor.Publishing.CSDL
 
         private static void AddReadByKeyRestriction(IODataAnnotatable annotatable, MethodDefinition sourceMethod)
         {
+            annotatable.Annotation ??= new List<Annotation>();
             var readRestriction =
                 annotatable.Annotation.FirstOrDefault(annotation => annotation.Term == Term.ReadRestrictionTerm);
             if (readRestriction != null)
@@ -1783,6 +1784,7 @@ namespace ApiDoctor.Publishing.CSDL
         private static void AddRestrictionAnnotation(IODataAnnotatable annotatable, MethodDefinition sourceMethod,
             string restriction)
         {
+            annotatable.Annotation ??= new List<Annotation>();
             var existingAnnotation = annotatable.Annotation.FirstOrDefault(x => x.Term == restriction);
             var property = GetDescriptionPropertyValues(sourceMethod);
             var record = new Record { PropertyValues = property };

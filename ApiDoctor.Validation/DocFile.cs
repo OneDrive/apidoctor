@@ -262,7 +262,9 @@ namespace ApiDoctor.Validation
         /// Parses the file contents and removes yaml front matter from the markdown.
         /// </summary>
         /// <param name="contents">Contents.</param>
-        internal static (string YamlFrontMatter, string ProcessedContent) ParseAndRemoveYamlFrontMatter(string contents, IssueLogger issues)
+        /// <param name="issues">The issue logger to use</param>
+        /// <param name="isInclude">Whether the file contents is part of another file</param>
+        internal static (string YamlFrontMatter, string ProcessedContent) ParseAndRemoveYamlFrontMatter(string contents, IssueLogger issues, bool isInclude = false)
         {
             const string yamlFrontMatterHeader = "---";
             using var reader = new StringReader(contents);
@@ -278,7 +280,7 @@ namespace ApiDoctor.Validation
                         if (!string.IsNullOrWhiteSpace(trimmedCurrentLine) && trimmedCurrentLine != yamlFrontMatterHeader)
                         {
                             var requiredYamlHeaders = DocSet.SchemaConfig.RequiredYamlHeaders;
-                            if (requiredYamlHeaders.Any())
+                            if (requiredYamlHeaders.Any() && !isInclude)//include files don't need the headers
                             {
                                 issues.Error(ValidationErrorCode.RequiredYamlHeaderMissing, $"Missing required YAML headers: {requiredYamlHeaders.ComponentsJoinedByString(", ")}");
                             }
