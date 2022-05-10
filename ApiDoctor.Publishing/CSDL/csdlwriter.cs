@@ -420,7 +420,7 @@ namespace ApiDoctor.Publishing.CSDL
             this.AddSourceMethods(edmx, DocSet.SchemaConfig.BaseUrls, issues);
             foreach (var schema in edmx.DataServices.Schemas)
             {
-                var annotationsMap = schema.Annotations.ToDictionary(an => an.Target);
+                var annotationsMap = schema.Annotations.GroupBy(static x => x.Target).ToDictionary(static g => g.Key, static x => x.First());
                 foreach (var container in schema.EntityContainers)
                 {
                     var prefix = schema.Namespace + "." + container.Name;
