@@ -104,6 +104,7 @@ namespace ApiDoctor.Validation
                         method.RequestBodyParameters.AddRange(requestBodyResource.Parameters);
                     }
                 }
+                method.HttpRequest = requestExample;
             }
             catch (Exception ex)
             {
@@ -128,6 +129,11 @@ namespace ApiDoctor.Validation
         public string Request {get; private set;}
 
         /// <summary>
+        /// The parsed Request data from the documentation. 
+        /// </summary>
+        public HttpRequest HttpRequest { get; private set; }
+
+        /// <summary>
         /// Properties about the Request populated from the documentation
         /// </summary>
         public CodeBlockAnnotation RequestMetadata { get; private set; }
@@ -148,7 +154,7 @@ namespace ApiDoctor.Validation
         /// </summary>
         /// <value>The source file.</value>
         public DocFile SourceFile {get; private set;}
-        
+
         /// <summary>
         /// The raw HTTP response from the actual service
         /// </summary>
@@ -366,7 +372,7 @@ namespace ApiDoctor.Validation
                 builder = new UriBuilder(request.Url);
                 path = builder.Path;
             }
-            
+
             string[] parts = path.Split('/');
             if (parts.Length > 0)
             {
@@ -415,7 +421,7 @@ namespace ApiDoctor.Validation
                     request.Headers.Add(split[0], split[1]);
                 }
             }
-        }    
+        }
 
         internal static void AddAccessTokenToRequest(AuthenicationCredentials credentials, HttpRequest request)
         {
@@ -471,7 +477,7 @@ namespace ApiDoctor.Validation
 
                 if (param.Value == null)
                     request.Headers.Remove(headerName);
-                else 
+                else
                     request.Headers[headerName] = param.Value;
             }
         }
@@ -587,7 +593,7 @@ namespace ApiDoctor.Validation
         private void VerifyResponseBody(HttpResponse actualResponse, HttpResponse expectedResponse, IssueLogger issues, ValidationOptions options = null)
         {
             if (string.IsNullOrEmpty(actualResponse.Body) &&
-                ((expectedResponse != null && !string.IsNullOrEmpty(expectedResponse.Body)) || 
+                ((expectedResponse != null && !string.IsNullOrEmpty(expectedResponse.Body)) ||
                  (this.ExpectedResponseMetadata != null && this.ExpectedResponseMetadata.ResourceType != null)))
             {
                 issues.Error(ValidationErrorCode.HttpBodyExpected, "Body missing from response (expected response includes a body or a response type was provided).");

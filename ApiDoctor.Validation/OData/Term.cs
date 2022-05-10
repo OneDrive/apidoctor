@@ -66,6 +66,11 @@ namespace ApiDoctor.Validation.OData
         public const string SearchRestrictionsTerm = "Org.OData.Capabilities.V1.SearchRestrictions";
         public const string ChangeTrackingTerm = "Org.OData.Capabilities.V1.ChangeTracking";
         public const string NavigationRestrictionsTerm = "Org.OData.Capabilities.V1.NavigationRestrictions";
+        public const string ReadRestrictionTerm = "Org.OData.Capabilities.V1.ReadRestrictions";
+        public const string ReadByKeyRestrictionsTerm = "ReadByKeyRestrictions";
+        public const string InsertRestrictionsTerm = "Org.OData.Capabilities.V1.InsertRestrictions";
+        public const string UpdateRestrictions = "Org.OData.Capabilities.V1.UpdateRestrictions";
+        public const string DeleteRestrictions = "Org.OData.Capabilities.V1.DeleteRestrictions";
 
 
         [XmlIgnore, MergePolicy(MergePolicy.Ignore)]

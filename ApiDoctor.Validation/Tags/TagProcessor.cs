@@ -70,8 +70,9 @@ namespace ApiDoctor.Validation.Tags
         /// Loads Markdown content from a file and removes unwanted content in preparation for passing to MarkdownDeep converter.
         /// </summary>
         /// <param name="sourceFile">The file containing the Markdown contents to preprocess.</param>
+        /// <param name="issues"></param>
         /// <returns>The preprocessed contents of the file.</returns>
-        public string Preprocess(FileInfo sourceFile)
+        public string Preprocess(FileInfo sourceFile, IssueLogger issues)
         {
             using (var writer = new StringWriter())
             using (var reader = new StreamReader(sourceFile.OpenRead()))
@@ -180,9 +181,10 @@ namespace ApiDoctor.Validation.Tags
                                 continue;
                             }
 
-                            var includeContent = Preprocess(includeFile);
-
-                            writer.WriteLine(includeContent);
+                            // Include Files can have Yaml Front Matter as well.
+                            var includeContent = Preprocess(includeFile, issues);
+                            var (_, processedContent) = DocFile.ParseAndRemoveYamlFrontMatter(includeContent, issues,true);
+                            writer.WriteLine(processedContent);
                         }
                         else
                         {
@@ -388,7 +390,6 @@ namespace ApiDoctor.Validation.Tags
         /// <returns></returns>
         private static bool IsDocFxVideoLine(string text)
         {
-            var upperNextLine = text.ToUpper();
             if (text.ToUpper().Contains("VIDEO"))
             {
                 return VideoFormat.IsMatch(text);
@@ -432,7 +433,7 @@ namespace ApiDoctor.Validation.Tags
             {
                 var relativePath = Path.ChangeExtension(m.Groups[1].Value, "md");
 
-                var fullPathToIncludeFile = string.Empty;
+                string fullPathToIncludeFile;
 
                 if (Path.IsPathRooted(relativePath))
                 {

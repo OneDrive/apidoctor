@@ -1,4 +1,4 @@
-/*
+﻿/*
  * API Doctor
  * Copyright (c) Microsoft Corporation
  * All rights reserved. 
@@ -197,12 +197,13 @@ namespace ApiDoctor.Validation
             return tagProcessor.PostProcess(inputHtml, fileInfo, null);
         }
 
-        protected virtual string GetContentsOfFile(string tags)
+        protected virtual string GetContentsOfFile(string tags, IssueLogger issues = default)
         {
+            _ = issues ?? throw new ArgumentNullException(nameof(issues));
             // Preprocess file content
             FileInfo docFile = new FileInfo(this.FullPath);
             TagProcessor tagProcessor = new TagProcessor(tags, Parent.SourceFolderPath);
-            return tagProcessor.Preprocess(docFile);
+            return tagProcessor.Preprocess(docFile, issues);
         }
 
         /// <summary>
@@ -241,9 +242,14 @@ namespace ApiDoctor.Validation
         {
             try
             {
-                string fileContents = this.GetContentsOfFile(tags);
-                fileContents = this.ParseAndRemoveYamlFrontMatter(fileContents, issues);
-                return fileContents;
+                string fileContents = this.GetContentsOfFile(tags, issues);
+                var (yamlFrontMatter, processedContent) = ParseAndRemoveYamlFrontMatter(fileContents, issues);
+                // Only Parse Yaml metadata if its present.
+                if (!string.IsNullOrWhiteSpace(yamlFrontMatter))
+                {
+                    ParseYamlMetadata(yamlFrontMatter, issues);
+                }
+                return processedContent;
             }
             catch (Exception ex)
             {
@@ -256,74 +262,72 @@ namespace ApiDoctor.Validation
         /// Parses the file contents and removes yaml front matter from the markdown.
         /// </summary>
         /// <param name="contents">Contents.</param>
-        private string ParseAndRemoveYamlFrontMatter(string contents, IssueLogger issues)
+        /// <param name="issues">The issue logger to use</param>
+        /// <param name="isInclude">Whether the file contents is part of another file</param>
+        internal static (string YamlFrontMatter, string ProcessedContent) ParseAndRemoveYamlFrontMatter(string contents, IssueLogger issues, bool isInclude = false)
         {
-            const string YamlFrontMatterHeader = "---";
-            using (StringReader reader = new StringReader(contents))
+            const string yamlFrontMatterHeader = "---";
+            using var reader = new StringReader(contents);
+            var currentLine = reader.ReadLine();
+            var frontMatter = new System.Text.StringBuilder();
+            var currentState = YamlFrontMatterDetectionState.NotDetected;
+            while (currentLine != null && currentState != YamlFrontMatterDetectionState.SecondTokenFound)
             {
-                string currentLine = reader.ReadLine();
-                System.Text.StringBuilder frontMatter = new System.Text.StringBuilder();
-                YamlFrontMatterDetectionState currentState = YamlFrontMatterDetectionState.NotDetected;
-                while (currentLine != null && currentState != YamlFrontMatterDetectionState.SecondTokenFound)
+                var trimmedCurrentLine = currentLine.Trim();
+                switch (currentState)
                 {
-                    string trimmedCurrentLine = currentLine.Trim();
-                    switch (currentState)
-                    {
-                        case YamlFrontMatterDetectionState.NotDetected:
-                            if (!string.IsNullOrWhiteSpace(trimmedCurrentLine) && trimmedCurrentLine != YamlFrontMatterHeader)
+                    case YamlFrontMatterDetectionState.NotDetected:
+                        if (!string.IsNullOrWhiteSpace(trimmedCurrentLine) && trimmedCurrentLine != yamlFrontMatterHeader)
+                        {
+                            var requiredYamlHeaders = DocSet.SchemaConfig.RequiredYamlHeaders;
+                            if (requiredYamlHeaders.Any() && !isInclude)//include files don't need the headers
                             {
-                                var requiredYamlHeaders = DocSet.SchemaConfig.RequiredYamlHeaders;
-                                if (requiredYamlHeaders.Any())
-                                {
-                                    issues.Error(ValidationErrorCode.RequiredYamlHeaderMissing, $"Missing required YAML headers: {requiredYamlHeaders.ComponentsJoinedByString(", ")}");
-                                }
+                                issues.Error(ValidationErrorCode.RequiredYamlHeaderMissing, $"Missing required YAML headers: {requiredYamlHeaders.ComponentsJoinedByString(", ")}");
+                            }
 
-                                // This file doesn't have YAML front matter, so we just return the full contents of the file
-                                return contents;
-                            }
-                            else if (trimmedCurrentLine == YamlFrontMatterHeader)
-                            {
-                                currentState = YamlFrontMatterDetectionState.FirstTokenFound;
-                            }
-                            break;
-                        case YamlFrontMatterDetectionState.FirstTokenFound:
-                            if (trimmedCurrentLine == YamlFrontMatterHeader)
-                            {
-                                // Found the end of the YAML front matter, so move to the final state
-                                currentState = YamlFrontMatterDetectionState.SecondTokenFound;
-                            }
-                            else
-                            {
-                                // Store the YAML data into our header
-                                frontMatter.AppendLine(currentLine);
-                            }
-                            break;
+                            // This file doesn't have YAML front matter, so we just return the full contents of the file
+                            return (YamlFrontMatter: null, ProcessedContent: contents);
+                        }
+                        else if (trimmedCurrentLine == yamlFrontMatterHeader)
+                        {
+                            currentState = YamlFrontMatterDetectionState.FirstTokenFound;
+                        }
+                        break;
+                    case YamlFrontMatterDetectionState.FirstTokenFound:
+                        if (trimmedCurrentLine == yamlFrontMatterHeader)
+                        {
+                            // Found the end of the YAML front matter, so move to the final state
+                            currentState = YamlFrontMatterDetectionState.SecondTokenFound;
+                        }
+                        else
+                        {
+                            // Store the YAML data into our header
+                            frontMatter.AppendLine(currentLine);
+                        }
+                        break;
 
-                        case YamlFrontMatterDetectionState.SecondTokenFound:
-                            break;
-                    }
-
-                    if (currentState != YamlFrontMatterDetectionState.SecondTokenFound)
-                    {
-                        currentLine = reader.ReadLine();
-                    }
+                    case YamlFrontMatterDetectionState.SecondTokenFound:
+                        break;
                 }
 
-                if (currentState == YamlFrontMatterDetectionState.SecondTokenFound)
+                if (currentState != YamlFrontMatterDetectionState.SecondTokenFound)
                 {
-                    // Parse YAML metadata
-                    ParseYamlMetadata(frontMatter.ToString(), issues);
-                    return reader.ReadToEnd();
+                    currentLine = reader.ReadLine();
                 }
-                else
-                {
-                    // Something went wrong along the way, so we just return the full file
-                    return contents;
-                }
+            }
+
+            if (currentState == YamlFrontMatterDetectionState.SecondTokenFound)
+            {
+                return (YamlFrontMatter: frontMatter.ToString(), ProcessedContent: reader.ReadToEnd());
+            }
+            else
+            {
+                // Something went wrong along the way, so we just return the full file
+                return (YamlFrontMatter: null, ProcessedContent: contents);
             }
         }
 
-        private void ParseYamlMetadata(string yamlMetadata, IssueLogger issues)
+        internal static void ParseYamlMetadata(string yamlMetadata, IssueLogger issues)
         {
             Dictionary<string, string> dictionary = new Dictionary<string, string>();
             string[] items = yamlMetadata.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
@@ -402,7 +406,7 @@ namespace ApiDoctor.Validation
             var blockContent = GetBlockContent(block);
             if (blockContent == string.Empty)
                 return blockContent;
-            
+
             const int previewLength = 35;
 
             string contentPreview = block.Content.Length > previewLength ? block.Content.Substring(0, previewLength) : block.Content;
@@ -446,12 +450,13 @@ namespace ApiDoctor.Validation
         /// Convert blocks of text found inside the markdown file into things we know how to work
         /// with (methods, resources, examples, etc).
         /// </summary>
-        /// <param name="errors"></param>
+        /// <param name="issues"></param>
         /// <returns></returns>
         protected bool ParseMarkdownBlocks(IssueLogger issues)
         {
             string methodTitle = null;
             string methodDescription = null;
+            List<string> methodDescriptionsData = new List<string>();
 
             Block previousHeaderBlock = null;
 
@@ -471,7 +476,7 @@ namespace ApiDoctor.Validation
                 }
 
                 // Capture h1 and/or p element to be used as the title and description for items on this page
-                if (IsHeaderBlock(block))
+                if (block.BlockType == BlockType.h1)
                 {
                     methodTitle = block.Content;
                     methodDescription = null;       // Clear this because we don't want new title + old description
@@ -484,9 +489,10 @@ namespace ApiDoctor.Validation
                         issues.Warning(ValidationErrorCode.MissingHeaderBlock,
                             $"Paragraph text found before a valid header: {block.Content.Substring(0, Math.Min(block.Content.Length, 20))}...");
                     }
-                    else if (IsHeaderBlock(previousHeaderBlock))
+                    else if (previousHeaderBlock.BlockType == BlockType.h1)
                     {
-                        methodDescription = block.Content;
+                        methodDescriptionsData.Add(block.Content);
+                        methodDescription = string.Join(" ", methodDescriptionsData.Skip(1));
                         issues.Message($"Found description: {methodDescription}");
                     }
                 }
@@ -776,7 +782,7 @@ namespace ApiDoctor.Validation
 
             var elementsFoundInDocument = elements as IList<object> ?? elements.ToList();
             var foundMethods = elementsFoundInDocument.OfType<MethodDefinition>().ToList();
-            var foundTables = elementsFoundInDocument.OfType<TableDefinition>().ToList();            
+            var foundTables = elementsFoundInDocument.OfType<TableDefinition>().ToList();
             var foundResources = elementsFoundInDocument.OfType<ResourceDefinition>()
                 .Select(c => { c.Namespace = this.Namespace; return c; }).ToList();
             var foundEnums = foundTables.Where(t => t.Type == TableBlockType.EnumerationValues)
@@ -795,7 +801,7 @@ namespace ApiDoctor.Validation
             string inferredNamespace = null;
             if (foundResource != null)
             {
-                if (foundResource.Name.Contains('.')) { 
+                if (foundResource.Name.Contains('.')) {
                     inferredNamespace = foundResource.Name.Substring(0, foundResource.Name.LastIndexOf('.'));
                 }
                 if (this.Annotation?.Namespace != null && this.Annotation.Namespace != inferredNamespace)
@@ -1053,7 +1059,7 @@ namespace ApiDoctor.Validation
                 {
                     issues.Error(ValidationErrorCode.HttpParserError, $"Exception while parsing HTTP request", ex);
                 }
-                
+
                 if (distinctMethodNames == 1)
                 {
                     foreach (var method in foundMethods)
