@@ -73,6 +73,8 @@ namespace ApiDoctor.Validation
         /// Contains information on the headers and content blocks found in this document.
         /// </summary>
         public List<string> ContentOutline { get; set; }
+        
+        public PageType DocumentPageType { get; protected set; } = PageType.Unknown;
 
         public ResourceDefinition[] Resources
         {
@@ -248,6 +250,7 @@ namespace ApiDoctor.Validation
                 if (!string.IsNullOrWhiteSpace(yamlFrontMatter))
                 {
                     ParseYamlMetadata(yamlFrontMatter, issues);
+                    SetDocumentTypeFromYamlMetadata(yamlFrontMatter);
                 }
                 return processedContent;
             }
@@ -368,11 +371,39 @@ namespace ApiDoctor.Validation
             }
         }
 
+        /// <summary>
+        /// Get document type from YAML front matter
+        /// </summary>
+        /// <returns></returns>
+        private void SetDocumentTypeFromYamlMetadata(string yamlMetadata)
+        {
+            PageType pageType = PageType.Unknown;
+            string[] items = yamlMetadata.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (string item in items)
+            {
+                string[] keyValue = item.Split(':');
+                if (keyValue.Length == 2 && keyValue[0].Trim() == "doc_type")
+                {
+                    Enum.TryParse(keyValue[1].Replace("\"", string.Empty), true, out pageType);
+                }
+            }
+            this.DocumentPageType = pageType;
+        }
+
         private enum YamlFrontMatterDetectionState
         {
             NotDetected,
             FirstTokenFound,
             SecondTokenFound
+        }
+
+        public enum PageType
+        {
+            Unknown,
+            ResourcePageType,
+            ApiPageType,
+            ConceptualPageType,
+            EnumPageType
         }
 
         private static bool IsHeaderBlock(Block block, int maxDepth = 2)
