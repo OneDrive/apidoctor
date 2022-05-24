@@ -73,7 +73,7 @@ namespace ApiDoctor.Validation
         /// Contains information on the headers and content blocks found in this document.
         /// </summary>
         public List<string> ContentOutline { get; set; }
-        
+
         public PageType DocumentPageType { get; protected set; } = PageType.Unknown;
 
         public ResourceDefinition[] Resources
@@ -523,7 +523,7 @@ namespace ApiDoctor.Validation
                     else if (previousHeaderBlock.BlockType == BlockType.h1)
                     {
                         methodDescriptionsData.Add(block.Content);
-                        methodDescription = string.Join(" ", methodDescriptionsData.Skip(1));
+                        methodDescription = string.Join(" ", methodDescriptionsData.Skip(1)).RemoveMarkdownLinksFromText();
                         issues.Message($"Found description: {methodDescription}");
                     }
                 }
@@ -832,7 +832,8 @@ namespace ApiDoctor.Validation
             string inferredNamespace = null;
             if (foundResource != null)
             {
-                if (foundResource.Name.Contains('.')) {
+                if (foundResource.Name.Contains('.'))
+                {
                     inferredNamespace = foundResource.Name.Substring(0, foundResource.Name.LastIndexOf('.'));
                 }
                 if (this.Annotation?.Namespace != null && this.Annotation.Namespace != inferredNamespace)
@@ -865,10 +866,10 @@ namespace ApiDoctor.Validation
             // if we thought it was a table of type EnumerationValues, it probably holds enum values. 
             // throw error if member name is null which could mean a wrong column name
             foreach (var enumType in foundEnums.Where(e => string.IsNullOrEmpty(e.MemberName) && !string.IsNullOrEmpty(e.TypeName))
-                .Select(x => new { x.TypeName, x.Namespace}).Distinct())
+                .Select(x => new { x.TypeName, x.Namespace }).Distinct())
             {
                 var possibleHeaderNames = this.Parent?.TableParserConfig?.TableDefinitions.Rules
-                    .Where(r => r.Type == "EnumerationDefinition").SelectMany(r => r.ColumnNames["memberName"]) .ToList();
+                    .Where(r => r.Type == "EnumerationDefinition").SelectMany(r => r.ColumnNames["memberName"]).ToList();
 
                 issues.Error(ValidationErrorCode.ParameterParserError,
                     $"Failed to parse enumeration values for type {enumType.Namespace}.{enumType.TypeName}. " +
