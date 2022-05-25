@@ -385,6 +385,7 @@ namespace ApiDoctor.Validation
                 if (keyValue.Length == 2 && keyValue[0].Trim() == "doc_type")
                 {
                     Enum.TryParse(keyValue[1].Replace("\"", string.Empty), true, out pageType);
+                    break; //no need to keep processing as we've found the doctype tag
                 }
             }
             this.DocumentPageType = pageType;
