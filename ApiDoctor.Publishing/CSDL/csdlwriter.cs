@@ -1249,6 +1249,12 @@ namespace ApiDoctor.Publishing.CSDL
                         continue;
                     }
 
+                    if (m.SourceFile.DocumentPageType != DocFile.PageType.ApiPageType)
+                    {
+                        // Ignore if not ApiPageType
+                        continue;
+                    }
+
                     var path = m.RequestUriPathOnly(baseUrlsToRemove, issues);
                     if (!path.StartsWith("/"))
                     {
@@ -1753,8 +1759,8 @@ namespace ApiDoctor.Publishing.CSDL
         {
             var descriptionPropertyValues = new List<PropertyValue>
             {
-                new() {Property = "Description", String = sourceMethod.Title},
-                new() {Property = "LongDescription", String = sourceMethod.Description.ToStringClean()}
+                new() { Property = "Description", String = sourceMethod.Title.ToStringClean() },
+                new() { Property = "LongDescription", String = sourceMethod.Description.ToStringClean() }
             };
             return descriptionPropertyValues;
         }

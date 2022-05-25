@@ -74,6 +74,8 @@ namespace ApiDoctor.Validation
         /// </summary>
         public List<string> ContentOutline { get; set; }
 
+        public PageType DocumentPageType { get; protected set; } = PageType.Unknown;
+
         public ResourceDefinition[] Resources
         {
             get { return this.resources.ToArray(); }
@@ -248,6 +250,7 @@ namespace ApiDoctor.Validation
                 if (!string.IsNullOrWhiteSpace(yamlFrontMatter))
                 {
                     ParseYamlMetadata(yamlFrontMatter, issues);
+                    SetDocumentTypeFromYamlMetadata(yamlFrontMatter);
                 }
                 return processedContent;
             }
@@ -368,11 +371,40 @@ namespace ApiDoctor.Validation
             }
         }
 
+        /// <summary>
+        /// Get document type from YAML front matter
+        /// </summary>
+        /// <returns></returns>
+        private void SetDocumentTypeFromYamlMetadata(string yamlMetadata)
+        {
+            PageType pageType = PageType.Unknown;
+            string[] items = yamlMetadata.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (string item in items)
+            {
+                string[] keyValue = item.Split(':');
+                if (keyValue.Length == 2 && keyValue[0].Trim() == "doc_type")
+                {
+                    Enum.TryParse(keyValue[1].Replace("\"", string.Empty), true, out pageType);
+                    break; //no need to keep processing as we've found the doctype tag
+                }
+            }
+            this.DocumentPageType = pageType;
+        }
+
         private enum YamlFrontMatterDetectionState
         {
             NotDetected,
             FirstTokenFound,
             SecondTokenFound
+        }
+
+        public enum PageType
+        {
+            Unknown,
+            ResourcePageType,
+            ApiPageType,
+            ConceptualPageType,
+            EnumPageType
         }
 
         private static bool IsHeaderBlock(Block block, int maxDepth = 2)
@@ -492,7 +524,7 @@ namespace ApiDoctor.Validation
                     else if (previousHeaderBlock.BlockType == BlockType.h1)
                     {
                         methodDescriptionsData.Add(block.Content);
-                        methodDescription = string.Join(" ", methodDescriptionsData.Skip(1));
+                        methodDescription = string.Join(" ", methodDescriptionsData.Skip(1)).RemoveMarkdownLinksFromText();
                         issues.Message($"Found description: {methodDescription}");
                     }
                 }
@@ -801,7 +833,8 @@ namespace ApiDoctor.Validation
             string inferredNamespace = null;
             if (foundResource != null)
             {
-                if (foundResource.Name.Contains('.')) {
+                if (foundResource.Name.Contains('.'))
+                {
                     inferredNamespace = foundResource.Name.Substring(0, foundResource.Name.LastIndexOf('.'));
                 }
                 if (this.Annotation?.Namespace != null && this.Annotation.Namespace != inferredNamespace)
@@ -834,10 +867,10 @@ namespace ApiDoctor.Validation
             // if we thought it was a table of type EnumerationValues, it probably holds enum values. 
             // throw error if member name is null which could mean a wrong column name
             foreach (var enumType in foundEnums.Where(e => string.IsNullOrEmpty(e.MemberName) && !string.IsNullOrEmpty(e.TypeName))
-                .Select(x => new { x.TypeName, x.Namespace}).Distinct())
+                .Select(x => new { x.TypeName, x.Namespace }).Distinct())
             {
                 var possibleHeaderNames = this.Parent?.TableParserConfig?.TableDefinitions.Rules
-                    .Where(r => r.Type == "EnumerationDefinition").SelectMany(r => r.ColumnNames["memberName"]) .ToList();
+                    .Where(r => r.Type == "EnumerationDefinition").SelectMany(r => r.ColumnNames["memberName"]).ToList();
 
                 issues.Error(ValidationErrorCode.ParameterParserError,
                     $"Failed to parse enumeration values for type {enumType.Namespace}.{enumType.TypeName}. " +

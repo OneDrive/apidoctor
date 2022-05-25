@@ -45,7 +45,8 @@ namespace ApiDoctor.Validation
         private const char fancyRightQuote = (char)0x201d;
         private const char singleQuote = '\'';
 
-        private static readonly Regex likelyBase64Regex = new Regex("^[a-fA-F0-9+=/]+$", RegexOptions.Compiled);
+        private static readonly Regex likelyBase64Regex = new ("^[a-fA-F0-9+=/]+$", RegexOptions.Compiled);
+        private static readonly Regex markdownLinkRegex = new (@"\[(.*?)\]((\(.*?\))|(\s*:\s*\w+))", RegexOptions.Compiled);
 
 
         private static readonly string[] Iso8601Formats =
@@ -105,6 +106,7 @@ namespace ApiDoctor.Validation
             }
 
             return value.ToString().
+                RemoveMarkdownLinksFromText().
                 Replace(fancyLeftQuote, singleQuote).
                 Replace(fancyRightQuote, singleQuote).
                 Replace('"', singleQuote).
@@ -210,6 +212,11 @@ namespace ApiDoctor.Validation
 
             value = null;
             return false;
+        }
+
+        public static string RemoveMarkdownLinksFromText(this string text)
+        {
+            return Regex.Replace(text, markdownLinkRegex.ToString(), "$1");
         }
 
         public static T PropertyValue<T>(this JContainer container, string propertyName, T defaultValue) where T : class
