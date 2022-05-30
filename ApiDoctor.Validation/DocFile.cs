@@ -57,12 +57,18 @@ namespace ApiDoctor.Validation
         /// <summary>
         /// Friendly name of the file
         /// </summary>
-        public string DisplayName { get; protected set; }
+        public string DisplayName
+        {
+            get; protected set;
+        }
 
         /// <summary>
         /// Path to the file on disk
         /// </summary>
-        public string FullPath { get; protected set; }
+        public string FullPath
+        {
+            get; protected set;
+        }
 
         ///// <summary>
         ///// HTML-rendered version of the markdown source (for displaying). This content is not suitable for publishing.
@@ -72,29 +78,62 @@ namespace ApiDoctor.Validation
         /// <summary>
         /// Contains information on the headers and content blocks found in this document.
         /// </summary>
-        public List<string> ContentOutline { get; set; }
+        public List<string> ContentOutline
+        {
+            get; set;
+        }
 
         public PageType DocumentPageType { get; protected set; } = PageType.Unknown;
 
         public ResourceDefinition[] Resources
         {
-            get { return this.resources.ToArray(); }
+            get
+            {
+                return this.resources.ToArray();
+            }
         }
 
         public MethodDefinition[] Requests
         {
-            get { return this.requests.ToArray(); }
+            get
+            {
+                return this.requests.ToArray();
+            }
         }
 
-        public ExampleDefinition[] Examples { get { return this.examples.ToArray(); } }
+        public ExampleDefinition[] Examples
+        {
+            get
+            {
+                return this.examples.ToArray();
+            }
+        }
 
-        public SamplesDefinition[] Samples { get { return this.samples.ToArray(); } }
+        public SamplesDefinition[] Samples
+        {
+            get
+            {
+                return this.samples.ToArray();
+            }
+        }
 
-        public EnumerationDefinition[] Enums { get { return this.enums.ToArray(); } }
+        public EnumerationDefinition[] Enums
+        {
+            get
+            {
+                return this.enums.ToArray();
+            }
+        }
 
-        public AuthScopeDefinition[] AuthScopes { get; protected set; }
+        public AuthScopeDefinition[] AuthScopes
+        {
+            get; protected set;
+        }
 
-        public ErrorDefinition[] ErrorCodes { get; protected set; }
+        public ErrorDefinition[] ErrorCodes
+        {
+            get; protected set;
+        }
 
         public string[] LinkDestinations
         {
@@ -123,17 +162,35 @@ namespace ApiDoctor.Validation
         /// <summary>
         /// Raw Markdown parsed blocks
         /// </summary>
-        public Block[] OriginalMarkdownBlocks { get; set; }
+        public Block[] OriginalMarkdownBlocks
+        {
+            get; set;
+        }
 
-        protected List<ILinkInfo> MarkdownLinks { get; set; }
+        protected List<ILinkInfo> MarkdownLinks
+        {
+            get; set;
+        }
 
-        public DocSet Parent { get; protected set; }
+        public DocSet Parent
+        {
+            get; protected set;
+        }
 
-        public PageAnnotation Annotation { get; set; }
+        public PageAnnotation Annotation
+        {
+            get; set;
+        }
 
-        public bool WriteFixesBackToDisk { get; set; }
+        public bool WriteFixesBackToDisk
+        {
+            get; set;
+        }
 
-        public string Namespace { get; set; }
+        public string Namespace
+        {
+            get; set;
+        }
         #endregion
 
         #region Constructor
@@ -524,7 +581,7 @@ namespace ApiDoctor.Validation
                     else if (previousHeaderBlock.BlockType == BlockType.h1)
                     {
                         methodDescriptionsData.Add(block.Content);
-                        methodDescription = string.Join(" ", methodDescriptionsData.Skip(1)).RemoveMarkdownLinksFromText();
+                        methodDescription = string.Join(" ", methodDescriptionsData.SkipWhile(x => x.StartsWith("Namespace:"))).ToStringClean();
                         issues.Message($"Found description: {methodDescription}");
                     }
                 }

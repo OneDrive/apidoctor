@@ -46,8 +46,11 @@ namespace ApiDoctor.Validation
         private const char singleQuote = '\'';
 
         private static readonly Regex likelyBase64Regex = new ("^[a-fA-F0-9+=/]+$", RegexOptions.Compiled);
-        private static readonly Regex markdownLinkRegex = new (@"\[(.*?)\]((\(.*?\))|(\s*:\s*\w+))", RegexOptions.Compiled);
 
+        /// <summary>
+        /// Matches [text](link_target) or [text]: link_reference
+        /// </summary>
+        private static readonly Regex markdownLinkRegex = new(@"\[(.*?)\]((\(.*?\))|(\s*:\s*\w+))", RegexOptions.Compiled);
 
         private static readonly string[] Iso8601Formats =
         {
@@ -106,7 +109,7 @@ namespace ApiDoctor.Validation
             }
 
             return value.ToString().
-                RemoveMarkdownLinksFromText().
+                StripMarkdownLinks().
                 Replace(fancyLeftQuote, singleQuote).
                 Replace(fancyRightQuote, singleQuote).
                 Replace('"', singleQuote).
@@ -214,7 +217,12 @@ namespace ApiDoctor.Validation
             return false;
         }
 
-        public static string RemoveMarkdownLinksFromText(this string text)
+        /// <summary>
+        /// Only removes markdown links with the format [text](link_target) or [text]: link_reference
+        /// </summary>
+        /// <param name="text"></param>
+        /// <returns></returns>
+        public static string StripMarkdownLinks(this string text)
         {
             return Regex.Replace(text, markdownLinkRegex.ToString(), "$1");
         }

@@ -1134,7 +1134,7 @@ namespace ApiDoctor.Publishing.CSDL
         private static readonly System.Text.RegularExpressions.Regex EntitySetPathRegEx = new (@"\/(\w*)\/{var}$", System.Text.RegularExpressions.RegexOptions.Compiled);
         // Singleton is something in the format of /name or /root/child/subChild where root is the singleton
         private static readonly System.Text.RegularExpressions.Regex SingletonPathRegEx = new (@"\/(\w*)$", System.Text.RegularExpressions.RegexOptions.Compiled);
-        private static readonly System.Text.RegularExpressions.Regex FullSingletonPathRegEx = new(@"\/(\w*)", System.Text.RegularExpressions.RegexOptions.Compiled);
+        private static readonly System.Text.RegularExpressions.Regex FullSingletonPathRegEx = new (@"\/(\w*)", System.Text.RegularExpressions.RegexOptions.Compiled);
 
         /// <summary>
         /// Parse the URI paths for methods defined in the documentation and construct an entity container that contains these
@@ -1223,7 +1223,10 @@ namespace ApiDoctor.Publishing.CSDL
             defaultSchema.EntityContainers.Add(container);
         }
 
-        private Dictionary<string, MethodCollection> cachedUniqueRequestPaths { get; set; }
+        private Dictionary<string, MethodCollection> cachedUniqueRequestPaths
+        {
+            get; set;
+        }
 
         /// <summary>
         /// Return a dictionary of the unique request paths in the
@@ -1538,7 +1541,7 @@ namespace ApiDoctor.Publishing.CSDL
                 var localName = qualifiedName.TypeOnly();
 
                 Term term = new Term { Name = localName, AppliesTo = containedResource.Name, Type = prop.Type.ODataResourceName() };
-                if (!string.IsNullOrEmpty(prop.Description))
+                if (!string.IsNullOrWhiteSpace(prop.Description))
                 {
                     term.Annotations.Add(new Annotation { Term = Term.LongDescriptionTerm, String = prop.Description.ToStringClean() });
                 }
@@ -1577,7 +1580,7 @@ namespace ApiDoctor.Publishing.CSDL
                 return;
             }
 
-            if (!string.IsNullOrEmpty(sourceParameter.Description))
+            if (!string.IsNullOrWhiteSpace(sourceParameter.Description))
             {
                 if (targetProperty.Annotation == null)
                 {
@@ -1664,7 +1667,7 @@ namespace ApiDoctor.Publishing.CSDL
                 }
             }
         }
-        
+
         private static void AddRestrictionAnnotations(Dictionary<string, Annotations> annotationsMap, ISet set, MethodCollection methods, string target, IssueLogger issues)
         {
             if (methods != null)
@@ -1757,11 +1760,22 @@ namespace ApiDoctor.Publishing.CSDL
 
         private static List<PropertyValue> GetDescriptionPropertyValues(MethodDefinition sourceMethod)
         {
-            var descriptionPropertyValues = new List<PropertyValue>
-            {
-                new() { Property = "Description", String = sourceMethod.Title.ToStringClean() },
-                new() { Property = "LongDescription", String = sourceMethod.Description.ToStringClean() }
-            };
+            var descriptionPropertyValues = new List<PropertyValue>();
+            var description = sourceMethod.Title.ToStringClean();
+            var longDescription = sourceMethod.Description.ToStringClean().RemoveUnnecessaryInformationFromDescriptionAnnotation();
+            if (!string.IsNullOrWhiteSpace(description))
+                descriptionPropertyValues.Add(new()
+                {
+                    Property = "Description",
+                    String = description
+                });
+
+            if (!string.IsNullOrWhiteSpace(longDescription))
+                descriptionPropertyValues.Add(new()
+                {
+                    Property = "LongDescription",
+                    String = longDescription
+                });
             return descriptionPropertyValues;
         }
 
@@ -1820,21 +1834,66 @@ namespace ApiDoctor.Publishing.CSDL
 
     public class CsdlWriterOptions
     {
-        public string OutputDirectoryPath { get; set; }
-        public string SourceMetadataPath { get; set; }
-        public string MergeWithMetadataPath { get; set; }
-        public MetadataFormat Formats { get; set; }
-        public string[] Namespaces { get; set; }
-        public bool Sort { get; set; }
-        public string TransformOutput { get; set; }
-        public string DocumentationSetPath { get; set; }
-        public string Version { get; set; }
-        public bool SkipMetadataGeneration { get; set; }
-        public AnnotationOptions Annotations { get; set; }
-        public bool ValidateSchema { get; set; }
-        public bool AttributesOnNewLines { get; set; }
-        public string EntityContainerName { get; set; }
-        public bool ShowSources { get; set; }
+        public string OutputDirectoryPath
+        {
+            get; set;
+        }
+        public string SourceMetadataPath
+        {
+            get; set;
+        }
+        public string MergeWithMetadataPath
+        {
+            get; set;
+        }
+        public MetadataFormat Formats
+        {
+            get; set;
+        }
+        public string[] Namespaces
+        {
+            get; set;
+        }
+        public bool Sort
+        {
+            get; set;
+        }
+        public string TransformOutput
+        {
+            get; set;
+        }
+        public string DocumentationSetPath
+        {
+            get; set;
+        }
+        public string Version
+        {
+            get; set;
+        }
+        public bool SkipMetadataGeneration
+        {
+            get; set;
+        }
+        public AnnotationOptions Annotations
+        {
+            get; set;
+        }
+        public bool ValidateSchema
+        {
+            get; set;
+        }
+        public bool AttributesOnNewLines
+        {
+            get; set;
+        }
+        public string EntityContainerName
+        {
+            get; set;
+        }
+        public bool ShowSources
+        {
+            get; set;
+        }
     }
 
     [Flags]
