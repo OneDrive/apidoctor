@@ -1131,10 +1131,10 @@ namespace ApiDoctor.Publishing.CSDL
         }
 
         // EntitySet is something in the format of /name/{var}
-        private static readonly System.Text.RegularExpressions.Regex EntitySetPathRegEx = new (@"\/(\w*)\/{var}$", System.Text.RegularExpressions.RegexOptions.Compiled);
+        private static readonly System.Text.RegularExpressions.Regex EntitySetPathRegEx = new(@"\/(\w*)\/{var}$", System.Text.RegularExpressions.RegexOptions.Compiled);
         // Singleton is something in the format of /name or /root/child/subChild where root is the singleton
-        private static readonly System.Text.RegularExpressions.Regex SingletonPathRegEx = new (@"\/(\w*)$", System.Text.RegularExpressions.RegexOptions.Compiled);
-        private static readonly System.Text.RegularExpressions.Regex FullSingletonPathRegEx = new (@"\/(\w*)", System.Text.RegularExpressions.RegexOptions.Compiled);
+        private static readonly System.Text.RegularExpressions.Regex SingletonPathRegEx = new(@"\/(\w*)$", System.Text.RegularExpressions.RegexOptions.Compiled);
+        private static readonly System.Text.RegularExpressions.Regex FullSingletonPathRegEx = new(@"\/(\w*)", System.Text.RegularExpressions.RegexOptions.Compiled);
 
         /// <summary>
         /// Parse the URI paths for methods defined in the documentation and construct an entity container that contains these
@@ -1580,6 +1580,8 @@ namespace ApiDoctor.Publishing.CSDL
                 return;
             }
 
+            sourceParameter.Description = RemoveUnnecessaryInformationFromDescriptionAnnotation(sourceParameter.Description).ToStringClean();
+
             if (!string.IsNullOrWhiteSpace(sourceParameter.Description))
             {
                 if (targetProperty.Annotation == null)
@@ -1592,6 +1594,10 @@ namespace ApiDoctor.Publishing.CSDL
                 if (descriptionTerm != null)
                 {
                     LogIfDifferent(descriptionTerm.String, sourceParameter.Description, issues, $"Type {typeName} has a different value for term '{termForDescription}' than the documentation.");
+                    if (string.IsNullOrWhiteSpace(descriptionTerm.String))
+                    {
+                        descriptionTerm.String = sourceParameter.Description;
+                    }
                 }
                 else
                 {
@@ -1599,10 +1605,26 @@ namespace ApiDoctor.Publishing.CSDL
                     new Annotation()
                     {
                         Term = termForDescription,
-                        String = sourceParameter.Description.ToStringClean(),
+                        String = sourceParameter.Description,
                     });
                 }
             }
+        }
+
+        private string RemoveUnnecessaryInformationFromDescriptionAnnotation(string description)
+        {
+            var termsToRemove = new string[] {
+                "Nullable.",
+                "Read-only.",
+                "Read-only. Nullable.",
+                "Read-write.",
+                "Read-write. Nullable."
+            };
+            if (description != null && (termsToRemove.Contains(description) || description.StartsWith("TODO:")))
+            {
+                return null;
+            }
+            return description;
         }
 
         private class EnumComparer : IEqualityComparer<EnumerationDefinition>
@@ -1762,7 +1784,7 @@ namespace ApiDoctor.Publishing.CSDL
         {
             var descriptionPropertyValues = new List<PropertyValue>();
             var description = sourceMethod.Title.ToStringClean();
-            var longDescription = sourceMethod.Description.ToStringClean().RemoveUnnecessaryInformationFromDescriptionAnnotation();
+            var longDescription = sourceMethod.Description.ToStringClean();
             if (!string.IsNullOrWhiteSpace(description))
                 descriptionPropertyValues.Add(new()
                 {

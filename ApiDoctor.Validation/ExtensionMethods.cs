@@ -45,7 +45,7 @@ namespace ApiDoctor.Validation
         private const char fancyRightQuote = (char)0x201d;
         private const char singleQuote = '\'';
 
-        private static readonly Regex likelyBase64Regex = new ("^[a-fA-F0-9+=/]+$", RegexOptions.Compiled);
+        private static readonly Regex likelyBase64Regex = new("^[a-fA-F0-9+=/]+$", RegexOptions.Compiled);
 
         /// <summary>
         /// Matches [text](link_target) or [text]: link_reference
