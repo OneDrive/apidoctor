@@ -1131,9 +1131,9 @@ namespace ApiDoctor.Publishing.CSDL
         }
 
         // EntitySet is something in the format of /name/{var}
-        private static readonly System.Text.RegularExpressions.Regex EntitySetPathRegEx = new (@"\/(\w*)\/{var}$", System.Text.RegularExpressions.RegexOptions.Compiled);
+        private static readonly System.Text.RegularExpressions.Regex EntitySetPathRegEx = new(@"\/(\w*)\/{var}$", System.Text.RegularExpressions.RegexOptions.Compiled);
         // Singleton is something in the format of /name or /root/child/subChild where root is the singleton
-        private static readonly System.Text.RegularExpressions.Regex SingletonPathRegEx = new (@"\/(\w*)$", System.Text.RegularExpressions.RegexOptions.Compiled);
+        private static readonly System.Text.RegularExpressions.Regex SingletonPathRegEx = new(@"\/(\w*)$", System.Text.RegularExpressions.RegexOptions.Compiled);
         private static readonly System.Text.RegularExpressions.Regex FullSingletonPathRegEx = new(@"\/(\w*)", System.Text.RegularExpressions.RegexOptions.Compiled);
 
         /// <summary>
@@ -1223,7 +1223,10 @@ namespace ApiDoctor.Publishing.CSDL
             defaultSchema.EntityContainers.Add(container);
         }
 
-        private Dictionary<string, MethodCollection> cachedUniqueRequestPaths { get; set; }
+        private Dictionary<string, MethodCollection> cachedUniqueRequestPaths
+        {
+            get; set;
+        }
 
         /// <summary>
         /// Return a dictionary of the unique request paths in the
@@ -1538,7 +1541,7 @@ namespace ApiDoctor.Publishing.CSDL
                 var localName = qualifiedName.TypeOnly();
 
                 Term term = new Term { Name = localName, AppliesTo = containedResource.Name, Type = prop.Type.ODataResourceName() };
-                if (!string.IsNullOrEmpty(prop.Description))
+                if (!string.IsNullOrWhiteSpace(prop.Description))
                 {
                     term.Annotations.Add(new Annotation { Term = Term.LongDescriptionTerm, String = prop.Description.ToStringClean() });
                 }
@@ -1577,7 +1580,9 @@ namespace ApiDoctor.Publishing.CSDL
                 return;
             }
 
-            if (!string.IsNullOrEmpty(sourceParameter.Description))
+            sourceParameter.Description = RemoveUnnecessaryInformationFromDescriptionAnnotation(sourceParameter.Description).ToStringClean();
+
+            if (!string.IsNullOrWhiteSpace(sourceParameter.Description))
             {
                 if (targetProperty.Annotation == null)
                 {
@@ -1589,6 +1594,10 @@ namespace ApiDoctor.Publishing.CSDL
                 if (descriptionTerm != null)
                 {
                     LogIfDifferent(descriptionTerm.String, sourceParameter.Description, issues, $"Type {typeName} has a different value for term '{termForDescription}' than the documentation.");
+                    if (string.IsNullOrWhiteSpace(descriptionTerm.String))
+                    {
+                        descriptionTerm.String = sourceParameter.Description;
+                    }
                 }
                 else
                 {
@@ -1596,10 +1605,26 @@ namespace ApiDoctor.Publishing.CSDL
                     new Annotation()
                     {
                         Term = termForDescription,
-                        String = sourceParameter.Description.ToStringClean(),
+                        String = sourceParameter.Description,
                     });
                 }
             }
+        }
+
+        private static readonly HashSet<string> termsToRemoveFromDescriptionAnnotations = new HashSet<string>(StringComparer.OrdinalIgnoreCase) {
+                "Nullable.",
+                "Read-only.",
+                "Read-only. Nullable.",
+                "Read-write.",
+                "Read-write. Nullable."
+              };
+        private string RemoveUnnecessaryInformationFromDescriptionAnnotation(string description)
+        {
+            if (description != null && (termsToRemoveFromDescriptionAnnotations.Contains(description) || description.StartsWith("TODO:")))
+            {
+                return null;
+            }
+            return description;
         }
 
         private class EnumComparer : IEqualityComparer<EnumerationDefinition>
@@ -1664,7 +1689,7 @@ namespace ApiDoctor.Publishing.CSDL
                 }
             }
         }
-        
+
         private static void AddRestrictionAnnotations(Dictionary<string, Annotations> annotationsMap, ISet set, MethodCollection methods, string target, IssueLogger issues)
         {
             if (methods != null)
@@ -1757,11 +1782,22 @@ namespace ApiDoctor.Publishing.CSDL
 
         private static List<PropertyValue> GetDescriptionPropertyValues(MethodDefinition sourceMethod)
         {
-            var descriptionPropertyValues = new List<PropertyValue>
-            {
-                new() { Property = "Description", String = sourceMethod.Title.ToStringClean() },
-                new() { Property = "LongDescription", String = sourceMethod.Description.ToStringClean() }
-            };
+            var descriptionPropertyValues = new List<PropertyValue>();
+            var description = sourceMethod.Title.ToStringClean();
+            var longDescription = sourceMethod.Description.ToStringClean();
+            if (!string.IsNullOrWhiteSpace(description))
+                descriptionPropertyValues.Add(new()
+                {
+                    Property = "Description",
+                    String = description
+                });
+
+            if (!string.IsNullOrWhiteSpace(longDescription))
+                descriptionPropertyValues.Add(new()
+                {
+                    Property = "LongDescription",
+                    String = longDescription
+                });
             return descriptionPropertyValues;
         }
 
@@ -1820,21 +1856,66 @@ namespace ApiDoctor.Publishing.CSDL
 
     public class CsdlWriterOptions
     {
-        public string OutputDirectoryPath { get; set; }
-        public string SourceMetadataPath { get; set; }
-        public string MergeWithMetadataPath { get; set; }
-        public MetadataFormat Formats { get; set; }
-        public string[] Namespaces { get; set; }
-        public bool Sort { get; set; }
-        public string TransformOutput { get; set; }
-        public string DocumentationSetPath { get; set; }
-        public string Version { get; set; }
-        public bool SkipMetadataGeneration { get; set; }
-        public AnnotationOptions Annotations { get; set; }
-        public bool ValidateSchema { get; set; }
-        public bool AttributesOnNewLines { get; set; }
-        public string EntityContainerName { get; set; }
-        public bool ShowSources { get; set; }
+        public string OutputDirectoryPath
+        {
+            get; set;
+        }
+        public string SourceMetadataPath
+        {
+            get; set;
+        }
+        public string MergeWithMetadataPath
+        {
+            get; set;
+        }
+        public MetadataFormat Formats
+        {
+            get; set;
+        }
+        public string[] Namespaces
+        {
+            get; set;
+        }
+        public bool Sort
+        {
+            get; set;
+        }
+        public string TransformOutput
+        {
+            get; set;
+        }
+        public string DocumentationSetPath
+        {
+            get; set;
+        }
+        public string Version
+        {
+            get; set;
+        }
+        public bool SkipMetadataGeneration
+        {
+            get; set;
+        }
+        public AnnotationOptions Annotations
+        {
+            get; set;
+        }
+        public bool ValidateSchema
+        {
+            get; set;
+        }
+        public bool AttributesOnNewLines
+        {
+            get; set;
+        }
+        public string EntityContainerName
+        {
+            get; set;
+        }
+        public bool ShowSources
+        {
+            get; set;
+        }
     }
 
     [Flags]

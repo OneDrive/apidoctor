@@ -187,12 +187,10 @@ namespace ApiDoctor.Publishing.CSDL
             }
 
             return edmx;
-
-
         }
 
-        private static ISet GetISet(this EntityFramework edmx, 
-            string name, 
+        private static ISet GetISet(this EntityFramework edmx,
+            string name,
             Func<EntityContainer, IEnumerable<ISet>> funcSelector)
         {
             var currentEntitySet = edmx.DataServices.Schemas.SelectMany(c => c.EntityContainers)
