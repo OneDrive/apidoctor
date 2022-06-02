@@ -1611,16 +1611,16 @@ namespace ApiDoctor.Publishing.CSDL
             }
         }
 
-        private string RemoveUnnecessaryInformationFromDescriptionAnnotation(string description)
-        {
-            var termsToRemove = new string[] {
+        private static readonly HashSet<string> termsToRemoveFromDescriptionAnnotations = new HashSet<string>(StringComparer.OrdinalIgnoreCase) {
                 "Nullable.",
                 "Read-only.",
                 "Read-only. Nullable.",
                 "Read-write.",
                 "Read-write. Nullable."
-            };
-            if (description != null && (termsToRemove.Contains(description) || description.StartsWith("TODO:")))
+              };
+        private string RemoveUnnecessaryInformationFromDescriptionAnnotation(string description)
+        {
+            if (description != null && (termsToRemoveFromDescriptionAnnotations.Contains(description) || description.StartsWith("TODO:")))
             {
                 return null;
             }
