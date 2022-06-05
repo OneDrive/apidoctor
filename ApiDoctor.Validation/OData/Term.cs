@@ -69,9 +69,20 @@ namespace ApiDoctor.Validation.OData
         public const string ReadRestrictionTerm = "Org.OData.Capabilities.V1.ReadRestrictions";
         public const string ReadByKeyRestrictionsTerm = "ReadByKeyRestrictions";
         public const string InsertRestrictionsTerm = "Org.OData.Capabilities.V1.InsertRestrictions";
-        public const string UpdateRestrictions = "Org.OData.Capabilities.V1.UpdateRestrictions";
-        public const string DeleteRestrictions = "Org.OData.Capabilities.V1.DeleteRestrictions";
+        public const string UpdateRestrictionsTerm = "Org.OData.Capabilities.V1.UpdateRestrictions";
+        public const string DeleteRestrictionsTerm = "Org.OData.Capabilities.V1.DeleteRestrictions";
+        public const string LinksTerm = "Links";
 
+        public static class LinkRel
+        {
+            public const string ReadByKey = "https://graph.microsoft.com/rels/docs/get";
+            public const string List = "https://graph.microsoft.com/rels/docs/list";
+            public const string Create = "https://graph.microsoft.com/rels/docs/create";
+            public const string Update = "https://graph.microsoft.com/rels/docs/update";
+            public const string Delete = "https://graph.microsoft.com/rels/docs/delete";
+            public const string Function = "https://graph.microsoft.com/rels/docs/function";
+            public const string Action = "https://graph.microsoft.com/rels/docs/action";
+        }
 
         [XmlIgnore, MergePolicy(MergePolicy.Ignore)]
         public override string ElementIdentifier

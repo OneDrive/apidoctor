@@ -33,7 +33,6 @@ namespace ApiDoctor.Publishing.CSDL
     using System.Text;
     using System.Threading.Tasks;
     using ApiDoctor.Validation.OData;
-    using Validation.Config;
     using Validation.OData.Transformation;
     using ApiDoctor.Validation.Http;
     using System.IO;
@@ -318,7 +317,7 @@ namespace ApiDoctor.Publishing.CSDL
                             {
                                 var annotation = new Annotation
                                 {
-                                    Term = "Org.OData.Capabilities.V1.NavigationRestrictions",
+                                    Term = Term.NavigationRestrictionsTerm,
                                     Records = new List<Record>(),
                                 };
 
@@ -1413,7 +1412,7 @@ namespace ApiDoctor.Publishing.CSDL
 
             if (schemaType.OpenType != docResource.OriginalMetadata?.IsOpenType && docResource.OriginalMetadata?.IsOpenType == true)
             {
-                issues.Warning(ValidationErrorCode.Unknown, $"Resource { schemaType.Name} has multiple declarations with mismatched OpenType declarations.");
+                issues.Warning(ValidationErrorCode.Unknown, $"Resource {schemaType.Name} has multiple declarations with mismatched OpenType declarations.");
                 schemaType.OpenType = true;
             }
 
@@ -1694,7 +1693,7 @@ namespace ApiDoctor.Publishing.CSDL
         {
             if (methods != null)
             {
-                var targetsAndAnnotations = AddRestrictionAnnotations(set, methods, target, issues);
+                var targetsAndAnnotations = AddLinkAndRestrictionAnnotations(set, methods, target, issues);
                 foreach (var (currentTarget, oDataAnnotatables) in targetsAndAnnotations)
                 {
                     foreach (var oDataAnnotatable in oDataAnnotatables.Distinct())
@@ -1705,7 +1704,7 @@ namespace ApiDoctor.Publishing.CSDL
             }
         }
 
-        private static Dictionary<string, List<IODataAnnotatable>> AddRestrictionAnnotations(ISet set, MethodCollection sourceMethod, string target, IssueLogger issues)
+        private static Dictionary<string, List<IODataAnnotatable>> AddLinkAndRestrictionAnnotations(ISet set, MethodCollection sourceMethod, string target, IssueLogger issues)
         {
             var targets = new Dictionary<string, List<IODataAnnotatable>>();
 
@@ -1717,6 +1716,7 @@ namespace ApiDoctor.Publishing.CSDL
                 {
                     continue;
                 }
+
                 var stringBuilder = new StringBuilder(target);
                 foreach (var match in matches.Skip(1))
                 {
@@ -1727,6 +1727,7 @@ namespace ApiDoctor.Publishing.CSDL
                         stringBuilder.Append(value);
                     }
                 }
+
                 IODataAnnotatable annotatable = new Property();
                 var path = stringBuilder.ToString();
                 if (path.Equals(target, StringComparison.OrdinalIgnoreCase))
@@ -1734,28 +1735,17 @@ namespace ApiDoctor.Publishing.CSDL
                     annotatable = (IODataAnnotatable)set;
                 }
                 var verb = method.HttpMethodVerb();
-                switch (verb)
+                if (verb == "GET" && url.EndsWith("}", StringComparison.OrdinalIgnoreCase))
                 {
-                    case "GET" when url.EndsWith("}", StringComparison.OrdinalIgnoreCase):
-                        AddReadByKeyRestriction(annotatable, method);
-                        break;
-                    case "GET":
-                        AddRestrictionAnnotation(annotatable, method, Term.ReadRestrictionTerm);
-                        break;
-                    case "POST":
-                        AddRestrictionAnnotation(annotatable, method, Term.InsertRestrictionsTerm);
-                        break;
-                    case "PUT":
-                    case "PATCH":
-                        AddRestrictionAnnotation(annotatable, method, Term.UpdateRestrictions);
-                        break;
-                    case "DELETE":
-                        AddRestrictionAnnotation(annotatable, method, Term.DeleteRestrictions);
-                        break;
-                    default:
-                        issues.Error(ValidationErrorCode.HttpMethodOutOfRange, "HttpMethod Verb Out of Range");
-                        break;
+                    AddReadByKeyRestriction(annotatable, method);
+                    AddReadByKeyLinkAnnotation(annotatable, method);
                 }
+                else
+                {
+                    AddRestrictionAnnotation(annotatable, method);
+                    AddLinkAnnotation(annotatable, method);
+                }
+
                 var key = stringBuilder.ToString();
                 var exists = targets.TryGetValue(key, out var annotationsList);
                 if (exists)
@@ -1823,18 +1813,21 @@ namespace ApiDoctor.Publishing.CSDL
             }
         }
 
-        private static void AddRestrictionAnnotation(IODataAnnotatable annotatable, MethodDefinition sourceMethod,
-            string restriction)
+        private static void AddRestrictionAnnotation(IODataAnnotatable annotatable, MethodDefinition sourceMethod, string restrictionTerm = null)
         {
-            annotatable.Annotation ??= new List<Annotation>();
-            var existingAnnotation = annotatable.Annotation.FirstOrDefault(x => x.Term == restriction);
+            restrictionTerm ??= GetRestrictionTermForMethod(sourceMethod.HttpMethodVerb());
+            if (restrictionTerm == null) return;
+
             var property = GetDescriptionPropertyValues(sourceMethod);
             var record = new Record { PropertyValues = property };
+
+            annotatable.Annotation ??= new List<Annotation>();
+            var existingAnnotation = annotatable.Annotation.FirstOrDefault(x => x.Term == restrictionTerm);       
             if (existingAnnotation == null)
             {
                 existingAnnotation = new Annotation
                 {
-                    Term = restriction,
+                    Term = restrictionTerm,
                     Records = new List<Record> { record }
                 };
                 annotatable.Annotation.Add(existingAnnotation);
@@ -1851,8 +1844,164 @@ namespace ApiDoctor.Publishing.CSDL
                 }
             }
         }
-    }
 
+        private static Dictionary<string, string> httpMethodToRestrictionTermMappings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+           { "GET", Term.ReadRestrictionTerm },
+           { "POST", Term.InsertRestrictionsTerm },
+           { "PATCH", Term.UpdateRestrictionsTerm },
+           { "PUT", Term.UpdateRestrictionsTerm },
+           { "DELETE", Term.DeleteRestrictionsTerm }
+        };
+
+        private static string GetRestrictionTermForMethod(string httpMethod)
+        {
+            httpMethodToRestrictionTermMappings.TryGetValue(httpMethod, out string restrictionTerm);
+            return restrictionTerm;
+        }
+
+
+#region Links Annotations
+        private static string CreateHrefValue(string sourceFilePath)
+        {
+
+            var uriBuilder = new UriBuilder()
+            {
+                Scheme = "https",
+                Host = "docs.microsoft.com",
+                Path = $@"graph{sourceFilePath}",
+                Query = "?view=graph-rest-1.0"
+            };
+            return uriBuilder.ToString();
+        }
+
+        private static Record CreateLinksRecord(string sourceFilePath, string linkRel)
+        {
+            return new Record
+            {
+                Type = "Core.Link",
+                PropertyValues = new List<PropertyValue>
+                {
+                    new()
+                    {
+                        Property = "rel",
+                        String = linkRel
+                    },
+                    new()
+                    {
+                        Property = "href",
+                        String = CreateHrefValue(sourceFilePath)
+                    }
+                }
+            };
+        }
+
+        private static Dictionary<string, string> httpMethodToLinkRelMappings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+           { "GET", Term.LinkRel.List },
+           { "POST", Term.LinkRel.Create },
+           { "PATCH", Term.LinkRel.Update },
+           { "PUT", Term.LinkRel.Update },
+           { "DELETE", Term.LinkRel.Delete }
+        };
+
+        private static string GetLinkRelValueForMethod(string httpMethod)
+        {
+            httpMethodToLinkRelMappings.TryGetValue(httpMethod, out string linkRel);
+            return linkRel;
+        }
+
+        private static void AddLinkAnnotation(IODataAnnotatable annotatable, MethodDefinition sourceMethod)
+        {
+            var linkRel = GetLinkRelValueForMethod(sourceMethod.HttpMethodVerb());
+            if (linkRel == null) return;
+
+            var linkRecord = CreateLinksRecord(sourceMethod.SourceFile.DisplayName, linkRel);
+
+            var linkAnnotation = annotatable.Annotation.FirstOrDefault(x => x.Term == Term.LinksTerm);
+            if (linkAnnotation == null)
+            {
+                linkAnnotation = new Annotation
+                {
+                    Term = Term.LinksTerm,
+                    Collection = new RecordCollection
+                    {
+                        Records = new List<Record> { linkRecord }
+                    }
+                };
+                annotatable.Annotation.Add(linkAnnotation);
+            }
+            else
+            {
+                var linkRecordExists = linkAnnotation.Collection.Records
+                   .Where(record => record.Type == linkRecord.Type)
+                   .SelectMany(p => p.PropertyValues)
+                   .Any(d => (d.Property == linkRecord.PropertyValues[0].Property && d.String == linkRecord.PropertyValues[0].String));
+                if (!linkRecordExists)
+                {
+                    linkAnnotation.Collection.Records.Add(linkRecord);
+                }
+            }
+        }
+
+        private static void AddReadByKeyLinkAnnotation(IODataAnnotatable annotatable, MethodDefinition sourceMethod)
+        {
+            var readRestriction = annotatable.Annotation
+                .FirstOrDefault(annotation => annotation.Term == Term.LinksTerm);
+            var currentLinkRecord = CreateLinksRecord(sourceMethod.SourceFile.DisplayName, Term.LinkRel.ReadByKey);
+            if (readRestriction != null)
+            {
+                var propertyValue = readRestriction.Collection.Records
+                    .SelectMany(c => c.PropertyValues)
+                    .FirstOrDefault(x => x.String == Term.LinkRel.ReadByKey);
+                if (propertyValue == null)
+                {
+                    readRestriction.Collection.Records.Add(currentLinkRecord);
+                }
+            }
+            else
+            {
+                AddLinkAnnotation(annotatable, sourceMethod, Term.LinksTerm, currentLinkRecord);
+                AddReadByKeyLinkAnnotation(annotatable, sourceMethod);
+            }
+        }
+        
+        private static void AddLinkAnnotation(IODataAnnotatable annotatable, MethodDefinition sourceMethod,
+            string restriction, Record currentLinkRecord)
+        {
+            var existingAnnotation = annotatable.Annotation.FirstOrDefault(x => x.Term == restriction);
+
+            if (existingAnnotation == null)
+            {
+                existingAnnotation = new Annotation
+                {
+                    Term = restriction,
+                    Collection = new RecordCollection
+                    {
+                        Records = new List<Record> { currentLinkRecord }
+                    }
+                };
+                annotatable.Annotation.Add(existingAnnotation);
+            }
+            else
+            {
+                var currentRecord = existingAnnotation
+                    .Collection.Records
+                    .FirstOrDefault(x => x.Type == currentLinkRecord.Type);
+                if (currentRecord != null)
+                {
+                    foreach (var propertyValue in currentRecord.PropertyValues)
+                    {
+                        if (!currentRecord.PropertyValues.Exists(c => c.Property == propertyValue.Property))
+                        {
+                            currentRecord.PropertyValues.Add(propertyValue);
+                        }
+                    }
+                }
+            }
+        }
+        #endregion
+    }
 
     public class CsdlWriterOptions
     {
