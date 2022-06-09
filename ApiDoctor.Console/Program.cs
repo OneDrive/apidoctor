@@ -58,10 +58,16 @@ namespace ApiDoctor.ConsoleApp
         private const int ParallelTaskCount = 5;
 
         public static readonly BuildWorkerApi BuildWorker = new BuildWorkerApi();
-        public static AppConfigFile CurrentConfiguration { get; private set; }
+        public static AppConfigFile CurrentConfiguration
+        {
+            get; private set;
+        }
 
         // Set to true to disable returning an error code when the app exits.
-        private static bool IgnoreErrors { get; set; }
+        private static bool IgnoreErrors
+        {
+            get; set;
+        }
 
         private static List<UndocumentedPropertyWarning> DiscoveredUndocumentedProperties = new List<UndocumentedPropertyWarning>();
 
@@ -81,13 +87,13 @@ namespace ApiDoctor.ConsoleApp
                         {
                             IgnoreErrors = options.IgnoreErrors;
 #if DEBUG
-                  if (options.AttachDebugger == 1)
-                  {
-                    Debugger.Launch();
-                  }
+                    if (options.AttachDebugger == 1)
+                            {
+                                Debugger.Launch();
+                            }
 #endif
 
-                    SetStateFromOptions(options);
+                            SetStateFromOptions(options);
                         })
                         .MapResult(
                             (PrintOptions options) => RunInvokedMethodAsync(options),
@@ -174,7 +180,7 @@ namespace ApiDoctor.ConsoleApp
             var issues = new IssueLogger()
             {
 #if DEBUG
-        DebugLine = options.AttachDebugger,
+                DebugLine = options.AttachDebugger,
 #endif
             };
 
@@ -1145,20 +1151,20 @@ namespace ApiDoctor.ConsoleApp
             await ForEachAsync(methods, concurrentTasks, async method =>
             {
                 FancyConsole.WriteLine(
-                          FancyConsole.ConsoleCodeColor,
-                          "Running validation for method: {0}",
-                          method.Identifier);
+                                FancyConsole.ConsoleCodeColor,
+                                "Running validation for method: {0}",
+                                method.Identifier);
 
                 // List out the scenarios defined for this method
                 ScenarioDefinition[] scenarios = docset.TestScenarios.ScenariosForMethod(method);
 
                 // Test these scenarios and validate responses
                 ValidationResults results = await method.ValidateServiceResponseAsync(scenarios, primaryAccount, secondaryAccount,
-                          new ValidationOptions
-                          {
-                              RelaxedStringValidation = commandLineOptions.RelaxStringTypeValidation ?? true,
-                              IgnoreRequiredScopes = commandLineOptions.IgnoreRequiredScopes
-                          });
+                                new ValidationOptions
+                                {
+                                    RelaxedStringValidation = commandLineOptions.RelaxStringTypeValidation ?? true,
+                                    IgnoreRequiredScopes = commandLineOptions.IgnoreRequiredScopes
+                                });
 
                 PrintResultsToConsole(method, primaryAccount, results, commandLineOptions);
                 await TestReport.LogMethodTestResults(method, primaryAccount, results);
@@ -1938,8 +1944,7 @@ namespace ApiDoctor.ConsoleApp
                 }
 
                 // for uniformity, add tabs for all available languages on document for all methods.
-                var languagesToAddForMethod = GetLanguageSetForDocument(method, methods, snippetsPath);
-
+                var languagesToAddForMethod = GetSnippetsLanguageSetForDocument(method, methods, snippetsPath);
                 foreach (var lang in languagesToAddForMethod)
                 {
                     var fileName = $"{snippetPrefix}---{lang.ToLowerInvariant()}";
@@ -1964,45 +1969,47 @@ namespace ApiDoctor.ConsoleApp
 
         private static Dictionary<string, HashSet<string>> SnippetsLanguageSetForDocument = new Dictionary<string, HashSet<string>>();
 
-        private static HashSet<string> GetLanguageSetForDocument(MethodDefinition sourceMethod, MethodDefinition[] methodCollection, string snippetsDirectory)
+        private static HashSet<string> GetSnippetsLanguageSetForDocument(MethodDefinition sourceMethod, MethodDefinition[] methodCollection, string snippetsDirectory)
         {
-            if (SnippetsLanguageSetForDocument.TryGetValue(sourceMethod.SourceFile.DisplayName, out var methodLanguages))
+            var languages = GetSnippetsLanguageSetForMethod(sourceMethod, snippetsDirectory);
+            if (!languages.Any())
             {
-                return methodLanguages;
-            };
-
-            // methods in same file as current method
-            var methodsInSameFileAsCurrentMethod = methodCollection
-                .Where(x => x.SourceFile.DisplayName == sourceMethod.SourceFile.DisplayName)
-                .ToList();
-
-            var languages = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var method in methodsInSameFileAsCurrentMethod)
-            {
-                try
-                {
-                    var expectedFileName = $"{snippetsDirectory}\\{GetSnippetPrefix(method)}---";
-                    var snippetLanguagesForMethod = Directory.EnumerateFiles(snippetsDirectory)
-                       .Where(x => x.StartsWith(expectedFileName))
-                       .Select(x => x.Substring(expectedFileName.Length))
-                       .ToList();
-                    if (snippetLanguagesForMethod.Any())
-                    {
-                        languages.UnionWith(snippetLanguagesForMethod);
-                    }
-                    else if (method.Identifier == sourceMethod.Identifier)
-                    {
-                        languages = new HashSet<string>();
-                        break;
-                    }
-                }
-                catch
-                {
-                    languages = new HashSet<string>();
-                }
+                return new HashSet<string>();
             }
-            SnippetsLanguageSetForDocument.Add(sourceMethod.SourceFile.DisplayName, languages);
-            return languages;
+            else if (SnippetsLanguageSetForDocument.TryGetValue(sourceMethod.SourceFile.DisplayName, out languages))
+            {
+                return languages;
+            }
+            else
+            {
+                languages ??= new HashSet<string>();
+                var methodsInSameFileAsCurrentMethod = methodCollection
+                    .Where(x => x.SourceFile.DisplayName == sourceMethod.SourceFile.DisplayName && x.Identifier != sourceMethod.Identifier)
+                    .ToList();
+                foreach (var method in methodsInSameFileAsCurrentMethod)
+                {
+                    var snippetLanguagesForMethod = GetSnippetsLanguageSetForMethod(method, snippetsDirectory);
+                    languages.UnionWith(snippetLanguagesForMethod);
+                }
+                SnippetsLanguageSetForDocument.Add(sourceMethod.SourceFile.DisplayName, languages);
+                return languages;
+            }
+        }
+
+        private static HashSet<string> GetSnippetsLanguageSetForMethod(MethodDefinition method, string snippetsDirectory)
+        {
+            try
+            {
+                var expectedFileName = $"{snippetsDirectory}\\{GetSnippetPrefix(method)}---";
+                return Directory.EnumerateFiles(snippetsDirectory)
+                .Where(x => x.StartsWith(expectedFileName))
+                .Select(x => x.Substring(expectedFileName.Length))
+                .ToHashSet();
+            }
+            catch
+            {
+                return new HashSet<string>();
+            }
         }
 
         /// <summary>
@@ -2168,16 +2175,17 @@ namespace ApiDoctor.ConsoleApp
             */
             for (var currentIndex = 0; currentIndex < originalFileContents.Length; currentIndex++)
             {
+                var currentLine = originalFileContents[currentIndex];
                 switch (parseStatus)
                 {
                     case "FindIdentifierLine"://look for the identifier of the method
-                        if (originalFileContents[currentIndex].Length >= method.Identifier.Length && originalFileContents[currentIndex].Contains(method.Identifier))
+                        if (currentLine.Length >= method.Identifier.Length && currentLine.Contains(method.Identifier))
                         {
                             parseStatus = "FindRequestLine";
                         }
                         break;
                     case "FindRequestLine"://check if we have found the line with the request with the matching identifier
-                        if (originalFileContents[currentIndex].Length >= httpRequestString.Length && originalFileContents[currentIndex].Equals(httpRequestString))
+                        if (currentLine.Length >= httpRequestString.Length && currentLine.Equals(httpRequestString))
                         {
                             parseStatus = "FindRequestStartLine";
                         }
@@ -2201,28 +2209,28 @@ namespace ApiDoctor.ConsoleApp
                         }
                         break;
                     case "FindEndOfCodeBlock"://Find the end of the code block
-                        if (originalFileContents[currentIndex].Trim().Equals("```"))
+                        if (currentLine.Trim().Equals("```"))
                         {
                             insertionLine = currentIndex;
                             parseStatus = "FirstTabInsertion";
                         }
                         break;
                     case "FirstTabInsertion"://check if we ever inserted any code snippet tab.
-                        if (originalFileContents[currentIndex].Contains("snippets") && originalFileContents[currentIndex].Contains("[sample-code]"))
+                        if (currentLine.Contains("snippets") && (currentLine.Contains("[sample-code]") || currentLine.Contains("[snippet-not-available]")))
                         {
                             parseStatus = "FindEndOfTabSection";
                             currentIndex -= 3;//backtrack a few lines so that we can scan the whole tab section
                         }
                         break;
                     case "FindEndOfTabSection"://we have inserted a code snippet tab before so look for end of tab section
-                        if (originalFileContents[currentIndex].Contains("---"))
+                        if (currentLine.Contains("---"))
                         {
                             insertionLine = currentIndex - 1;//insert new language just before end of tab area
                             parseStatus = "AdditionalTabInsertion";//exit this parse mode.
                         }
-                        if (originalFileContents[currentIndex].Contains($"(#tab/{codeFenceString})"))
+                        if (currentLine.Contains($"(#tab/{codeFenceString})"))
                         {
-                            originalFileContents[currentIndex] = $"# [{language}](#tab/{codeFenceString})";
+                            currentLine = $"# [{language}](#tab/{codeFenceString})";
                             originalFileContents[currentIndex + 1] = codeSnippet == null ? $"[!INCLUDE [snippet-not-available]({snippetsNotAvailableRelativeIncludeLink})]" : $"[!INCLUDE [sample-code]({snippetsRelativeIncludeLink})]";//update include link. Just in case.
                             includeText = "";
                         }
@@ -2487,7 +2495,6 @@ namespace ApiDoctor.ConsoleApp
 
     internal static class OutcomeExtensionMethods
     {
-
         public static ConsoleColor ConsoleColor(this ValidationOutcome outcome)
         {
             if ((outcome & ValidationOutcome.Error) > 0)
