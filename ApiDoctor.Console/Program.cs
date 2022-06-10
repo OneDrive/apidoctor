@@ -1946,8 +1946,8 @@ namespace ApiDoctor.ConsoleApp
                 }
 
                 // for uniformity, add tabs for all available languages on document for all methods.
-                var languagesToAddForMethod = GetSnippetsLanguageSetForDocument(method, methods, snippetsPath, languageOptions);
-                foreach (var lang in languagesToAddForMethod)
+               // var languagesToAddForMethod = GetSnippetsLanguageSetForDocument(method, methods, snippetsPath, languageOptions);
+                foreach (var lang in languageOptions)
                 {
                     var fileName = $"{snippetPrefix}---{lang.ToLowerInvariant()}";
                     var fileFullPath = Path.Combine(snippetsPath, fileName);
@@ -1959,7 +1959,7 @@ namespace ApiDoctor.ConsoleApp
                     else
                         FancyConsole.WriteLine(FancyConsole.ConsoleErrorColor, $"Error: file '{fileName}' does not exist");
 
-                    InjectSnippetIntoFile(method, codeSnippet, lang, languagesToAddForMethod.ToArray());
+                    InjectSnippetIntoFile(method, codeSnippet, lang, languageOptions);
                 }
             }
 
