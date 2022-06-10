@@ -174,6 +174,13 @@ namespace ApiDoctor.Validation
             }
         }
 
+        public static IEnumerable<T> Splice<T>(this IEnumerable<T> list, int start, int count)
+        {
+            var listWithDeletedElements = list.ToList();
+            listWithDeletedElements.RemoveRange(start, count);
+            return listWithDeletedElements;
+        }
+
         public static void IntersectInPlace<T>(this IList<T> source, IList<T> otherSet)
         {
             var existingList = source.ToArray();
