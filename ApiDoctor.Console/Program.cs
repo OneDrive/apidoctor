@@ -1932,6 +1932,8 @@ namespace ApiDoctor.ConsoleApp
                     "--SnippetsPath", snippetsPath, "--Languages", options.Languages, "--CustomMetadataPath", options.CustomMetadataPath); // args
             }
 
+            var snippetsLanguageSetBySourceFile = GetSnippetsLanguageSetForDocSet(docset.Files, languageOptions, snippetsPath);
+            
             foreach (var method in methods)
             {
                 string snippetPrefix;
@@ -1945,7 +1947,11 @@ namespace ApiDoctor.ConsoleApp
                     continue;
                 }
 
-                var languagesToIncludeForMethod = GetSnippetsLanguagesToIncludeForMethod(method, methods, languageOptions, snippetsPath, snippetPrefix);
+                if (!snippetsLanguageSetBySourceFile.TryGetValue($"{method.SourceFile.DisplayName}/{method.Identifier}", out var languagesToIncludeForMethod))
+                {
+                    languagesToIncludeForMethod = snippetsLanguageSetBySourceFile[method.SourceFile.DisplayName];
+                }
+
                 // Generate snippets section for method to inject to document
                 var codeSnippetsText = GenerateSnippetsTabSectionForMethod(method, languagesToIncludeForMethod, snippetsPath, snippetPrefix);
                 InjectSnippetsIntoFile(method, codeSnippetsText);
@@ -1978,7 +1984,7 @@ namespace ApiDoctor.ConsoleApp
                 var codeFenceString = language.ToLower().Replace("#", "sharp");
                 var snippetFileName = methodString + $"-{codeFenceString}-snippets.md";
 
-                var codeSnippet = GetSnippetContentForMethod(language, snippetPrefix, snippetsPath);
+                var codeSnippet = GetSnippetContentForMethodByLanguage(language, snippetPrefix, snippetsPath);
                 var sampleCodeIncludeText = $"[!INCLUDE [sample-code](../{ReplaceWindowsByLinuxPathSeparators(Path.Combine(relativePathFolder, codeFenceString, snippetFileName))})]";
                 var tabText = $"# [{language}](#tab/{codeFenceString})\r\n" +
                               $"{(!string.IsNullOrWhiteSpace(codeSnippet) ? sampleCodeIncludeText : snippetNotAvailableIncludeText)}\r\n" +
@@ -2027,7 +2033,7 @@ namespace ApiDoctor.ConsoleApp
             return snippetsTabSectionForMethod.ToString();
         }
 
-        private static string GetSnippetContentForMethod(string language, string snippetPrefix, string snippetsPath)
+        private static string GetSnippetContentForMethodByLanguage(string language, string snippetPrefix, string snippetsPath)
         {
             var fileName = $"{snippetPrefix}---{language.ToLowerInvariant()}";
             var fileFullPath = Path.Combine(snippetsPath, fileName);
@@ -2043,52 +2049,42 @@ namespace ApiDoctor.ConsoleApp
             return codeSnippet;
         }
 
-        private static Dictionary<string, HashSet<string>> SnippetsLanguageSetForDocument = new Dictionary<string, HashSet<string>>();
-
-        private static HashSet<string> GetSnippetsLanguagesToIncludeForMethod(MethodDefinition sourceMethod, MethodDefinition[] methodCollection, string[] languageOptions, string snippetsPath, string snippetPrefix)
+        private static Dictionary<string, HashSet<string>> GetSnippetsLanguageSetForDocSet(DocFile[] docFiles, string[] languageOptions, string snippetsPath)
         {
-            var languages = LookupGeneratedSnippetsLanguagesBySnippetPrefix(snippetPrefix, snippetsPath);
-            if (!languages.Any())
+            var snippetsLanguageSetBySourceFile = new Dictionary<string, HashSet<string>>();
+            var snippetTempFiles = Directory.EnumerateFiles(snippetsPath);
+            foreach (DocFile docFile in docFiles)
             {
-                FancyConsole.WriteLine(FancyConsole.ConsoleWarningColor, $"Failed to fetch snippets for method: {sourceMethod.Identifier}");
-                return new HashSet<string>();
-            }
-            else if (SnippetsLanguageSetForDocument.TryGetValue(sourceMethod.SourceFile.DisplayName, out var storedLanguages))
-            {
-                return storedLanguages;
-            }
-            else
-            {
-                languages ??= new HashSet<string>();
-                var methodsInSameFileAsCurrentMethod = methodCollection
-                    .Where(x => x.SourceFile.DisplayName == sourceMethod.SourceFile.DisplayName &&
-                        x.Identifier != sourceMethod.Identifier)
-                    .ToList();
-                foreach (var method in methodsInSameFileAsCurrentMethod)
+                var languages = new HashSet<string>();
+                foreach (var request in docFile.Requests)
                 {
                     // no need to continue if we already have the full list of languages
                     if (languages.Count == languageOptions.Length)
                         break;
 
-                    var snippetLanguagesForMethod = LookupGeneratedSnippetsLanguagesBySnippetPrefix(snippetPrefix, snippetsPath);
+                    string snippetPrefix;
+                    try { snippetPrefix = GetSnippetPrefix(request); } catch (ArgumentException) { continue; }
+
+                    var expectedFileName = $"{Path.Combine(snippetsPath, snippetPrefix)}---";
+                    var snippetLanguagesForMethod = snippetTempFiles
+                        .Where(x => x.StartsWith(expectedFileName))
+                        .Select(x => x.Substring(expectedFileName.Length))
+                        .ToHashSet();
+                    if (!snippetLanguagesForMethod.Any())
+                    {
+                        snippetsLanguageSetBySourceFile.Add($"{request.SourceFile.DisplayName}/{request.Identifier}", snippetLanguagesForMethod);
+                        continue;
+                    }
+
                     languages.UnionWith(snippetLanguagesForMethod);
                 }
 
                 // just so that we have the correct casing displayed as tab names in docs e.g. PowerShell and not powershell
                 languages = languageOptions.Where(x => languages.Contains(x, StringComparer.OrdinalIgnoreCase)).ToHashSet();
 
-                SnippetsLanguageSetForDocument.Add(sourceMethod.SourceFile.DisplayName, languages);
-                return languages;
+                snippetsLanguageSetBySourceFile.Add(docFile.DisplayName, languages);
             }
-        }
-
-        private static HashSet<string> LookupGeneratedSnippetsLanguagesBySnippetPrefix(string snippetPrefix, string snippetsPath)
-        {
-            var expectedFileName = $"{Path.Combine(snippetsPath, snippetPrefix)}---";
-            return Directory.EnumerateFiles(snippetsPath)
-                .Where(x => x.StartsWith(expectedFileName))
-                .Select(x => x.Substring(expectedFileName.Length))
-                .ToHashSet();
+            return snippetsLanguageSetBySourceFile;
         }
 
         /// <summary>
@@ -2316,8 +2312,6 @@ namespace ApiDoctor.ConsoleApp
                 // dump the injections
                 File.WriteAllLines(method.SourceFile.FullPath, updatedFileContents);
             }
-
-            return; // just return and do not insert a snippet if we can't find a proper place to inject the snippet
         }
 
         private enum CodeSnippetInsertionState
