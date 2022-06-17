@@ -2056,7 +2056,7 @@ namespace ApiDoctor.ConsoleApp
             var snippetTempFiles = Directory.EnumerateFiles(snippetsPath);
             foreach (DocFile docFile in docFiles)
             {
-                var languages = new HashSet<string>();
+                var languages = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 foreach (var request in docFile.Requests)
                 {
                     // no need to continue if we already have the full list of languages
