@@ -2081,7 +2081,7 @@ namespace ApiDoctor.ConsoleApp
                 }
 
                 // just so that we have the correct casing displayed as tab names in docs e.g. PowerShell and not powershell
-                languages = languageOptions.Where(x => languages.Contains(x, StringComparer.OrdinalIgnoreCase)).ToHashSet();
+                languages = languageOptions.Where(x => languages.Contains(x)).ToHashSet();
 
                 snippetsLanguageSetBySourceFile.Add(docFile.DisplayName, languages);
             }
