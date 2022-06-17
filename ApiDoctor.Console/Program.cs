@@ -1932,7 +1932,8 @@ namespace ApiDoctor.ConsoleApp
                     "--SnippetsPath", snippetsPath, "--Languages", options.Languages, "--CustomMetadataPath", options.CustomMetadataPath); // args
             }
 
-            var snippetsLanguageSetBySourceFile = GetSnippetsLanguageSetForDocSet(docset.Files, languageOptions, snippetsPath);
+            var docFiles = methods.Select(method => method.SourceFile).Distinct();
+            var snippetsLanguageSetBySourceFile = GetSnippetsLanguageSetForDocSet(docFiles, languageOptions, snippetsPath);
             
             foreach (var method in methods)
             {
