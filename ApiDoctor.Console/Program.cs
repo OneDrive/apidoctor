@@ -2050,7 +2050,7 @@ namespace ApiDoctor.ConsoleApp
             return codeSnippet;
         }
 
-        private static Dictionary<string, HashSet<string>> GetSnippetsLanguageSetForDocSet(DocFile[] docFiles, string[] languageOptions, string snippetsPath)
+        private static Dictionary<string, HashSet<string>> GetSnippetsLanguageSetForDocSet(IEnumerable<DocFile> docFiles, string[] languageOptions, string snippetsPath)
         {
             var snippetsLanguageSetBySourceFile = new Dictionary<string, HashSet<string>>();
             var snippetTempFiles = Directory.EnumerateFiles(snippetsPath);
