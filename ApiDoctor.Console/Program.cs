@@ -87,7 +87,7 @@ namespace ApiDoctor.ConsoleApp
                         {
                             IgnoreErrors = options.IgnoreErrors;
 #if DEBUG
-                    if (options.AttachDebugger == 1)
+                            if (options.AttachDebugger == 1)
                             {
                                 Debugger.Launch();
                             }
@@ -1932,9 +1932,9 @@ namespace ApiDoctor.ConsoleApp
                     "--SnippetsPath", snippetsPath, "--Languages", options.Languages, "--CustomMetadataPath", options.CustomMetadataPath); // args
             }
 
-            var docFiles = methods.Select(method => method.SourceFile).Distinct();
+            var docFiles = methods.Select(method => method.SourceFile).DistinctBy(x => x.DisplayName);
             var snippetsLanguageSetBySourceFile = GetSnippetsLanguageSetForDocSet(docFiles, languageOptions, snippetsPath);
-            
+
             foreach (var method in methods)
             {
                 string snippetPrefix;
@@ -2059,10 +2059,6 @@ namespace ApiDoctor.ConsoleApp
                 var languages = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 foreach (var request in docFile.Requests)
                 {
-                    // no need to continue if we already have the full list of languages
-                    if (languages.Count == languageOptions.Length)
-                        break;
-
                     string snippetPrefix;
                     try { snippetPrefix = GetSnippetPrefix(request); } catch (ArgumentException) { continue; }
 
