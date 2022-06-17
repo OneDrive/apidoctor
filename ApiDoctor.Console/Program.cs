@@ -1950,7 +1950,7 @@ namespace ApiDoctor.ConsoleApp
 
                 if (!snippetsLanguageSetBySourceFile.TryGetValue($"{method.SourceFile.DisplayName}/{method.Identifier}", out var languagesToIncludeForMethod))
                 {
-                    languagesToIncludeForMethod = snippetsLanguageSetBySourceFile[method.SourceFile.DisplayName];
+                    snippetsLanguageSetBySourceFile.TryGetValue(method.SourceFile.DisplayName, out languagesToIncludeForMethod);
                 }
 
                 // Generate snippets section for method to inject to document
@@ -1966,7 +1966,7 @@ namespace ApiDoctor.ConsoleApp
 
         private static string GenerateSnippetsTabSectionForMethod(MethodDefinition method, HashSet<string> languages, string snippetsPath, string snippetPrefix)
         {
-            if (!languages.Any())
+            if (languages == null || !languages.Any())
                 return string.Empty;
 
             var methodString = Regex.Replace(method.Identifier, @"[# .()\\/]", "").Replace("_", "-").ToLower(); // cleanup the method name
@@ -2008,8 +2008,8 @@ namespace ApiDoctor.ConsoleApp
                     FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"Writing snippet to {snippetMarkdownFilePath}");
                     File.WriteAllText(snippetMarkdownFilePath, snippetFileContents); // write snippet to file
                 }
-
             }
+
             if (snippetsTabSectionForMethod.Length > 0)
                 snippetsTabSectionForMethod.Append("---\r\n"); // append end of tab section
 
