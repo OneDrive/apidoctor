@@ -23,6 +23,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+using ApiDoctor.Validation.OData;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -93,6 +94,14 @@ namespace ApiDoctor.Publishing.CSDL
 
                 return dataType;
             }
+        }
+
+        /// <summary>
+        /// Indicates whether target is an entity type, entity set, navagitation property, action, function etc
+        /// </summary>
+        public ODataTargetInfo RequestTargetType
+        {
+            get; set;
         }
 
         protected bool HttpVerbAllowed(string verb)

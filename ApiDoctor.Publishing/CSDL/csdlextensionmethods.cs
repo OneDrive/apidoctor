@@ -204,17 +204,18 @@ namespace ApiDoctor.Publishing.CSDL
             string name)
         {
             var currentSet = edmx.GetISet(name, selector);
-            if (currentSet != null)
+            if (currentSet == null)
+                return;
 
-                if (currentSet.SourceMethods is MethodCollection sourceMethods)
-                {
-                    var differences = methodCollection.Except(sourceMethods).ToList();
-                    sourceMethods.AddRange(differences);
-                }
-                else
-                {
-                    currentSet.SourceMethods = methodCollection;
-                }
+            if (currentSet.SourceMethods is MethodCollection sourceMethods)
+            {
+                var differences = methodCollection.Except(sourceMethods).ToList();
+                sourceMethods.AddRange(differences);
+            }
+            else
+            {
+                currentSet.SourceMethods = methodCollection;
+            }
         }
     }
 }
