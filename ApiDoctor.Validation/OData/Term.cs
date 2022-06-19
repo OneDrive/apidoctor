@@ -71,7 +71,7 @@ namespace ApiDoctor.Validation.OData
         public const string InsertRestrictionsTerm = "Org.OData.Capabilities.V1.InsertRestrictions";
         public const string UpdateRestrictionsTerm = "Org.OData.Capabilities.V1.UpdateRestrictions";
         public const string DeleteRestrictionsTerm = "Org.OData.Capabilities.V1.DeleteRestrictions";
-        public const string LinksTerm = "Links";
+        public const string LinksTerm = "Org.OData.Core.V1.Links";
 
         public static class LinkRel
         {
