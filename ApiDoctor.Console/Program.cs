@@ -2069,7 +2069,7 @@ namespace ApiDoctor.ConsoleApp
                         .ToHashSet();
                     if (!snippetLanguagesForMethod.Any())
                     {
-                        snippetsLanguageSetBySourceFile.Add($"{request.SourceFile.DisplayName}/{request.Identifier}", snippetLanguagesForMethod);
+                        snippetsLanguageSetBySourceFile.TryAdd($"{request.SourceFile.DisplayName}/{request.Identifier}", snippetLanguagesForMethod);
                         continue;
                     }
 
