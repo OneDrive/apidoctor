@@ -174,6 +174,13 @@ namespace ApiDoctor.Validation
             }
         }
 
+        public static IEnumerable<T> Splice<T>(this IEnumerable<T> list, int start, int count)
+        {
+            var listWithDeletedElements = list.ToList();
+            listWithDeletedElements.RemoveRange(start, count);
+            return listWithDeletedElements;
+        }
+
         public static void IntersectInPlace<T>(this IList<T> source, IList<T> otherSet)
         {
             var existingList = source.ToArray();
@@ -181,6 +188,18 @@ namespace ApiDoctor.Validation
             {
                 if (!otherSet.Contains(item))
                     source.Remove(item);
+            }
+        }
+
+        public static IEnumerable<TSource> DistinctBy<TSource, TKey>(this IEnumerable<TSource> source, Func<TSource, TKey> keySelector)
+        {
+            HashSet<TKey> seenKeys = new HashSet<TKey>();
+            foreach (TSource element in source)
+            {
+                if (seenKeys.Add(keySelector(element)))
+                {
+                    yield return element;
+                }
             }
         }
 
