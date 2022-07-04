@@ -76,7 +76,7 @@ namespace ApiDoctor.Validation.OData
         }
 
         /// <summary>
-        /// Resovles a fully qualified type identifier within a collection of schema. 
+        /// Resolves a fully qualified type identifier within a collection of schema. 
         /// Will match on ComplexType, EntityType, Action, or Function.
         /// </summary>
         public static object FindTypeWithIdentifier(this IEnumerable<Schema> schemas, string identifier)
@@ -99,7 +99,7 @@ namespace ApiDoctor.Validation.OData
             string typeName = identifier.Substring(splitIndex + 1);
 
             // Resolve the schema first
-            var schema = schemas.FirstOrDefault(s => s.Namespace == schemaName);
+            var schema = schemas.FirstOrDefault(s => s.Namespace == schemaName || s.Alias == schemaName);
             if (schema == null)
             {
                 return null;
@@ -142,7 +142,7 @@ namespace ApiDoctor.Validation.OData
         private static bool UnwrapCollectionIfNeeded(ref string identifier)
         {
             bool isCollection = false;
-            if (identifier.StartsWith("Collection(", StringComparison.OrdinalIgnoreCase))
+            if (identifier.IsCollection())
             {
                 identifier = identifier.Substring(11, identifier.Length - 12);
                 isCollection = true;
@@ -265,6 +265,9 @@ namespace ApiDoctor.Validation.OData
         /// <returns></returns>
         public static string NamespaceOnly(this string type)
         {
+            if (type.IsCollection())
+                type = type.ElementName();
+
             var trimPoint = type.LastIndexOf('.');
             if (trimPoint >= 0)
                 return type.Substring(0, trimPoint);
@@ -286,6 +289,9 @@ namespace ApiDoctor.Validation.OData
         /// <returns></returns>
         public static string TypeOnly(this string type)
         {
+            if (type.IsCollection())
+                type = type.ElementName(); 
+
             var trimPoint = type.LastIndexOf('.');
             return type.Substring(trimPoint + 1);
         }
@@ -312,9 +318,6 @@ namespace ApiDoctor.Validation.OData
 
             return type.Type.ODataResourceName();
         }
-
-
-
 
         /// <summary>
         /// Convert a simple type into OData equivelent. If Object is specified, a customDataType can be returned instead.

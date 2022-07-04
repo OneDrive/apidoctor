@@ -40,6 +40,10 @@ namespace ApiDoctor.Validation.OData
             SortBy]
         public string Namespace { get; set; }
 
+        [XmlAttribute("Alias", Namespace = ODataParser.EdmNamespace),
+           SortBy]
+        public string Alias { get; set; }
+
         [XmlElement("EnumType", Namespace = ODataParser.EdmNamespace),
             Sortable]
         public List<EnumType> Enumerations { get; set; }
