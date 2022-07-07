@@ -318,11 +318,7 @@ namespace ApiDoctor.Validation.Json
             }
 
             this.CleanMissingProperties(options, missingProperties);
-            if (missingProperties.Count > 0)
-            {
-                issues.Error(ValidationErrorCode.RequiredPropertiesMissing,
-                    $"Missing properties: response was missing these required properties: {missingProperties.ComponentsJoinedByString(", ")}");
-            }
+            this.UpdateIssuesWithMissingProperties(issues, missingProperties);
         }
 
         /// <summary>
@@ -349,6 +345,20 @@ namespace ApiDoctor.Validation.Json
             {
                 // Ignore all missing properties
                 missingProperties.Clear();
+            }
+        }
+
+        /// <summary>
+        /// Updaates issues with RequiredPropertiesMissing error for each missing property
+        /// </summary
+        /// <param name="issues"></param>
+        /// <param name="missingProperties"></param>
+        private void UpdateIssuesWithMissingProperties(IssueLogger issues, List<string> missingProperties)
+        {
+            if (missingProperties.Count > 0)
+            {
+                issues.Error(ValidationErrorCode.RequiredPropertiesMissing,
+                    $"Missing properties: response was missing these required properties: {missingProperties.ComponentsJoinedByString(", ")}");
             }
         }
 
@@ -688,6 +698,7 @@ namespace ApiDoctor.Validation.Json
             }
 
             this.CleanMissingProperties(options, missingProperties);
+            this.UpdateIssuesWithMissingProperties(issues, missingProperties);
 
             return !issues.Issues.WereWarningsOrErrors();
         }
