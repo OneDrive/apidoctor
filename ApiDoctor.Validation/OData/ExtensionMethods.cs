@@ -272,7 +272,7 @@ namespace ApiDoctor.Validation.OData
             if (trimPoint >= 0)
                 return type.Substring(0, trimPoint);
 
-            throw new InvalidOperationException("Type doesn't appear to have a namespace assocaited with it: " + type);
+            throw new InvalidOperationException("Type doesn't appear to have a namespace associated with it: " + type);
         }
 
         public static bool HasNamespace(this string type)

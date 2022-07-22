@@ -426,7 +426,7 @@ namespace ApiDoctor.Publishing.CSDL
                     foreach (var entitySet in container.EntitySets)
                     {
                         var annotationName = prefix + "/" + entitySet.Name;
-                        AddLinkAndRestrictionAnnotations(annotationsMap, entitySet,
+                        AddLinkAndRestrictionAnnotations(edmx, annotationsMap, entitySet,
                             entitySet.SourceMethods as MethodCollection,
                             annotationName, issues.For(annotationName));
                     }
@@ -434,7 +434,7 @@ namespace ApiDoctor.Publishing.CSDL
                     foreach (var singleton in container.Singletons)
                     {
                         var annotationName = prefix + "/" + singleton.Name;
-                        AddLinkAndRestrictionAnnotations(annotationsMap, singleton,
+                        AddLinkAndRestrictionAnnotations(edmx, annotationsMap, singleton,
                             singleton.SourceMethods as MethodCollection,
                             annotationName, issues.For(annotationName));
                     }
@@ -740,7 +740,7 @@ namespace ApiDoctor.Publishing.CSDL
                     {
                         // TODO: If we have an input Edmx, we may already know what this so we don't need to infer anything.
                         // if that is the case, we should just update it with anything else we know from the documentation.
-                        requestTarget = ParseRequestTargetType(path, methodCollection, edmx, issues);
+                        requestTarget = ParseRequestTargetType(path, edmx, issues);
                         if (requestTarget.Classification == ODataTargetClassification.Unknown &&
                             !string.IsNullOrEmpty(requestTarget.Name) &&
                             requestTarget.QualifiedType != null)
@@ -1022,7 +1022,7 @@ namespace ApiDoctor.Publishing.CSDL
         /// <param name="requestMethod"></param>
         /// <param name="edmx"></param>
         /// <returns></returns>
-        private static ODataTargetInfo ParseRequestTargetType(string requestPath, MethodCollection requestMethodCollection, EntityFramework edmx, IssueLogger issues)
+        private static ODataTargetInfo ParseRequestTargetType(string requestPath, EntityFramework edmx, IssueLogger issues)
         {
             string[] requestParts = requestPath.Substring(1).Split(new char[] { '/' });
 
@@ -1609,14 +1609,14 @@ namespace ApiDoctor.Publishing.CSDL
             }
         }
 
-        private static readonly HashSet<string> termsToRemoveFromDescriptionAnnotations = new HashSet<string>(StringComparer.OrdinalIgnoreCase) {
+        private static readonly HashSet<string> termsToRemoveFromDescriptionAnnotations = new(StringComparer.OrdinalIgnoreCase) {
                 "Nullable.",
                 "Read-only.",
                 "Read-only. Nullable.",
                 "Read-write.",
                 "Read-write. Nullable."
               };
-        private string RemoveUnnecessaryInformationFromDescriptionAnnotation(string description)
+        private static string RemoveUnnecessaryInformationFromDescriptionAnnotation(string description)
         {
             if (description != null && (termsToRemoveFromDescriptionAnnotations.Contains(description) || description.StartsWith("TODO:")))
             {
@@ -1679,7 +1679,6 @@ namespace ApiDoctor.Publishing.CSDL
                 try
                 {
                     var methodCollection = uniqueRequestPaths[path];
-                    SetMethodCollectionRequestTarget(path, methodCollection, edmx, issues);
                     AddEntitySetSourceMethods(edmx, methodCollection, path);
                     AddSingletonSourceMethods(edmx, methodCollection, path);
                 }
@@ -1690,51 +1689,41 @@ namespace ApiDoctor.Publishing.CSDL
             }
         }
 
-        private void SetMethodCollectionRequestTarget(string path, MethodCollection methodCollection, EntityFramework edmx, IssueLogger issues)
+        private static ActionOrFunctionBase CheckIfRequestIsActionOrFunction(string path, EntityFramework edmx, IssueLogger issues)
         {
+            ActionOrFunctionBase actionOrFunction = null;
             try
             {
-                var requestTarget = ParseRequestTargetType(path, methodCollection, edmx, issues);
-                methodCollection.RequestTargetType = requestTarget;
-
-                if (requestTarget.Classification != ODataTargetClassification.Unknown || requestTarget.QualifiedType == null)
-                    return;
-
-                var requestTargetNamespace = requestTarget.QualifiedType.NamespaceOnly();
-                var schema = edmx.DataServices.Schemas.FirstOrDefault(x => x.Namespace == requestTargetNamespace || x.Alias == requestTargetNamespace);
-                if (schema == null)
-                    return;
-
-                Func<ActionOrFunctionBase, bool> condition = (actionOrFunction) =>
+                var requestTarget = ParseRequestTargetType(path, edmx, issues);
+                if (requestTarget.Classification != ODataTargetClassification.Unknown || (requestTarget.QualifiedType != null && requestTarget.QualifiedType.IsCollection()))
                 {
-                    return actionOrFunction.IsBound &&
-                    actionOrFunction.Name == requestTarget.Name &&
-                    actionOrFunction.Parameters.FirstOrDefault(x => x.Name == "bindingParameter" && x.Type.TypeOnly() == requestTarget.QualifiedType.TypeOnly()) != null;
-                };
-                var actionOrFunction = schema.Actions.FirstOrDefault(condition) as object ?? schema.Functions.FirstOrDefault(condition) as object;
-                if (actionOrFunction != null)
-                {
-                    if (actionOrFunction is Function)
+                    var requestTargetNamespace = requestTarget.QualifiedType?.NamespaceOnly();
+                    var schema = edmx.DataServices.Schemas.FirstOrDefault(x => x.Namespace == requestTargetNamespace || x.Alias == requestTargetNamespace);
+                    if (schema == null)
+                        throw new Exception($"Unknown namespace: {requestTargetNamespace}");
+
+                    bool condition(ActionOrFunctionBase actionOrFunction)
                     {
-                        requestTarget.Classification = ODataTargetClassification.Function;
+                        return actionOrFunction.IsBound &&
+                        actionOrFunction.Name == requestTarget.Name &&
+                        actionOrFunction.Parameters.Any(x => x.Name == "bindingParameter" && x.Type.TypeOnly() == requestTarget.QualifiedType.TypeOnly());
                     }
-                    else if (actionOrFunction is Validation.OData.Action)
-                    {
-                        requestTarget.Classification = ODataTargetClassification.Action;
-                    }
+
+                    actionOrFunction = schema.Actions.FirstOrDefault((Func<ActionOrFunctionBase, bool>)condition) ?? schema.Functions.FirstOrDefault((Func<ActionOrFunctionBase, bool>)condition);
                 }
             }
             catch (Exception ex)
             {
                 issues.Error(ValidationErrorCode.Unknown, path, ex);
             }
+            return actionOrFunction;
         }
 
-        private static void AddLinkAndRestrictionAnnotations(Dictionary<string, Annotations> annotationsMap, ISet set, MethodCollection methodCollection, string target, IssueLogger issues)
+        private static void AddLinkAndRestrictionAnnotations(EntityFramework edmx, Dictionary<string, Annotations> annotationsMap, ISet set, MethodCollection methodCollection, string target, IssueLogger issues)
         {
             if (methodCollection != null)
             {
-                var targetsAndAnnotations = GenerateLinkAndRestrictionAnnotations(set, methodCollection, target, issues);
+                var targetsAndAnnotations = GenerateLinkAndRestrictionAnnotations(edmx, set, methodCollection, target, issues);
                 foreach (var (currentTarget, oDataAnnotatables) in targetsAndAnnotations)
                 {
                     foreach (var oDataAnnotatable in oDataAnnotatables.Distinct())
@@ -1745,14 +1734,9 @@ namespace ApiDoctor.Publishing.CSDL
             }
         }
 
-        private static Dictionary<string, List<IODataAnnotatable>> GenerateLinkAndRestrictionAnnotations(ISet set, MethodCollection sourceMethodCollection, string target, IssueLogger issues)
+        private static Dictionary<string, List<IODataAnnotatable>> GenerateLinkAndRestrictionAnnotations(EntityFramework edmx, ISet set, MethodCollection sourceMethodCollection, string target, IssueLogger issues)
         {
             var targets = new Dictionary<string, List<IODataAnnotatable>>();
-            if (sourceMethodCollection.RequestTargetType?.Classification == ODataTargetClassification.NavigationProperty)
-            {
-                target = $"{sourceMethodCollection.RequestTargetType.QualifiedType}/{sourceMethodCollection.RequestTargetType.Name}";
-            }
-
             foreach (var method in sourceMethodCollection)
             {
                 var url = method.RequestUriPathOnly(DocSet.SchemaConfig.BaseUrls, issues);
@@ -1790,7 +1774,9 @@ namespace ApiDoctor.Publishing.CSDL
                 else
                 {
                     AddRestrictionAnnotation(annotatable, method);
-                    AddLinkAnnotation(annotatable, method, sourceMethodCollection, existingPathTargets);
+
+                    var linkRel = GetLinkRelValueForMethod(edmx, verb, url, issues);
+                    AddLinkAnnotation(annotatable, method, linkRel, existingPathTargets);
                 }
 
                 bool pathExists = targets.TryGetValue(path, out var annotationsList);
@@ -1891,7 +1877,7 @@ namespace ApiDoctor.Publishing.CSDL
             }
         }
 
-        private static Dictionary<string, string> httpMethodToRestrictionTermMappings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        private static readonly Dictionary<string, string> httpMethodToRestrictionTermMappings = new(StringComparer.OrdinalIgnoreCase)
         {
            { "GET", Term.ReadRestrictionTerm },
            { "POST", Term.InsertRestrictionsTerm },
@@ -1943,7 +1929,7 @@ namespace ApiDoctor.Publishing.CSDL
             };
         }
 
-        private static readonly Dictionary<string, string> httpMethodToLinkRelMappings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        private static readonly Dictionary<string, string> httpMethodToLinkRelMappings = new(StringComparer.OrdinalIgnoreCase)
         {
            { "GET", Term.LinkRel.List },
            { "POST", Term.LinkRel.Create },
@@ -1952,31 +1938,31 @@ namespace ApiDoctor.Publishing.CSDL
            { "DELETE", Term.LinkRel.Delete }
         };
 
-        private static string GetLinkRelValueForMethod(MethodDefinition method, MethodCollection methodCollection)
+        private static string GetLinkRelValueForMethod(EntityFramework edmx, string verb, string path, IssueLogger issues)
         {
+            ActionOrFunctionBase actionOrFunction = CheckIfRequestIsActionOrFunction(path, edmx, issues);
             string linkRel;
-            if (methodCollection.RequestTargetType?.Classification == ODataTargetClassification.Function)
-            {
+
+            if (actionOrFunction is Function)
                 linkRel = Term.LinkRel.Function;
-            }
-            else if (methodCollection.RequestTargetType?.Classification == ODataTargetClassification.Action)
-            {
+            else if (actionOrFunction is Validation.OData.Action)
                 linkRel = Term.LinkRel.Action;
-            }
             else
-            {
-                httpMethodToLinkRelMappings.TryGetValue(method.HttpMethodVerb(), out linkRel);
-            }
+                httpMethodToLinkRelMappings.TryGetValue(verb, out linkRel);
+
             return linkRel;
         }
 
-        private static void AddLinkAnnotation(IODataAnnotatable annotatable, MethodDefinition method, MethodCollection methodCollection, List<IODataAnnotatable> existingTargets)
+        private static void AddLinkAnnotation(IODataAnnotatable annotatable, MethodDefinition method, string linkRel, List<IODataAnnotatable> existingTargets)
         {
-            var linkRel = GetLinkRelValueForMethod(method, methodCollection);
             if (linkRel == null) return;
 
             var linkRecord = CreateLinksRecord(method.SourceFile.DisplayName, linkRel);
 
+            annotatable.Annotation ??= new List<Annotation>();
+            var linkAnnotation = annotatable.Annotation.FirstOrDefault(x => x.Term == Term.LinksTerm);
+
+            existingTargets ??= new List<IODataAnnotatable>();
             var existsInTarget = existingTargets.SelectMany(x => x.Annotation)
                     .Where(x => x.Term == Term.LinksTerm)
                     .SelectMany(x => x.Collection.Records)
@@ -1984,28 +1970,31 @@ namespace ApiDoctor.Publishing.CSDL
                     .SelectMany(p => p.PropertyValues)
                     .Any(d => (d.Property == linkRecord.PropertyValues[0].Property && d.String == linkRecord.PropertyValues[0].String));
 
-            if (!existsInTarget)
+            if (linkAnnotation == null)
             {
-                var linkAnnotation = new Annotation
+                if (!existsInTarget)
                 {
-                    Term = Term.LinksTerm,
-                    Collection = new RecordCollection
+
+                    linkAnnotation = new Annotation
                     {
-                        Records = new List<Record> { linkRecord }
-                    }
-                };
-                annotatable.Annotation.Add(linkAnnotation);
+                        Term = Term.LinksTerm,
+                        Collection = new RecordCollection
+                        {
+                            Records = new List<Record> { linkRecord }
+                        }
+                    };
+                    annotatable.Annotation.Add(linkAnnotation);
+                }
             }
             else
             {
-                var existingLinkAnnotation = annotatable.Annotation.FirstOrDefault(x => x.Term == Term.LinksTerm);
-                var linkRecordExists = existingLinkAnnotation.Collection.Records
-                  .Where(record => record.Type == linkRecord.Type)
-                  .SelectMany(p => p.PropertyValues)
-                  .Any(d => (d.Property == linkRecord.PropertyValues[0].Property && d.String == linkRecord.PropertyValues[0].String));
+                var linkRecordExists = linkAnnotation.Collection.Records
+                      .Where(record => record.Type == linkRecord.Type)
+                      .SelectMany(p => p.PropertyValues)
+                      .Any(d => (d.Property == linkRecord.PropertyValues[0].Property && d.String == linkRecord.PropertyValues[0].String));
                 if (!linkRecordExists)
                 {
-                    existingLinkAnnotation.Collection.Records.Add(linkRecord);
+                    linkAnnotation.Collection.Records.Add(linkRecord);
                 }
             }
         }
