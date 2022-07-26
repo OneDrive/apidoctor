@@ -73,16 +73,16 @@ namespace ApiDoctor.Publishing.CSDL
             }
 
             // Normalize variables in the request path
-            path = GuidRegex.Replace(path, "{var}");
             path = path.ReplaceTextBetweenCharacters('{', '}', "var");
-
             if (method.RequestMetadata.SampleKeys != null)
             {
                 foreach (var key in method.RequestMetadata.SampleKeys)
                 {
                     path = path.Replace("/" + key, "/{var}");
+                    path = path.Replace("'" + key + "'", "'{var}'");
                 }
             }
+            path = GuidRegex.Replace(path, "{var}");
 
             // Normalize function params
             var substitutions = new Dictionary<string, string>();
@@ -113,7 +113,7 @@ namespace ApiDoctor.Publishing.CSDL
             // Rewrite path syntax into what it logically means
             path = path.ReplaceTextBetweenCharacters(':', ':', "/children/{var}", requireSecondChar: false, removeTargetChars: true);
 
-            return path;
+            return path.Trim();
         }
 
         private static string NormalizeFunctionParameters(string funcParams, IssueLogger issues)

@@ -32,7 +32,7 @@ namespace ApiDoctor.Validation.OData
 
     [XmlRoot("EntitySet", Namespace = ODataParser.EdmNamespace)]
     [Mergable(CollectionIdentifier = "Name")]
-    public class EntitySet : XmlBackedTransformableObject, IODataAnnotatable, ISet
+    public class EntitySet : XmlBackedTransformableObject, ISet
     {
         public EntitySet()
         {

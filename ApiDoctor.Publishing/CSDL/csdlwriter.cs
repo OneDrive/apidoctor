@@ -632,6 +632,7 @@ namespace ApiDoctor.Publishing.CSDL
 
             return record;
         }
+
         private static void FixUpAnnotations(string fullName, IODataAnnotatable annotatable, Dictionary<string, Annotations> schemaLevelAnnotations)
         {
             if (annotatable.Annotation?.Count > 0)
@@ -665,6 +666,9 @@ namespace ApiDoctor.Publishing.CSDL
                 }
                 else
                 {
+                    if (annotatable is ActionOrFunctionBase)
+                        return;
+
                     schemaLevelAnnotations[fullName] = new Annotations
                     {
                         Target = fullName,
@@ -1384,7 +1388,7 @@ namespace ApiDoctor.Publishing.CSDL
                                   (docResource.ResolvedBaseTypeReference == null ||
                                    !docResource.ResolvedBaseTypeReference.HasOrInheritsProperty(p.Name))
                             select p).ToList();
-            MergePropertiesIntoSchema(schemaType.Name, schemaType.Properties, docProps, edmx, generateNewElements, issues.For(schemaType.Name), schemaType.Contributors);
+            MergePropertiesIntoSchema(schemaType.Name, schemaType.Properties, docProps, generateNewElements, issues.For(schemaType.Name), schemaType.Contributors);
 
 
             var docNavigationProps = (from p in docResource.Parameters
@@ -1396,7 +1400,7 @@ namespace ApiDoctor.Publishing.CSDL
 
             if (schemaType is EntityType schemaEntity)
             {
-                MergePropertiesIntoSchema(schemaEntity.Name, schemaEntity.NavigationProperties, docNavigationProps, edmx, generateNewElements, issues.For(schemaEntity.Name), schemaEntity.Contributors);
+                MergePropertiesIntoSchema(schemaEntity.Name, schemaEntity.NavigationProperties, docNavigationProps, generateNewElements, issues.For(schemaEntity.Name), schemaEntity.Contributors);
             }
 
             if (schemaType.BaseType != docResource.BaseType)
@@ -1425,7 +1429,6 @@ namespace ApiDoctor.Publishing.CSDL
             string typeName,
             List<TProp> schemaProps,
             IEnumerable<ParameterDefinition> docProps,
-            EntityFramework edmx,
             bool generateNewElements,
             IssueLogger issues,
             HashSet<ResourceDefinition> allContributors = null)
@@ -1434,18 +1437,17 @@ namespace ApiDoctor.Publishing.CSDL
             var documentedProperties = docProps.ToDictionary(x => x.Name, x => x);
             foreach (var schemaProp in schemaProps)
             {
-                ParameterDefinition documentedVersion = null;
-                if (documentedProperties.TryGetValue(schemaProp.Name, out documentedVersion))
+                if (documentedProperties.TryGetValue(schemaProp.Name, out ParameterDefinition documentedPropVersion))
                 {
                     // Compare / update schema with data from documentation
-                    var docProp = ConvertParameterToProperty<Property>(typeName, documentedVersion, issues.For(schemaProp.Name));
+                    var docProp = ConvertParameterToProperty<Property>(typeName, documentedPropVersion, issues.For(schemaProp.Name));
                     LogIfDifferent(schemaProp.Nullable, docProp.Nullable, issues, $"Type {typeName}: Property {docProp.Name} has a different nullable value than documentation.");
                     LogIfDifferent(schemaProp.TargetEntityType, docProp.TargetEntityType, issues, $"Type {typeName}: Property {docProp.Name} has a different target entity type than documentation.");
                     LogIfDifferent(schemaProp.Type, docProp.Type, issues, $"Type {typeName}: Property {docProp.Name} has a different Type value than documentation ({schemaProp.Type},{docProp.Type}).");
                     LogIfDifferent(schemaProp.Unicode, docProp.Unicode, issues, $"Type {typeName}: Property {docProp.Name} has a different unicode value than documentation ({schemaProp.Unicode},{docProp.Unicode}).");
-                    documentedProperties.Remove(documentedVersion.Name);
+                    documentedProperties.Remove(documentedPropVersion.Name);
 
-                    AddDescriptionAnnotation(typeName, schemaProp, documentedVersion, issues);
+                    AddDescriptionAnnotation(typeName, schemaProp, documentedPropVersion, issues);
                 }
                 else
                 {
@@ -1739,7 +1741,7 @@ namespace ApiDoctor.Publishing.CSDL
             var targets = new Dictionary<string, List<IODataAnnotatable>>();
             foreach (var method in sourceMethodCollection)
             {
-                var url = method.RequestUriPathOnly(DocSet.SchemaConfig.BaseUrls, issues);
+                var url = method.RequestUriPathOnly(DocSet.SchemaConfig.BaseUrls, issues);        
                 var matches = FullSingletonPathRegEx.Matches(url);
                 if (matches is { Count: > 0 } && matches[0].Groups[1].Value != set.Name)
                 {
@@ -1758,11 +1760,15 @@ namespace ApiDoctor.Publishing.CSDL
                 }
 
                 IODataAnnotatable annotatable = new Property();
-                var path = stringBuilder.ToString();
-                var existingPathTargets = targets.Where(x => x.Key == path).Select(x => x.Value).FirstOrDefault();
-                if (path.Equals(target, StringComparison.OrdinalIgnoreCase))
+                var path = stringBuilder.ToString(); 
+                ActionOrFunctionBase actionOrFunction = CheckIfRequestIsActionOrFunction(url, edmx, issues);
+                if (actionOrFunction != null)
                 {
-                    annotatable = (IODataAnnotatable)set;
+                    annotatable = actionOrFunction;
+                }
+                else if (path.Equals(target, StringComparison.OrdinalIgnoreCase))
+                {
+                    annotatable = set;
                 }
 
                 var verb = method.HttpMethodVerb();
@@ -1773,10 +1779,9 @@ namespace ApiDoctor.Publishing.CSDL
                 }
                 else
                 {
+                    var existingPathTargets = targets.Where(x => x.Key == path).Select(x => x.Value).FirstOrDefault();
                     AddRestrictionAnnotation(annotatable, method);
-
-                    var linkRel = GetLinkRelValueForMethod(edmx, verb, url, issues);
-                    AddLinkAnnotation(annotatable, method, linkRel, existingPathTargets);
+                    AddLinkAnnotation(annotatable, method, existingPathTargets);
                 }
 
                 bool pathExists = targets.TryGetValue(path, out var annotationsList);
@@ -1938,14 +1943,12 @@ namespace ApiDoctor.Publishing.CSDL
            { "DELETE", Term.LinkRel.Delete }
         };
 
-        private static string GetLinkRelValueForMethod(EntityFramework edmx, string verb, string path, IssueLogger issues)
+        private static string GetLinkRelValueForMethod(IODataAnnotatable annotatable, string verb)
         {
-            ActionOrFunctionBase actionOrFunction = CheckIfRequestIsActionOrFunction(path, edmx, issues);
             string linkRel;
-
-            if (actionOrFunction is Function)
+            if (annotatable is Function)
                 linkRel = Term.LinkRel.Function;
-            else if (actionOrFunction is Validation.OData.Action)
+            else if (annotatable is Validation.OData.Action)
                 linkRel = Term.LinkRel.Action;
             else
                 httpMethodToLinkRelMappings.TryGetValue(verb, out linkRel);
@@ -1953,8 +1956,9 @@ namespace ApiDoctor.Publishing.CSDL
             return linkRel;
         }
 
-        private static void AddLinkAnnotation(IODataAnnotatable annotatable, MethodDefinition method, string linkRel, List<IODataAnnotatable> existingTargets)
+        private static void AddLinkAnnotation(IODataAnnotatable annotatable, MethodDefinition method, List<IODataAnnotatable> existingTargets)
         {
+            var linkRel = GetLinkRelValueForMethod(annotatable, method.HttpMethodVerb());
             if (linkRel == null) return;
 
             var linkRecord = CreateLinksRecord(method.SourceFile.DisplayName, linkRel);
@@ -1974,7 +1978,6 @@ namespace ApiDoctor.Publishing.CSDL
             {
                 if (!existsInTarget)
                 {
-
                     linkAnnotation = new Annotation
                     {
                         Term = Term.LinksTerm,

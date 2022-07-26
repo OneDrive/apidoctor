@@ -487,8 +487,7 @@ namespace ApiDoctor.Validation
         /// </summary>
         internal void VerifyRequestFormat(IssueLogger issues)
         {
-            HttpRequest request;
-            HttpParser.TryParseHttpRequest(this.Request, out request);
+            HttpParser.TryParseHttpRequest(this.Request, out HttpRequest request);
             if (request != null)
             {
                 if (null != request.ContentType)

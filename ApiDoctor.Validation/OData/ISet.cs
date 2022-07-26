@@ -27,10 +27,8 @@ namespace ApiDoctor.Validation.OData
 {
     using System.Collections.Generic;
 
-    public interface ISet
+    public interface ISet: IODataAnnotatable
     {
-        string Name { get; set; }
-        List<Annotation> Annotation { get; set; }
         List<NavigationPropertyBinding> NavigationPropertyBinding { get; set; }
         object SourceMethods { get; set; }
     }
