@@ -51,6 +51,7 @@ namespace ApiDoctor.ConsoleApp
 
         public const string VerbGenerateDocs = "generate-docs";
         public const string VerbGenerateSnippets = "generate-snippets";
+        public const string VerbDeduplicateExampleNames = "deduplicate-example-names";
     }
 
     [Verb(CommandLineOptions.VerbAbout, HelpText = "Print about information for this application.")]
@@ -610,5 +611,10 @@ namespace ApiDoctor.ConsoleApp
 
         [Option("custom-metadata-path", HelpText = "Path to custom metadata that snippet generation can consume", Required = false)]
         public string CustomMetadataPath { get; set; }
+    }
+
+    [Verb(CommandLineOptions.VerbDeduplicateExampleNames, HelpText = "Reports duplicate names in examples and attempts to deduplicate them")]
+    class DeduplicateExampleNamesOptions : BasicCheckOptions
+    {
     }
 }
