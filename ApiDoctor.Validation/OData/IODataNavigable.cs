@@ -27,7 +27,6 @@ namespace ApiDoctor.Validation.OData
 {
     using System;
     using System.Linq;
-    using System.Text.RegularExpressions;
     using ApiDoctor.Validation.Error;
 
     public interface IODataNavigable
@@ -108,6 +107,27 @@ namespace ApiDoctor.Validation.OData
                         f.Parameters.Any(p => p.Name == "bindingParameter" && p.Type.TypeOnly() == source.TypeIdentifier.TypeOnly())).
                     ToList();
 
+
+            if (!matches.Any())
+            {
+                // check for case-insensitive matches and throw if one exists
+                matches =
+                    edmx.DataServices.Schemas.SelectMany(s => s.Functions).
+                        Where(f =>
+                            f.IsBound &&
+                            (f.Name.IEquals(component) || f.ParameterizedName.IEquals(component)) &&
+                            f.ReturnType?.Type != null &&
+                            f.Parameters.Any(p => p.Name == "bindingParameter" && p.Type.TypeOnly() == source.TypeIdentifier.TypeOnly())).
+                        ToList();
+
+                if (matches.Any())
+                {
+                    var otherCaseName = matches.Select(x => x.Name.IEquals(component) ? x.Name : x.ParameterizedName).First();
+                    issues.Error(ValidationErrorCode.TypeNameMismatch, $"ERROR: case mismatch between URL segment '{component}' and schema element '{otherCaseName}'");
+                }
+            }
+
+
             if (matches.Any())
             {
                 foreach (var m in matches)
@@ -117,20 +137,6 @@ namespace ApiDoctor.Validation.OData
 
                 var match = matches.First().ReturnType.Type;
                 return edmx.ResourceWithIdentifier<IODataNavigable>(match);
-            }
-
-            var otherCaseName =
-                edmx.DataServices.Schemas.SelectMany(s => s.Functions).
-                    Where(f =>
-                        f.IsBound &&
-                        (f.Name.IEquals(component) || f.ParameterizedName.IEquals(component)) &&
-                        f.Parameters.Any(p => p.Name == "bindingParameter" && p.Type.TypeOnly() == source.TypeIdentifier.TypeOnly())).
-                    Select(f => f.Name.IEquals(component) ? f.Name : f.ParameterizedName).
-                    FirstOrDefault();
-
-            if (otherCaseName != null)
-            {
-                issues.Error(ValidationErrorCode.TypeNameMismatch, $"ERROR: case mismatch between URL segment '{component}' and schema element '{otherCaseName}'");
             }
 
             return null;
@@ -169,6 +175,7 @@ namespace ApiDoctor.Validation.OData
         public string QualifiedType { get; set; }
 
         public string Name { get; set; }
+
     }
 
 

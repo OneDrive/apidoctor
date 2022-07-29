@@ -1108,13 +1108,12 @@ namespace ApiDoctor.Publishing.CSDL
                     if (response.Name.Contains("."))
                     {
                         response.Classification = ODataTargetClassification.TypeCast;
+                        response.QualifiedType = edmx.LookupIdentifierForType(previousObject);
                     }
                     else
                     {
                         response.Classification = ODataTargetClassification.NavigationProperty;
                     }
-
-                    response.QualifiedType = edmx.LookupIdentifierForType(previousObject);
                 }
                 else
                 {
@@ -1691,38 +1690,46 @@ namespace ApiDoctor.Publishing.CSDL
             }
         }
 
-        private static ActionOrFunctionBase CheckIfRequestIsActionOrFunction(string path, EntityFramework edmx, IssueLogger issues)
+        private static ActionOrFunctionBase FindActionOrFunctionTarget(string path, EntityFramework edmx, IssueLogger issues)
         {
             ActionOrFunctionBase actionOrFunction = null;
+            string[] requestParts = path.Substring(1).Split(new char[] { '/' });
+
+            if (requestParts.Length < 2 || requestParts.Last() == "{var}")
+                return null;
+
             try
             {
-                ODataTargetInfo requestTarget = ParseRequestTargetType(path, edmx, issues);
+                var targetPath = string.Join('/', requestParts.SkipLast(1));
+                ODataTargetInfo requestTarget = ParseRequestTargetType($"/{targetPath}", edmx, issues);
 
-                if (requestTarget.Classification == ODataTargetClassification.Unknown || (requestTarget?.QualifiedType != null && requestTarget.QualifiedType.IsCollection()))
+                if (requestTarget?.QualifiedType != null)
                 {
-                    var requestTargetNamespace = requestTarget.QualifiedType?.NamespaceOnly();
+                    var requestTargetNamespace = requestTarget.QualifiedType.NamespaceOnly();
                     var schema = edmx.DataServices.Schemas.FirstOrDefault(x => x.Namespace == requestTargetNamespace || x.Alias == requestTargetNamespace);
                     if (schema == null)
                         throw new Exception($"Unknown namespace: {requestTargetNamespace}");
 
                     var actionsAndFunctions = schema.Functions.Cast<ActionOrFunctionBase>().Concat(schema.Actions);
+                    var bindingParameterType = schema.Alias != null ? $"{schema.Alias}.{requestTarget.QualifiedType.TypeOnly()}" : requestTarget.QualifiedType;
+                    if (requestTarget.QualifiedType.IsCollection())
+                        bindingParameterType = $"Collection({bindingParameterType})";
+
                     var matches = actionsAndFunctions.Where(x =>
                         x.IsBound &&
-                        (x.Name.IEquals(requestTarget.Name) || x.ParameterizedName.IEquals(requestTarget.Name)) &&
-                        x.Parameters.Any(x => x.Type?.TypeOnly() == requestTarget.QualifiedType?.TypeOnly() &&
-                            x.Type?.IsCollection() == requestTarget.QualifiedType.IsCollection()))
+                        (x.Name.IEquals(requestParts.Last()) || x.ParameterizedName.IEquals(requestParts.Last())) &&
+                        x.Parameters.Any(x => x.Type == bindingParameterType))
                         .ToList();
 
                     if (matches.Any())
                     {
-                        actionOrFunction = matches.FirstOrDefault(x => x.Name == "bindingParameter");
+                        actionOrFunction = matches.Where(x => x.Parameters.Any(x => x.Name == "bindingParameter")).FirstOrDefault();
                         if (actionOrFunction == null && matches.Count == 1) // bindingParameter not specified but can be deduced
                         {
                             actionOrFunction = matches.First();
                             issues.Error(ValidationErrorCode.BindingParameterNotFound, $"ERROR: binding parameter not specified for {requestTarget.Name} targeting {requestTarget.QualifiedType}");
                         }
                     }
-
                 }
             }
             catch (Exception ex)
@@ -1773,7 +1780,7 @@ namespace ApiDoctor.Publishing.CSDL
 
                 IODataAnnotatable annotatable = new Property();
                 var path = stringBuilder.ToString();
-                ActionOrFunctionBase actionOrFunction = CheckIfRequestIsActionOrFunction(url, edmx, issues);
+                ActionOrFunctionBase actionOrFunction = FindActionOrFunctionTarget(url, edmx, issues);
                 if (actionOrFunction != null)
                 {
                     annotatable = actionOrFunction;

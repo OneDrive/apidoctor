@@ -88,18 +88,19 @@ namespace ApiDoctor.Validation.OData
 
             var match = this.Properties.Where(p => p.Name == component).Select(p => p.Type).FirstOrDefault();
 
+            if (match == null)
+            {
+                // check for case-insensitive matches and throw if one exists
+                match = this.Properties.Where(p => p.Name.IEquals(component)).Select(p => p.Name).FirstOrDefault();
+                if (match != null)
+                {
+                    issues.Error(ValidationErrorCode.TypeNameMismatch, $"ERROR: case mismatch between URL segment '{component}' and schema element '{match}'");
+                }
+            }
+
             if (match != null)
             {
                 return edmx.ResourceWithIdentifier<IODataNavigable>(match);
-            }
-
-            // check for case-insensitive matches and throw if one exists
-            var otherCaseName =
-                this.Properties.Where(p => p.Name.IEquals(component)).Select(p => p.Name).FirstOrDefault();
-
-            if (otherCaseName != null)
-            {
-                throw new ArgumentException($"ERROR: case mismatch between URL segment '{component}' and schema element '{otherCaseName}'");
             }
 
             return null;

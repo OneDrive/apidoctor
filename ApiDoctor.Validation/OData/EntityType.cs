@@ -98,7 +98,7 @@ namespace ApiDoctor.Validation.OData
 
         public override IODataNavigable NavigateByUriComponent(string component, EntityFramework edmx, IssueLogger issues, bool isLastSegment)
         {
-            var navigationPropertyMatch = FindNavigationPropertyByName(component, edmx);
+            var navigationPropertyMatch = FindNavigationPropertyByName(component, edmx, issues);
 
             if (null != navigationPropertyMatch)
             {
@@ -111,27 +111,29 @@ namespace ApiDoctor.Validation.OData
                 return edmx.LookupNavigableType(identifier);
             }
 
-            var otherCaseName =
-                (from n in this.NavigationProperties
-                 where n.Name.IEquals(component)
-                 select n.Name).FirstOrDefault();
-
-            if (otherCaseName != null)
-            {
-                throw new ArgumentException($"ERROR: case mismatch between URL segment '{component}' and existing nav prop '{otherCaseName}'");
-            }
-
             return base.NavigateByUriComponent(component, edmx, issues, isLastSegment);
         }
 
-        private NavigationProperty FindNavigationPropertyByName(string component, EntityFramework edmx)
+        private NavigationProperty FindNavigationPropertyByName(string component, EntityFramework edmx, IssueLogger issues)
         {
             var navigationProperty = this.NavigationProperties.FirstOrDefault(x => x.Name == component);
+
+            if (navigationProperty == null)
+            {
+                // check for case-insensitive matches and throw if one exists
+                navigationProperty = this.NavigationProperties.FirstOrDefault(x => x.Name.IEquals(component));
+                if (navigationProperty != null)
+                {
+                    issues.Error(ValidationErrorCode.TypeNameMismatch, $"ERROR: case mismatch between URL segment '{component}' and schema element '{navigationProperty.Name}'");
+                }
+            }
+
             if (navigationProperty == null && this.BaseType != null)
             {
                 var baseType = edmx.DataServices.Schemas.SelectMany(x => x.EntityTypes).FirstOrDefault(x => x.Name == this.BaseType.TypeOnly());
-                return baseType.FindNavigationPropertyByName(component, edmx);
+                return baseType.FindNavigationPropertyByName(component, edmx, issues);
             }
+
             return navigationProperty;
         }
 
