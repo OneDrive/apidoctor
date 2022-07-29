@@ -47,7 +47,7 @@ namespace ApiDoctor.Validation.OData
 
         [XmlAttribute("Name"), SortBy]
         public string Name { get; set; }
-        
+
         [XmlAttribute("BaseType"), ContainsType, MergePolicy(MergePolicy.EqualOrNull)]
         public string BaseType { get; set; }
 
@@ -62,7 +62,7 @@ namespace ApiDoctor.Validation.OData
 
         [XmlElement("Annotation", Namespace = ODataParser.EdmNamespace), MergePolicy(MergePolicy.EqualOrNull)]
         public List<Annotation> Annotation { get; set; }
-        
+
         [XmlAttribute("WorkloadName", Namespace = ODataParser.AgsNamespace), MergePolicy(MergePolicy.EqualOrNull)]
         public string WorkloadName { get; set; }
 
@@ -80,7 +80,7 @@ namespace ApiDoctor.Validation.OData
 
         public virtual IODataNavigable NavigateByUriComponent(string component, EntityFramework edmx, IssueLogger issues, bool isLastSegment)
         {
-            var func = this.NavigateByFunction(component, edmx, isLastSegment);
+            var func = this.NavigateByFunction(component, edmx, issues);
             if (func != null)
             {
                 return func;

@@ -70,7 +70,7 @@ namespace ApiDoctor.Validation.OData
                 return this.NavigateByEntityTypeKey(edmx, issues);
             }
 
-            var result = this.NavigateByFunction(component, edmx, isLastSegment);
+            var result = this.NavigateByFunction(component, edmx, issues);
             if (result != null)
             {
                 return result;
@@ -97,7 +97,7 @@ namespace ApiDoctor.Validation.OData
 
     public static class OdataNavigableExtensionMethods
     {
-        public static IODataNavigable NavigateByFunction(this IODataNavigable source, string component, EntityFramework edmx, bool isLastSegment)
+        public static IODataNavigable NavigateByFunction(this IODataNavigable source, string component, EntityFramework edmx, IssueLogger issues)
         {
             var matches =
                 edmx.DataServices.Schemas.SelectMany(s => s.Functions).
@@ -130,7 +130,7 @@ namespace ApiDoctor.Validation.OData
 
             if (otherCaseName != null)
             {
-                throw new ArgumentException($"ERROR: case mismatch between URL segment '{component}' and schema element '{otherCaseName}'");
+                issues.Error(ValidationErrorCode.TypeNameMismatch, $"ERROR: case mismatch between URL segment '{component}' and schema element '{otherCaseName}'");
             }
 
             return null;

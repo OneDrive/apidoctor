@@ -67,7 +67,9 @@ namespace ApiDoctor.Validation.OData
         [XmlAttribute("AddressContainsEntitySetSegment", Namespace = ODataParser.AgsNamespace)]
         public bool GraphAddressContainsEntitySetSegmentSerializedValue
         {
-            get {  if (this.GraphAddressContainsEntitySetSegment.HasValue)
+            get
+            {
+                if (this.GraphAddressContainsEntitySetSegment.HasValue)
                 {
                     return this.GraphAddressContainsEntitySetSegment.Value;
                 }
@@ -96,9 +98,8 @@ namespace ApiDoctor.Validation.OData
 
         public override IODataNavigable NavigateByUriComponent(string component, EntityFramework edmx, IssueLogger issues, bool isLastSegment)
         {
-            var navigationPropertyMatch = (from n in this.NavigationProperties
-                                           where n.Name == component
-                                           select n).FirstOrDefault();
+            var navigationPropertyMatch = FindNavigationPropertyByName(component, edmx);
+
             if (null != navigationPropertyMatch)
             {
                 var identifier = navigationPropertyMatch.Type;
@@ -121,6 +122,17 @@ namespace ApiDoctor.Validation.OData
             }
 
             return base.NavigateByUriComponent(component, edmx, issues, isLastSegment);
+        }
+
+        private NavigationProperty FindNavigationPropertyByName(string component, EntityFramework edmx)
+        {
+            var navigationProperty = this.NavigationProperties.FirstOrDefault(x => x.Name == component);
+            if (navigationProperty == null && this.BaseType != null)
+            {
+                var baseType = edmx.DataServices.Schemas.SelectMany(x => x.EntityTypes).FirstOrDefault(x => x.Name == this.BaseType.TypeOnly());
+                return baseType.FindNavigationPropertyByName(component, edmx);
+            }
+            return navigationProperty;
         }
 
         public override IODataNavigable NavigateByEntityTypeKey(EntityFramework edmx, IssueLogger issues)

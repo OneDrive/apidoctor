@@ -1696,22 +1696,33 @@ namespace ApiDoctor.Publishing.CSDL
             ActionOrFunctionBase actionOrFunction = null;
             try
             {
-                var requestTarget = ParseRequestTargetType(path, edmx, issues);
-                if (requestTarget.Classification != ODataTargetClassification.Unknown || (requestTarget.QualifiedType != null && requestTarget.QualifiedType.IsCollection()))
+                ODataTargetInfo requestTarget = ParseRequestTargetType(path, edmx, issues);
+
+                if (requestTarget.Classification == ODataTargetClassification.Unknown || (requestTarget?.QualifiedType != null && requestTarget.QualifiedType.IsCollection()))
                 {
                     var requestTargetNamespace = requestTarget.QualifiedType?.NamespaceOnly();
                     var schema = edmx.DataServices.Schemas.FirstOrDefault(x => x.Namespace == requestTargetNamespace || x.Alias == requestTargetNamespace);
                     if (schema == null)
                         throw new Exception($"Unknown namespace: {requestTargetNamespace}");
 
-                    bool condition(ActionOrFunctionBase actionOrFunction)
+                    var actionsAndFunctions = schema.Functions.Cast<ActionOrFunctionBase>().Concat(schema.Actions);
+                    var matches = actionsAndFunctions.Where(x =>
+                        x.IsBound &&
+                        (x.Name.IEquals(requestTarget.Name) || x.ParameterizedName.IEquals(requestTarget.Name)) &&
+                        x.Parameters.Any(x => x.Type?.TypeOnly() == requestTarget.QualifiedType?.TypeOnly() &&
+                            x.Type?.IsCollection() == requestTarget.QualifiedType.IsCollection()))
+                        .ToList();
+
+                    if (matches.Any())
                     {
-                        return actionOrFunction.IsBound &&
-                        actionOrFunction.Name == requestTarget.Name &&
-                        actionOrFunction.Parameters.Any(x => x.Name == "bindingParameter" && x.Type.TypeOnly() == requestTarget.QualifiedType.TypeOnly());
+                        actionOrFunction = matches.FirstOrDefault(x => x.Name == "bindingParameter");
+                        if (actionOrFunction == null && matches.Count == 1) // bindingParameter not specified but can be deduced
+                        {
+                            actionOrFunction = matches.First();
+                            issues.Error(ValidationErrorCode.BindingParameterNotFound, $"ERROR: binding parameter not specified for {requestTarget.Name} targeting {requestTarget.QualifiedType}");
+                        }
                     }
 
-                    actionOrFunction = schema.Actions.FirstOrDefault((Func<ActionOrFunctionBase, bool>)condition) ?? schema.Functions.FirstOrDefault((Func<ActionOrFunctionBase, bool>)condition);
                 }
             }
             catch (Exception ex)
