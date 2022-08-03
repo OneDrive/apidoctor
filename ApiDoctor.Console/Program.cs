@@ -2306,7 +2306,7 @@ namespace ApiDoctor.ConsoleApp
         /// <returns>canonical name from method identifier and version</returns>
         private static string GetSnippetPrefix(string identifier, string version)
         {
-            var methodName = Regex.Replace(identifier, @"[# .()\\/]", "").Replace("_", "-").ToLower();
+            var methodName = Regex.Replace(identifier, @"[$# .()\\/]", "").Replace("_", "-").ToLower();
             return methodName + version;
         }
 
@@ -2359,7 +2359,7 @@ namespace ApiDoctor.ConsoleApp
         /// Finds the file the request is located and inserts the code snippet into the file.
         /// </summary>
         /// <param name="method">The <see cref="MethodDefinition"/> of the request being generated a snippet for</param>
-        /// <param name="codeSnippetsText">The string of the code snippets tab section</param>
+        /// <param name="codeSnippets">The string of the code snippets tab section</param>
         private static void InjectSnippetsIntoFile(MethodDefinition method, string codeSnippets)
         {
             var originalFileContents = File.ReadAllLines(method.SourceFile.FullPath);
