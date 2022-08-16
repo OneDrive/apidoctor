@@ -114,7 +114,7 @@ namespace ApiDoctor.Validation.OData
             return base.NavigateByUriComponent(component, edmx, issues, isLastSegment);
         }
 
-        private NavigationProperty FindNavigationPropertyByName(string component, EntityFramework edmx, IssueLogger issues)
+        public NavigationProperty FindNavigationPropertyByName(string component, EntityFramework edmx, IssueLogger issues)
         {
             var navigationProperty = this.NavigationProperties.FirstOrDefault(x => x.Name == component);
 

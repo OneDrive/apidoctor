@@ -127,7 +127,6 @@ namespace ApiDoctor.Validation.OData
                 }
             }
 
-
             if (matches.Any())
             {
                 foreach (var m in matches)
@@ -175,9 +174,7 @@ namespace ApiDoctor.Validation.OData
         public string QualifiedType { get; set; }
 
         public string Name { get; set; }
-
     }
-
 
     public enum ODataTargetClassification
     {
