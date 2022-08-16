@@ -1762,13 +1762,10 @@ namespace ApiDoctor.Publishing.CSDL
                         .Where(x => x.Name == typeOnly).FirstOrDefault();
                     if (complexType != null)
                     {
-                        var entityType = complexType as EntityType;
-
-                        // check if last segment is navigation property of entity type
-                        var navProperty = entityType.FindNavigationPropertyByName(requestParts.Last(), edmx, issues);
+                        var navProperty = complexType.NavigateByUriComponent(requestParts.Last(), edmx, issues, true);
                         if (navProperty != null)
                         {
-                            return $"{schema}.{typeOnly}/{requestParts.Last()}";
+                            return $"{schema.Namespace}.{typeOnly}/{requestParts.Last()}";
                         }
                     }
                 }

@@ -86,21 +86,11 @@ namespace ApiDoctor.Validation.OData
                 return func;
             }
 
-            var match = this.Properties.Where(p => p.Name == component).Select(p => p.Type).FirstOrDefault();
-
-            if (match == null)
-            {
-                // check for case-insensitive matches and throw if one exists
-                match = this.Properties.Where(p => p.Name.IEquals(component)).Select(p => p.Name).FirstOrDefault();
-                if (match != null)
-                {
-                    issues.Error(ValidationErrorCode.TypeNameMismatch, $"ERROR: case mismatch between URL segment '{component}' and schema element '{match}'");
-                }
-            }
+            var match = FindPropertyByName(component, edmx, issues);
 
             if (match != null)
             {
-                return edmx.ResourceWithIdentifier<IODataNavigable>(match);
+                return edmx.ResourceWithIdentifier<IODataNavigable>(match.Type);
             }
 
             return null;
@@ -125,6 +115,31 @@ namespace ApiDoctor.Validation.OData
                 }
                 return false;
             });
+        }
+
+        private Property FindPropertyByName(string component, EntityFramework edmx, IssueLogger issues)
+        {
+            var property = this.Properties.FirstOrDefault(x => x.Name == component);
+
+            if (property == null)
+            {
+                // check for case-insensitive matches and throw if one exists
+                property = this.Properties.FirstOrDefault(x => x.Name.IEquals(component));
+                if (property != null)
+                {
+                    issues.Error(ValidationErrorCode.TypeNameMismatch, $"ERROR: case mismatch between URL segment '{component}' and schema element '{property.Name}'");
+                }
+            }
+
+            if (property == null && this.BaseType != null)
+            {
+                var baseType = edmx.DataServices.Schemas.SelectMany(
+                    x => x.EntityTypes.Concat(x.ComplexTypes))
+                    .FirstOrDefault(x => x.Name == this.BaseType.TypeOnly());
+                return baseType.FindPropertyByName(component, edmx, issues);
+            }
+
+            return property;
         }
 
         [XmlIgnore, MergePolicy(MergePolicy.Ignore)]
