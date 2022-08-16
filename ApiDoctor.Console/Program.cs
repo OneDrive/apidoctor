@@ -82,7 +82,7 @@ namespace ApiDoctor.ConsoleApp
 
             try
             {
-                Parser.Default.ParseArguments<PrintOptions, CheckLinkOptions, BasicCheckOptions, CheckAllLinkOptions, CheckServiceOptions, PublishOptions, PublishMetadataOptions, CheckMetadataOptions, FixDocsOptions, GenerateDocsOptions, GenerateSnippetsOptions, AboutOptions>(args)
+                Parser.Default.ParseArguments<PrintOptions, CheckLinkOptions, BasicCheckOptions, CheckAllLinkOptions, CheckServiceOptions, PublishOptions, PublishMetadataOptions, CheckMetadataOptions, FixDocsOptions, GenerateDocsOptions, GenerateSnippetsOptions, AboutOptions, DeduplicateExampleNamesOptions>(args)
                         .WithParsed<BaseOptions>((options) =>
                         {
                             IgnoreErrors = options.IgnoreErrors;
@@ -108,6 +108,7 @@ namespace ApiDoctor.ConsoleApp
                             (GenerateDocsOptions options) => RunInvokedMethodAsync(options),
                             (AboutOptions options) => RunInvokedMethodAsync(options),
                             (GenerateSnippetsOptions options) => RunInvokedMethodAsync(options),
+                            (DeduplicateExampleNamesOptions options) => RunInvokedMethodAsync(options),
                             (errors) =>
                             {
                                 FancyConsole.WriteLine(ConsoleColor.Red, "COMMAND LINE PARSE ERROR");
@@ -217,6 +218,9 @@ namespace ApiDoctor.ConsoleApp
                     break;
                 case GenerateSnippetsOptions o:
                     returnSuccess = await GenerateSnippetsAsync(o, issues);
+                    break;
+                case DeduplicateExampleNamesOptions o:
+                    returnSuccess = await DeduplicateExampleNamesAsync(o, issues);
                     break;
                 case BasicCheckOptions o:
                     returnSuccess = await CheckDocsAsync(o, issues);
@@ -1884,6 +1888,50 @@ namespace ApiDoctor.ConsoleApp
         }
 
         /// <summary>
+        /// Detects duplicate names within a version (beta and V1) and deduplicates them by postfixing a counter at the end
+        /// </summary>
+        /// <param name="options">command line options</param>
+        /// <param name="issues">issue logger</param>
+        /// <param name="docs">doc set</param>
+        /// <returns>whether the attempt was successful</returns>
+        private static async Task<bool> DeduplicateExampleNamesAsync(DeduplicateExampleNamesOptions options, IssueLogger issues, DocSet docs = null)
+        {
+            //we are not out to validate the documents in this context.
+            options.IgnoreErrors = options.IgnoreWarnings = true;
+
+            //scan the docset and find the methods present
+            var docset = docs ?? await GetDocSetAsync(options, issues).ConfigureAwait(false);
+            if (null == docset)
+            {
+                return false;
+            }
+            var methods = FindTestMethods(options, docset);
+            var hadDuplicates = !await ReportDuplicateMethodNamesAndDeduplicateAsync(methods).ConfigureAwait(false);
+            if (hadDuplicates)
+            {
+                FancyConsole.WriteLine(FancyConsole.ConsoleWarningColor, "======================================================================================");
+                FancyConsole.WriteLine(FancyConsole.ConsoleWarningColor, "Parsing the documentation again to make sure that deduplication attempt was successful");
+                FancyConsole.WriteLine(FancyConsole.ConsoleWarningColor, "======================================================================================");
+
+                docset = await GetDocSetAsync(options, issues).ConfigureAwait(false);
+                if (null == docset)
+                {
+                    return false;
+                }
+
+                methods = FindTestMethods(options, docset);
+                var hadDuplicatesInSecondRun = !await ReportDuplicateMethodNamesAndDeduplicateAsync(methods).ConfigureAwait(false);
+                if (hadDuplicatesInSecondRun)
+                {
+                    issues.Error(ValidationErrorCode.DeduplicationWasUnsuccessful, "Please revisit the deduplication logic as one replacement attempt was not enough to clear all duplicates.");
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
         /// Generate snippets for the methods present in the documents by querying an existing snippet generation api
         /// </summary>
         /// <param name="options"></param>
@@ -2085,6 +2133,95 @@ namespace ApiDoctor.ConsoleApp
         }
 
         /// <summary>
+        /// Snippet generation has an assumption that request block names are unique within a version
+        /// This method reports duplicate names and deduplicates them
+        /// </summary>
+        /// <param name="methods">request method definitions</param>
+        private static async Task<bool> ReportDuplicateMethodNamesAndDeduplicateAsync(MethodDefinition[] methods)
+        {
+            var identifierFileMapping = new Dictionary<string, List<(string, string)>>();
+            var duplicates = new HashSet<string>();
+            var allIdentifiers = new HashSet<string>();
+            var fileCount = 0;
+            foreach (var method in methods)
+            {
+                string snippetPrefix;
+                try
+                {
+                    snippetPrefix = GetSnippetPrefix(method);
+                }
+                catch
+                {
+                    snippetPrefix = method.Identifier;
+                }
+                allIdentifiers.Add(snippetPrefix);
+
+                if (identifierFileMapping.ContainsKey(snippetPrefix))
+                {
+                    identifierFileMapping[snippetPrefix].Add((method.Identifier, method.SourceFile.FullPath));
+                    fileCount++;
+                    duplicates.Add(snippetPrefix);
+                }
+                else
+                {
+                    identifierFileMapping[snippetPrefix] = new List<(string, string)> { (method.Identifier, method.SourceFile.FullPath) };
+                }
+            }
+
+            if (duplicates.Count > 0)
+            {
+                var totalFileCount = fileCount + duplicates.Count; // add number of initial occurences as well
+                FancyConsole.WriteLine(FancyConsole.ConsoleErrorColor, $"==================================================================");
+                FancyConsole.WriteLine(FancyConsole.ConsoleErrorColor, $"found {duplicates.Count} duplicate names in {totalFileCount} files");
+                FancyConsole.WriteLine(FancyConsole.ConsoleErrorColor, $"==================================================================");
+
+                foreach (var duplicate in duplicates)
+                {
+                    FancyConsole.WriteLine(FancyConsole.ConsoleErrorColor, $"{duplicate}");
+                    var counter = 0;
+                    foreach ((var identifier, var fileName) in identifierFileMapping[duplicate])
+                    {
+                        string version;
+                        try
+                        {
+                            version = GetSnippetVersion(fileName);
+                        }
+                        catch
+                        {
+                            version = string.Empty;
+                        }
+
+                        do
+                        {
+                            // make sure we don't collide with existing identifiers while replacing
+                            // continue incrementing until we don't have collision
+                            counter++;
+                        } while (allIdentifiers.Contains(GetSnippetPrefix($"{identifier}_{counter}", version)));
+
+                        // deduplicate by appending a counter at the end.
+                        await ReplaceFirstOccurence(fileName, identifier, $"{identifier}_{counter}").ConfigureAwait(false);
+
+                        // report duplicate
+                        FancyConsole.WriteLine(FancyConsole.ConsoleErrorColor, $"  {identifier} in {fileName}");
+                    }
+                }
+
+                FancyConsole.WriteLine(FancyConsole.ConsoleErrorColor, $"==================================================================");
+                FancyConsole.WriteLine(FancyConsole.ConsoleErrorColor, $"End of duplicates reporting...");
+                FancyConsole.WriteLine(FancyConsole.ConsoleErrorColor, $"==================================================================");
+                return false;
+            }
+            else
+            {
+                FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"==================================================================");
+                FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"No duplicates found");
+                FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"==================================================================");
+            }
+
+            return true;
+        }
+
+        /// <summary>
         /// Generate snippets using snippet generator command line tool
         /// </summary>
         /// <param name="executablePath">path to snippet generator command line tool</param>
@@ -2135,22 +2272,41 @@ namespace ApiDoctor.ConsoleApp
         /// <returns>prefix representing method name and version</returns>
         private static string GetSnippetPrefix(MethodDefinition method)
         {
-            var displayName = method.SourceFile.DisplayName;
-            string version;
-            if (displayName.Contains("beta"))
+            var version = GetSnippetVersion(method.SourceFile.DisplayName);
+            return GetSnippetPrefix(method.Identifier, version);
+        }
+
+        /// <summary>
+        /// determines the version postfix in snippet file name
+        /// </summary>
+        /// <param name="sourceFileDisplayName">file where the snippet appears</param>
+        /// <returns>version postfix for snippet file name</returns>
+        /// <exception cref="ArgumentException">if file doesn't belong to a version</exception>
+        private static string GetSnippetVersion(string sourceFileDisplayName)
+        {
+            if (sourceFileDisplayName.Contains("beta"))
             {
-                version = "-beta";
+                return "-beta";
             }
-            else if (displayName.Contains("v1.0"))
+            else if (sourceFileDisplayName.Contains("v1.0"))
             {
-                version = "-v1";
+                return "-v1";
             }
             else
             {
-                throw new ArgumentException("trying to parse a snippet which doesn't belong to a particular version", nameof(method));
+                throw new ArgumentException("trying to parse a snippet which doesn't belong to a particular version", nameof(sourceFileDisplayName));
             }
+        }
 
-            var methodName = Regex.Replace(method.Identifier, @"[# .()\\/]", "").Replace("_", "-").ToLower();
+        /// <summary>
+        /// Calculates canonical name from method identifier and version.
+        /// </summary>
+        /// <param name="identifier">identifier as it appears in request definition block</param>
+        /// <param name="version">version postfix</param>
+        /// <returns>canonical name from method identifier and version</returns>
+        private static string GetSnippetPrefix(string identifier, string version)
+        {
+            var methodName = Regex.Replace(identifier, @"[$# .()\\/]", "").Replace("_", "-").ToLower();
             return methodName + version;
         }
 
@@ -2203,7 +2359,7 @@ namespace ApiDoctor.ConsoleApp
         /// Finds the file the request is located and inserts the code snippet into the file.
         /// </summary>
         /// <param name="method">The <see cref="MethodDefinition"/> of the request being generated a snippet for</param>
-        /// <param name="codeSnippetsText">The string of the code snippets tab section</param>
+        /// <param name="codeSnippets">The string of the code snippets tab section</param>
         private static void InjectSnippetsIntoFile(MethodDefinition method, string codeSnippets)
         {
             var originalFileContents = File.ReadAllLines(method.SourceFile.FullPath);
@@ -2398,6 +2554,28 @@ namespace ApiDoctor.ConsoleApp
             return request;
         }
 
+        /// <summary>
+        /// Replaces first occurence of a string
+        /// </summary>
+        /// <param name="fileName">file to search for the string to be replaced</param>
+        /// <param name="original">string to be replaced</param>
+        /// <param name="replacement">replacement string</param>
+        /// <returns></returns>
+        private static async Task ReplaceFirstOccurence(string fileName, string original, string replacement)
+        {
+            // put strings in quotes as method names are always in quotes in the JSON blob
+            // this makes sure that there is no substring collisions in the search
+            original = $"\"{original}\"";
+            replacement = $"\"{replacement}\"";
+            var fileContents = await File.ReadAllTextAsync(fileName).ConfigureAwait(false);
+            int position = fileContents.IndexOf(original);
+            if (position < 0)
+            {
+                return;
+            }
+            var updatedFileContentes = fileContents[..position] + replacement+ fileContents[(position + original.Length)..];
+            await File.WriteAllTextAsync(fileName, updatedFileContentes).ConfigureAwait(false);
+        }
 
         private static async Task<bool> GenerateDocsAsync(GenerateDocsOptions options)
         {

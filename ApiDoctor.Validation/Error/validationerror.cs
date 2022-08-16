@@ -129,7 +129,9 @@ namespace ApiDoctor.Validation.Error
         BindingParameterNotFound,
 
         AmbiguousExample,
-        HttpMethodOutOfRange
+        HttpMethodOutOfRange,
+
+        DeduplicationWasUnsuccessful
     }
 
     public class ValidationError
