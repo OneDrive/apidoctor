@@ -112,7 +112,8 @@ namespace ApiDoctor.Validation.OData
             {
                 foreach (var m in matches)
                 {
-                    m.IsComposable = true;
+                    // if its the last segment, it may not really be composable. So default to what already is already there.
+                    m.IsComposable = !isLastSegment || m.IsComposable;
                 }
 
                 var match = matches.First().ReturnType.Type;
