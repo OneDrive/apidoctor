@@ -1775,7 +1775,7 @@ namespace ApiDoctor.Publishing.CSDL
 
                 IODataAnnotatable annotatable = new Property();
                 var path = stringBuilder.ToString();
-                var existingPathTargets = targets.Where(x => x.Key == path).Select(x => x.Value).FirstOrDefault();
+                var existingPathTargets = targets.Where(x => x.Key == path).Select(x => x.Value).FirstOrDefault() ?? new List<IODataAnnotatable>();
                 if (path.Equals(target, StringComparison.OrdinalIgnoreCase))
                 {
                     annotatable = (IODataAnnotatable)set;
@@ -1974,6 +1974,7 @@ namespace ApiDoctor.Publishing.CSDL
         {
             var linkRel = GetLinkRelValueForMethod(method, methodCollection);
             if (linkRel == null) return;
+            if (existingTargets == null) return;
 
             var linkRecord = CreateLinksRecord(method.SourceFile.DisplayName, linkRel);
 
@@ -1999,13 +2000,16 @@ namespace ApiDoctor.Publishing.CSDL
             else
             {
                 var existingLinkAnnotation = annotatable.Annotation.FirstOrDefault(x => x.Term == Term.LinksTerm);
-                var linkRecordExists = existingLinkAnnotation.Collection.Records
-                  .Where(record => record.Type == linkRecord.Type)
-                  .SelectMany(p => p.PropertyValues)
-                  .Any(d => (d.Property == linkRecord.PropertyValues[0].Property && d.String == linkRecord.PropertyValues[0].String));
-                if (!linkRecordExists)
+                if (existingLinkAnnotation != null)
                 {
-                    existingLinkAnnotation.Collection.Records.Add(linkRecord);
+                    var linkRecordExists = existingLinkAnnotation.Collection.Records
+                        .Where(record => record.Type == linkRecord.Type)
+                        .SelectMany(p => p.PropertyValues)
+                        .Any(d => (d.Property == linkRecord.PropertyValues[0].Property && d.String == linkRecord.PropertyValues[0].String));
+                    if (!linkRecordExists)
+                    {
+                        existingLinkAnnotation.Collection.Records.Add(linkRecord);
+                    }
                 }
             }
         }
