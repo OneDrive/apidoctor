@@ -1798,10 +1798,10 @@ namespace ApiDoctor.Publishing.CSDL
             var requestTargetMapping = new Dictionary<string, string>();
 
             var distinctMethods = sourceMethodCollection
-                .DistinctBy(x => new { 
-                    Method = x.HttpMethodVerb(), 
-                    RequestUri = x.RequestUriPathOnly(), 
-                    SourceFile = x.SourceFile.DisplayName 
+                .DistinctBy(x => new {
+                    Method = x.HttpMethodVerb(),
+                    RequestUri = x.RequestUriPathOnly(),
+                    SourceFile = x.SourceFile.DisplayName
                 });
             foreach (var method in distinctMethods)
             {
@@ -1854,7 +1854,7 @@ namespace ApiDoctor.Publishing.CSDL
                         path = requestTargetName;
                     }
                 }
-                
+
                 var verb = method.HttpMethodVerb();
                 if (verb == "GET" && url.EndsWith("}", StringComparison.OrdinalIgnoreCase))
                 {

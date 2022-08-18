@@ -80,7 +80,7 @@ namespace ApiDoctor.Validation.OData
 
         public virtual IODataNavigable NavigateByUriComponent(string component, EntityFramework edmx, IssueLogger issues, bool isLastSegment)
         {
-            var func = this.NavigateByFunction(component, edmx, issues);
+            var func = this.NavigateByFunction(component, edmx, issues, isLastSegment);
             if (func != null)
             {
                 return func;

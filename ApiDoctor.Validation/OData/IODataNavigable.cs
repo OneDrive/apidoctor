@@ -69,7 +69,7 @@ namespace ApiDoctor.Validation.OData
                 return this.NavigateByEntityTypeKey(edmx, issues);
             }
 
-            var result = this.NavigateByFunction(component, edmx, issues);
+            var result = this.NavigateByFunction(component, edmx, issues, isLastSegment);
             if (result != null)
             {
                 return result;
@@ -96,7 +96,7 @@ namespace ApiDoctor.Validation.OData
 
     public static class OdataNavigableExtensionMethods
     {
-        public static IODataNavigable NavigateByFunction(this IODataNavigable source, string component, EntityFramework edmx, IssueLogger issues)
+        public static IODataNavigable NavigateByFunction(this IODataNavigable source, string component, EntityFramework edmx, IssueLogger issues, bool isLastSegment)
         {
             var matches =
                 edmx.DataServices.Schemas.SelectMany(s => s.Functions).
@@ -131,7 +131,8 @@ namespace ApiDoctor.Validation.OData
             {
                 foreach (var m in matches)
                 {
-                    m.IsComposable = true;
+                    // if its the last segment, it may not really be composable. So default to what already is already there.
+                    m.IsComposable |= !isLastSegment;
                 }
 
                 var match = matches.First().ReturnType.Type;
