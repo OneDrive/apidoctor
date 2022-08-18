@@ -10,7 +10,7 @@
     using Utility;
 
     [Mergable(CollectionIdentifier = "ElementIdentifier", CollapseSingleItemMatchingProperty = "Name")]
-    public class ActionOrFunctionBase : XmlBackedTransformableObject, IODataAnnotatable, IODataNavigable
+    public class ActionOrFunctionBase : XmlBackedTransformableObject, IODataAnnotatable
     {
         [XmlAttribute("Name"), SortBy, MergePolicy(MergePolicy.EqualOrNull)]
         public string Name { get; set; }
@@ -105,16 +105,6 @@
             return false;
         }
 
-        public IODataNavigable NavigateByUriComponent(string component, EntityFramework edmx, IssueLogger logger, bool isLastSegment)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IODataNavigable NavigateByEntityTypeKey(EntityFramework edmx, IssueLogger issues)
-        {
-            throw new NotImplementedException();
-        }
-
         #region ITransformable
         [XmlIgnore, MergePolicy(MergePolicy.Ignore)]
         public override string ElementIdentifier
@@ -178,11 +168,6 @@
                     return names.ComponentsJoinedByString(",");
                 return string.Empty;
             }
-        }
-        [XmlIgnore]
-        public string TypeIdentifier
-        {
-            get { return Name; }
         }
         #endregion
     }

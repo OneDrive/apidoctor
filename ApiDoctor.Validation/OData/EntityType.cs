@@ -131,7 +131,7 @@ namespace ApiDoctor.Validation.OData
             if (navigationProperty == null && this.BaseType != null)
             {
                 var baseType = edmx.DataServices.Schemas.SelectMany(x => x.EntityTypes).FirstOrDefault(x => x.Name == this.BaseType.TypeOnly());
-                return baseType.FindNavigationPropertyByName(component, edmx, issues);
+                return baseType?.FindNavigationPropertyByName(component, edmx, issues);
             }
 
             return navigationProperty;

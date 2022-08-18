@@ -1023,8 +1023,8 @@ namespace ApiDoctor.Publishing.CSDL
         /// the type of request represented by the path
         /// </summary>
         /// <param name="requestPath"></param>
-        /// <param name="requestMethod"></param>
         /// <param name="edmx"></param>
+        /// <param name="issues"></param>
         /// <returns></returns>
         private static ODataTargetInfo ParseRequestTargetType(string requestPath, EntityFramework edmx, IssueLogger issues)
         {

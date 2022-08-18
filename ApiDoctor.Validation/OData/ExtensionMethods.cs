@@ -151,12 +151,12 @@ namespace ApiDoctor.Validation.OData
             return isCollection;
         }
 
-        public static T ResourceWithIdentifier<T>(this IEnumerable<Schema> schemas, string identifier, string bindingParameterType = null) where T : class
+        public static T ResourceWithIdentifier<T>(this IEnumerable<Schema> schemas, string identifier) where T : class
         {
             var type = schemas.FindTypeWithIdentifier(identifier);
-            if (type is not null and T)
+            if (type is T typeinstance)
             {
-                return (T)type;
+                return typeinstance;
             }
 
             bool isCollection = UnwrapCollectionIfNeeded(ref identifier);

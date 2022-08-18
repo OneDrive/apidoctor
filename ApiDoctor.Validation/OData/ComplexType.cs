@@ -136,7 +136,7 @@ namespace ApiDoctor.Validation.OData
                 var baseType = edmx.DataServices.Schemas.SelectMany(
                     x => x.EntityTypes.Concat(x.ComplexTypes))
                     .FirstOrDefault(x => x.Name == this.BaseType.TypeOnly());
-                return baseType.FindPropertyByName(component, edmx, issues);
+                return baseType?.FindPropertyByName(component, edmx, issues);
             }
 
             return property;
