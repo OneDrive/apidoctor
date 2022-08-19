@@ -154,9 +154,9 @@ namespace ApiDoctor.Validation.OData
         public static T ResourceWithIdentifier<T>(this IEnumerable<Schema> schemas, string identifier) where T : class
         {
             var type = schemas.FindTypeWithIdentifier(identifier);
-            if (type != null && type is T)
+            if (type is T typeinstance)
             {
-                return (T)type;
+                return typeinstance;
             }
 
             bool isCollection = UnwrapCollectionIfNeeded(ref identifier);
@@ -186,7 +186,6 @@ namespace ApiDoctor.Validation.OData
         {
             return edmx.DataServices.Schemas.ResourceWithIdentifier<T>(identifier);
         }
-
 
         public static IODataNavigable LookupNavigableType(this List<Schema> schemas, string identifier)
         {
@@ -239,19 +238,15 @@ namespace ApiDoctor.Validation.OData
             {
                 if (type is EntityType)
                 {
-                    foreach (var et in schema.EntityTypes)
-                    {
-                        if (et == type)
-                            return schema.Namespace + "." + et.Name;
-                    }
+                    var et = schema.EntityTypes.FirstOrDefault(x => x == type);
+                    if (et != null)
+                        return $"{schema.Namespace}.{ et.Name}";
                 }
                 else if (type is ComplexType)
                 {
-                    foreach (var ct in schema.ComplexTypes)
-                    {
-                        if (ct == type)
-                            return schema.Namespace + "." + ct.Name;
-                    }
+                    var ct = schema.ComplexTypes.FirstOrDefault(x => x == type);
+                    if (ct != null)
+                        return $"{schema.Namespace}.{ct.Name}";
                 }
             }
 
@@ -272,7 +267,7 @@ namespace ApiDoctor.Validation.OData
             if (trimPoint >= 0)
                 return type.Substring(0, trimPoint);
 
-            throw new InvalidOperationException("Type doesn't appear to have a namespace assocaited with it: " + type);
+            throw new InvalidOperationException("Type doesn't appear to have a namespace associated with it: " + type);
         }
 
         public static bool HasNamespace(this string type)

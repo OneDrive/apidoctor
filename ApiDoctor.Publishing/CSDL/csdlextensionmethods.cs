@@ -41,8 +41,9 @@ namespace ApiDoctor.Publishing.CSDL
     internal static class CsdlExtensionMethods
     {
         private static readonly Regex GuidRegex = new(@"[0-9a-f\-]{32,36}", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        public static string RequestUriPathOnly(this MethodDefinition method, string[] baseUrlsToRemove, IssueLogger issues)
+        public static string RequestUriPathOnly(this MethodDefinition method, IssueLogger issues = null)
         {
+            string[] baseUrlsToRemove = DocSet.SchemaConfig.BaseUrls;
             if (string.IsNullOrWhiteSpace(method.Request)) return string.Empty;
 
             var path = method.Request.FirstLineOnly().TextBetweenCharacters(' ', '?').TrimEnd('/');
@@ -73,16 +74,16 @@ namespace ApiDoctor.Publishing.CSDL
             }
 
             // Normalize variables in the request path
-            path = GuidRegex.Replace(path, "{var}");
             path = path.ReplaceTextBetweenCharacters('{', '}', "var");
-
             if (method.RequestMetadata.SampleKeys != null)
             {
                 foreach (var key in method.RequestMetadata.SampleKeys)
                 {
                     path = path.Replace("/" + key, "/{var}");
+                    path = path.Replace("'" + key + "'", "'{var}'");
                 }
             }
+            path = GuidRegex.Replace(path, "{var}");
 
             // Normalize function params
             var substitutions = new Dictionary<string, string>();
@@ -94,6 +95,7 @@ namespace ApiDoctor.Publishing.CSDL
                     var close = path.IndexOf(')', i);
                     if (close > -1)
                     {
+                        issues ??= new IssueLogger();
                         var inner = path.Substring(i + 1, close - i - 1);
                         substitutions[inner] = NormalizeFunctionParameters(inner, issues.For(method.Identifier));
                         i = close;
@@ -113,7 +115,7 @@ namespace ApiDoctor.Publishing.CSDL
             // Rewrite path syntax into what it logically means
             path = path.ReplaceTextBetweenCharacters(':', ':', "/children/{var}", requireSecondChar: false, removeTargetChars: true);
 
-            return path;
+            return path.Trim();
         }
 
         private static string NormalizeFunctionParameters(string funcParams, IssueLogger issues)
@@ -140,8 +142,7 @@ namespace ApiDoctor.Publishing.CSDL
 
         public static string HttpMethodVerb(this MethodDefinition method)
         {
-            HttpRequest request;
-            HttpParser.TryParseHttpRequest(method.Request, out request);
+            HttpParser.TryParseHttpRequest(method.Request, out HttpRequest request);
             return request?.Method;
         }
 

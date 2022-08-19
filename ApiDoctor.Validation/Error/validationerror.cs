@@ -125,6 +125,8 @@ namespace ApiDoctor.Validation.Error
         DuplicateResource,
         ContentFormatException,
         NamespaceMismatch,
+        TypeNameMismatch,
+        BindingParameterNotFound,
 
         AmbiguousExample,
         HttpMethodOutOfRange,

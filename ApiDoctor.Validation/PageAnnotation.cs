@@ -131,7 +131,6 @@ namespace ApiDoctor.Validation
         }
     }
     
-
     public class MaxLengthAttribute : Attribute 
     {
         public MaxLengthAttribute(int maximumLength)

@@ -33,7 +33,7 @@ namespace ApiDoctor.Validation.OData
 
     [XmlRoot("Singleton", Namespace = ODataParser.EdmNamespace)]
     [Mergable(CollectionIdentifier = "Name")]
-    public class Singleton : XmlBackedTransformableObject, IODataAnnotatable, ISet
+    public class Singleton : XmlBackedTransformableObject, ISet
     {
         public Singleton()
         {

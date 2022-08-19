@@ -27,7 +27,6 @@ namespace ApiDoctor.Validation.OData
 {
     using System;
     using System.Linq;
-    using System.Text.RegularExpressions;
     using ApiDoctor.Validation.Error;
 
     public interface IODataNavigable
@@ -70,7 +69,7 @@ namespace ApiDoctor.Validation.OData
                 return this.NavigateByEntityTypeKey(edmx, issues);
             }
 
-            var result = this.NavigateByFunction(component, edmx, isLastSegment);
+            var result = this.NavigateByFunction(component, edmx, issues, isLastSegment);
             if (result != null)
             {
                 return result;
@@ -97,7 +96,7 @@ namespace ApiDoctor.Validation.OData
 
     public static class OdataNavigableExtensionMethods
     {
-        public static IODataNavigable NavigateByFunction(this IODataNavigable source, string component, EntityFramework edmx, bool isLastSegment)
+        public static IODataNavigable NavigateByFunction(this IODataNavigable source, string component, EntityFramework edmx, IssueLogger issues, bool isLastSegment)
         {
             var matches =
                 edmx.DataServices.Schemas.SelectMany(s => s.Functions).
@@ -107,6 +106,26 @@ namespace ApiDoctor.Validation.OData
                         f.ReturnType?.Type != null &&
                         f.Parameters.Any(p => p.Name == "bindingParameter" && p.Type.TypeOnly() == source.TypeIdentifier.TypeOnly())).
                     ToList();
+
+
+            if (!matches.Any())
+            {
+                // check for case-insensitive matches and throw if one exists
+                matches =
+                    edmx.DataServices.Schemas.SelectMany(s => s.Functions).
+                        Where(f =>
+                            f.IsBound &&
+                            (f.Name.IEquals(component) || f.ParameterizedName.IEquals(component)) &&
+                            f.ReturnType?.Type != null &&
+                            f.Parameters.Any(p => p.Name == "bindingParameter" && p.Type.TypeOnly() == source.TypeIdentifier.TypeOnly())).
+                        ToList();
+
+                if (matches.Any())
+                {
+                    var otherCaseName = matches.Select(x => x.Name.IEquals(component) ? x.Name : x.ParameterizedName).First();
+                    issues.Error(ValidationErrorCode.TypeNameMismatch, $"ERROR: case mismatch between URL segment '{component}' and schema element '{otherCaseName}'");
+                }
+            }
 
             if (matches.Any())
             {
@@ -118,20 +137,6 @@ namespace ApiDoctor.Validation.OData
 
                 var match = matches.First().ReturnType.Type;
                 return edmx.ResourceWithIdentifier<IODataNavigable>(match);
-            }
-
-            var otherCaseName =
-                edmx.DataServices.Schemas.SelectMany(s => s.Functions).
-                    Where(f =>
-                        f.IsBound &&
-                        (f.Name.IEquals(component) || f.ParameterizedName.IEquals(component)) &&
-                        f.Parameters.Any(p => p.Name == "bindingParameter" && p.Type.TypeOnly() == source.TypeIdentifier.TypeOnly())).
-                    Select(f => f.Name.IEquals(component) ? f.Name : f.ParameterizedName).
-                    FirstOrDefault();
-
-            if (otherCaseName != null)
-            {
-                throw new ArgumentException($"ERROR: case mismatch between URL segment '{component}' and schema element '{otherCaseName}'");
             }
 
             return null;
@@ -171,7 +176,6 @@ namespace ApiDoctor.Validation.OData
 
         public string Name { get; set; }
     }
-
 
     public enum ODataTargetClassification
     {

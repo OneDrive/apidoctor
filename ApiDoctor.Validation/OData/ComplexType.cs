@@ -47,7 +47,7 @@ namespace ApiDoctor.Validation.OData
 
         [XmlAttribute("Name"), SortBy]
         public string Name { get; set; }
-        
+
         [XmlAttribute("BaseType"), ContainsType, MergePolicy(MergePolicy.EqualOrNull)]
         public string BaseType { get; set; }
 
@@ -62,7 +62,7 @@ namespace ApiDoctor.Validation.OData
 
         [XmlElement("Annotation", Namespace = ODataParser.EdmNamespace), MergePolicy(MergePolicy.EqualOrNull)]
         public List<Annotation> Annotation { get; set; }
-        
+
         [XmlAttribute("WorkloadName", Namespace = ODataParser.AgsNamespace), MergePolicy(MergePolicy.EqualOrNull)]
         public string WorkloadName { get; set; }
 
@@ -80,26 +80,17 @@ namespace ApiDoctor.Validation.OData
 
         public virtual IODataNavigable NavigateByUriComponent(string component, EntityFramework edmx, IssueLogger issues, bool isLastSegment)
         {
-            var func = this.NavigateByFunction(component, edmx, isLastSegment);
+            var func = this.NavigateByFunction(component, edmx, issues, isLastSegment);
             if (func != null)
             {
                 return func;
             }
 
-            var match = this.Properties.Where(p => p.Name == component).Select(p => p.Type).FirstOrDefault();
+            var match = FindPropertyByName(component, edmx, issues);
 
             if (match != null)
             {
-                return edmx.ResourceWithIdentifier<IODataNavigable>(match);
-            }
-
-            // check for case-insensitive matches and throw if one exists
-            var otherCaseName =
-                this.Properties.Where(p => p.Name.IEquals(component)).Select(p => p.Name).FirstOrDefault();
-
-            if (otherCaseName != null)
-            {
-                throw new ArgumentException($"ERROR: case mismatch between URL segment '{component}' and schema element '{otherCaseName}'");
+                return edmx.ResourceWithIdentifier<IODataNavigable>(match.Type);
             }
 
             return null;
@@ -124,6 +115,31 @@ namespace ApiDoctor.Validation.OData
                 }
                 return false;
             });
+        }
+
+        private Property FindPropertyByName(string component, EntityFramework edmx, IssueLogger issues)
+        {
+            var property = this.Properties.FirstOrDefault(x => x.Name == component);
+
+            if (property == null)
+            {
+                // check for case-insensitive matches and throw if one exists
+                property = this.Properties.FirstOrDefault(x => x.Name.IEquals(component));
+                if (property != null)
+                {
+                    issues.Error(ValidationErrorCode.TypeNameMismatch, $"ERROR: case mismatch between URL segment '{component}' and schema element '{property.Name}'");
+                }
+            }
+
+            if (property == null && this.BaseType != null)
+            {
+                var baseType = edmx.DataServices.Schemas.SelectMany(
+                    x => x.EntityTypes.Concat(x.ComplexTypes))
+                    .FirstOrDefault(x => x.Name == this.BaseType.TypeOnly());
+                return baseType?.FindPropertyByName(component, edmx, issues);
+            }
+
+            return property;
         }
 
         [XmlIgnore, MergePolicy(MergePolicy.Ignore)]
