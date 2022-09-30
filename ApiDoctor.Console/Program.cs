@@ -2284,11 +2284,11 @@ namespace ApiDoctor.ConsoleApp
         /// <exception cref="ArgumentException">if file doesn't belong to a version</exception>
         private static string GetSnippetVersion(string request)
         {
-            if (request.Contains("beta"))
+            if (request.Contains("beta", StringComparison.OrdinalIgnoreCase))
             {
                 return "-beta";
             }
-            else if (request.Contains("v1.0"))
+            else if (request.Contains("v1.0", StringComparison.OrdinalIgnoreCase))
             {
                 return "-v1";
             }
