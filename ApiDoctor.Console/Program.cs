@@ -2272,29 +2272,29 @@ namespace ApiDoctor.ConsoleApp
         /// <returns>prefix representing method name and version</returns>
         private static string GetSnippetPrefix(MethodDefinition method)
         {
-            var version = GetSnippetVersion(method.SourceFile.DisplayName);
+            var version = GetSnippetVersion(method.Request);
             return GetSnippetPrefix(method.Identifier, version);
         }
 
         /// <summary>
         /// determines the version postfix in snippet file name
         /// </summary>
-        /// <param name="sourceFileDisplayName">file where the snippet appears</param>
+        /// <param name="request">the url snippet calls</param>
         /// <returns>version postfix for snippet file name</returns>
         /// <exception cref="ArgumentException">if file doesn't belong to a version</exception>
-        private static string GetSnippetVersion(string sourceFileDisplayName)
+        private static string GetSnippetVersion(string request)
         {
-            if (sourceFileDisplayName.Contains("beta"))
+            if (request.Contains("beta"))
             {
                 return "-beta";
             }
-            else if (sourceFileDisplayName.Contains("v1.0"))
+            else if (request.Contains("v1.0"))
             {
                 return "-v1";
             }
             else
             {
-                throw new ArgumentException("trying to parse a snippet which doesn't belong to a particular version", nameof(sourceFileDisplayName));
+                throw new ArgumentException("trying to parse a snippet which doesn't belong to a particular version", nameof(request));
             }
         }
 
@@ -2400,7 +2400,8 @@ namespace ApiDoctor.ConsoleApp
                                 break;
                             }
                             if (originalFileContents[index].Contains("```http")
-                              && HttpParser.ParseHttpRequest(method.Request).Method.Equals("GET"))
+                                && HttpParser.TryParseHttpRequest(method.Request, out var request) 
+                                && request.Method.Equals("GET"))
                             {
                                 originalFileContents[index] = "```msgraph-interactive";
                             }
