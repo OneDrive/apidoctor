@@ -146,7 +146,7 @@ namespace ApiDoctor.Publishing.CSDL
 
         public EntityFramework CreateEntityFrameworkFromDocs(IssueLogger issues, string sourcePath = null, bool? generateFromDocs = null)
         {
-            sourcePath = sourcePath ?? options.SourceMetadataPath;
+            sourcePath ??= options.SourceMetadataPath;
 
             EntityFramework edmx = new EntityFramework();
             if (!string.IsNullOrEmpty(sourcePath))
@@ -1583,10 +1583,7 @@ namespace ApiDoctor.Publishing.CSDL
 
             if (!string.IsNullOrWhiteSpace(sourceParameter.Description))
             {
-                if (targetProperty.Annotation == null)
-                {
-                    targetProperty.Annotation = new List<Annotation>();
-                }
+                targetProperty.Annotation ??= new List<Annotation>();
 
                 // Check to see if there already is a term with Description
                 var descriptionTerm = targetProperty.Annotation.Where(t => t.Term == termForDescription).FirstOrDefault();

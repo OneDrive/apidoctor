@@ -36,6 +36,7 @@ namespace ApiDoctor.Validation
     using ApiDoctor.Validation.Params;
     using Newtonsoft.Json;
     using MultipartMime;
+    using System.IO;
 
     /// <summary>
     /// Definition of a request / response pair for the API
@@ -483,6 +484,25 @@ namespace ApiDoctor.Validation
         }
 
         /// <summary>
+        /// Checks to ensure the request metadata is valid
+        /// </summary>
+        internal void ValidateRequestMetadata(IssueLogger issues)
+        {
+            // Checks if defined sample keys are contained in the method's request URI.
+            if (this.RequestMetadata.SampleKeys != null)
+            {
+                foreach (var sampleKey in this.RequestMetadata.SampleKeys)
+                {
+                    if (!this.Request.Contains(sampleKey, StringComparison.OrdinalIgnoreCase))
+                    {
+                        issues.Error(ValidationErrorCode.IncorrectSampleKey,
+                            $"Defined sample key '{sampleKey}' was not found in method: {this.Identifier}");
+                    }
+                }
+            }           
+        }
+
+        /// <summary>
         /// Check to ensure the http request is valid
         /// </summary>
         internal void VerifyRequestFormat(IssueLogger issues)
@@ -494,6 +514,7 @@ namespace ApiDoctor.Validation
                 {
                     ValidateContentForType(new MimeContentType(request.ContentType), request.Body, issues);
                 }
+                ValidateRequestMetadata(issues);
                 // Verify API requirements response
                 request.IsRequestValid(this.SourceFile.DisplayName, this.SourceFile.Parent.Requirements, issues);
             }
