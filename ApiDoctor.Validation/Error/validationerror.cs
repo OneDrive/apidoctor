@@ -131,7 +131,8 @@ namespace ApiDoctor.Validation.Error
         AmbiguousExample,
         HttpMethodOutOfRange,
 
-        DeduplicationWasUnsuccessful
+        DeduplicationWasUnsuccessful,
+        IncorrectSampleKey
     }
 
     public class ValidationError

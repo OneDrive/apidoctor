@@ -43,6 +43,7 @@ namespace ApiDoctor.Publishing.CSDL
         private static readonly Regex GuidRegex = new(@"[0-9a-f\-]{32,36}", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         public static string RequestUriPathOnly(this MethodDefinition method, IssueLogger issues = null)
         {
+            issues ??= new IssueLogger();
             string[] baseUrlsToRemove = DocSet.SchemaConfig.BaseUrls;
             if (string.IsNullOrWhiteSpace(method.Request)) return string.Empty;
 
@@ -77,10 +78,10 @@ namespace ApiDoctor.Publishing.CSDL
             path = path.ReplaceTextBetweenCharacters('{', '}', "var");
             if (method.RequestMetadata.SampleKeys != null)
             {
-                foreach (var key in method.RequestMetadata.SampleKeys)
+                foreach (var sampleKey in method.RequestMetadata.SampleKeys)
                 {
-                    path = path.Replace("/" + key, "/{var}");
-                    path = path.Replace("'" + key + "'", "'{var}'");
+                    path = path.Replace("/" + sampleKey, "/{var}");
+                    path = path.Replace("'" + sampleKey + "'", "'{var}'");
                 }
             }
             path = GuidRegex.Replace(path, "{var}");
@@ -95,7 +96,6 @@ namespace ApiDoctor.Publishing.CSDL
                     var close = path.IndexOf(')', i);
                     if (close > -1)
                     {
-                        issues ??= new IssueLogger();
                         var inner = path.Substring(i + 1, close - i - 1);
                         substitutions[inner] = NormalizeFunctionParameters(inner, issues.For(method.Identifier));
                         i = close;

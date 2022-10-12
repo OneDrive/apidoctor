@@ -60,8 +60,7 @@ namespace ApiDoctor.Validation.OData
         {
             if (string.IsNullOrEmpty(source)) return false;
 
-            bool value;
-            if (Boolean.TryParse(source, out value))
+            if (bool.TryParse(source, out bool value))
                 return value;
 
             throw new ArgumentException(string.Format("Failed to convert {0} into a boolean", source));
