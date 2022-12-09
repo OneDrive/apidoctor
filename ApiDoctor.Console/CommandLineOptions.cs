@@ -52,6 +52,7 @@ namespace ApiDoctor.ConsoleApp
         public const string VerbGenerateDocs = "generate-docs";
         public const string VerbGenerateSnippets = "generate-snippets";
         public const string VerbDeduplicateExampleNames = "deduplicate-example-names";
+        public const string VerbGeneratePermissionFiles = "generate-permission-files";
     }
 
     [Verb(CommandLineOptions.VerbAbout, HelpText = "Print about information for this application.")]
@@ -616,5 +617,12 @@ namespace ApiDoctor.ConsoleApp
     [Verb(CommandLineOptions.VerbDeduplicateExampleNames, HelpText = "Reports duplicate names in examples and attempts to deduplicate them")]
     class DeduplicateExampleNamesOptions : BasicCheckOptions
     {
+    }
+
+    [Verb(CommandLineOptions.VerbGeneratePermissionFiles, HelpText = "Generate permission files for operation topics, optionally enable bootstrapping.")]
+    class GeneratePermissionFilesOptions: DocSetOptions
+    {
+        [Option("bootstrapping-only", HelpText = "If set to true, moves permissions table in reference document to own file but will not update contents of permissions table.")]
+        public bool BootstrappingOnly { get; set; } = false;
     }
 }
