@@ -82,7 +82,7 @@ namespace ApiDoctor.ConsoleApp
 
             try
             {
-                Parser.Default.ParseArguments<PrintOptions, CheckLinkOptions, BasicCheckOptions, CheckAllLinkOptions, CheckServiceOptions, PublishOptions, PublishMetadataOptions, CheckMetadataOptions, FixDocsOptions, GenerateDocsOptions, GenerateSnippetsOptions, AboutOptions, DeduplicateExampleNamesOptions>(args)
+                Parser.Default.ParseArguments<PrintOptions, CheckLinkOptions, BasicCheckOptions, CheckAllLinkOptions, CheckServiceOptions, PublishOptions, PublishMetadataOptions, CheckMetadataOptions, FixDocsOptions, GenerateDocsOptions, GenerateSnippetsOptions, AboutOptions, DeduplicateExampleNamesOptions, GeneratePermissionFilesOptions>(args)
                         .WithParsed<BaseOptions>((options) =>
                         {
                             IgnoreErrors = options.IgnoreErrors;
@@ -109,6 +109,7 @@ namespace ApiDoctor.ConsoleApp
                             (AboutOptions options) => RunInvokedMethodAsync(options),
                             (GenerateSnippetsOptions options) => RunInvokedMethodAsync(options),
                             (DeduplicateExampleNamesOptions options) => RunInvokedMethodAsync(options),
+                            (GeneratePermissionFilesOptions options) => RunInvokedMethodAsync(options),
                             (errors) =>
                             {
                                 FancyConsole.WriteLine(ConsoleColor.Red, "COMMAND LINE PARSE ERROR");
@@ -230,6 +231,9 @@ namespace ApiDoctor.ConsoleApp
                     break;
                 case PublishMetadataOptions o:
                     returnSuccess = await PublishMetadataAsync(o, issues);
+                    break;
+                case GeneratePermissionFilesOptions o:
+                    returnSuccess = await GeneratePermissionFilesAsync(o, issues);
                     break;
                 case CheckMetadataOptions o:
                     await CheckServiceMetadataAsync(o, issues);
@@ -493,7 +497,6 @@ namespace ApiDoctor.ConsoleApp
 
 
         #endregion
-
 
         /// <summary>
         /// Verifies that all markdown links inside the documentation are valid. Prints warnings
@@ -779,7 +782,6 @@ namespace ApiDoctor.ConsoleApp
                    where f.DisplayName.IsWildcardMatch(filter)
                    select f;
         }
-
 
         /// <summary>
         /// Print a collection of ValidationError objects to the console. Also shuts down the test runner
@@ -1191,8 +1193,6 @@ namespace ApiDoctor.ConsoleApp
             return docSetResults;
         }
 
-
-
         /// <summary>
         /// Parallel enabled for each processor that supports async lambdas. Copied from 
         /// http://blogs.msdn.com/b/pfxteam/archive/2012/03/05/10278165.aspx
@@ -1275,9 +1275,6 @@ namespace ApiDoctor.ConsoleApp
             }
         }
 
-
-
-
         private static void ConfigureAdditionalHeadersForAccount(CheckServiceOptions options, IServiceAccount account)
         {
             if (account.AdditionalHeaders != null && account.AdditionalHeaders.Length > 0)
@@ -1314,9 +1311,6 @@ namespace ApiDoctor.ConsoleApp
 
             Environment.Exit(exitCode);
         }
-
-
-
 
         private static void AddPause(CheckServiceOptions options)
         {
@@ -1454,7 +1448,6 @@ namespace ApiDoctor.ConsoleApp
 
             WriteValidationError("", msg);
         }
-
 
         private static async Task<EntityFramework> TryGetMetadataEntityFrameworkAsync(CheckMetadataOptions options)
         {
@@ -1931,6 +1924,7 @@ namespace ApiDoctor.ConsoleApp
             return true;
         }
 
+        #region generate snippets
         /// <summary>
         /// Generate snippets for the methods present in the documents by querying an existing snippet generation api
         /// </summary>
@@ -2562,6 +2556,138 @@ namespace ApiDoctor.ConsoleApp
 
             return request;
         }
+        #endregion
+
+        #region generate permission files
+        /// <summary>
+        /// Generate/update permission files for operation topics
+        /// </summary>
+        /// <param name="options"></param>
+        /// <param name="issues"></param>
+        /// <returns></returns>
+        private static async Task<bool> GeneratePermissionFilesAsync(GeneratePermissionFilesOptions options, IssueLogger issues, DocSet docs = null)
+        {
+            //TODO: If options.BootstrappingOnly = false and permissions file source is null, return false
+
+            var docSet = docs ?? await GetDocSetAsync(options, issues);
+            if (null == docSet)
+            {
+                return false;
+            }
+
+            var filesToUpdate = docSet.Files.Where(x => x.DocumentPageType == DocFile.PageType.ApiPageType);
+            foreach (var docFile in filesToUpdate)
+            {
+                bool finishedParsing = false;
+                int insertionStartLine = -1, insertionEndLine = -1;
+                var originalFileContents = File.ReadAllLines(docFile.FullPath);
+                var parseStatus = PermissionsInsertionState.FindPermissionsHeader;
+                for (var currentIndex = 0; currentIndex < originalFileContents.Length && !finishedParsing; currentIndex++)
+                {
+                    var currentLine = originalFileContents[currentIndex];
+                    switch (parseStatus)
+                    {
+                        case PermissionsInsertionState.FindPermissionsHeader:
+                            if (currentLine.Contains("# Permissions"))
+                            {
+                                parseStatus = PermissionsInsertionState.FindInsertionStartLine;
+                            }
+                            break;
+                        case PermissionsInsertionState.FindInsertionStartLine:
+                            if (currentLine.Contains("[!INCLUDE [permissions-table]("))
+                            {
+                                if (options.BootstrappingOnly)
+                                {
+                                    finishedParsing = true;
+                                }
+                                else
+                                {
+                                    // find the permissions block start line
+                                    for (var i = currentIndex; i > 0; i--)
+                                    {
+                                        if (originalFileContents[i].Contains("<!-- {") || originalFileContents[i].Contains("<!--{"))
+                                        {
+                                            insertionStartLine = i;
+                                        }
+                                    }
+                                    insertionEndLine = currentIndex;
+                                    parseStatus = PermissionsInsertionState.FindHttpRequestHeader;
+                                }
+                            }
+                            else if (currentLine.Contains("|") && currentLine.Contains("Permission")) // permissions table
+                            {
+                                insertionStartLine = currentIndex;
+                                parseStatus = PermissionsInsertionState.FindInsertionEndLine;
+                            }
+                            break;
+                        case PermissionsInsertionState.FindInsertionEndLine:
+                            // find the end of the permissions table
+                            for (int i = currentIndex; currentIndex < originalFileContents.Length; i++)
+                            {
+                                if (originalFileContents[i].Contains("|"))
+                                    continue;
+
+                                currentIndex = i - 1;
+                                insertionEndLine = currentIndex;
+                                parseStatus = options.BootstrappingOnly
+                                    ? PermissionsInsertionState.InsertPermissionsBlock
+                                    : PermissionsInsertionState.FindHttpRequestHeader;
+                                break;
+                            }
+                            break;
+                        case PermissionsInsertionState.FindHttpRequestHeader:
+                            // TODO: Find HTTP request header
+                            parseStatus = PermissionsInsertionState.FindHttpRequestExamples;
+                            break;
+                        case PermissionsInsertionState.FindHttpRequestExamples:
+                            // TODO: Extract requests
+                            parseStatus = PermissionsInsertionState.InsertPermissionsBlock;
+                            break;
+                        case PermissionsInsertionState.InsertPermissionsBlock:
+                            var permissionsFileContents = options.BootstrappingOnly
+                                ? string.Join("\r\n", originalFileContents.Skip(insertionStartLine).Take(insertionEndLine + 1 - insertionStartLine))
+                                : ""; // TODO: get table from Kibali
+                            var docFileName = docFile.DisplayName.Remove(docFile.DisplayName.Length - 3).Split("\\").Last();
+                            var permissionsFileName = $"{docFileName}-permissions.md";
+                            var permissionsRelativeFilePath = Path.Combine("includes", "permissions");
+
+                            // write permissions to separate Markdown file
+                            var permissionsDirectory = Path.Combine(Directory.GetParent(Path.GetDirectoryName(docFile.FullPath)).FullName, permissionsRelativeFilePath);
+                            Directory.CreateDirectory(permissionsDirectory);
+                            var permissionsMarkdownFilePath = Path.Combine(permissionsDirectory, permissionsFileName);
+                            File.WriteAllText(permissionsMarkdownFilePath, permissionsFileContents);
+
+                            // generate permissions block text
+                            var includeText = $"[!INCLUDE [permissions-table](../{ReplaceWindowsByLinuxPathSeparators(Path.Combine(permissionsRelativeFilePath, permissionsFileName))})]";
+                            var metadata = $"<!-- {{ \"blockType\": \"permissions\", \"name\": \"{docFileName.Replace("-", "_")}\" }} -->";
+                            var permissionsBlockText = $"{metadata}\r\n{includeText}";
+
+                            // insert permissions block text into doc file
+                            IEnumerable<string> updatedFileContents = originalFileContents;
+                            updatedFileContents = updatedFileContents.Splice(insertionStartLine, insertionEndLine + 1 - insertionStartLine);
+                            updatedFileContents = FileSplicer(updatedFileContents.ToArray(), insertionStartLine - 1, permissionsBlockText);
+                            File.WriteAllLines(docFile.FullPath, updatedFileContents);
+                            finishedParsing = true;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+            return true;
+        }
+
+        private enum PermissionsInsertionState
+        {
+            FindPermissionsHeader,
+            FindInsertionStartLine,
+            FindInsertionEndLine,
+            InsertPermissionsBlock,
+            FindHttpRequestHeader,
+            FindHttpRequestExamples
+        }
+
+        #endregion
 
         /// <summary>
         /// Replaces first occurence of a string
