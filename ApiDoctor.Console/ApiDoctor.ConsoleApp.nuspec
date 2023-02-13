@@ -17,6 +17,5 @@
     <file src="bin\Release\net6.0\*.dll" target="tools" />
     <file src="bin\Release\net6.0\*.json" target="tools" />
     <file src="bin\Release\net6.0\runtimes\**" target="tools\runtimes" />
-    <file src="bin\Release\net6.0\ref\**" target="tools\ref" />
   </files>
 </package>
