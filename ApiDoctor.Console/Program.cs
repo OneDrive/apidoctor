@@ -2400,7 +2400,7 @@ namespace ApiDoctor.ConsoleApp
                                 break;
                             }
                             if (originalFileContents[index].Contains("```http")
-                                && HttpParser.TryParseHttpRequest(method.Request, out var request) 
+                                && HttpParser.TryParseHttpRequest(method.Request, out var request)
                                 && request.Method.Equals("GET"))
                             {
                                 originalFileContents[index] = "```msgraph-interactive";
@@ -2415,12 +2415,12 @@ namespace ApiDoctor.ConsoleApp
                         }
                         break;
                     case CodeSnippetInsertionState.FirstTabInsertion:
-                        if (currentLine.Contains("snippets") && (currentLine.Contains("[sample-code]") || currentLine.Contains("[snippet-not-available]")))
+                        if (currentLine.Contains("#tab"))
                         {
                             parseStatus = CodeSnippetInsertionState.FindEndOfTabSection;
                         }
-                        // stop if I get to response header
-                        if (currentLine.Trim().EndsWith("# Response"))
+
+                        if (currentLine.Trim().StartsWith("#") && !currentLine.Contains("#tab")) // stop if we get to a header
                         {
                             finishedParsing = true;
                         }
@@ -2574,7 +2574,7 @@ namespace ApiDoctor.ConsoleApp
             {
                 return;
             }
-            var updatedFileContentes = fileContents[..position] + replacement+ fileContents[(position + original.Length)..];
+            var updatedFileContentes = fileContents[..position] + replacement + fileContents[(position + original.Length)..];
             await File.WriteAllTextAsync(fileName, updatedFileContentes).ConfigureAwait(false);
         }
 
