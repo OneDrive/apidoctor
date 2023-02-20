@@ -2059,7 +2059,7 @@ namespace ApiDoctor.ConsoleApp
             }
 
             if (snippetsTabSectionForMethod.Length > 0)
-                snippetsTabSectionForMethod.Append("---\r\n"); // append end of tab section
+                snippetsTabSectionForMethod.Append("---"); // append end of tab section
 
             // Dump the SDK link file if doesn't exist
             var sdkFileFullName = Path.Combine(docsSnippetsDirectory, includeSdkFileName);
@@ -2356,7 +2356,7 @@ namespace ApiDoctor.ConsoleApp
         private static string ReplaceWindowsByLinuxPathSeparators(string original) => original.Replace("\\", "/");
 
         /// <summary>
-        /// Finds the file the request is located and inserts the code snippet into the file.
+        /// Finds the file the request is located and inserts the code snippet into the file
         /// </summary>
         /// <param name="method">The <see cref="MethodDefinition"/> of the request being generated a snippet for</param>
         /// <param name="codeSnippets">The string of the code snippets tab section</param>
@@ -2400,7 +2400,7 @@ namespace ApiDoctor.ConsoleApp
                                 break;
                             }
                             if (originalFileContents[index].Contains("```http")
-                                && HttpParser.TryParseHttpRequest(method.Request, out var request) 
+                                && HttpParser.TryParseHttpRequest(method.Request, out var request)
                                 && request.Method.Equals("GET"))
                             {
                                 originalFileContents[index] = "```msgraph-interactive";
@@ -2414,15 +2414,15 @@ namespace ApiDoctor.ConsoleApp
                             parseStatus = CodeSnippetInsertionState.FirstTabInsertion;
                         }
                         break;
-                    case CodeSnippetInsertionState.FirstTabInsertion:
-                        if (currentLine.Contains("snippets") && (currentLine.Contains("[sample-code]") || currentLine.Contains("[snippet-not-available]")))
-                        {
-                            parseStatus = CodeSnippetInsertionState.FindEndOfTabSection;
-                        }
-                        // stop if I get to response header
-                        if (currentLine.Trim().EndsWith("# Response"))
+                    case CodeSnippetInsertionState.FirstTabInsertion:        
+                        // stop if we get to a header, HTTP tab, or HTML comment
+                        if (currentLine.Trim().StartsWith("##") || currentLine.Contains("#tab/http") || currentLine.Trim().StartsWith("<!--"))
                         {
                             finishedParsing = true;
+                        }
+                        else if (currentLine.Contains("#tab"))
+                        {
+                            parseStatus = CodeSnippetInsertionState.FindEndOfTabSection;
                         }
                         break;
                     case CodeSnippetInsertionState.FindEndOfTabSection:
@@ -2441,12 +2441,15 @@ namespace ApiDoctor.ConsoleApp
             }
 
             IEnumerable<string> updatedFileContents = originalFileContents;
-            // if parse status is FirstTabInsertion here, then 
             if (parseStatus == CodeSnippetInsertionState.FirstTabInsertion && !string.IsNullOrWhiteSpace(codeSnippets))
             {
-                const string httpTabText = "\r\n# [HTTP](#tab/http)";
-                updatedFileContents = FileSplicer(updatedFileContents.ToArray(), requestStartLine - 1, httpTabText); // inject the first tab section
-                codeSnippets = $"\r\n{codeSnippets}";
+                // inject the first tab section
+                if (!originalFileContents[requestStartLine - 1].Contains("#tab/http"))
+                {
+                    const string httpTabText = "# [HTTP](#tab/http)";
+                    updatedFileContents = FileSplicer(updatedFileContents.ToArray(), requestStartLine - 1, httpTabText);
+                    codeSnippets = $"\r\n{codeSnippets}";
+                }
 
                 snippetsTabSectionEndLine = insertionLine;
                 parseStatus = CodeSnippetInsertionState.InsertSnippets;
@@ -2459,10 +2462,15 @@ namespace ApiDoctor.ConsoleApp
                 {
                     updatedFileContents = updatedFileContents.Splice(requestStartLine - 1, 1);
                     insertionLine--;
+                    snippetsTabSectionEndLine--;
                 }
                 updatedFileContents = updatedFileContents.Splice(insertionLine, snippetsTabSectionEndLine - insertionLine);
-                updatedFileContents = FileSplicer(updatedFileContents.ToArray(), insertionLine, codeSnippets);
-
+                if (!string.IsNullOrWhiteSpace(codeSnippets))
+                {
+                    if (!string.IsNullOrWhiteSpace(updatedFileContents.ElementAt(insertionLine + 1)))
+                        codeSnippets = $"{codeSnippets}\r\n";
+                    updatedFileContents = FileSplicer(updatedFileContents.ToArray(), insertionLine, codeSnippets);
+                }
                 // dump the injections
                 File.WriteAllLines(method.SourceFile.FullPath, updatedFileContents);
             }
@@ -2574,7 +2582,7 @@ namespace ApiDoctor.ConsoleApp
             {
                 return;
             }
-            var updatedFileContentes = fileContents[..position] + replacement+ fileContents[(position + original.Length)..];
+            var updatedFileContentes = fileContents[..position] + replacement + fileContents[(position + original.Length)..];
             await File.WriteAllTextAsync(fileName, updatedFileContentes).ConfigureAwait(false);
         }
 
