@@ -223,6 +223,9 @@ namespace ApiDoctor.ConsoleApp
                 case DeduplicateExampleNamesOptions o:
                     returnSuccess = await DeduplicateExampleNamesAsync(o, issues);
                     break;
+                case GeneratePermissionFilesOptions o:
+                    returnSuccess = await GeneratePermissionFilesAsync(o, issues);
+                    break;
                 case BasicCheckOptions o:
                     returnSuccess = await CheckDocsAsync(o, issues);
                     break;
@@ -231,9 +234,6 @@ namespace ApiDoctor.ConsoleApp
                     break;
                 case PublishMetadataOptions o:
                     returnSuccess = await PublishMetadataAsync(o, issues);
-                    break;
-                case GeneratePermissionFilesOptions o:
-                    returnSuccess = await GeneratePermissionFilesAsync(o, issues);
                     break;
                 case CheckMetadataOptions o:
                     await CheckServiceMetadataAsync(o, issues);

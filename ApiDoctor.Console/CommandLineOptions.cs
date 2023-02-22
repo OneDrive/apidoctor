@@ -32,7 +32,6 @@ namespace ApiDoctor.ConsoleApp
     using ApiDoctor.Validation;
     using ApiDoctor.Validation.Writers;
     using CommandLine;
-    using CommandLine.Text;
     using Publishing.CSDL;
 
     class CommandLineOptions
@@ -620,9 +619,28 @@ namespace ApiDoctor.ConsoleApp
     }
 
     [Verb(CommandLineOptions.VerbGeneratePermissionFiles, HelpText = "Generate permission files for operation topics, optionally enable bootstrapping.")]
-    class GeneratePermissionFilesOptions: DocSetOptions
+    class GeneratePermissionFilesOptions: BasicCheckOptions
     {
         [Option("bootstrapping-only", HelpText = "If set to true, moves permissions table in reference document to own file but will not update contents of permissions table.")]
         public bool BootstrappingOnly { get; set; } = false;
+
+        [Option("permissions-source-file", HelpText = "The file path or URL to permissions in JSON format to be consumed by Kibali")]
+        public string PermissionsSourceFile { get; set; }
+
+        public override bool HasRequiredProperties(out string[] missingArguments)
+        {
+            if (!base.HasRequiredProperties(out missingArguments))
+                return false;
+
+            if (!this.BootstrappingOnly && string.IsNullOrWhiteSpace(this.PermissionsSourceFile))
+            {
+                missingArguments = new string[] { "The file path or URL to JSON permissions file has not been specified." };
+            }
+            else
+            {
+                missingArguments = Array.Empty<string>();
+            }
+            return !missingArguments.Any();
+        }
     }
 }
