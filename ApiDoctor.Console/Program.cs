@@ -40,6 +40,7 @@ namespace ApiDoctor.ConsoleApp
     using ApiDoctor.Validation.OData.Transformation;
     using AppVeyor;
     using CommandLine;
+    using Kibali;
     using Newtonsoft.Json;
     using Publishing.Html;
     using Publishing.Swagger;
@@ -2442,7 +2443,7 @@ namespace ApiDoctor.ConsoleApp
                 {
                     const string httpTabText = "# [HTTP](#tab/http)";
                     updatedFileContents = FileSplicer(updatedFileContents.ToArray(), requestStartLine - 1, httpTabText);
-                codeSnippets = $"\r\n{codeSnippets}";
+                    codeSnippets = $"\r\n{codeSnippets}";
                 }
 
                 snippetsTabSectionEndLine = insertionLine;
@@ -2463,7 +2464,7 @@ namespace ApiDoctor.ConsoleApp
                 {
                     if (!string.IsNullOrWhiteSpace(updatedFileContents.ElementAt(insertionLine + 1)))
                         codeSnippets = $"{codeSnippets}\r\n";
-                updatedFileContents = FileSplicer(updatedFileContents.ToArray(), insertionLine, codeSnippets);
+                    updatedFileContents = FileSplicer(updatedFileContents.ToArray(), insertionLine, codeSnippets);
                 }
                 // dump the injections
                 File.WriteAllLines(method.SourceFile.FullPath, updatedFileContents);
@@ -2578,6 +2579,15 @@ namespace ApiDoctor.ConsoleApp
 
             // we only expect to have permission definitions in documents of ApiPageType
             var docFiles = docSet.Files.Where(x => x.DocumentPageType == DocFile.PageType.ApiPageType);
+
+            // generate permissions document
+            var permissionsDocument = new PermissionsDocument();
+            if (docFiles.Any() && !options.BootstrappingOnly)
+            {
+                using var fileStream = new FileStream(options.PermissionsSourceFile, FileMode.Open);
+                permissionsDocument = PermissionsDocument.Load(fileStream);
+            }
+
             foreach (var docFile in docFiles)
             {
                 bool finishedParsing = false, isBootstrapped = false;
@@ -2592,9 +2602,7 @@ namespace ApiDoctor.ConsoleApp
                     {
                         case PermissionsInsertionState.FindPermissionsHeader:
                             if (currentLine.Trim() == "## Permissions")
-                            {
                                 parseStatus = PermissionsInsertionState.FindInsertionStartLine;
-                            }
                             break;
                         case PermissionsInsertionState.FindInsertionStartLine:
                             if (currentLine.Contains("[!INCLUDE [permissions-table](")) // bootstrapping already took place
@@ -2636,9 +2644,7 @@ namespace ApiDoctor.ConsoleApp
                             break;
                         case PermissionsInsertionState.FindHttpRequestHeader:
                             if (currentLine.Trim() == "## HTTP request" || foundHttpRequestBlocks > 0)
-                            {
                                 parseStatus = PermissionsInsertionState.FindHttpRequestStartLine;
-                            }
                             break;
                         case PermissionsInsertionState.FindHttpRequestStartLine:
                             if (currentLine.Trim().StartsWith("## ") && currentLine.Trim() != "## HTTP request") // if we get to another header 2, break
@@ -2675,11 +2681,12 @@ namespace ApiDoctor.ConsoleApp
                                 : string.Empty;
                             if (!options.BootstrappingOnly)
                             {
-                                var newPermissionFileContents = ""; // get from Kibali
+                                var httpRequests = new List<string>(originalFileContents.Skip(httpRequestStartLine + 1).Take(httpRequestEndLine - httpRequestStartLine - 1));
+                                if (httpRequests.Count > 1)
+                                    FancyConsole.WriteLine(ConsoleColor.Yellow, $"Multiple HTTP requests found in {docFile.DisplayName} for permissions table ({foundPermissionTablesOrBlocks})");
+                                var newPermissionFileContents = GetPermissionsMarkdownTableForHttpRequestBlock(httpRequests, permissionsDocument); // get from Kibali
                                 if (string.IsNullOrWhiteSpace(newPermissionFileContents))
-                                {
                                     FancyConsole.WriteLine(FancyConsole.ConsoleErrorColor, $"Failed to update permissions table ({foundPermissionTablesOrBlocks}) for {docFile.DisplayName}");
-                                }
                                 else
                                 {
                                     permissionFileContents = newPermissionFileContents;
@@ -2727,6 +2734,18 @@ namespace ApiDoctor.ConsoleApp
                 }
             }
             return true;
+        }
+
+        private static string GetPermissionsMarkdownTableForHttpRequestBlock(List<string> httpRequests, PermissionsDocument permissionsDoc)
+        {
+            // use the first HTTP Request, we are assuming the group of URLs will have the same set of permissions
+            var request = httpRequests.Where(x => !string.IsNullOrWhiteSpace(x)).FirstOrDefault();
+            if (request == null)
+                return null;
+
+            HttpParser.TryParseHttpRequest(request, out var parsedRequest);
+            var generator = new PermissionsStubGenerator(permissionsDoc, parsedRequest.Url, parsedRequest.Method);
+            return generator.GenerateTable();
         }
 
         private enum PermissionsInsertionState
