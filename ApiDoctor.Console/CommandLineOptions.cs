@@ -32,7 +32,6 @@ namespace ApiDoctor.ConsoleApp
     using ApiDoctor.Validation;
     using ApiDoctor.Validation.Writers;
     using CommandLine;
-    using CommandLine.Text;
     using Publishing.CSDL;
 
     class CommandLineOptions
@@ -52,6 +51,7 @@ namespace ApiDoctor.ConsoleApp
         public const string VerbGenerateDocs = "generate-docs";
         public const string VerbGenerateSnippets = "generate-snippets";
         public const string VerbDeduplicateExampleNames = "deduplicate-example-names";
+        public const string VerbGeneratePermissionFiles = "generate-permission-files";
     }
 
     [Verb(CommandLineOptions.VerbAbout, HelpText = "Print about information for this application.")]
@@ -616,5 +616,31 @@ namespace ApiDoctor.ConsoleApp
     [Verb(CommandLineOptions.VerbDeduplicateExampleNames, HelpText = "Reports duplicate names in examples and attempts to deduplicate them")]
     class DeduplicateExampleNamesOptions : BasicCheckOptions
     {
+    }
+
+    [Verb(CommandLineOptions.VerbGeneratePermissionFiles, HelpText = "Generate permission files for operation topics, optionally enable bootstrapping.")]
+    class GeneratePermissionFilesOptions: BasicCheckOptions
+    {
+        [Option("bootstrapping-only", HelpText = "If set to true, moves permissions table in reference document to own file but will not update contents of permissions table.")]
+        public bool BootstrappingOnly { get; set; } = false;
+
+        [Option("permissions-source-file", HelpText = "The file path or URL to permissions in JSON format to be consumed by Kibali")]
+        public string PermissionsSourceFile { get; set; }
+
+        public override bool HasRequiredProperties(out string[] missingArguments)
+        {
+            if (!base.HasRequiredProperties(out missingArguments))
+                return false;
+
+            if (!this.BootstrappingOnly && string.IsNullOrWhiteSpace(this.PermissionsSourceFile))
+            {
+                missingArguments = new string[] { "The file path or URL to JSON permissions file has not been specified." };
+            }
+            else
+            {
+                missingArguments = Array.Empty<string>();
+            }
+            return !missingArguments.Any();
+        }
     }
 }

@@ -31,6 +31,7 @@ namespace ApiDoctor.ConsoleApp
     using System.IO;
     using System.Linq;
     using System.Net;
+    using System.Net.Http;
     using System.Text;
     using System.Text.RegularExpressions;
     using System.Threading;
@@ -40,6 +41,7 @@ namespace ApiDoctor.ConsoleApp
     using ApiDoctor.Validation.OData.Transformation;
     using AppVeyor;
     using CommandLine;
+    using Kibali;
     using Newtonsoft.Json;
     using Publishing.Html;
     using Publishing.Swagger;
@@ -82,7 +84,7 @@ namespace ApiDoctor.ConsoleApp
 
             try
             {
-                Parser.Default.ParseArguments<PrintOptions, CheckLinkOptions, BasicCheckOptions, CheckAllLinkOptions, CheckServiceOptions, PublishOptions, PublishMetadataOptions, CheckMetadataOptions, FixDocsOptions, GenerateDocsOptions, GenerateSnippetsOptions, AboutOptions, DeduplicateExampleNamesOptions>(args)
+                Parser.Default.ParseArguments<PrintOptions, CheckLinkOptions, BasicCheckOptions, CheckAllLinkOptions, CheckServiceOptions, PublishOptions, PublishMetadataOptions, CheckMetadataOptions, FixDocsOptions, GenerateDocsOptions, GenerateSnippetsOptions, AboutOptions, DeduplicateExampleNamesOptions, GeneratePermissionFilesOptions>(args)
                         .WithParsed<BaseOptions>((options) =>
                         {
                             IgnoreErrors = options.IgnoreErrors;
@@ -109,6 +111,7 @@ namespace ApiDoctor.ConsoleApp
                             (AboutOptions options) => RunInvokedMethodAsync(options),
                             (GenerateSnippetsOptions options) => RunInvokedMethodAsync(options),
                             (DeduplicateExampleNamesOptions options) => RunInvokedMethodAsync(options),
+                            (GeneratePermissionFilesOptions options) => RunInvokedMethodAsync(options),
                             (errors) =>
                             {
                                 FancyConsole.WriteLine(ConsoleColor.Red, "COMMAND LINE PARSE ERROR");
@@ -221,6 +224,9 @@ namespace ApiDoctor.ConsoleApp
                     break;
                 case DeduplicateExampleNamesOptions o:
                     returnSuccess = await DeduplicateExampleNamesAsync(o, issues);
+                    break;
+                case GeneratePermissionFilesOptions o:
+                    returnSuccess = await GeneratePermissionFilesAsync(o, issues);
                     break;
                 case BasicCheckOptions o:
                     returnSuccess = await CheckDocsAsync(o, issues);
@@ -493,7 +499,6 @@ namespace ApiDoctor.ConsoleApp
 
 
         #endregion
-
 
         /// <summary>
         /// Verifies that all markdown links inside the documentation are valid. Prints warnings
@@ -779,7 +784,6 @@ namespace ApiDoctor.ConsoleApp
                    where f.DisplayName.IsWildcardMatch(filter)
                    select f;
         }
-
 
         /// <summary>
         /// Print a collection of ValidationError objects to the console. Also shuts down the test runner
@@ -1191,8 +1195,6 @@ namespace ApiDoctor.ConsoleApp
             return docSetResults;
         }
 
-
-
         /// <summary>
         /// Parallel enabled for each processor that supports async lambdas. Copied from 
         /// http://blogs.msdn.com/b/pfxteam/archive/2012/03/05/10278165.aspx
@@ -1275,9 +1277,6 @@ namespace ApiDoctor.ConsoleApp
             }
         }
 
-
-
-
         private static void ConfigureAdditionalHeadersForAccount(CheckServiceOptions options, IServiceAccount account)
         {
             if (account.AdditionalHeaders != null && account.AdditionalHeaders.Length > 0)
@@ -1314,9 +1313,6 @@ namespace ApiDoctor.ConsoleApp
 
             Environment.Exit(exitCode);
         }
-
-
-
 
         private static void AddPause(CheckServiceOptions options)
         {
@@ -1454,7 +1450,6 @@ namespace ApiDoctor.ConsoleApp
 
             WriteValidationError("", msg);
         }
-
 
         private static async Task<EntityFramework> TryGetMetadataEntityFrameworkAsync(CheckMetadataOptions options)
         {
@@ -1931,6 +1926,7 @@ namespace ApiDoctor.ConsoleApp
             return true;
         }
 
+        #region generate snippets
         /// <summary>
         /// Generate snippets for the methods present in the documents by querying an existing snippet generation api
         /// </summary>
@@ -2414,7 +2410,7 @@ namespace ApiDoctor.ConsoleApp
                             parseStatus = CodeSnippetInsertionState.FirstTabInsertion;
                         }
                         break;
-                    case CodeSnippetInsertionState.FirstTabInsertion:        
+                    case CodeSnippetInsertionState.FirstTabInsertion:
                         // stop if we get to a header, HTTP tab, or HTML comment
                         if (currentLine.Trim().StartsWith("##") || currentLine.Contains("#tab/http") || currentLine.Trim().StartsWith("<!--"))
                         {
@@ -2562,6 +2558,250 @@ namespace ApiDoctor.ConsoleApp
 
             return request;
         }
+        #endregion
+
+        #region generate permission files
+        /// <summary>
+        /// Generate/update permission files for operation topics
+        /// </summary>
+        /// <param name="options"></param>
+        /// <param name="issues"></param>
+        /// <returns></returns>
+        private static async Task<bool> GeneratePermissionFilesAsync(GeneratePermissionFilesOptions options, IssueLogger issues, DocSet docs = null)
+        {
+            // we don't care about validating documents in this context
+            options.IgnoreErrors = options.IgnoreWarnings = true;
+
+            var docSet = docs ?? await GetDocSetAsync(options, issues);
+            if (null == docSet)
+                return false;
+
+            // we only expect to have permission definitions in documents of ApiPageType
+            var docFiles = docSet.Files.Where(x => x.DocumentPageType == DocFile.PageType.ApiPageType);
+
+            // generate permissions document
+            var permissionsDocument = new PermissionsDocument();
+            if (docFiles.Any() && !options.BootstrappingOnly)
+            {
+                permissionsDocument = await GetPermissionsDocumentAsync(options.PermissionsSourceFile);
+                if (permissionsDocument == null)
+                    return false;
+            }
+
+            foreach (var docFile in docFiles)
+            {
+                bool finishedParsing = false, isBootstrapped = false;
+                var originalFileContents = await File.ReadAllLinesAsync(docFile.FullPath);
+                var parseStatus = PermissionsInsertionState.FindPermissionsHeader;
+                int foundPermissionTablesOrBlocks = 0, foundHttpRequestBlocks = 0;
+                int insertionStartLine = -1, insertionEndLine = -1, httpRequestStartLine = -1, httpRequestEndLine = -1, boilerplateStartLine = -1;
+                for (var currentIndex = 0; currentIndex < originalFileContents.Length && !finishedParsing; currentIndex++)
+                {
+                    var currentLine = originalFileContents[currentIndex];
+                    switch (parseStatus)
+                    {
+                        case PermissionsInsertionState.FindPermissionsHeader:
+                            if (currentLine.Trim().Equals("## Permissions", StringComparison.OrdinalIgnoreCase))
+                                parseStatus = PermissionsInsertionState.FindInsertionStartLine;
+                            break;
+                        case PermissionsInsertionState.FindInsertionStartLine:
+                            if (currentLine.StartsWith("One of the following permissions is required to call this API", StringComparison.OrdinalIgnoreCase))
+                            {
+                                boilerplateStartLine = currentIndex;
+                            }
+                            if (currentLine.Contains("[!INCLUDE [permissions-table](")) // bootstrapping already took place
+                            {
+                                foundPermissionTablesOrBlocks++;
+                                isBootstrapped = true;
+                                if (!options.BootstrappingOnly)
+                                {
+                                    // find the permissions block start line
+                                    for (var i = currentIndex; i > 0; i--)
+                                    {
+                                        if (originalFileContents[i].Contains("<!-- {") || originalFileContents[i].Contains("<!--{"))
+                                        {
+                                            insertionStartLine = i;
+                                            insertionEndLine = currentIndex; // [!INCLUDE [permissions-table]... is the end of the insertion block
+                                            parseStatus = PermissionsInsertionState.FindHttpRequestHeader;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                            else if (currentLine.Contains('|') && currentLine.Trim().Contains("Permission type", StringComparison.OrdinalIgnoreCase)) // found the permissions table
+                            {
+                                foundPermissionTablesOrBlocks++;
+                                insertionStartLine = currentIndex;
+                                parseStatus = PermissionsInsertionState.FindInsertionEndLine;
+                                isBootstrapped = false;
+                            }
+                            break;
+                        case PermissionsInsertionState.FindInsertionEndLine: // if we are here, we need to find the end of the permissions table
+                            if (!currentLine.Contains('|'))
+                            {
+                                currentIndex--;
+                                insertionEndLine = currentIndex;
+                                parseStatus = options.BootstrappingOnly
+                                    ? PermissionsInsertionState.InsertPermissionBlock
+                                    : PermissionsInsertionState.FindHttpRequestHeader;
+                            }
+                            break;
+                        case PermissionsInsertionState.FindHttpRequestHeader:
+                            if (currentLine.Trim().Equals("## HTTP request", StringComparison.OrdinalIgnoreCase) || foundHttpRequestBlocks > 0)
+                                parseStatus = PermissionsInsertionState.FindHttpRequestStartLine;
+                            break;
+                        case PermissionsInsertionState.FindHttpRequestStartLine:
+                            if (currentLine.Trim().StartsWith("## ") && !currentLine.Trim().Equals("## HTTP request", StringComparison.OrdinalIgnoreCase)) // if we get to another header 2, break
+                            { 
+                                if (!options.BootstrappingOnly)
+                                {
+                                    FancyConsole.WriteLine(ConsoleColor.Yellow, $"The number of permission tables does not match the HTTP request blocks in {docFile.DisplayName}");
+                                    finishedParsing = true;
+                                }
+                                parseStatus = PermissionsInsertionState.InsertPermissionBlock; 
+                                break;
+                            }
+
+                            if (currentLine.Contains("```"))
+                            {
+                                foundHttpRequestBlocks++;
+                                if (foundHttpRequestBlocks == foundPermissionTablesOrBlocks)
+                                {
+                                    httpRequestStartLine = currentIndex;
+                                    parseStatus = PermissionsInsertionState.FindHttpRequestEndLine;
+                                }
+                            }
+                            break;
+                         case PermissionsInsertionState.FindHttpRequestEndLine:
+                            if (currentLine.Contains("```"))
+                            {
+                                httpRequestEndLine = currentIndex;
+                                parseStatus = PermissionsInsertionState.InsertPermissionBlock;
+                            }
+                            break;
+                        case PermissionsInsertionState.InsertPermissionBlock:
+                            var permissionFileContents = !isBootstrapped 
+                                ? string.Join("\r\n", originalFileContents.Skip(insertionStartLine).Take(insertionEndLine + 1 - insertionStartLine))
+                                : string.Empty;
+                            if (!options.BootstrappingOnly)
+                            {
+                                var httpRequests = new List<string>(originalFileContents.Skip(httpRequestStartLine + 1).Take(httpRequestEndLine - httpRequestStartLine - 1));
+                                if (httpRequests.Count > 1)
+                                    FancyConsole.WriteLine(ConsoleColor.Yellow, $"Multiple HTTP requests found in {docFile.DisplayName} for permissions table ({foundPermissionTablesOrBlocks})");
+                                var newPermissionFileContents = GetPermissionsMarkdownTableForHttpRequestBlock(httpRequests, permissionsDocument); // get from Kibali
+                                if (string.IsNullOrWhiteSpace(newPermissionFileContents))
+                                    FancyConsole.WriteLine(FancyConsole.ConsoleErrorColor, $"Failed to update permissions table ({foundPermissionTablesOrBlocks}) for {docFile.DisplayName}");
+                                else
+                                {
+                                    permissionFileContents = newPermissionFileContents;
+                                    FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"Permissions table ({foundPermissionTablesOrBlocks}) updated for {docFile.DisplayName}");
+                                }
+                            }
+                            if (string.IsNullOrWhiteSpace(permissionFileContents))
+                            {
+                                parseStatus = PermissionsInsertionState.FindNextPermissionBlock;
+                                break;
+                            }
+
+                            // update boilerplate text
+                            if (!isBootstrapped && boilerplateStartLine > -1 && foundPermissionTablesOrBlocks == 1)
+                            {
+                                originalFileContents[boilerplateStartLine] = "Choose the permission marked as least privileged for this API." +
+                                    " Use a higher privileged permission only if your app requires it. For details about delegated and application permissions," +
+                                    " see [Permission types](/graph/permissions-overview#permission-types). To learn more about these permissions, see the [permissions reference](/graph/permissions-reference).";
+                            }
+
+                            // create folder and file names
+                            var permissionsFileRelativePath = Path.Combine("includes", "permissions");
+                            var docFileName = $"{Path.GetFileNameWithoutExtension(docFile.FullPath)}{(foundPermissionTablesOrBlocks > 1 ? $"-{foundPermissionTablesOrBlocks}" : string.Empty)}";
+                            var permissionsFileName = $"{docFileName}-permissions.md";
+
+                            // write permissions to separate Markdown file
+                            var permissionsDirectory = Path.Combine(Directory.GetParent(Path.GetDirectoryName(docFile.FullPath)).FullName, permissionsFileRelativePath);
+                            Directory.CreateDirectory(permissionsDirectory); // make sure the '/includes/permissions' directory exists
+                            var permissionsMarkdownFilePath = Path.Combine(permissionsDirectory, permissionsFileName);
+                            FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"Writing permissions table to {permissionsMarkdownFilePath}");
+                            await File.WriteAllTextAsync(permissionsMarkdownFilePath, permissionFileContents);
+
+                            // insert permissions block text into doc file
+                            var permissionsBlockText = $"<!-- {{ \"blockType\": \"permissions\", \"name\": \"{docFileName.Replace("-", "_")}\" }} -->\r\n" +
+                                $"[!INCLUDE [permissions-table](../{ReplaceWindowsByLinuxPathSeparators(Path.Combine(permissionsFileRelativePath, permissionsFileName))})]";
+                            IEnumerable<string> updatedFileContents = originalFileContents;
+                            updatedFileContents = updatedFileContents.Splice(insertionStartLine, insertionEndLine + 1 - insertionStartLine);
+                            updatedFileContents = FileSplicer(updatedFileContents.ToArray(), insertionStartLine - 1, permissionsBlockText);
+                            await File.WriteAllLinesAsync(docFile.FullPath, updatedFileContents);
+                            parseStatus = PermissionsInsertionState.FindNextPermissionBlock;
+                            break;
+                        case PermissionsInsertionState.FindNextPermissionBlock:
+                            isBootstrapped = false;
+                            foundHttpRequestBlocks = 0;
+                            currentIndex = insertionStartLine + 2;
+                            originalFileContents = await File.ReadAllLinesAsync(docFile.FullPath);
+                            parseStatus = PermissionsInsertionState.FindInsertionStartLine;
+                            insertionStartLine = insertionEndLine = httpRequestStartLine = httpRequestEndLine = -1;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+            return true;
+        }
+
+        private static string GetPermissionsMarkdownTableForHttpRequestBlock(List<string> httpRequests, PermissionsDocument permissionsDoc)
+        {
+            // use the first HTTP Request, we are assuming the group of URLs will have the same set of permissions
+            var request = httpRequests.Where(x => !string.IsNullOrWhiteSpace(x)).FirstOrDefault();
+            if (request == null)
+                return null;
+
+            if (HttpParser.TryParseHttpRequest(request, out var parsedRequest))
+            {
+                var generator = new PermissionsStubGenerator(permissionsDoc, parsedRequest.Url, parsedRequest.Method);
+                return generator.GenerateTable();
+            }
+
+            return null;
+        }
+
+        private static async Task<PermissionsDocument> GetPermissionsDocumentAsync(string filePathOrUrl)
+        {
+            var permissionsDocument = new PermissionsDocument();
+            try
+            {
+                if (Uri.IsWellFormedUriString(filePathOrUrl, UriKind.Absolute))
+                {
+                    using var client = new HttpClient();
+                    using var stream = await client.GetStreamAsync(filePathOrUrl);
+                    permissionsDocument = PermissionsDocument.Load(stream);
+                }
+                else
+                {
+                    using var fileStream = new FileStream(filePathOrUrl, FileMode.Open);
+                    permissionsDocument = PermissionsDocument.Load(fileStream);
+                }
+                return permissionsDocument;
+            }
+            catch (Exception ex) 
+            {
+                FancyConsole.WriteLine(FancyConsole.ConsoleErrorColor, $"Failed to parse permission source file {ex.Message}");
+                return null;
+            }
+        }
+
+        private enum PermissionsInsertionState
+        {
+            FindPermissionsHeader,
+            FindInsertionStartLine,
+            FindInsertionEndLine,
+            InsertPermissionBlock,
+            FindHttpRequestHeader,
+            FindHttpRequestStartLine,
+            FindHttpRequestEndLine,
+            FindNextPermissionBlock
+        }
+
+        #endregion
 
         /// <summary>
         /// Replaces first occurence of a string
