@@ -31,6 +31,7 @@ namespace ApiDoctor.ConsoleApp
     using System.IO;
     using System.Linq;
     using System.Net;
+    using System.Net.Http;
     using System.Text;
     using System.Text.RegularExpressions;
     using System.Threading;
@@ -2573,9 +2574,7 @@ namespace ApiDoctor.ConsoleApp
 
             var docSet = docs ?? await GetDocSetAsync(options, issues);
             if (null == docSet)
-            {
                 return false;
-            }
 
             // we only expect to have permission definitions in documents of ApiPageType
             var docFiles = docSet.Files.Where(x => x.DocumentPageType == DocFile.PageType.ApiPageType);
@@ -2584,8 +2583,9 @@ namespace ApiDoctor.ConsoleApp
             var permissionsDocument = new PermissionsDocument();
             if (docFiles.Any() && !options.BootstrappingOnly)
             {
-                using var fileStream = new FileStream(options.PermissionsSourceFile, FileMode.Open);
-                permissionsDocument = PermissionsDocument.Load(fileStream);
+                permissionsDocument = await GetPermissionsDocumentAsync(options.PermissionsSourceFile);
+                if (permissionsDocument == null)
+                    return false;
             }
 
             foreach (var docFile in docFiles)
@@ -2662,7 +2662,7 @@ namespace ApiDoctor.ConsoleApp
                                 break;
                             }
 
-                            if (currentLine.Contains("```http"))
+                            if (currentLine.Contains("```"))
                             {
                                 foundHttpRequestBlocks++;
                                 if (foundHttpRequestBlocks == foundPermissionTablesOrBlocks)
@@ -2704,7 +2704,7 @@ namespace ApiDoctor.ConsoleApp
                             }
 
                             // update boilerplate text
-                            if (!isBootstrapped && foundPermissionTablesOrBlocks == 1)
+                            if (!isBootstrapped && boilerplateStartLine > -1 && foundPermissionTablesOrBlocks == 1)
                             {
                                 originalFileContents[boilerplateStartLine] = "Choose the permission marked as least privileged for this API." +
                                     " Use a higher privileged permission only if your app requires it. For details about delegated and application permissions," +
@@ -2762,6 +2762,31 @@ namespace ApiDoctor.ConsoleApp
             }
 
             return null;
+        }
+
+        private static async Task<PermissionsDocument> GetPermissionsDocumentAsync(string filePathOrUrl)
+        {
+            var permissionsDocument = new PermissionsDocument();
+            try
+            {
+                if (Uri.IsWellFormedUriString(filePathOrUrl, UriKind.Absolute))
+                {
+                    using var client = new HttpClient();
+                    using var stream = await client.GetStreamAsync(filePathOrUrl);
+                    permissionsDocument = PermissionsDocument.Load(stream);
+                }
+                else
+                {
+                    using var fileStream = new FileStream(filePathOrUrl, FileMode.Open);
+                    permissionsDocument = PermissionsDocument.Load(fileStream);
+                }
+                return permissionsDocument;
+            }
+            catch (Exception ex) 
+            {
+                FancyConsole.WriteLine(FancyConsole.ConsoleErrorColor, $"Failed to parse permission source file {ex.Message}");
+                return null;
+            }
         }
 
         private enum PermissionsInsertionState
