@@ -2683,33 +2683,32 @@ namespace ApiDoctor.ConsoleApp
                             var permissionFileContents = !isBootstrapped 
                                 ? string.Join("\r\n", originalFileContents.Skip(insertionStartLine).Take(insertionEndLine + 1 - insertionStartLine))
                                 : string.Empty;
+                            
                             if (!options.BootstrappingOnly)
                             {
                                 var httpRequests = new List<string>(originalFileContents.Skip(httpRequestStartLine + 1).Take(httpRequestEndLine - httpRequestStartLine - 1));
-                                if (httpRequests.Count > 1)
-                                    FancyConsole.WriteLine(ConsoleColor.Yellow, $"Multiple HTTP requests found in {docFile.DisplayName} for permissions table ({foundPermissionTablesOrBlocks})");
+                                FancyConsole.WriteLine($"Fetching permissions table ({foundPermissionTablesOrBlocks}) for {docFile.DisplayName}");
                                 var newPermissionFileContents = GetPermissionsMarkdownTableForHttpRequestBlock(httpRequests, permissionsDocument); // get from Kibali
-                                if (string.IsNullOrWhiteSpace(newPermissionFileContents))
-                                    FancyConsole.WriteLine(FancyConsole.ConsoleErrorColor, $"Failed to update permissions table ({foundPermissionTablesOrBlocks}) for {docFile.DisplayName}");
-                                else
+                                if (!string.IsNullOrWhiteSpace(newPermissionFileContents))
                                 {
                                     permissionFileContents = newPermissionFileContents;
                                     FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"Permissions table ({foundPermissionTablesOrBlocks}) updated for {docFile.DisplayName}");
                                 }
+                                
+                                // update boilerplate text
+                                if (boilerplateStartLine > -1 && foundPermissionTablesOrBlocks == 1 && !string.IsNullOrWhiteSpace(newPermissionFileContents))
+                                {
+                                    originalFileContents[boilerplateStartLine] = "Choose the permission marked as least privileged for this API." +
+                                        " Use a higher privileged permission only if your app requires it. For details about delegated and application permissions," +
+                                        " see [Permission types](/graph/permissions-overview#permission-types). To learn more about these permissions, see the [permissions reference](/graph/permissions-reference).";
+                                }
                             }
+
                             if (string.IsNullOrWhiteSpace(permissionFileContents))
                             {
                                 parseStatus = PermissionsInsertionState.FindNextPermissionBlock;
                                 break;
-                            }
-
-                            // update boilerplate text
-                            if (!isBootstrapped && boilerplateStartLine > -1 && foundPermissionTablesOrBlocks == 1)
-                            {
-                                originalFileContents[boilerplateStartLine] = "Choose the permission marked as least privileged for this API." +
-                                    " Use a higher privileged permission only if your app requires it. For details about delegated and application permissions," +
-                                    " see [Permission types](/graph/permissions-overview#permission-types). To learn more about these permissions, see the [permissions reference](/graph/permissions-reference).";
-                            }
+                            }                         
 
                             // create folder and file names
                             var permissionsFileRelativePath = Path.Combine("includes", "permissions");
@@ -2752,15 +2751,18 @@ namespace ApiDoctor.ConsoleApp
         {
             // use the first HTTP Request, we are assuming the group of URLs will have the same set of permissions
             var request = httpRequests.Where(x => !string.IsNullOrWhiteSpace(x)).FirstOrDefault();
-            if (request == null)
-                return null;
-
             if (HttpParser.TryParseHttpRequest(request, out var parsedRequest))
             {
-                var generator = new PermissionsStubGenerator(permissionsDoc, parsedRequest.Url, parsedRequest.Method);
-                return generator.GenerateTable();
+                try
+                {
+                    var generator = new PermissionsStubGenerator(permissionsDoc, parsedRequest.Url, parsedRequest.Method);
+                    return generator.GenerateTable();
+                }
+                catch (Exception ex)
+                {
+                    FancyConsole.WriteLine($"Permissions for {request} not found: {ex.Message}");
+                }
             }
-
             return null;
         }
 
