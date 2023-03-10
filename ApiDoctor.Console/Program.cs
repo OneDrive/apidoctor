@@ -1959,8 +1959,9 @@ namespace ApiDoctor.ConsoleApp
 
             FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, "Generating snippets from Snippets API..");
 
-            var guid = Guid.NewGuid().ToString();
-            var snippetsPath = Path.Combine(Path.GetTempPath(), guid);
+            var snippetsPath = string.IsNullOrEmpty(options.TempOutputPath) ?
+                Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString()) :
+                options.TempOutputPath;
             Directory.CreateDirectory(snippetsPath);
 
             WriteHttpSnippetsIntoFile(snippetsPath, methods, issues);
@@ -2001,9 +2002,6 @@ namespace ApiDoctor.ConsoleApp
                 var codeSnippetsText = GenerateSnippetsTabSectionForMethod(method, languagesToIncludeForMethod, snippetsPath, snippetPrefix);
                 InjectSnippetsIntoFile(method, codeSnippetsText);
             }
-
-            // clean up
-            Directory.Delete(snippetsPath, true /* recursive */);
 
             return true;
         }
@@ -2108,6 +2106,7 @@ namespace ApiDoctor.ConsoleApp
 
                     var expectedFileName = $"{Path.Combine(snippetsPath, snippetPrefix)}---";
                     var snippetLanguagesForMethod = snippetTempFiles
+                        .Where(x => !x.EndsWith("-error", StringComparison.OrdinalIgnoreCase))
                         .Where(x => x.StartsWith(expectedFileName))
                         .Select(x => x.Substring(expectedFileName.Length))
                         .ToHashSet();
@@ -2314,6 +2313,7 @@ namespace ApiDoctor.ConsoleApp
         /// <param name="issues">logging</param>
         private static void WriteHttpSnippetsIntoFile(string tempDir, MethodDefinition[] methods, IssueLogger issues)
         {
+            var duplicates = new Dictionary<string, (string OriginalSourceFile, string OriginalIdentifier, int Count)>();
             foreach (var method in methods)
             {
                 HttpRequest request;
@@ -2335,9 +2335,27 @@ namespace ApiDoctor.ConsoleApp
 
                 var fileName = snippetPrefix + "-httpSnippet";
                 var fileFullPath = Path.Combine(tempDir, fileName);
-                FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"Writing {fileFullPath}");
 
-                File.WriteAllText(fileFullPath, ReplaceLFbyCRLF(request.FullHttpText(true)));
+                // if there is a duplicate in http snippet naming, write error message into a file with -duplicate<count> suffix
+                if (duplicates.ContainsKey(fileName))
+                {
+                    (var originalSourceFile, var originalIdentifier, var count) = duplicates[fileName];
+                    duplicates[fileName] = (originalSourceFile, originalIdentifier, count + 1);   
+                    var errorMessage = "OriginalFile: " + originalSourceFile + Environment.NewLine
+                                    + "OriginalIdentifier: " + originalIdentifier + Environment.NewLine
+                                    + "DuplicateFile: " + method.SourceFile.DisplayName + Environment.NewLine
+                                    + "DuplicateIdentifier: " + method.Identifier + Environment.NewLine;
+
+                    var duplicateFileFullPath = fileFullPath + "-duplicate" + count;
+                    FancyConsole.WriteLine(FancyConsole.ConsoleErrorColor, $"Writing {duplicateFileFullPath}");
+                    File.WriteAllText(duplicateFileFullPath, errorMessage);
+                }
+                else
+                {
+                    duplicates[fileName] = (method.SourceFile.DisplayName, method.Identifier, 1);
+                    FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"Writing {fileFullPath}");
+                    File.WriteAllText(fileFullPath, ReplaceLFbyCRLF(request.FullHttpText(true)));
+                }
             }
         }
         private static string ReplaceLFbyCRLF(string original)
