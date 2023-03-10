@@ -2106,7 +2106,7 @@ namespace ApiDoctor.ConsoleApp
 
                     var expectedFileName = $"{Path.Combine(snippetsPath, snippetPrefix)}---";
                     var snippetLanguagesForMethod = snippetTempFiles
-                        .Where(x => !x.EndsWith("-error"))
+                        .Where(x => !x.EndsWith("-error", StringComparison.OrdinalIgnoreCase))
                         .Where(x => x.StartsWith(expectedFileName))
                         .Select(x => x.Substring(expectedFileName.Length))
                         .ToHashSet();
