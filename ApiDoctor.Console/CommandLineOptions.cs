@@ -611,6 +611,9 @@ namespace ApiDoctor.ConsoleApp
 
         [Option("custom-metadata-path", HelpText = "Path to custom metadata that snippet generation can consume", Required = false)]
         public string CustomMetadataPath { get; set; }
+
+        [Option("temp-output-path", HelpText = "Temporary path to output the generated snippets for analysis", Required = false)]
+        public string TempOutputPath { get; set; }
     }
 
     [Verb(CommandLineOptions.VerbDeduplicateExampleNames, HelpText = "Reports duplicate names in examples and attempts to deduplicate them")]
