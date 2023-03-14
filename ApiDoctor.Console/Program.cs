@@ -2674,7 +2674,6 @@ namespace ApiDoctor.ConsoleApp
                                 if (!options.BootstrappingOnly)
                                 {
                                     FancyConsole.WriteLine(ConsoleColor.Yellow, $"The number of permission tables does not match the HTTP request blocks in {docFile.DisplayName}");
-                                    finishedParsing = true;
                                 }
                                 parseStatus = PermissionsInsertionState.InsertPermissionBlock;
                                 break;
@@ -2704,6 +2703,12 @@ namespace ApiDoctor.ConsoleApp
 
                             if (!options.BootstrappingOnly)
                             {
+                                if (httpRequestStartLine == -1)
+                                {
+                                    parseStatus = PermissionsInsertionState.FindNextPermissionBlock;
+                                    break;
+                                }
+
                                 var httpRequests = new List<string>(originalFileContents.Skip(httpRequestStartLine + 1).Take(httpRequestEndLine - httpRequestStartLine - 1));
                                 FancyConsole.WriteLine($"Fetching permissions table ({foundPermissionTablesOrBlocks}) for {docFile.DisplayName}");
                                 var newPermissionFileContents = GetPermissionsMarkdownTableForHttpRequestBlock(httpRequests, permissionsDocument); // get from Kibali
