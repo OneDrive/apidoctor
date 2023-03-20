@@ -132,7 +132,8 @@ namespace ApiDoctor.Validation.Error
         HttpMethodOutOfRange,
 
         DeduplicationWasUnsuccessful,
-        IncorrectSampleKey
+        IncorrectSampleKey,
+        TabHeaderError
     }
 
     public class ValidationError
