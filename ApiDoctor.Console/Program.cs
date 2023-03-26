@@ -2714,7 +2714,7 @@ namespace ApiDoctor.ConsoleApp
                                 var newPermissionFileContents = GetPermissionsMarkdownTableForHttpRequestBlock(httpRequests, permissionsDocument); // get from Kibali
                                 if (!string.IsNullOrWhiteSpace(newPermissionFileContents))
                                 {
-                                    permissionFileContents = $"---\r\ndescription: \"Automatically generated file. DO NOT MODIFY\"\r\n---\r\n\r\n{newPermissionFileContents}";
+                                    permissionFileContents = $"---\r\ndescription: \"Automatically generated file. DO NOT MODIFY\"\r\nms.topic: include\r\nms.localizationpriority: medium\r\n---\r\n\r\n{newPermissionFileContents}";
                                     FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"Permissions table ({foundPermissionTablesOrBlocks}) updated for {docFile.DisplayName}");
                                 }
                                 else
