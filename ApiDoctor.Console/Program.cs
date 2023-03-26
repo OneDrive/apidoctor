@@ -2782,6 +2782,11 @@ namespace ApiDoctor.ConsoleApp
             {
                 try
                 {
+                    // remove $ref, $count, $value segments from paths
+                    parsedRequest.Url = Regex.Replace(parsedRequest.Url, @"(\$.*)", string.Empty, RegexOptions.None, TimeSpan.FromSeconds(5))
+                        .TrimEnd('/')
+                        .ToLowerInvariant();    
+
                     var generator = new PermissionsStubGenerator(permissionsDoc, parsedRequest.Url, parsedRequest.Method);
                     return generator.GenerateTable();
                 }
