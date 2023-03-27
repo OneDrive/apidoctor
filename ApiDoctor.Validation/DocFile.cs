@@ -683,8 +683,9 @@ namespace ApiDoctor.Validation
             List<ValidationError> errors = new List<ValidationError>();
             if (this.Parent.DocumentStructure != null)
             {
-                ValidateDocumentStructure(this.Parent.DocumentStructure.AllowedHeaders, this.DocumentHeaders, issues);
+                ValidateDocumentHeaders(this.Parent.DocumentStructure.AllowedHeaders, this.DocumentHeaders, issues);
             }
+            ValidateTabStructure(issues);
         }
 
         private static bool ContainsMatchingDocumentHeader(Config.DocumentHeader expectedHeader, IReadOnlyList<Config.DocumentHeader> collection)
@@ -692,7 +693,7 @@ namespace ApiDoctor.Validation
             return collection.Any(h => h.Matches(expectedHeader));
         }
 
-        private void ValidateDocumentStructure(IReadOnlyList<Config.DocumentHeader> expectedHeaders, IReadOnlyList<Config.DocumentHeader> foundHeaders, IssueLogger issues)
+        private void ValidateDocumentHeaders(IReadOnlyList<Config.DocumentHeader> expectedHeaders, IReadOnlyList<Config.DocumentHeader> foundHeaders, IssueLogger issues)
         {
             int expectedIndex = 0;
             int foundIndex = 0;
@@ -704,7 +705,7 @@ namespace ApiDoctor.Validation
 
                 if (expected.Matches(found))
                 {
-                    ValidateDocumentStructure(expected.ChildHeaders, found.ChildHeaders, issues);
+                    ValidateDocumentHeaders(expected.ChildHeaders, found.ChildHeaders, issues);
 
                     // Found an expected header, keep going!
                     expectedIndex++;
@@ -716,7 +717,7 @@ namespace ApiDoctor.Validation
                 {
                     // This is an additional header that isn't in the expected header collection
                     issues.Warning(ValidationErrorCode.ExtraDocumentHeaderFound, $"A extra document header was found: {found.Title}");
-                    ValidateDocumentStructure(new Config.DocumentHeader[0], found.ChildHeaders, issues);
+                    ValidateDocumentHeaders(new Config.DocumentHeader[0], found.ChildHeaders, issues);
                     foundIndex++;
                     continue;
                 }
@@ -804,6 +805,112 @@ namespace ApiDoctor.Validation
             }
         }
 
+        /// <summary>
+        /// Validates code snippets tab section. 
+        /// Checks:
+        /// - No duplicated tabs
+        /// - Existence of tab boundary at the end of tab group definition
+        /// - Tab groups have the same tabs
+        /// - At least two tabs in a tab group
+        /// - HTTP tab should be present
+        /// - Tabs should only be within the example request sections
+        /// </summary>
+        private void ValidateTabStructure(IssueLogger issues)
+        {
+            if (this.DocumentPageType != PageType.ApiPageType)
+                return;
+
+            var tabHeaders = new List<string>();
+            int foundTabIndex = -1, foundTabGroups = 0;
+            var currentState = TabDetectionState.FindExamplesHeader;
+            var fileContents = File.ReadAllLines(this.FullPath);
+
+            for (var currentIndex = 0; currentIndex < fileContents.Length; currentIndex++)
+            {
+                var currentLine = fileContents[currentIndex].Trim();
+                bool isTabHeader = currentLine.Contains("#tab/");
+
+                switch (currentState)
+                {
+                    case TabDetectionState.FindExamplesHeader:
+                        if (isTabHeader)
+                        {
+                            issues.Error(ValidationErrorCode.TabHeaderError, $"Tab group #{foundTabGroups + 1} should be within the examples section");
+                            currentState = TabDetectionState.FindStartOfTabGroup;
+                            currentIndex--;
+                        }
+
+                        if (currentLine.Contains("# Example", StringComparison.OrdinalIgnoreCase))
+                            currentState = TabDetectionState.FindStartOfTabGroup; 
+                        break;
+                    case TabDetectionState.FindStartOfTabGroup:
+                        if (isTabHeader)
+                        {
+                            foundTabIndex++;
+                            foundTabGroups++;
+
+                            if (foundTabIndex == 0 && !currentLine.Contains("#tab/http"))
+                                issues.Error(ValidationErrorCode.TabHeaderError, $"The first tab should be 'HTTP' in tab group #{foundTabGroups}");
+                            
+                            if (foundTabGroups == 1)
+                                tabHeaders.Add(currentLine);
+
+                            currentState = TabDetectionState.FindEndOfTabGroup;
+                        }
+                        break;
+                    case TabDetectionState.FindEndOfTabGroup:
+                        if (isTabHeader)
+                        {
+                            foundTabIndex++;
+                            if (foundTabGroups == 1)
+                            {
+                                if (tabHeaders.Contains(currentLine))
+                                    issues.Error(ValidationErrorCode.TabHeaderError, $"Duplicate tab header '{currentLine}' found in tab group #{foundTabGroups}");
+                                else
+                                    tabHeaders.Add(currentLine);
+                            }
+                            else
+                            {
+                                if (foundTabIndex >= tabHeaders.Count)
+                                {
+                                    issues.Error(ValidationErrorCode.TabHeaderError, $"Inconsistent tab headers in tab group #{foundTabGroups}");
+                                    currentState = TabDetectionState.FindStartOfTabGroup;
+                                    break;
+                                }
+
+                                if (!currentLine.Equals(tabHeaders[foundTabIndex], StringComparison.OrdinalIgnoreCase))
+                                    issues.Error(ValidationErrorCode.TabHeaderError, $"Tab header '{currentLine}' is in the wrong order in tab group #{foundTabGroups}");
+                            }
+                        }
+
+                        if (currentLine.StartsWith("#") && !currentLine.Contains("#tab"))
+                            issues.Error(ValidationErrorCode.TabHeaderError, $"Header '{currentLine}' found within tab group #{foundTabGroups}");
+
+                        if (currentLine == "---")
+                        {
+                            if (foundTabIndex == 0)
+                                issues.Error(ValidationErrorCode.TabHeaderError, $"At least two tab headers are required in tab group #{foundTabGroups}");
+
+                            currentState = TabDetectionState.FindStartOfTabGroup;
+                            foundTabIndex = -1;
+                        }
+                        break;
+                    default:
+                        break;
+
+                }
+            }
+            
+            if (currentState == TabDetectionState.FindEndOfTabGroup)
+                issues.Error(ValidationErrorCode.TabHeaderError, $"Missing tab boundary in document for tab group #{foundTabGroups}");
+        }
+
+        private enum TabDetectionState
+        {
+            FindExamplesHeader,
+            FindStartOfTabGroup,
+            FindEndOfTabGroup
+        }
 
         /// <summary>
         /// Remove <!-- and --> from the content string
