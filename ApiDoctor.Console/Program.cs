@@ -2655,13 +2655,28 @@ namespace ApiDoctor.ConsoleApp
                             }
                             break;
                         case PermissionsInsertionState.FindInsertionEndLine: // if we are here, we need to find the end of the permissions table
-                            if (!currentLine.Contains('|'))
+                            int numberOfRows = 1;
+                            for (int index = currentIndex; index < originalFileContents.Length; index++)
                             {
-                                currentIndex--;
-                                insertionEndLine = currentIndex;
-                                parseStatus = options.BootstrappingOnly
-                                    ? PermissionsInsertionState.InsertPermissionBlock
-                                    : PermissionsInsertionState.FindHttpRequestHeading;
+                                if (originalFileContents[index].Contains('|'))
+                                {
+                                    numberOfRows++;
+                                    if (numberOfRows > 5)
+                                    {
+                                        FancyConsole.WriteLine(ConsoleColor.Yellow, $"Permissions table ({foundPermissionTablesOrBlocks}) in {docFile.DisplayName} was not updated because extra rows were found");
+                                        parseStatus = PermissionsInsertionState.FindNextPermissionBlock;
+                                        break;
+                                    }
+                                }
+                                else 
+                                {
+                                    currentIndex = index - 1;
+                                    insertionEndLine = currentIndex;
+                                    parseStatus = options.BootstrappingOnly
+                                        ? PermissionsInsertionState.InsertPermissionBlock
+                                        : PermissionsInsertionState.FindHttpRequestHeading;
+                                    break;
+                                } 
                             }
                             break;
                         case PermissionsInsertionState.FindHttpRequestHeading:
