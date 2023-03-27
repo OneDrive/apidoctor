@@ -2694,21 +2694,25 @@ namespace ApiDoctor.ConsoleApp
                                 break;
                             }
 
-                            if (currentLine.Replace(" ", "").Contains("```http"))
+                            if (currentLine.Contains("```"))
                             {
                                 foundHttpRequestBlocks++;
-                                if (foundHttpRequestBlocks == foundPermissionTablesOrBlocks)
-                                {
-                                    httpRequestStartLine = currentIndex;
-                                    parseStatus = PermissionsInsertionState.FindHttpRequestEndLine;
-                                }
+                                httpRequestStartLine = currentIndex;
+                                parseStatus = PermissionsInsertionState.FindHttpRequestEndLine;
                             }
                             break;
                         case PermissionsInsertionState.FindHttpRequestEndLine:
                             if (currentLine.Contains("```"))
                             {
-                                httpRequestEndLine = currentIndex;
-                                parseStatus = PermissionsInsertionState.InsertPermissionBlock;
+                                if (foundHttpRequestBlocks == foundPermissionTablesOrBlocks)
+                                {
+                                    httpRequestEndLine = currentIndex;
+                                    parseStatus = PermissionsInsertionState.InsertPermissionBlock;
+                                }
+                                else 
+                                {
+                                    parseStatus = PermissionsInsertionState.FindHttpRequestStartLine;
+                                }
                             }
                             break;
                         case PermissionsInsertionState.InsertPermissionBlock:
