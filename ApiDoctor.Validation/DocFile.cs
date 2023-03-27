@@ -842,7 +842,7 @@ namespace ApiDoctor.Validation
 
                         if (currentLine.Contains("# Example", StringComparison.OrdinalIgnoreCase))
                             currentState = TabDetectionState.FindStartOfTabGroup; 
-                    break;
+                        break;
                     case TabDetectionState.FindStartOfTabGroup:
                         if (isTabHeader)
                         {
