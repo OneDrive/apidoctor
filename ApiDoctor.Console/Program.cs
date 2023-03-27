@@ -2720,13 +2720,14 @@ namespace ApiDoctor.ConsoleApp
                             {
                                 if (httpRequestStartLine == -1)
                                 {
-                                    parseStatus = PermissionsInsertionState.FindNextPermissionBlock;
+                                    finishedParsing =  true;
                                     break;
                                 }
 
                                 var httpRequests = new List<string>(originalFileContents.Skip(httpRequestStartLine + 1).Take(httpRequestEndLine - httpRequestStartLine - 1));
                                 FancyConsole.WriteLine($"Fetching permissions table ({foundPermissionTablesOrBlocks}) for {docFile.DisplayName}");
                                 var newPermissionFileContents = GetPermissionsMarkdownTableForHttpRequestBlock(httpRequests, permissionsDocument); // get from Kibali
+                                
                                 if (!string.IsNullOrWhiteSpace(newPermissionFileContents))
                                 {
                                     permissionFileContents = $"---\r\ndescription: \"Automatically generated file. DO NOT MODIFY\"\r\nms.topic: include\r\nms.localizationpriority: medium\r\n---\r\n\r\n{newPermissionFileContents}";
@@ -2735,6 +2736,8 @@ namespace ApiDoctor.ConsoleApp
                                 else
                                 {
                                     FancyConsole.WriteLine($"No permissions data found for '{httpRequests.FirstOrDefault()}' in {docFile.DisplayName}");
+                                    parseStatus = PermissionsInsertionState.FindNextPermissionBlock;
+                                    break;
                                 }
 
                                 // update boilerplate text
@@ -2784,6 +2787,11 @@ namespace ApiDoctor.ConsoleApp
                         default:
                             break;
                     }
+                }
+
+                if (parseStatus == PermissionsInsertionState.FindPermissionsHeader)
+                {
+                   FancyConsole.WriteLine(ConsoleColor.Yellow, $"Could not locate permissions table for {docFile.DisplayName}"); 
                 }
             }
             return true;
