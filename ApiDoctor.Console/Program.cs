@@ -2615,6 +2615,10 @@ namespace ApiDoctor.ConsoleApp
                 "The following permissions are required to call this API."
             };
 
+            var boilerplateText = "Choose the permission or permissions marked as least privileged for this API." +
+                " Use a higher privileged permission or permissions [only if your app requires it](/graph/permissions-overview#best-practices-for-using-microsoft-graph-permissions)." +
+                " For details about delegated and application permissions, see [Permission types](/graph/permissions-overview#permission-types). To learn more about these permissions, see the [permissions reference](/graph/permissions-reference).";
+
             foreach (var docFile in docFiles)
             {
                 var originalFileContents = await File.ReadAllLinesAsync(docFile.FullPath);
@@ -2628,8 +2632,11 @@ namespace ApiDoctor.ConsoleApp
                     switch (parseStatus)
                     {
                         case PermissionsInsertionState.FindPermissionsHeader:
-                            if (currentLine.Trim().Equals("## Permissions", StringComparison.OrdinalIgnoreCase))
+                            if (currentLine.Equals("## Permissions", StringComparison.OrdinalIgnoreCase) || currentLine.Equals("## Prerequisites", StringComparison.OrdinalIgnoreCase))
+                            {
+                                permissionsHeaderIndex = currentIndex;
                                 parseStatus = PermissionsInsertionState.FindInsertionStartLine;
+                            }
                             break;
                         case PermissionsInsertionState.FindInsertionStartLine:
                             if (boilerplateTextsToReplace.Any(x => currentLine.StartsWith(x)))
@@ -2678,12 +2685,11 @@ namespace ApiDoctor.ConsoleApp
                                 foundPermissionTablesOrBlocks++;
                                 insertionStartLine = currentIndex;
                                 parseStatus = PermissionsInsertionState.FindInsertionEndLine;
-                                isBootstrapped = false;
 
                                 // Find position to add boileplate text if missing
                                 if (foundPermissionTablesOrBlocks == 1 && boilerplateStartLine == -1)
                                 {
-                                    for (int index = currentIndex; index >= permissionsHeaderIndex; index--)
+                                    for (int index = currentIndex - 1; index >= permissionsHeaderIndex; index--)
                                     {
                                         if (!string.IsNullOrWhiteSpace(originalFileContents[index]) && !originalFileContents[index].StartsWith('#'))
                                             break;
@@ -2759,6 +2765,7 @@ namespace ApiDoctor.ConsoleApp
                             var permissionFileContents = !isBootstrapped
                                 ? string.Join("\r\n", originalFileContents.Skip(insertionStartLine).Take(insertionEndLine + 1 - insertionStartLine))
                                 : string.Empty;
+                            
                             if (!options.BootstrappingOnly)
                             {
                                 if (httpRequestStartLine == -1)
@@ -2784,11 +2791,11 @@ namespace ApiDoctor.ConsoleApp
                                 }
 
                                 // update boilerplate text
-                                if (!isBootstrapped && boilerplateStartLine > -1 && foundPermissionTablesOrBlocks == 1 && !string.IsNullOrWhiteSpace(newPermissionFileContents))
+                                if (!isBootstrapped && boilerplateStartLine > -1 && foundPermissionTablesOrBlocks == 1 && !string.IsNullOrWhiteSpace(newPermissionFileContents)) 
                                 {
-                                    originalFileContents[boilerplateStartLine] = "Choose the permission or permissions marked as least privileged for this API." +
-                                        " Use a higher privileged permission or permissions [only if your app requires it](/graph/permissions-overview#best-practices-for-using-microsoft-graph-permissions)." +
-                                        " For details about delegated and application permissions, see [Permission types](/graph/permissions-overview#permission-types). To learn more about these permissions, see the [permissions reference](/graph/permissions-reference).";
+                                    originalFileContents[boilerplateStartLine] = boilerplateText;
+                                    if (boilerplateStartLine == insertionStartLine)
+                                        insertionStartLine++;
                                 }
 
                                 if (!isBootstrapped && !string.IsNullOrWhiteSpace(newPermissionFileContents) && boilerplateStartLine == -1)
@@ -2815,7 +2822,7 @@ namespace ApiDoctor.ConsoleApp
 
                             // insert permissions block text into doc file
                             var permissionsBlockText = $"<!-- {{ \"blockType\": \"permissions\", \"name\": \"{docFileName.Replace("-", "_")}\" }} -->\r\n" +
-                                $"[!INCLUDE [permissions-table](../{ReplaceWindowsByLinuxPathSeparators(Path.Combine(permissionsFileRelativePath, permissionsFileName))})]";
+                                $"[!INCLUDE [permissions-table](../{ReplaceWindowsByLinuxPathSeparators(Path.Combine(permissionsFileRelativePath, permissionsFileName))})]";                         
                             IEnumerable<string> updatedFileContents = originalFileContents;
                             updatedFileContents = updatedFileContents.Splice(insertionStartLine, insertionEndLine + 1 - insertionStartLine);
                             updatedFileContents = FileSplicer(updatedFileContents.ToArray(), insertionStartLine - 1, permissionsBlockText);
@@ -2839,10 +2846,8 @@ namespace ApiDoctor.ConsoleApp
                     }
                 }
 
-                if (parseStatus == PermissionsInsertionState.FindPermissionsHeader)
-                {
+                if (foundPermissionTablesOrBlocks == 0)
                     FancyConsole.WriteLine(ConsoleColor.Yellow, $"Could not locate permissions table for {docFile.DisplayName}");
-                }
             }
             return true;
         }
