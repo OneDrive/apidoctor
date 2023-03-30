@@ -2689,6 +2689,7 @@ namespace ApiDoctor.ConsoleApp
                                 if (!options.BootstrappingOnly)
                                 {
                                     FancyConsole.WriteLine(ConsoleColor.Yellow, $"The number of permission tables does not match the HTTP request blocks in {docFile.DisplayName}");
+                                    finishedParsing = true;
                                 }
                                 parseStatus = PermissionsInsertionState.InsertPermissionBlock;
                                 break;
@@ -2719,7 +2720,6 @@ namespace ApiDoctor.ConsoleApp
                             var permissionFileContents = !isBootstrapped
                                 ? string.Join("\r\n", originalFileContents.Skip(insertionStartLine).Take(insertionEndLine + 1 - insertionStartLine))
                                 : string.Empty;
-
                             if (!options.BootstrappingOnly)
                             {
                                 if (httpRequestStartLine == -1)
