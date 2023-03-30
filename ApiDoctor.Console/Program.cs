@@ -2612,6 +2612,7 @@ namespace ApiDoctor.ConsoleApp
                 "One of the following sets of permissions is required to call this API.",
                 "One of the following permissions is required to call these APIs.",
                 "The following permission is required to call the API.",
+                "The following permission is required to call this API.",
                 "The following permissions are required to call this API."
             };
 
