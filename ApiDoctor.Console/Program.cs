@@ -496,8 +496,6 @@ namespace ApiDoctor.ConsoleApp
                 FancyConsole.WriteLine($"{account.Name} = {account.BaseUrl}");
             }
         }
-
-
         #endregion
 
         /// <summary>
@@ -2606,16 +2604,28 @@ namespace ApiDoctor.ConsoleApp
                     return false;
             }
 
+            
+            var boilerplateTextsToReplace = new List<string>()
+            {
+                "One of the following permissions is required to call this API.",
+                "One of the following permissions are required to call this API.",
+                "One of the following permissions may be required to call this API.",
+                "One of the following sets of permissions is required to call this API.",
+                "One of the following permissions is required to call these APIs.",
+                "The following permission is required to call the API.",
+                "The following permissions are required to call this API."
+            };
+
             foreach (var docFile in docFiles)
             {
                 bool finishedParsing = false, isBootstrapped = false;
                 var originalFileContents = await File.ReadAllLinesAsync(docFile.FullPath);
                 var parseStatus = PermissionsInsertionState.FindPermissionsHeader;
                 int foundPermissionTablesOrBlocks = 0, foundHttpRequestBlocks = 0;
-                int insertionStartLine = -1, insertionEndLine = -1, httpRequestStartLine = -1, httpRequestEndLine = -1, boilerplateStartLine = -1;
+                int insertionStartLine = -1, insertionEndLine = -1, httpRequestStartLine = -1, httpRequestEndLine = -1, boilerplateStartLine = -1, permissionsHeaderIndex = -1;
                 for (var currentIndex = 0; currentIndex < originalFileContents.Length && !finishedParsing; currentIndex++)
                 {
-                    var currentLine = originalFileContents[currentIndex];
+                    var currentLine = originalFileContents[currentIndex].Trim();
                     switch (parseStatus)
                     {
                         case PermissionsInsertionState.FindPermissionsHeader:
@@ -2623,10 +2633,11 @@ namespace ApiDoctor.ConsoleApp
                                 parseStatus = PermissionsInsertionState.FindInsertionStartLine;
                             break;
                         case PermissionsInsertionState.FindInsertionStartLine:
-                            if (currentLine.StartsWith("One of the following permissions is required to call this API", StringComparison.OrdinalIgnoreCase))
+                            if (boilerplateTextsToReplace.Any(x => currentLine.StartsWith(x)))
                             {
                                 boilerplateStartLine = currentIndex;
                             }
+
                             if (currentLine.Contains("[!INCLUDE [permissions-table](")) // bootstrapping already took place
                             {
                                 foundPermissionTablesOrBlocks++;
@@ -2652,6 +2663,18 @@ namespace ApiDoctor.ConsoleApp
                                 insertionStartLine = currentIndex;
                                 parseStatus = PermissionsInsertionState.FindInsertionEndLine;
                                 isBootstrapped = false;
+
+                                // Find position to add boileplate text if missing
+                                if (foundPermissionTablesOrBlocks == 1 && boilerplateStartLine == -1)
+                                {
+                                    for(int index = currentIndex; index >= permissionsHeaderIndex; index--)
+                                    {
+                                        if (!string.IsNullOrWhiteSpace(originalFileContents[index]) &&!originalFileContents[index].StartsWith('#'))
+                                            break;
+                                        if (index == permissionsHeaderIndex)
+                                            boilerplateStartLine = permissionsHeaderIndex + 1;
+                                    }
+                                }
                             }
                             break;
                         case PermissionsInsertionState.FindInsertionEndLine: // if we are here, we need to find the end of the permissions table
