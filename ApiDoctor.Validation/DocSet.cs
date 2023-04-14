@@ -389,8 +389,7 @@ namespace ApiDoctor.Validation
             this.Methods = foundMethods.ToArray();
             this.Enums = foundEnums.ToArray();
 
-            // suppressing until we have a better way that's less collission-prone
-            ////CheckForDuplicatesMethods(foundMethods, issues);
+            CheckForDuplicatesMethods(foundMethods, issues);
 
             var definedTypes = new HashSet<string>(
                 this.Resources.Select(r => r.Name).
@@ -513,7 +512,7 @@ namespace ApiDoctor.Validation
             {
                 if (identifiers.ContainsKey(method.Identifier))
                 {
-                    issues.Warning(ValidationErrorCode.DuplicateMethodIdentifier, $"Duplicate method identifier detected: {method.Identifier} in {identifiers[method.Identifier].DisplayName} and {method.SourceFile.DisplayName}.");
+                    issues.Error(ValidationErrorCode.DuplicateMethodIdentifier, $"Duplicate method identifier detected: {method.Identifier} in {identifiers[method.Identifier].DisplayName} and {method.SourceFile.DisplayName}.");
                 }
                 else
                 {
