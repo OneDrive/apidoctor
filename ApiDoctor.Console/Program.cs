@@ -2265,7 +2265,18 @@ namespace ApiDoctor.ConsoleApp
         /// <returns>prefix representing method name and version</returns>
         private static string GetSnippetPrefix(MethodDefinition method)
         {
-            var version = GetSnippetVersion(method.Request);
+            string version;
+            try
+            {
+                // try to get the version from the url
+                version = GetSnippetVersion(method.Request);
+            }
+            catch (ArgumentException)
+            {
+                // default to using the file location. Error/Warning will be logged
+                version = GetSnippetVersion(method.SourceFile.DisplayName);
+            }
+            
             return GetSnippetPrefix(method.Identifier, version);
         }
 
