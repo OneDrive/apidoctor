@@ -443,6 +443,7 @@ namespace ApiDoctor.Publishing.CSDL
             }
             return edmx;
         }
+
         private static void TryAddAnnotation(Property annotatable, string term, string property, bool? value)
         {
             if (value.HasValue)
@@ -1133,10 +1134,10 @@ namespace ApiDoctor.Publishing.CSDL
         }
 
         // EntitySet is something in the format of /name/{var}
-        private static readonly System.Text.RegularExpressions.Regex EntitySetPathRegEx = new(@"\/(\w*)\/{var}$", System.Text.RegularExpressions.RegexOptions.Compiled);
+        private static readonly System.Text.RegularExpressions.Regex EntitySetPathRegEx = new(@"^\/(\w*)\/{var}$", System.Text.RegularExpressions.RegexOptions.Compiled);
         // Singleton is something in the format of /name or /root/child/subChild where root is the singleton
-        private static readonly System.Text.RegularExpressions.Regex SingletonPathRegEx = new(@"\/(\w*)$", System.Text.RegularExpressions.RegexOptions.Compiled);
-        private static readonly System.Text.RegularExpressions.Regex FullSingletonPathRegEx = new(@"\/(\w*)", System.Text.RegularExpressions.RegexOptions.Compiled);
+        private static readonly System.Text.RegularExpressions.Regex SingletonPathRegEx = new(@"^\/(\w*)$", System.Text.RegularExpressions.RegexOptions.Compiled);
+        private static readonly System.Text.RegularExpressions.Regex FullSingletonPathRegEx = new(@"^\/(\w*)", System.Text.RegularExpressions.RegexOptions.Compiled);
 
         /// <summary>
         /// Parse the URI paths for methods defined in the documentation and construct an entity container that contains these
