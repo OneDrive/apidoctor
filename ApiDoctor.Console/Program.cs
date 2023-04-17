@@ -2627,10 +2627,16 @@ namespace ApiDoctor.ConsoleApp
                 "The following permissions are required to call this API."
             };
 
-            var boilerplateText = "Choose the permission or permissions marked as least privileged for this API." +
-                " Use a higher privileged permission or permissions [only if your app requires it](/graph/permissions-overview#best-practices-for-using-microsoft-graph-permissions)." +
-                " For details about delegated and application permissions, see [Permission types](/graph/permissions-overview#permission-types). To learn more about these permissions, see the [permissions reference](/graph/permissions-reference).";
-
+            var boilerplateTexts = new List<string>()
+            { 
+                "Choose the permission or permissions marked as least privileged for this API." +
+                    " Use a higher privileged permission or permissions [only if your app requires it](/graph/permissions-overview#best-practices-for-using-microsoft-graph-permissions)." +
+                    " For details about delegated and application permissions, see [Permission types](/graph/permissions-overview#permission-types). To learn more about these permissions, see the [permissions reference](/graph/permissions-reference).",
+                "The following tables show the least privileged permission or permissions required to call this API on each supported resource type." +
+                    " Follow [best practices](/graph/permissions-overview#best-practices-for-using-microsoft-graph-permissions) to request least privileged permissions." +
+                    " For details about delegated and application permissions, see [Permission types](/graph/permissions-overview#permission-types). To learn more about these permissions, see the [permissions reference](/graph/permissions-reference)."
+            };
+             
             foreach (var docFile in docFiles)
             {
                 var originalFileContents = await File.ReadAllLinesAsync(docFile.FullPath);
@@ -2803,9 +2809,13 @@ namespace ApiDoctor.ConsoleApp
                                 }
 
                                 // update boilerplate text
-                                if (!isBootstrapped && boilerplateStartLine > -1 && foundPermissionTablesOrBlocks == 1 && !string.IsNullOrWhiteSpace(newPermissionFileContents)) 
+                                if (!isBootstrapped && boilerplateStartLine > -1 && !string.IsNullOrWhiteSpace(newPermissionFileContents)) 
                                 {
-                                    originalFileContents[boilerplateStartLine] = boilerplateText;
+                                    if (foundPermissionTablesOrBlocks == 1)
+                                        originalFileContents[boilerplateStartLine] = boilerplateTexts[0];
+                                    else if (foundPermissionTablesOrBlocks == 2)
+                                        originalFileContents[boilerplateStartLine] = boilerplateTexts[1];
+
                                     if (boilerplateStartLine == insertionStartLine)
                                         insertionStartLine++;
                                 }
