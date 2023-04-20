@@ -2614,23 +2614,7 @@ namespace ApiDoctor.ConsoleApp
                 if (permissionsDocument == null)
                     return false;
             }
-
-            var boilerplateTextsToReplace = new List<string>()
-            {
-                "One of the following permissions is required to call this API.",
-                "One of the following permissions are required to call this API.",
-                "One of the following permissions may be required to call this API.",
-                "One of the following sets of permissions is required to call this API.",
-                "One of the following permissions is required to call these APIs.",
-                "The following permission is required to call the API.",
-                "The following permission is required to call this API.",
-                "The following permissions are required to call this API."
-            };
-
-            var boilerplateText = "Choose the permission or permissions marked as least privileged for this API." +
-                " Use a higher privileged permission or permissions [only if your app requires it](/graph/permissions-overview#best-practices-for-using-microsoft-graph-permissions)." +
-                " For details about delegated and application permissions, see [Permission types](/graph/permissions-overview#permission-types). To learn more about these permissions, see the [permissions reference](/graph/permissions-reference).";
-
+             
             foreach (var docFile in docFiles)
             {
                 var originalFileContents = await File.ReadAllLinesAsync(docFile.FullPath);
@@ -2651,7 +2635,7 @@ namespace ApiDoctor.ConsoleApp
                             }
                             break;
                         case PermissionsInsertionState.FindInsertionStartLine:
-                            if (boilerplateTextsToReplace.Any(x => currentLine.StartsWith(x)))
+                            if (Constants.PermissionConstants.BoilerplateTextsToReplace.Any(x => currentLine.StartsWith(x)))
                             {
                                 boilerplateStartLine = currentIndex;
                             }
@@ -2703,10 +2687,11 @@ namespace ApiDoctor.ConsoleApp
                                 {
                                     for (int index = currentIndex - 1; index >= permissionsHeaderIndex; index--)
                                     {
+                                        // Break, if we encounter a non-standard boilerplate text
                                         if (!string.IsNullOrWhiteSpace(originalFileContents[index]) && !originalFileContents[index].StartsWith('#'))
                                             break;
                                         if (index == permissionsHeaderIndex)
-                                            boilerplateStartLine = permissionsHeaderIndex + 1;
+                                            boilerplateStartLine = permissionsHeaderIndex;
                                     }
                                 }
                             }
@@ -2803,11 +2788,26 @@ namespace ApiDoctor.ConsoleApp
                                 }
 
                                 // update boilerplate text
-                                if (!isBootstrapped && boilerplateStartLine > -1 && foundPermissionTablesOrBlocks == 1 && !string.IsNullOrWhiteSpace(newPermissionFileContents)) 
+                                if (!isBootstrapped && boilerplateStartLine > -1 && !string.IsNullOrWhiteSpace(newPermissionFileContents)) 
                                 {
-                                    originalFileContents[boilerplateStartLine] = boilerplateText;
-                                    if (boilerplateStartLine == insertionStartLine)
-                                        insertionStartLine++;
+                                    if (foundPermissionTablesOrBlocks == 1)
+                                    {
+                                        // We do not have a boilerplate text in this case, add new next line
+                                        if(boilerplateStartLine == permissionsHeaderIndex)
+                                        {
+                                            // insert a new line to hold boilerplate text
+                                            originalFileContents = FileSplicer(originalFileContents, boilerplateStartLine, Constants.PermissionConstants.DefaultBoilerPlateText).ToArray();
+                                            boilerplateStartLine++;
+                                            insertionStartLine++;
+                                            insertionEndLine++;
+                                        }
+                                        else {
+                                            originalFileContents[boilerplateStartLine] = Constants.PermissionConstants.DefaultBoilerPlateText;
+                                        }
+                                    }
+                                    else if (foundPermissionTablesOrBlocks == 2) {
+                                        originalFileContents[boilerplateStartLine] = Constants.PermissionConstants.MultipleTableBoilerPlateText;
+                                    } 
                                 }
 
                                 if (!isBootstrapped && !string.IsNullOrWhiteSpace(newPermissionFileContents) && boilerplateStartLine == -1)
