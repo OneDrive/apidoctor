@@ -2276,7 +2276,7 @@ namespace ApiDoctor.ConsoleApp
                 // default to using the file location. Error/Warning will be logged
                 version = GetSnippetVersion(method.SourceFile.DisplayName);
             }
-            
+
             return GetSnippetPrefix(method.Identifier, version);
         }
 
@@ -2614,7 +2614,7 @@ namespace ApiDoctor.ConsoleApp
                 if (permissionsDocument == null)
                     return false;
             }
-             
+
             foreach (var docFile in docFiles)
             {
                 var originalFileContents = await File.ReadAllLinesAsync(docFile.FullPath);
@@ -2762,7 +2762,9 @@ namespace ApiDoctor.ConsoleApp
                             var permissionFileContents = !isBootstrapped
                                 ? string.Join("\r\n", originalFileContents.Skip(insertionStartLine).Take(insertionEndLine + 1 - insertionStartLine))
                                 : string.Empty;
-                            
+
+                            var oldTable = GetPermissionsFromOldTable(permissionFileContents);
+
                             if (!options.BootstrappingOnly)
                             {
                                 if (httpRequestStartLine == -1)
@@ -2774,7 +2776,9 @@ namespace ApiDoctor.ConsoleApp
                                 var httpRequests = new List<string>(originalFileContents.Skip(httpRequestStartLine + 1).Take(httpRequestEndLine - httpRequestStartLine - 1));
                                 FancyConsole.WriteLine($"Fetching permissions table ({foundPermissionTablesOrBlocks}) for {docFile.DisplayName}");
                                 var newPermissionFileContents = GetPermissionsMarkdownTableForHttpRequestBlock(httpRequests, permissionsDocument); // get from Kibali
-
+                                var newTable = GetPermissionsFromNewTable(newPermissionFileContents);
+                                var request = httpRequests.Where(x => !string.IsNullOrWhiteSpace(x)).FirstOrDefault();
+                                ComparePermissions(oldTable, newTable, docFile.DisplayName, foundPermissionTablesOrBlocks, request);
                                 if (!string.IsNullOrWhiteSpace(newPermissionFileContents))
                                 {
                                     permissionFileContents = $"---\r\ndescription: \"Automatically generated file. DO NOT MODIFY\"\r\nms.topic: include\r\nms.localizationpriority: medium\r\n---\r\n\r\n{newPermissionFileContents}";
@@ -2788,12 +2792,12 @@ namespace ApiDoctor.ConsoleApp
                                 }
 
                                 // update boilerplate text
-                                if (!isBootstrapped && boilerplateStartLine > -1 && !string.IsNullOrWhiteSpace(newPermissionFileContents)) 
+                                if (!isBootstrapped && boilerplateStartLine > -1 && !string.IsNullOrWhiteSpace(newPermissionFileContents))
                                 {
                                     if (foundPermissionTablesOrBlocks == 1)
                                     {
                                         // We do not have a boilerplate text in this case, add new next line
-                                        if(boilerplateStartLine == permissionsHeaderIndex)
+                                        if (boilerplateStartLine == permissionsHeaderIndex)
                                         {
                                             // insert a new line to hold boilerplate text
                                             originalFileContents = FileSplicer(originalFileContents, boilerplateStartLine, Constants.PermissionConstants.DefaultBoilerPlateText).ToArray();
@@ -2801,13 +2805,15 @@ namespace ApiDoctor.ConsoleApp
                                             insertionStartLine++;
                                             insertionEndLine++;
                                         }
-                                        else {
+                                        else
+                                        {
                                             originalFileContents[boilerplateStartLine] = Constants.PermissionConstants.DefaultBoilerPlateText;
                                         }
                                     }
-                                    else if (foundPermissionTablesOrBlocks == 2) {
+                                    else if (foundPermissionTablesOrBlocks == 2)
+                                    {
                                         originalFileContents[boilerplateStartLine] = Constants.PermissionConstants.MultipleTableBoilerPlateText;
-                                    } 
+                                    }
                                 }
 
                                 if (!isBootstrapped && !string.IsNullOrWhiteSpace(newPermissionFileContents) && boilerplateStartLine == -1)
@@ -2834,7 +2840,7 @@ namespace ApiDoctor.ConsoleApp
 
                             // insert permissions block text into doc file
                             var permissionsBlockText = $"<!-- {{ \"blockType\": \"permissions\", \"name\": \"{docFileName.Replace("-", "_")}\" }} -->\r\n" +
-                                $"[!INCLUDE [permissions-table](../{ReplaceWindowsByLinuxPathSeparators(Path.Combine(permissionsFileRelativePath, permissionsFileName))})]";                         
+                                $"[!INCLUDE [permissions-table](../{ReplaceWindowsByLinuxPathSeparators(Path.Combine(permissionsFileRelativePath, permissionsFileName))})]";
                             IEnumerable<string> updatedFileContents = originalFileContents;
                             updatedFileContents = updatedFileContents.Splice(insertionStartLine, insertionEndLine + 1 - insertionStartLine);
                             updatedFileContents = FileSplicer(updatedFileContents.ToArray(), insertionStartLine - 1, permissionsBlockText);
@@ -2862,6 +2868,204 @@ namespace ApiDoctor.ConsoleApp
                     FancyConsole.WriteLine(ConsoleColor.Yellow, $"Could not locate permissions table for {docFile.DisplayName}");
             }
             return true;
+        }
+
+        private static void ComparePermissions(Dictionary<string, Dictionary<string, List<string>>> oldTable, Dictionary<string, Dictionary<string, List<string>>> newTable, string fileName, int permissionTablePos, string httpRequest)
+        {
+            foreach (string permissionType in oldTable.Keys)
+            {
+                if (!newTable.ContainsKey(permissionType))
+                {
+                    Console.WriteLine($"Permission type '{permissionType}' is missing for permission table {permissionTablePos} in {fileName}");
+                    continue;
+                }
+
+                if (!newTable[permissionType]["leastPrivilegePermissions"].Any() && newTable[permissionType]["higherPermissions"].Any())
+                {
+                    Console.WriteLine($"Permission type '{permissionType}' has 'higherPrivilegePermissions' but no 'leastPrivilegePermissions' for permission table {permissionTablePos} in {fileName} for request {httpRequest}.");
+                    continue;
+                }
+
+                else if (!oldTable[permissionType]["leastPrivilegePermissions"].SequenceEqual(newTable[permissionType]["leastPrivilegePermissions"]))
+                {
+                    Console.WriteLine($"Reason: Mismatching least privilege permissions; FileName: {fileName}; PermissionsTable: {permissionTablePos}; ScopeType: {permissionType}; Request: {httpRequest}");
+                }
+
+               
+
+                foreach (var permission in newTable[permissionType]["higherPermissions"])
+                {
+                    var oldPermissions = oldTable[permissionType]["higherPermissions"];
+                    if (!oldPermissions.Contains(permission) && !oldTable[permissionType]["leastPrivilegePermissions"].Contains(permission))
+                    {
+                        Console.WriteLine($"Reason: Additional higher privilege permissions; FileName: {fileName}; PermissionsTable: {permissionTablePos}; ScopeType: {permissionType}; Scope: {permission};  Request: {httpRequest}");
+                    }
+                }
+
+                foreach (var permission in oldTable[permissionType]["higherPermissions"])
+                {
+                    var newPermissions = newTable[permissionType]["higherPermissions"];
+                    if (!newPermissions.Contains(permission) && !newTable[permissionType]["leastPrivilegePermissions"].Contains(permission))
+                    {
+                        Console.WriteLine($"Reason: Missing higher privilege permissions; FileName: {fileName}; PermissionsTable: {permissionTablePos}; ScopeType: {permissionType}; Scope: {permission};  Request: {httpRequest}");
+                    }
+                }
+            }
+        }
+
+
+        private static Dictionary<string, Dictionary<string, List<string>>> GetPermissionsFromOldTable(string markdownTable)
+        {
+
+            Dictionary<string, Dictionary<string, List<string>>> permissionsDict = new Dictionary<string, Dictionary<string, List<string>>>()
+        {
+            {"Application", new Dictionary<string, List<string>>()
+                {
+                    {"leastPrivilegePermissions", new List<string>()},
+                    {"higherPermissions", new List<string>()}
+                }
+            },
+            {"DelegatedWork", new Dictionary<string, List<string>>()
+                {
+                    {"leastPrivilegePermissions", new List<string>()},
+                    {"higherPermissions", new List<string>()}
+                }
+            },
+            {"DelegatedPersonal", new Dictionary<string, List<string>>()
+                {
+                    {"leastPrivilegePermissions", new List<string>()},
+                    {"higherPermissions", new List<string>()}
+                }
+            }
+        };
+
+            string[] rows = markdownTable.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (string row in rows.Skip(2))
+            {
+                string[] cells = Regex.Split(row.Trim(), @"\s*\|\s*").Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
+                
+                var leastPrivilegePermission = cells[1].Trim().Split(',', StringSplitOptions.TrimEntries).First();
+                var higherPrivilegePermissions = cells[1].Trim().Split(',', StringSplitOptions.TrimEntries).Skip(1).Where(x => !x.Equals("None.", StringComparison.OrdinalIgnoreCase) && !x.Equals("Not supported.", StringComparison.OrdinalIgnoreCase));
+                
+
+                if (cells[0].StartsWith("Delegated", StringComparison.OrdinalIgnoreCase) && cells[0].Contains("work", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (!string.IsNullOrWhiteSpace(leastPrivilegePermission) && !leastPrivilegePermission.Equals("None.", StringComparison.OrdinalIgnoreCase) && !leastPrivilegePermission.Equals("Not supported.", StringComparison.OrdinalIgnoreCase))
+                    {    
+                        permissionsDict["DelegatedWork"]["leastPrivilegePermissions"].Add(leastPrivilegePermission);
+                    }
+
+                    if (higherPrivilegePermissions.Any())
+                    {                  
+                        permissionsDict["DelegatedWork"]["higherPermissions"].AddRange(higherPrivilegePermissions);
+                    }
+                }
+                else if (cells[0].StartsWith("Delegated", StringComparison.OrdinalIgnoreCase) && cells[0].Contains("personal", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (!string.IsNullOrWhiteSpace(leastPrivilegePermission) && !leastPrivilegePermission.Equals("None.", StringComparison.OrdinalIgnoreCase) && !leastPrivilegePermission.Equals("Not supported.", StringComparison.OrdinalIgnoreCase))
+                    {    
+                        permissionsDict["DelegatedPersonal"]["leastPrivilegePermissions"].Add(leastPrivilegePermission);
+                    }
+                    if (higherPrivilegePermissions.Any())
+                    {                  
+                        permissionsDict["DelegatedPersonal"]["higherPermissions"].AddRange(higherPrivilegePermissions);
+                    }
+                }
+
+                else if (cells[0].Equals("Application", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (!string.IsNullOrWhiteSpace(leastPrivilegePermission) && !leastPrivilegePermission.Equals("None.", StringComparison.OrdinalIgnoreCase) && !leastPrivilegePermission.Equals("Not supported.", StringComparison.OrdinalIgnoreCase))
+                    {    
+                        permissionsDict["Application"]["leastPrivilegePermissions"].Add(leastPrivilegePermission);
+                    }
+                    if (higherPrivilegePermissions.Any())
+                    {                  
+                        permissionsDict["Application"]["higherPermissions"].AddRange(higherPrivilegePermissions);
+                    }
+                }
+            }
+
+            return permissionsDict;
+        }
+
+        public static Dictionary<string, Dictionary<string, List<string>>> GetPermissionsFromNewTable(string markdownTable)
+        {
+
+            Dictionary<string, Dictionary<string, List<string>>> permissionsDict = new Dictionary<string, Dictionary<string, List<string>>>()
+            {
+                {"Application", new Dictionary<string, List<string>>()
+                    {
+                        {"leastPrivilegePermissions", new List<string>()},
+                        {"higherPermissions", new List<string>()}
+                    }
+                },
+                {"DelegatedWork", new Dictionary<string, List<string>>()
+                    {
+                        {"leastPrivilegePermissions", new List<string>()},
+                        {"higherPermissions", new List<string>()}
+                    }
+                },
+                {"DelegatedPersonal", new Dictionary<string, List<string>>()
+                    {
+                        {"leastPrivilegePermissions", new List<string>()},
+                        {"higherPermissions", new List<string>()}
+                    }
+                }
+            };
+
+            string[] rows = markdownTable.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (string row in rows.Skip(1))
+            {
+                string[] cells = Regex.Split(row.Trim(), @"\s*\|\s*").Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
+
+                if (cells[0].StartsWith("Delegated", StringComparison.OrdinalIgnoreCase) && cells[0].Contains("work", StringComparison.OrdinalIgnoreCase))
+                {
+                    permissionsDict["DelegatedWork"]["leastPrivilegePermissions"].Add(cells[1].Trim());
+                    string[] higherPrivilegePermissions = cells[2].Split(',', StringSplitOptions.TrimEntries);
+                    foreach (string permission in higherPrivilegePermissions)
+                    {
+                        if (permission.Equals("None.", StringComparison.OrdinalIgnoreCase) || permission.Equals("Not supported.", StringComparison.OrdinalIgnoreCase))
+                            continue;
+                        if (!permissionsDict["DelegatedWork"]["leastPrivilegePermissions"].Contains(permission))
+                        {
+                            permissionsDict["DelegatedWork"]["higherPermissions"].Add(permission);
+                        }
+                    }
+                }
+                else if (cells[0].StartsWith("Delegated", StringComparison.OrdinalIgnoreCase) && cells[0].Contains("personal", StringComparison.OrdinalIgnoreCase))
+                {
+                    permissionsDict["DelegatedPersonal"]["leastPrivilegePermissions"].Add(cells[1].Trim());
+                    string[] higherPrivilegePermissions = cells[2].Split(',', StringSplitOptions.TrimEntries);
+                    foreach (string permission in higherPrivilegePermissions)
+                    {
+                        if (permission.Equals("None.", StringComparison.OrdinalIgnoreCase) || permission.Equals("Not supported.", StringComparison.OrdinalIgnoreCase))
+                            continue;
+                        if (!permissionsDict["DelegatedPersonal"]["leastPrivilegePermissions"].Contains(permission))
+                        {
+                            permissionsDict["DelegatedPersonal"]["higherPermissions"].Add(permission);
+                        }
+                    }
+                }
+
+                if (cells[0].Equals("Application", StringComparison.OrdinalIgnoreCase))
+                {
+                    permissionsDict["Application"]["leastPrivilegePermissions"].Add(cells[1].Trim());
+                    string[] higherPrivilegePermissions = cells[2].Split(',', StringSplitOptions.TrimEntries);
+                    foreach (string permission in higherPrivilegePermissions)
+                    {
+                        if (permission.Equals("None.", StringComparison.OrdinalIgnoreCase) || permission.Equals("Not supported.", StringComparison.OrdinalIgnoreCase))
+                            continue;
+
+                        if (!permissionsDict["Application"]["leastPrivilegePermissions"].Contains(permission))
+                        {
+                            permissionsDict["Application"]["higherPermissions"].Add(permission);
+                        }
+                    }
+                }
+            }
+            return permissionsDict;
         }
 
         private static string GetPermissionsMarkdownTableForHttpRequestBlock(List<string> httpRequests, PermissionsDocument permissionsDoc)
