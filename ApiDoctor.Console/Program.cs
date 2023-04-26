@@ -2776,11 +2776,12 @@ namespace ApiDoctor.ConsoleApp
                                 var httpRequests = new List<string>(originalFileContents.Skip(httpRequestStartLine + 1).Take(httpRequestEndLine - httpRequestStartLine - 1));
                                 FancyConsole.WriteLine($"Fetching permissions table ({foundPermissionTablesOrBlocks}) for {docFile.DisplayName}");
                                 var newPermissionFileContents = GetPermissionsMarkdownTableForHttpRequestBlock(httpRequests, permissionsDocument); // get from Kibali
-                                var newTable = GetPermissionsFromNewTable(newPermissionFileContents);
-                                var request = httpRequests.Where(x => !string.IsNullOrWhiteSpace(x)).FirstOrDefault();
-                                ComparePermissions(oldTable, newTable, docFile.DisplayName, foundPermissionTablesOrBlocks, request);
+                               
                                 if (!string.IsNullOrWhiteSpace(newPermissionFileContents))
                                 {
+                                     var newTable = GetPermissionsFromNewTable(newPermissionFileContents);
+                                var request = httpRequests.Where(x => !string.IsNullOrWhiteSpace(x)).FirstOrDefault();
+                                ComparePermissions(oldTable, newTable, docFile.DisplayName, foundPermissionTablesOrBlocks, request);
                                     permissionFileContents = $"---\r\ndescription: \"Automatically generated file. DO NOT MODIFY\"\r\nms.topic: include\r\nms.localizationpriority: medium\r\n---\r\n\r\n{newPermissionFileContents}";
                                     FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"Permissions table ({foundPermissionTablesOrBlocks}) updated for {docFile.DisplayName}");
                                 }
