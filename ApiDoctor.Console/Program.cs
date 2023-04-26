@@ -2617,6 +2617,9 @@ namespace ApiDoctor.ConsoleApp
 
             foreach (var docFile in docFiles)
             {
+                
+                if (docFile.DisplayName.Contains("intune", StringComparison.OrdinalIgnoreCase))
+                    continue;
                 var originalFileContents = await File.ReadAllLinesAsync(docFile.FullPath);
                 var parseStatus = PermissionsInsertionState.FindPermissionsHeader;
                 int foundPermissionTablesOrBlocks = 0, foundHttpRequestBlocks = 0;
@@ -2882,8 +2885,6 @@ namespace ApiDoctor.ConsoleApp
 
         private static void ComparePermissions(Dictionary<string, Dictionary<string, List<string>>> oldTable, Dictionary<string, Dictionary<string, List<string>>> newTable, string fileName, int permissionTablePos, string httpRequest)
         {
-            if (fileName.Contains("intune", StringComparison.OrdinalIgnoreCase))
-                return;
             foreach (string permissionType in oldTable.Keys)
             {
                 if (!newTable.ContainsKey(permissionType))
@@ -2957,44 +2958,34 @@ namespace ApiDoctor.ConsoleApp
             {
                 string[] cells = Regex.Split(row.Trim(), @"\s*\|\s*").Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
 
-                var leastPrivilegePermission = cells[1].Trim().Split(',', StringSplitOptions.TrimEntries).First();
-                var higherPrivilegePermissions = cells[1].Trim().Split(',', StringSplitOptions.TrimEntries).Skip(1).Where(x => !x.Equals("None.", StringComparison.OrdinalIgnoreCase) && !x.Equals("Not supported.", StringComparison.OrdinalIgnoreCase));
+                var allPermissions = cells[1].Trim().Split(',', StringSplitOptions.TrimEntries).Where(x => !string.IsNullOrWhiteSpace(x) && !x.Equals("None.", StringComparison.OrdinalIgnoreCase) && !x.Equals("Not supported.", StringComparison.OrdinalIgnoreCase));
+
+                if (!allPermissions.Any())
+                    continue;
+
+                var leastPrivilegePermission = allPermissions.First();
+
+                var higherPrivilegePermissions = new List<string>();
+                
+                if (allPermissions.Count() > 1)
+                  higherPrivilegePermissions = allPermissions.Skip(1).ToList();
 
 
                 if (cells[0].StartsWith("Delegated", StringComparison.OrdinalIgnoreCase) && cells[0].Contains("work", StringComparison.OrdinalIgnoreCase))
                 {
-                    if (!string.IsNullOrWhiteSpace(leastPrivilegePermission) && !leastPrivilegePermission.Equals("None.", StringComparison.OrdinalIgnoreCase) && !leastPrivilegePermission.Equals("Not supported.", StringComparison.OrdinalIgnoreCase))
-                    {
-                        permissionsDict["DelegatedWork"]["leastPrivilegePermissions"].Add(leastPrivilegePermission);
-                    }
-
-                    if (higherPrivilegePermissions.Any())
-                    {
-                        permissionsDict["DelegatedWork"]["higherPermissions"].AddRange(higherPrivilegePermissions);
-                    }
+                    permissionsDict["DelegatedWork"]["leastPrivilegePermissions"].Add(leastPrivilegePermission);
+                    permissionsDict["DelegatedWork"]["higherPermissions"].AddRange(higherPrivilegePermissions);
                 }
                 else if (cells[0].StartsWith("Delegated", StringComparison.OrdinalIgnoreCase) && cells[0].Contains("personal", StringComparison.OrdinalIgnoreCase))
                 {
-                    if (!string.IsNullOrWhiteSpace(leastPrivilegePermission) && !leastPrivilegePermission.Equals("None.", StringComparison.OrdinalIgnoreCase) && !leastPrivilegePermission.Equals("Not supported.", StringComparison.OrdinalIgnoreCase))
-                    {
-                        permissionsDict["DelegatedPersonal"]["leastPrivilegePermissions"].Add(leastPrivilegePermission);
-                    }
-                    if (higherPrivilegePermissions.Any())
-                    {
-                        permissionsDict["DelegatedPersonal"]["higherPermissions"].AddRange(higherPrivilegePermissions);
-                    }
+                    permissionsDict["DelegatedWork"]["leastPrivilegePermissions"].Add(leastPrivilegePermission);
+                    permissionsDict["DelegatedWork"]["higherPermissions"].AddRange(higherPrivilegePermissions);
                 }
 
                 else if (cells[0].Equals("Application", StringComparison.OrdinalIgnoreCase))
                 {
-                    if (!string.IsNullOrWhiteSpace(leastPrivilegePermission) && !leastPrivilegePermission.Equals("None.", StringComparison.OrdinalIgnoreCase) && !leastPrivilegePermission.Equals("Not supported.", StringComparison.OrdinalIgnoreCase))
-                    {
-                        permissionsDict["Application"]["leastPrivilegePermissions"].Add(leastPrivilegePermission);
-                    }
-                    if (higherPrivilegePermissions.Any())
-                    {
-                        permissionsDict["Application"]["higherPermissions"].AddRange(higherPrivilegePermissions);
-                    }
+                    permissionsDict["DelegatedWork"]["leastPrivilegePermissions"].Add(leastPrivilegePermission);
+                    permissionsDict["DelegatedWork"]["higherPermissions"].AddRange(higherPrivilegePermissions);
                 }
             }
 
