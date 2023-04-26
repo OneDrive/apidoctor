@@ -2698,10 +2698,19 @@ namespace ApiDoctor.ConsoleApp
                             break;
                         case PermissionsInsertionState.FindInsertionEndLine: // if we are here, we need to find the end of the permissions table
                             int numberOfRows = 1;
+
                             for (int index = currentIndex; index < originalFileContents.Length; index++)
                             {
                                 if (originalFileContents[index].Contains('|'))
                                 {
+                                    string[] cells = Regex.Split(originalFileContents[index].Trim(), @"\s*\|\s*").Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
+                                    if (cells.Any() && (cells[1].Contains(" and ") || cells[1].Contains("*")))
+                                    {
+                                        FancyConsole.WriteLine(ConsoleColor.Yellow, $"Permissions table ({foundPermissionTablesOrBlocks}) in {docFile.DisplayName} was not updated because extra information was found");
+                                        parseStatus = PermissionsInsertionState.FindNextPermissionBlock;
+                                        break;
+                                    }
+
                                     numberOfRows++;
                                     if (numberOfRows > 5)
                                     {
@@ -2776,12 +2785,12 @@ namespace ApiDoctor.ConsoleApp
                                 var httpRequests = new List<string>(originalFileContents.Skip(httpRequestStartLine + 1).Take(httpRequestEndLine - httpRequestStartLine - 1));
                                 FancyConsole.WriteLine($"Fetching permissions table ({foundPermissionTablesOrBlocks}) for {docFile.DisplayName}");
                                 var newPermissionFileContents = GetPermissionsMarkdownTableForHttpRequestBlock(httpRequests, permissionsDocument); // get from Kibali
-                               
+
                                 if (!string.IsNullOrWhiteSpace(newPermissionFileContents))
                                 {
-                                     var newTable = GetPermissionsFromNewTable(newPermissionFileContents);
-                                var request = httpRequests.Where(x => !string.IsNullOrWhiteSpace(x)).FirstOrDefault();
-                                ComparePermissions(oldTable, newTable, docFile.DisplayName, foundPermissionTablesOrBlocks, request);
+                                    var newTable = GetPermissionsFromNewTable(newPermissionFileContents);
+                                    var request = httpRequests.Where(x => !string.IsNullOrWhiteSpace(x)).FirstOrDefault();
+                                    ComparePermissions(oldTable, newTable, docFile.DisplayName, foundPermissionTablesOrBlocks, request);
                                     permissionFileContents = $"---\r\ndescription: \"Automatically generated file. DO NOT MODIFY\"\r\nms.topic: include\r\nms.localizationpriority: medium\r\n---\r\n\r\n{newPermissionFileContents}";
                                     FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"Permissions table ({foundPermissionTablesOrBlocks}) updated for {docFile.DisplayName}");
                                 }
@@ -2873,6 +2882,8 @@ namespace ApiDoctor.ConsoleApp
 
         private static void ComparePermissions(Dictionary<string, Dictionary<string, List<string>>> oldTable, Dictionary<string, Dictionary<string, List<string>>> newTable, string fileName, int permissionTablePos, string httpRequest)
         {
+            if (fileName.Contains("intune", StringComparison.OrdinalIgnoreCase))
+                return;
             foreach (string permissionType in oldTable.Keys)
             {
                 if (!newTable.ContainsKey(permissionType))
@@ -2892,7 +2903,7 @@ namespace ApiDoctor.ConsoleApp
                     Console.WriteLine($"Reason: Mismatching least privilege permissions; FileName: {fileName}; PermissionsTable: {permissionTablePos}; ScopeType: {permissionType}; Request: {httpRequest}");
                 }
 
-               
+
 
                 foreach (var permission in newTable[permissionType]["higherPermissions"])
                 {
@@ -2945,31 +2956,31 @@ namespace ApiDoctor.ConsoleApp
             foreach (string row in rows.Skip(2))
             {
                 string[] cells = Regex.Split(row.Trim(), @"\s*\|\s*").Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
-                
+
                 var leastPrivilegePermission = cells[1].Trim().Split(',', StringSplitOptions.TrimEntries).First();
                 var higherPrivilegePermissions = cells[1].Trim().Split(',', StringSplitOptions.TrimEntries).Skip(1).Where(x => !x.Equals("None.", StringComparison.OrdinalIgnoreCase) && !x.Equals("Not supported.", StringComparison.OrdinalIgnoreCase));
-                
+
 
                 if (cells[0].StartsWith("Delegated", StringComparison.OrdinalIgnoreCase) && cells[0].Contains("work", StringComparison.OrdinalIgnoreCase))
                 {
                     if (!string.IsNullOrWhiteSpace(leastPrivilegePermission) && !leastPrivilegePermission.Equals("None.", StringComparison.OrdinalIgnoreCase) && !leastPrivilegePermission.Equals("Not supported.", StringComparison.OrdinalIgnoreCase))
-                    {    
+                    {
                         permissionsDict["DelegatedWork"]["leastPrivilegePermissions"].Add(leastPrivilegePermission);
                     }
 
                     if (higherPrivilegePermissions.Any())
-                    {                  
+                    {
                         permissionsDict["DelegatedWork"]["higherPermissions"].AddRange(higherPrivilegePermissions);
                     }
                 }
                 else if (cells[0].StartsWith("Delegated", StringComparison.OrdinalIgnoreCase) && cells[0].Contains("personal", StringComparison.OrdinalIgnoreCase))
                 {
                     if (!string.IsNullOrWhiteSpace(leastPrivilegePermission) && !leastPrivilegePermission.Equals("None.", StringComparison.OrdinalIgnoreCase) && !leastPrivilegePermission.Equals("Not supported.", StringComparison.OrdinalIgnoreCase))
-                    {    
+                    {
                         permissionsDict["DelegatedPersonal"]["leastPrivilegePermissions"].Add(leastPrivilegePermission);
                     }
                     if (higherPrivilegePermissions.Any())
-                    {                  
+                    {
                         permissionsDict["DelegatedPersonal"]["higherPermissions"].AddRange(higherPrivilegePermissions);
                     }
                 }
@@ -2977,11 +2988,11 @@ namespace ApiDoctor.ConsoleApp
                 else if (cells[0].Equals("Application", StringComparison.OrdinalIgnoreCase))
                 {
                     if (!string.IsNullOrWhiteSpace(leastPrivilegePermission) && !leastPrivilegePermission.Equals("None.", StringComparison.OrdinalIgnoreCase) && !leastPrivilegePermission.Equals("Not supported.", StringComparison.OrdinalIgnoreCase))
-                    {    
+                    {
                         permissionsDict["Application"]["leastPrivilegePermissions"].Add(leastPrivilegePermission);
                     }
                     if (higherPrivilegePermissions.Any())
-                    {                  
+                    {
                         permissionsDict["Application"]["higherPermissions"].AddRange(higherPrivilegePermissions);
                     }
                 }
@@ -3021,10 +3032,14 @@ namespace ApiDoctor.ConsoleApp
             {
                 string[] cells = Regex.Split(row.Trim(), @"\s*\|\s*").Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
 
+                var leastPrivilegePermission = cells[1].Trim();
+                string[] higherPrivilegePermissions = cells[2].Split(',', StringSplitOptions.TrimEntries);
                 if (cells[0].StartsWith("Delegated", StringComparison.OrdinalIgnoreCase) && cells[0].Contains("work", StringComparison.OrdinalIgnoreCase))
                 {
-                    permissionsDict["DelegatedWork"]["leastPrivilegePermissions"].Add(cells[1].Trim());
-                    string[] higherPrivilegePermissions = cells[2].Split(',', StringSplitOptions.TrimEntries);
+                    if (!string.IsNullOrWhiteSpace(leastPrivilegePermission) && !leastPrivilegePermission.Equals("None.", StringComparison.OrdinalIgnoreCase) && !leastPrivilegePermission.Equals("Not supported.", StringComparison.OrdinalIgnoreCase))
+                    {
+                        permissionsDict["DelegatedWork"]["leastPrivilegePermissions"].Add(leastPrivilegePermission);
+                    }                  
                     foreach (string permission in higherPrivilegePermissions)
                     {
                         if (permission.Equals("None.", StringComparison.OrdinalIgnoreCase) || permission.Equals("Not supported.", StringComparison.OrdinalIgnoreCase))
@@ -3037,8 +3052,10 @@ namespace ApiDoctor.ConsoleApp
                 }
                 else if (cells[0].StartsWith("Delegated", StringComparison.OrdinalIgnoreCase) && cells[0].Contains("personal", StringComparison.OrdinalIgnoreCase))
                 {
-                    permissionsDict["DelegatedPersonal"]["leastPrivilegePermissions"].Add(cells[1].Trim());
-                    string[] higherPrivilegePermissions = cells[2].Split(',', StringSplitOptions.TrimEntries);
+                    if (!string.IsNullOrWhiteSpace(leastPrivilegePermission) && !leastPrivilegePermission.Equals("None.", StringComparison.OrdinalIgnoreCase) && !leastPrivilegePermission.Equals("Not supported.", StringComparison.OrdinalIgnoreCase))
+                    {
+                        permissionsDict["DelegatedPersonal"]["leastPrivilegePermissions"].Add(leastPrivilegePermission);
+                    }
                     foreach (string permission in higherPrivilegePermissions)
                     {
                         if (permission.Equals("None.", StringComparison.OrdinalIgnoreCase) || permission.Equals("Not supported.", StringComparison.OrdinalIgnoreCase))
@@ -3052,8 +3069,10 @@ namespace ApiDoctor.ConsoleApp
 
                 if (cells[0].Equals("Application", StringComparison.OrdinalIgnoreCase))
                 {
-                    permissionsDict["Application"]["leastPrivilegePermissions"].Add(cells[1].Trim());
-                    string[] higherPrivilegePermissions = cells[2].Split(',', StringSplitOptions.TrimEntries);
+                    if (!string.IsNullOrWhiteSpace(leastPrivilegePermission) && !leastPrivilegePermission.Equals("None.", StringComparison.OrdinalIgnoreCase) && !leastPrivilegePermission.Equals("Not supported.", StringComparison.OrdinalIgnoreCase))
+                    {
+                        permissionsDict["Application"]["leastPrivilegePermissions"].Add(leastPrivilegePermission);
+                    }
                     foreach (string permission in higherPrivilegePermissions)
                     {
                         if (permission.Equals("None.", StringComparison.OrdinalIgnoreCase) || permission.Equals("Not supported.", StringComparison.OrdinalIgnoreCase))
