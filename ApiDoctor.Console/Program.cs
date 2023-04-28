@@ -2958,7 +2958,7 @@ namespace ApiDoctor.ConsoleApp
             {
                 string[] cells = Regex.Split(row.Trim(), @"\s*\|\s*").Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
 
-                var allPermissions = cells[1].Trim().Split(',', StringSplitOptions.TrimEntries).Where(x => !string.IsNullOrWhiteSpace(x) && !x.Equals("None.", StringComparison.OrdinalIgnoreCase) && !x.Equals("Not supported.", StringComparison.OrdinalIgnoreCase));
+                var allPermissions = cells[1].Trim().Split(',', StringSplitOptions.TrimEntries).Where(x => !string.IsNullOrWhiteSpace(x) && !x.Equals("None.", StringComparison.OrdinalIgnoreCase) && !x.Equals("Not supported.", StringComparison.OrdinalIgnoreCase)).ToList();
 
                 if (!allPermissions.Any())
                     continue;
@@ -2978,14 +2978,14 @@ namespace ApiDoctor.ConsoleApp
                 }
                 else if (cells[0].StartsWith("Delegated", StringComparison.OrdinalIgnoreCase) && cells[0].Contains("personal", StringComparison.OrdinalIgnoreCase))
                 {
-                    permissionsDict["DelegatedWork"]["leastPrivilegePermissions"].Add(leastPrivilegePermission);
-                    permissionsDict["DelegatedWork"]["higherPermissions"].AddRange(higherPrivilegePermissions);
+                    permissionsDict["DelegatedPersonal"]["leastPrivilegePermissions"].Add(leastPrivilegePermission);
+                    permissionsDict["DelegatedPersonal"]["higherPermissions"].AddRange(higherPrivilegePermissions);
                 }
 
                 else if (cells[0].Equals("Application", StringComparison.OrdinalIgnoreCase))
                 {
-                    permissionsDict["DelegatedWork"]["leastPrivilegePermissions"].Add(leastPrivilegePermission);
-                    permissionsDict["DelegatedWork"]["higherPermissions"].AddRange(higherPrivilegePermissions);
+                    permissionsDict["Application"]["leastPrivilegePermissions"].Add(leastPrivilegePermission);
+                    permissionsDict["Application"]["higherPermissions"].AddRange(higherPrivilegePermissions);
                 }
             }
 
