@@ -2642,14 +2642,14 @@ namespace ApiDoctor.ConsoleApp
                             
                             if (currentLine.Contains("[!INCLUDE [permissions-table](")) // bootstrapping already took place
                             {
+                                foundPermissionTablesOrBlocks++;
                                 if (ignorePermissionTableUpdate)
                                 {
-                                    FancyConsole.WriteLine(ConsoleColor.Yellow, $"Skipping update of permissions table ({foundPermissionTablesOrBlocks + 1}) in {docFile.DisplayName}");
+                                    FancyConsole.WriteLine(ConsoleColor.Yellow, $"Skipping update of permissions table ({foundPermissionTablesOrBlocks}) in {docFile.DisplayName}");
                                     parseStatus = PermissionsInsertionState.FindNextPermissionBlock;
                                     break;
                                 }
 
-                                foundPermissionTablesOrBlocks++;
                                 isBootstrapped = true;
                                 if (!options.BootstrappingOnly)
                                 {
@@ -2668,14 +2668,14 @@ namespace ApiDoctor.ConsoleApp
                             }
                             else if (currentLine.Contains('|') && currentLine.Trim().Contains("Permission type", StringComparison.OrdinalIgnoreCase)) // found the permissions table
                             {
+                                foundPermissionTablesOrBlocks++;
                                 if (ignorePermissionTableUpdate)
                                 {
-                                    FancyConsole.WriteLine(ConsoleColor.Yellow, $"Skipping update of permissions table ({foundPermissionTablesOrBlocks + 1}) in {docFile.DisplayName}");
+                                    FancyConsole.WriteLine(ConsoleColor.Yellow, $"Skipping update of permissions table ({foundPermissionTablesOrBlocks}) in {docFile.DisplayName}");
                                     parseStatus = PermissionsInsertionState.FindNextPermissionBlock;
                                     break;
                                 }
 
-                                foundPermissionTablesOrBlocks++;
                                 insertionStartLine = currentIndex;
                                 parseStatus = PermissionsInsertionState.FindInsertionEndLine;
 
