@@ -1137,7 +1137,7 @@ namespace ApiDoctor.Publishing.CSDL
         private static readonly System.Text.RegularExpressions.Regex EntitySetPathRegEx = new(@"^\/(\w*)\/{var}$", System.Text.RegularExpressions.RegexOptions.Compiled);
         // Singleton is something in the format of /name or /root/child/subChild where root is the singleton
         private static readonly System.Text.RegularExpressions.Regex SingletonPathRegEx = new(@"^\/(\w*)$", System.Text.RegularExpressions.RegexOptions.Compiled);
-        private static readonly System.Text.RegularExpressions.Regex FullSingletonPathRegEx = new(@"^\/(\w*)", System.Text.RegularExpressions.RegexOptions.Compiled);
+        private static readonly System.Text.RegularExpressions.Regex FullPathRegEx = new(@"\/(\w+)", System.Text.RegularExpressions.RegexOptions.Compiled);
 
         /// <summary>
         /// Parse the URI paths for methods defined in the documentation and construct an entity container that contains these
@@ -1339,7 +1339,7 @@ namespace ApiDoctor.Publishing.CSDL
             var typeName = resource.Name.TypeOnly();
 
             // First check to see if there is an existing resource that matches this resource in the framework already
-            var existingEntity = (from e in schema.EntityTypes where e.Name == typeName select e).SingleOrDefault();
+            var existingEntity = schema.EntityTypes.SingleOrDefault(e => e.Name.IEquals(typeName));
             if (existingEntity != null)
             {
                 type = existingEntity;
@@ -1348,7 +1348,7 @@ namespace ApiDoctor.Publishing.CSDL
             // If that didn't work, look for a complex type that matches
             if (type == null)
             {
-                var existingComplexType = (from e in schema.ComplexTypes where e.Name == typeName select e).SingleOrDefault();
+                var existingComplexType = schema.ComplexTypes.SingleOrDefault(e => e.Name.IEquals(typeName));
                 if (existingComplexType != null)
                 {
                     type = existingComplexType;
@@ -1647,27 +1647,6 @@ namespace ApiDoctor.Publishing.CSDL
             }
         }
 
-        private static void AddEntitySetSourceMethods(EntityFramework edmx, MethodCollection methodCollection, string path)
-        {
-            if (EntitySetPathRegEx.IsMatch(path))
-            {
-                var matches = EntitySetPathRegEx.Matches(path);
-                var name = matches[0].Groups[1].Value;
-                edmx.AddSetSourceMethods(methodCollection, x => x.EntitySets, name);
-            }
-        }
-
-        private static void AddSingletonSourceMethods(EntityFramework edmx, MethodCollection methodCollection, string path)
-        {
-            if (SingletonPathRegEx.IsMatch(path))
-            {
-                var matches = FullSingletonPathRegEx.Matches(path);
-                var name = matches[0].Groups[1].Value;
-                edmx.AddSetSourceMethods(methodCollection, x => x.Singletons, name);
-                edmx.AddSetSourceMethods(methodCollection, x => x.EntitySets, name);
-            }
-        }
-
         private void AddSourceMethods(EntityFramework edmx, IssueLogger issues)
         {
             Dictionary<string, MethodCollection> uniqueRequestPaths = GetUniqueRequestPaths(issues);
@@ -1678,8 +1657,13 @@ namespace ApiDoctor.Publishing.CSDL
                 try
                 {
                     var methodCollection = uniqueRequestPaths[path];
-                    AddEntitySetSourceMethods(edmx, methodCollection, path);
-                    AddSingletonSourceMethods(edmx, methodCollection, path);
+                    if (FullPathRegEx.IsMatch(path))
+                    {
+                        var matches = FullPathRegEx.Matches(path);
+                        var name = matches[0].Groups[1].Value;
+                        edmx.AddSetSourceMethods(methodCollection, x => x.Singletons, name);
+                        edmx.AddSetSourceMethods(methodCollection, x => x.EntitySets, name);
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -1804,7 +1788,7 @@ namespace ApiDoctor.Publishing.CSDL
             foreach (var method in distinctMethods)
             {
                 var url = method.RequestUriPathOnly(issues);
-                var matches = FullSingletonPathRegEx.Matches(url);
+                var matches = FullPathRegEx.Matches(url);
                 if (matches is { Count: > 0 } && matches[0].Groups[1].Value != set.Name)
                 {
                     continue;
