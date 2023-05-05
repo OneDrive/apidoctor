@@ -28,6 +28,7 @@ namespace ApiDoctor.ConsoleApp
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
+    using System.Globalization;
     using System.IO;
     using System.Linq;
     using System.Net;
@@ -2621,7 +2622,8 @@ namespace ApiDoctor.ConsoleApp
                 var parseStatus = PermissionsInsertionState.FindPermissionsHeader;
                 int foundPermissionTablesOrBlocks = 0, foundHttpRequestBlocks = 0;
                 bool finishedParsing = false, isBootstrapped = false, ignorePermissionTableUpdate = false;
-                int insertionStartLine = -1, insertionEndLine = -1, httpRequestStartLine = -1, httpRequestEndLine = -1, boilerplateStartLine = -1, permissionsHeaderIndex = -1;
+                int insertionStartLine = -1, insertionEndLine = -1, httpRequestStartLine = -1, httpRequestEndLine = -1, 
+                    boilerplateStartLine = -1, boilerplateEndLine = -1, permissionsHeaderIndex = -1;
                 for (var currentIndex = 0; currentIndex < originalFileContents.Length && !finishedParsing; currentIndex++)
                 {
                     var currentLine = originalFileContents[currentIndex].Trim();
@@ -2635,14 +2637,9 @@ namespace ApiDoctor.ConsoleApp
                             }
                             break;
                         case PermissionsInsertionState.FindInsertionStartLine:
-                            if (Constants.PermissionConstants.BoilerplateTextsToReplace.Any(x => currentLine.StartsWith(x)))
-                            {
-                                boilerplateStartLine = currentIndex;
-                            }
-
                             if (currentLine.Contains("blockType", StringComparison.OrdinalIgnoreCase) && currentLine.Contains("\"ignored\""))
                                 ignorePermissionTableUpdate = true;
-
+                            
                             if (currentLine.Contains("[!INCLUDE [permissions-table](")) // bootstrapping already took place
                             {
                                 if (ignorePermissionTableUpdate)
@@ -2682,16 +2679,19 @@ namespace ApiDoctor.ConsoleApp
                                 insertionStartLine = currentIndex;
                                 parseStatus = PermissionsInsertionState.FindInsertionEndLine;
 
-                                // Find position to add boileplate text if missing
-                                if (foundPermissionTablesOrBlocks == 1 && boilerplateStartLine == -1)
+                                // Find position to add boileplate text
+                                if (foundPermissionTablesOrBlocks == 1)
                                 {
-                                    for (int index = currentIndex - 1; index >= permissionsHeaderIndex; index--)
+                                    boilerplateStartLine = permissionsHeaderIndex;
+                                    for (int index = permissionsHeaderIndex + 1; index < currentIndex; index++)
                                     {
-                                        // Break, if we encounter a non-standard boilerplate text
-                                        if (!string.IsNullOrWhiteSpace(originalFileContents[index]) && !originalFileContents[index].StartsWith('#'))
-                                            break;
-                                        if (index == permissionsHeaderIndex)
-                                            boilerplateStartLine = permissionsHeaderIndex;
+                                        // if the line is not empty and is not a sub header, this is the boilerplate start line
+                                       if (!string.IsNullOrWhiteSpace(originalFileContents[index]) && !originalFileContents[index].StartsWith('#'))  
+                                       {
+                                            if (boilerplateStartLine == permissionsHeaderIndex)
+                                                boilerplateStartLine = index;
+                                            boilerplateEndLine = index;
+                                       }
                                     }
                                 }
                             }
@@ -2706,6 +2706,13 @@ namespace ApiDoctor.ConsoleApp
                                     if (numberOfRows > 5)
                                     {
                                         FancyConsole.WriteLine(ConsoleColor.Yellow, $"Permissions table ({foundPermissionTablesOrBlocks}) in {docFile.DisplayName} was not updated because extra rows were found");
+                                        parseStatus = PermissionsInsertionState.FindNextPermissionBlock;
+                                        break;
+                                    }
+
+                                    if (originalFileContents[index].Contains("<sup>") || originalFileContents[index].Contains("*"))
+                                    {
+                                        FancyConsole.WriteLine(ConsoleColor.Yellow, $"Permissions table ({foundPermissionTablesOrBlocks}) in {docFile.DisplayName} was not updated because an astrerisk or superscript was found");
                                         parseStatus = PermissionsInsertionState.FindNextPermissionBlock;
                                         break;
                                     }
@@ -2802,6 +2809,13 @@ namespace ApiDoctor.ConsoleApp
                                             insertionEndLine++;
                                         }
                                         else {
+                                            if (boilerplateEndLine > boilerplateStartLine)
+                                            {
+                                                int extraLinesToRemove = boilerplateEndLine - boilerplateStartLine;
+                                                originalFileContents = originalFileContents.Splice(boilerplateStartLine + 1, extraLinesToRemove).ToArray();
+                                                insertionStartLine -= extraLinesToRemove;
+                                                insertionEndLine -= extraLinesToRemove;
+                                            }
                                             originalFileContents[boilerplateStartLine] = Constants.PermissionConstants.DefaultBoilerPlateText;
                                         }
                                     }
