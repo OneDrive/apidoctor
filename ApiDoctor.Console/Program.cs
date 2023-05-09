@@ -2887,6 +2887,9 @@ namespace ApiDoctor.ConsoleApp
         {
             foreach (string permissionType in oldTable.Keys)
             {
+                var allPrevPermissions = $"{string.Join(",", oldTable[permissionType]["leastPrivilegePermissions"])}, {string.Join(",", oldTable[permissionType]["higherPermissions"])}";
+                var allNewPermissions = $"{string.Join(",", newTable[permissionType]["leastPrivilegePermissions"])}, {string.Join(",", newTable[permissionType]["higherPermissions"])}";
+                
                 if (!newTable.ContainsKey(permissionType))
                 {
                     Console.WriteLine($"Permission type '{permissionType}' is missing for permission table {permissionTablePos} in {fileName}");
@@ -2901,17 +2904,17 @@ namespace ApiDoctor.ConsoleApp
 
                 else if (!oldTable[permissionType]["leastPrivilegePermissions"].SequenceEqual(newTable[permissionType]["leastPrivilegePermissions"]))
                 {
-                    Console.WriteLine($"Reason: Mismatching least privilege permissions; FileName: {fileName}; PermissionsTable: {permissionTablePos}; ScopeType: {permissionType}; Request: {httpRequest}");
+                    Console.WriteLine($"Reason: Mismatching least privilege permissions; FileName: {fileName}; PermissionsTable: {permissionTablePos}; ScopeType: {permissionType};  Scopes: {string.Join(",", newTable[permissionType]["leastPrivilegePermissions"])};  Request: {httpRequest}; OldPermissions: {allPrevPermissions}; NewPermissions: {allNewPermissions}");
                 }
 
-
-
+                var additionalPermissions = new List<string>();
+                var missingPermissions = new List<string>();
                 foreach (var permission in newTable[permissionType]["higherPermissions"])
                 {
                     var oldPermissions = oldTable[permissionType]["higherPermissions"];
                     if (!oldPermissions.Contains(permission) && !oldTable[permissionType]["leastPrivilegePermissions"].Contains(permission))
                     {
-                        Console.WriteLine($"Reason: Additional higher privilege permissions; FileName: {fileName}; PermissionsTable: {permissionTablePos}; ScopeType: {permissionType}; Scope: {permission};  Request: {httpRequest}");
+                        additionalPermissions.Add(permission);
                     }
                 }
 
@@ -2920,8 +2923,18 @@ namespace ApiDoctor.ConsoleApp
                     var newPermissions = newTable[permissionType]["higherPermissions"];
                     if (!newPermissions.Contains(permission) && !newTable[permissionType]["leastPrivilegePermissions"].Contains(permission))
                     {
-                        Console.WriteLine($"Reason: Missing higher privilege permissions; FileName: {fileName}; PermissionsTable: {permissionTablePos}; ScopeType: {permissionType}; Scope: {permission};  Request: {httpRequest}");
+                        missingPermissions.Add(permission);
                     }
+                }
+
+                if(additionalPermissions.Any())
+                {
+                    Console.WriteLine($"Reason: Additional higher privilege permissions; FileName: {fileName}; PermissionsTable: {permissionTablePos}; ScopeType: {permissionType}; Scopes: {string.Join(",", additionalPermissions)};  Request: {httpRequest}; OldPermissions: {allPrevPermissions}; NewPermissions: {allNewPermissions}");
+                }
+
+                if(missingPermissions.Any())
+                {
+                    Console.WriteLine($"Reason: Missing higher privilege permissions; FileName: {fileName}; PermissionsTable: {permissionTablePos}; ScopeType: {permissionType}; Scopes: {string.Join(",", missingPermissions)};  Request: {httpRequest}; OldPermissions: {allPrevPermissions}; NewPermissions: {allNewPermissions}");
                 }
             }
         }
