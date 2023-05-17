@@ -47,10 +47,13 @@ namespace ApiDoctor.Validation
 
         private static readonly Regex likelyBase64Regex = new("^[a-fA-F0-9+=/]+$", RegexOptions.Compiled);
 
-        /// <summary>
-        /// Matches [text](link_target) or [text]: link_reference
-        /// </summary>
         private static readonly Regex markdownLinkRegex = new(@"\[(.*?)\]((\(.*?\))|(\s*:\s*\w+))", RegexOptions.Compiled);
+
+        private static readonly Regex markdownBoldRegex = new(@"\*\*(.*?)\*\*", RegexOptions.Compiled);
+       
+        private static readonly Regex markdownItalicRegex = new(@"_(.*?)_", RegexOptions.Compiled);
+       
+        private static readonly Regex markdownCodeRegex = new(@"`(.*?)`", RegexOptions.Compiled);
 
         private static readonly string[] Iso8601Formats =
         {
@@ -109,7 +112,7 @@ namespace ApiDoctor.Validation
             }
 
             return value.ToString().
-                StripMarkdownLinks().
+                RemoveMarkdownStyling().
                 Replace(fancyLeftQuote, singleQuote).
                 Replace(fancyRightQuote, singleQuote).
                 Replace('"', singleQuote).
@@ -225,13 +228,25 @@ namespace ApiDoctor.Validation
         }
 
         /// <summary>
-        /// Only removes markdown links with the format [text](link_target) or [text]: link_reference
+        /// Removes markdown styling from text i.e. links, bold, italics, code fence 
         /// </summary>
-        /// <param name="text"></param>
-        /// <returns></returns>
-        public static string StripMarkdownLinks(this string text)
+        /// <param name="markdownText">String with possible markdown style</param>
+        /// <returns>Text without markdown styling</returns>
+        public static string RemoveMarkdownStyling(this string markdownText)
         {
-            return Regex.Replace(text, markdownLinkRegex.ToString(), "$1");
+            // Remove bold (**text**)
+            markdownText = markdownBoldRegex.Replace(markdownText, "$1");
+
+            // Remove italic (_text_)
+            markdownText = markdownItalicRegex .Replace(markdownText, "$1");
+
+            // Remove code (`code`)
+            markdownText = markdownCodeRegex .Replace(markdownText, "$1");
+
+            // Remove links [text](link_target) or [text]: link_reference    
+            markdownText = markdownLinkRegex.Replace(markdownText, "$1");
+            
+            return markdownText;
         }
 
         public static T PropertyValue<T>(this JContainer container, string propertyName, T defaultValue) where T : class

@@ -1943,7 +1943,7 @@ namespace ApiDoctor.Publishing.CSDL
             var uriBuilder = new UriBuilder()
             {
                 Scheme = "https",
-                Host = "docs.microsoft.com",
+                Host = "learn.microsoft.com",
                 Path = $@"graph{sourceFilePath}",
                 Query = $"?view=graph-rest-{version}"
             };
