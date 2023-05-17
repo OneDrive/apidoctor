@@ -47,6 +47,7 @@ namespace ApiDoctor.Validation.OData.Transformation
             FoldersToSkip = new List<string>();
             FilesToSkip = new List<string>();
             TreatErrorsAsWarningsWorkloads = new List<string>();
+            SkipPermissionTableUpdateForWorkloads = new List<string>();
         }
 
         /// <summary>
@@ -92,10 +93,16 @@ namespace ApiDoctor.Validation.OData.Transformation
         public List<string> FilesToSkip { get; set; }
 
         /// <summary>
-        /// optionally specify workloads whose errors should be treated as warnings
+        /// Optionally specify workloads whose errors should be treated as warnings
         /// </summary>
         [JsonProperty("treatErrorsAsWarningsWorkloads")]
         public List<string> TreatErrorsAsWarningsWorkloads { get; set; }
+
+        /// <summary>
+        /// Optionally exclude workloads from automatic update of permissions table
+        /// </summary>
+        [JsonProperty("skipPermissionTableUpdateForWorkloads")]
+        public List<string> SkipPermissionTableUpdateForWorkloads { get; set; }
     }
 
     public class SchemaDiffConfig
