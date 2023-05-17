@@ -1470,8 +1470,15 @@ namespace ApiDoctor.Validation
                                 MethodDefinition pairedRequest = (from m in this.requests where m.Identifier == requestMethodName select m).FirstOrDefault();
                                 if (pairedRequest != null)
                                 {
-                                    pairedRequest.AddExpectedResponse(GetBlockContent(code), annotation);
-                                    responses.Add(pairedRequest);
+                                    try 
+                                    {
+                                        pairedRequest.AddExpectedResponse(GetBlockContent(code), annotation);
+                                        responses.Add(pairedRequest);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        detectedErrors.Add(new ValidationError(ValidationErrorCode.MarkdownParserError, this.DisplayName, "Unable to pair response with request {0}: {1}.", annotation.MethodName, ex.Message));
+                                    }
                                 }
                                 else
                                 {
