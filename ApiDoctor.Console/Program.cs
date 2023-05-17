@@ -2603,9 +2603,13 @@ namespace ApiDoctor.ConsoleApp
             var docSet = docs ?? await GetDocSetAsync(options, issues);
             if (null == docSet)
                 return false;
-
+         
             // we only expect to have permission definitions in documents of ApiPageType
             var docFiles = docSet.Files.Where(x => x.DocumentPageType == DocFile.PageType.ApiPageType);
+
+            // skip generation for workloads specified in config
+            var workloadsToSkip = DocSet.SchemaConfig?.SkipPermissionTableUpdateForWorkloads ?? new List<string>();
+            docFiles = docFiles.Where(f => !workloadsToSkip.Any(w => !string.IsNullOrWhiteSpace(f.DisplayName) && f.DisplayName.IContains(w)));
 
             // generate permissions document
             var permissionsDocument = new PermissionsDocument();
@@ -2615,7 +2619,7 @@ namespace ApiDoctor.ConsoleApp
                 if (permissionsDocument == null)
                     return false;
             }
-             
+
             foreach (var docFile in docFiles)
             {
                 var originalFileContents = await File.ReadAllLinesAsync(docFile.FullPath);
