@@ -2895,7 +2895,7 @@ namespace ApiDoctor.ConsoleApp
                         .TrimEnd('/')
                         .ToLowerInvariant();
 
-                    var generator = new PermissionsStubGenerator(permissionsDoc, parsedRequest.Url, parsedRequest.Method);
+                    var generator = new PermissionsStubGenerator(permissionsDoc, parsedRequest.Url, parsedRequest.Method, false, true);
                     return generator.GenerateTable();
                 }
                 catch (Exception ex)
