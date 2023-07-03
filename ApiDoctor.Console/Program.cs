@@ -2038,7 +2038,7 @@ namespace ApiDoctor.ConsoleApp
                 if (codeSnippet != null)
                 {
                     var snippetFileContents = "---\r\ndescription: \"Automatically generated file. DO NOT MODIFY\"\r\n---\r\n\r\n" +    //header
-                        $"```{codeFenceString}\r\n\r\n" + // code fence
+                        $"```{codeFenceString.Replace("cli","bash")}\r\n\r\n" + // code fence
                         $"{codeSnippet}\r\n\r\n" +       // generated code snippet
                         "```";                           // closing fence
 
