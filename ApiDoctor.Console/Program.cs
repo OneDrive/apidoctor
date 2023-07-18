@@ -2029,7 +2029,14 @@ namespace ApiDoctor.ConsoleApp
                 var snippetFileName = methodString + $"-{codeFenceString}-snippets.md";
 
                 var codeSnippet = GetSnippetContentForMethodByLanguage(language, snippetPrefix, snippetsPath);
-                var sampleCodeIncludeText = $"[!INCLUDE [sample-code](../{ReplaceWindowsByLinuxPathSeparators(Path.Combine(relativePathFolder, codeFenceString, snippetFileName))})]";
+                var sampleCodeIncludeText = string.Empty;
+                if (isConceptsDirectory)
+                {
+                    sampleCodeIncludeText = $"[!INCLUDE [sample-code](../{ReplaceWindowsByLinuxPathSeparators(Path.Combine(relativePathFolder, codeFenceString, versionString, snippetFileName))})]";
+                }
+                else{
+                    sampleCodeIncludeText = $"[!INCLUDE [sample-code](../{ReplaceWindowsByLinuxPathSeparators(Path.Combine(relativePathFolder, codeFenceString, snippetFileName))})]";
+                }
                 var tabText = $"# [{language}](#tab/{codeFenceString})\r\n" +
                               $"{(!string.IsNullOrWhiteSpace(codeSnippet) ? sampleCodeIncludeText : snippetNotAvailableIncludeText)}\r\n" +
                               $"{sdkIncludeText}\r\n\r\n";
