@@ -1,25 +1,25 @@
 /*
  * API Doctor
  * Copyright (c) Microsoft Corporation
- * All rights reserved. 
- * 
+ * All rights reserved.
+ *
  * MIT License
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of 
- * this software and associated documentation files (the ""Software""), to deal in 
- * the Software without restriction, including without limitation the rights to use, 
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of
+ * this software and associated documentation files (the ""Software""), to deal in
+ * the Software without restriction, including without limitation the rights to use,
  * copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
- * Software, and to permit persons to whom the Software is furnished to do so, 
+ * Software, and to permit persons to whom the Software is furnished to do so,
  * subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in all 
+ *
+ * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED *AS IS*, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
- * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
- * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT 
- * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION 
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
+ *
+ * THE SOFTWARE IS PROVIDED *AS IS*, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
@@ -267,7 +267,7 @@ namespace ApiDoctor.ConsoleApp
 
         /// <summary>
         /// Perform all of the local documentation based checks. This is the "compile"
-        /// command for the documentation that verifies that everything is clean inside the 
+        /// command for the documentation that verifies that everything is clean inside the
         /// documentation itself.
         /// </summary>
         /// <param name="options"></param>
@@ -584,7 +584,7 @@ namespace ApiDoctor.ConsoleApp
         }
 
         /// <summary>
-        /// Perform internal consistency checks on the documentation, including verify that 
+        /// Perform internal consistency checks on the documentation, including verify that
         /// code blocks have proper formatting, that resources are used properly, and that expected
         /// responses and examples conform to the resource definitions.
         /// </summary>
@@ -976,7 +976,7 @@ namespace ApiDoctor.ConsoleApp
 
         /// <summary>
         /// Executes the remote service tests defined in the documentation. This is similar to CheckDocs, expect
-        /// that the actual requests come from the service instead of the documentation. Prints the errors to 
+        /// that the actual requests come from the service instead of the documentation. Prints the errors to
         /// the console.
         /// </summary>
         /// <param name="options"></param>
@@ -1195,7 +1195,7 @@ namespace ApiDoctor.ConsoleApp
         }
 
         /// <summary>
-        /// Parallel enabled for each processor that supports async lambdas. Copied from 
+        /// Parallel enabled for each processor that supports async lambdas. Copied from
         /// http://blogs.msdn.com/b/pfxteam/archive/2012/03/05/10278165.aspx
         /// </summary>
         /// <typeparam name="T"></typeparam>
@@ -2020,6 +2020,8 @@ namespace ApiDoctor.ConsoleApp
             var sdkIncludeText = $"[!INCLUDE [sdk-documentation](../{ReplaceWindowsByLinuxPathSeparators(Path.Combine(relativePathFolder, includeSdkFileName))})]";
             var snippetNotAvailableIncludeText = $"[!INCLUDE [snippet-not-available](../{ReplaceWindowsByLinuxPathSeparators(Path.Combine(relativePathFolder, includeSnippetsNotAvailableFileName))})]";
 
+            var isConceptsDirectory = method.SourceFile.FullPath.Contains("concepts");
+            var versionString = snippetPrefix.Contains("beta") ? "beta" : "v1";
             var snippetsTabSectionForMethod = new StringBuilder();
             foreach (var language in languages)
             {
@@ -2027,7 +2029,14 @@ namespace ApiDoctor.ConsoleApp
                 var snippetFileName = methodString + $"-{codeFenceString}-snippets.md";
 
                 var codeSnippet = GetSnippetContentForMethodByLanguage(language, snippetPrefix, snippetsPath);
-                var sampleCodeIncludeText = $"[!INCLUDE [sample-code](../{ReplaceWindowsByLinuxPathSeparators(Path.Combine(relativePathFolder, codeFenceString, snippetFileName))})]";
+                var sampleCodeIncludeText = string.Empty;
+                if (isConceptsDirectory)
+                {
+                    sampleCodeIncludeText = $"[!INCLUDE [sample-code](../{ReplaceWindowsByLinuxPathSeparators(Path.Combine(relativePathFolder, codeFenceString, versionString, snippetFileName))})]";
+                }
+                else{
+                    sampleCodeIncludeText = $"[!INCLUDE [sample-code](../{ReplaceWindowsByLinuxPathSeparators(Path.Combine(relativePathFolder, codeFenceString, snippetFileName))})]";
+                }
                 var tabText = $"# [{language}](#tab/{codeFenceString})\r\n" +
                               $"{(!string.IsNullOrWhiteSpace(codeSnippet) ? sampleCodeIncludeText : snippetNotAvailableIncludeText)}\r\n" +
                               $"{sdkIncludeText}\r\n\r\n";
@@ -2043,6 +2052,11 @@ namespace ApiDoctor.ConsoleApp
                         "```";                           // closing fence
 
                     var docsSnippetLanguageDirectory = Path.Combine(docsSnippetsDirectory, codeFenceString);
+                    if (isConceptsDirectory)
+                    {
+                        // If the method is in the concepts directory, we further need to separate the snippets by version
+                        docsSnippetLanguageDirectory = Path.Combine(docsSnippetLanguageDirectory, versionString);
+                    }
                     Directory.CreateDirectory(docsSnippetLanguageDirectory); // make sure snippet file directory exists
 
                     var snippetMarkdownFilePath = Path.Combine(docsSnippetLanguageDirectory, snippetFileName);
@@ -2277,7 +2291,7 @@ namespace ApiDoctor.ConsoleApp
                 // default to using the file location. Error/Warning will be logged
                 version = GetSnippetVersion(method.SourceFile.DisplayName);
             }
-            
+
             return GetSnippetPrefix(method.Identifier, version);
         }
 
@@ -2603,7 +2617,7 @@ namespace ApiDoctor.ConsoleApp
             var docSet = docs ?? await GetDocSetAsync(options, issues);
             if (null == docSet)
                 return false;
-         
+
             // we only expect to have permission definitions in documents of ApiPageType
             var docFiles = docSet.Files.Where(x => x.DocumentPageType == DocFile.PageType.ApiPageType);
 
@@ -2626,7 +2640,7 @@ namespace ApiDoctor.ConsoleApp
                 var parseStatus = PermissionsInsertionState.FindPermissionsHeader;
                 int foundPermissionTablesOrBlocks = 0, foundHttpRequestBlocks = 0;
                 bool finishedParsing = false, isBootstrapped = false, ignorePermissionTableUpdate = false;
-                int insertionStartLine = -1, insertionEndLine = -1, httpRequestStartLine = -1, httpRequestEndLine = -1, 
+                int insertionStartLine = -1, insertionEndLine = -1, httpRequestStartLine = -1, httpRequestEndLine = -1,
                     boilerplateStartLine = -1, boilerplateEndLine = -1, permissionsHeaderIndex = -1;
                 for (var currentIndex = 0; currentIndex < originalFileContents.Length && !finishedParsing; currentIndex++)
                 {
@@ -2643,7 +2657,7 @@ namespace ApiDoctor.ConsoleApp
                         case PermissionsInsertionState.FindInsertionStartLine:
                             if (currentLine.Contains("blockType", StringComparison.OrdinalIgnoreCase) && currentLine.Contains("\"ignored\""))
                                 ignorePermissionTableUpdate = true;
-                            
+
                             if (currentLine.Contains("[!INCLUDE [permissions-table](")) // bootstrapping already took place
                             {
                                 foundPermissionTablesOrBlocks++;
@@ -2690,7 +2704,7 @@ namespace ApiDoctor.ConsoleApp
                                     for (int index = permissionsHeaderIndex + 1; index < currentIndex; index++)
                                     {
                                         // if the line is not empty and is not a sub header, this is the boilerplate start line
-                                       if (!string.IsNullOrWhiteSpace(originalFileContents[index]) && !originalFileContents[index].StartsWith('#'))  
+                                       if (!string.IsNullOrWhiteSpace(originalFileContents[index]) && !originalFileContents[index].StartsWith('#'))
                                        {
                                             if (boilerplateStartLine == permissionsHeaderIndex)
                                                 boilerplateStartLine = index;
@@ -2773,7 +2787,7 @@ namespace ApiDoctor.ConsoleApp
                             var permissionFileContents = !isBootstrapped
                                 ? string.Join("\r\n", originalFileContents.Skip(insertionStartLine).Take(insertionEndLine + 1 - insertionStartLine))
                                 : string.Empty;
-                            
+
                             if (!options.BootstrappingOnly)
                             {
                                 if (httpRequestStartLine == -1)
@@ -2799,7 +2813,7 @@ namespace ApiDoctor.ConsoleApp
                                 }
 
                                 // update boilerplate text
-                                if (!isBootstrapped && boilerplateStartLine > -1 && !string.IsNullOrWhiteSpace(newPermissionFileContents)) 
+                                if (!isBootstrapped && boilerplateStartLine > -1 && !string.IsNullOrWhiteSpace(newPermissionFileContents))
                                 {
                                     if (foundPermissionTablesOrBlocks == 1)
                                     {
@@ -2825,7 +2839,7 @@ namespace ApiDoctor.ConsoleApp
                                     }
                                     else if (foundPermissionTablesOrBlocks == 2) {
                                         originalFileContents[boilerplateStartLine] = Constants.PermissionConstants.MultipleTableBoilerPlateText;
-                                    } 
+                                    }
                                 }
 
                                 if (!isBootstrapped && !string.IsNullOrWhiteSpace(newPermissionFileContents) && boilerplateStartLine == -1)
@@ -2852,7 +2866,7 @@ namespace ApiDoctor.ConsoleApp
 
                             // insert permissions block text into doc file
                             var permissionsBlockText = $"<!-- {{ \"blockType\": \"permissions\", \"name\": \"{docFileName.Replace("-", "_")}\" }} -->\r\n" +
-                                $"[!INCLUDE [permissions-table](../{ReplaceWindowsByLinuxPathSeparators(Path.Combine(permissionsFileRelativePath, permissionsFileName))})]";                         
+                                $"[!INCLUDE [permissions-table](../{ReplaceWindowsByLinuxPathSeparators(Path.Combine(permissionsFileRelativePath, permissionsFileName))})]";
                             IEnumerable<string> updatedFileContents = originalFileContents;
                             updatedFileContents = updatedFileContents.Splice(insertionStartLine, insertionEndLine + 1 - insertionStartLine);
                             updatedFileContents = FileSplicer(updatedFileContents.ToArray(), insertionStartLine - 1, permissionsBlockText);
