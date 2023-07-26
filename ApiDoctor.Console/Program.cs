@@ -3002,17 +3002,17 @@ namespace ApiDoctor.ConsoleApp
             {
                 string[] cells = Regex.Split(row.Trim(), @"\s*\|\s*").Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
 
-                var allPermissions = cells[1].Trim().Split(',', StringSplitOptions.TrimEntries).Where(x => !string.IsNullOrWhiteSpace(x) && !x.Equals("None.", StringComparison.OrdinalIgnoreCase) && !x.Equals("Not supported.", StringComparison.OrdinalIgnoreCase)).ToList();
+                var allPermissions = cells[1].Trim().Split(',', StringSplitOptions.TrimEntries).Where(x => !string.IsNullOrWhiteSpace(x) && !x.Equals("None.", StringComparison.OrdinalIgnoreCase) && !x.Equals("Not supported.", StringComparison.OrdinalIgnoreCase) && !x.Equals("Not available.", StringComparison.OrdinalIgnoreCase)).ToList();
 
                 if (!allPermissions.Any())
                     continue;
 
-                var leastPrivilegePermission = allPermissions.First();
+                var leastPrivilegePermission = allPermissions.First().Replace(",", "").Trim();
 
                 var higherPrivilegePermissions = new List<string>();
                 
                 if (allPermissions.Count() > 1)
-                  higherPrivilegePermissions = allPermissions.Skip(1).ToList();
+                  higherPrivilegePermissions = allPermissions.Skip(1).Select(x => x.Replace(",", "").Trim()).ToList();
 
 
                 if (cells[0].StartsWith("Delegated", StringComparison.OrdinalIgnoreCase) && cells[0].Contains("work", StringComparison.OrdinalIgnoreCase))
@@ -3071,13 +3071,13 @@ namespace ApiDoctor.ConsoleApp
                 string[] higherPrivilegePermissions = cells[2].Split(',', StringSplitOptions.TrimEntries);
                 if (cells[0].StartsWith("Delegated", StringComparison.OrdinalIgnoreCase) && cells[0].Contains("work", StringComparison.OrdinalIgnoreCase))
                 {
-                    if (!string.IsNullOrWhiteSpace(leastPrivilegePermission) && !leastPrivilegePermission.Equals("None.", StringComparison.OrdinalIgnoreCase) && !leastPrivilegePermission.Equals("Not supported.", StringComparison.OrdinalIgnoreCase))
+                    if (!string.IsNullOrWhiteSpace(leastPrivilegePermission) && !leastPrivilegePermission.Equals("None.", StringComparison.OrdinalIgnoreCase) && !leastPrivilegePermission.Equals("Not supported.", StringComparison.OrdinalIgnoreCase) &&  !leastPrivilegePermission.Equals("Not available.", StringComparison.OrdinalIgnoreCase))
                     {
                         permissionsDict["DelegatedWork"]["leastPrivilegePermissions"].Add(leastPrivilegePermission);
                     }                  
                     foreach (string permission in higherPrivilegePermissions)
                     {
-                        if (permission.Equals("None.", StringComparison.OrdinalIgnoreCase) || permission.Equals("Not supported.", StringComparison.OrdinalIgnoreCase))
+                        if (permission.Equals("None.", StringComparison.OrdinalIgnoreCase) || permission.Equals("Not supported.", StringComparison.OrdinalIgnoreCase) ||  permission.Equals("Not available.", StringComparison.OrdinalIgnoreCase)))
                             continue;
                         if (!permissionsDict["DelegatedWork"]["leastPrivilegePermissions"].Contains(permission))
                         {
@@ -3087,13 +3087,13 @@ namespace ApiDoctor.ConsoleApp
                 }
                 else if (cells[0].StartsWith("Delegated", StringComparison.OrdinalIgnoreCase) && cells[0].Contains("personal", StringComparison.OrdinalIgnoreCase))
                 {
-                    if (!string.IsNullOrWhiteSpace(leastPrivilegePermission) && !leastPrivilegePermission.Equals("None.", StringComparison.OrdinalIgnoreCase) && !leastPrivilegePermission.Equals("Not supported.", StringComparison.OrdinalIgnoreCase))
+                    if (!string.IsNullOrWhiteSpace(leastPrivilegePermission) && !leastPrivilegePermission.Equals("None.", StringComparison.OrdinalIgnoreCase) && !leastPrivilegePermission.Equals("Not supported.", StringComparison.OrdinalIgnoreCase) &&  !leastPrivilegePermission.Equals("Not available.", StringComparison.OrdinalIgnoreCase))
                     {
                         permissionsDict["DelegatedPersonal"]["leastPrivilegePermissions"].Add(leastPrivilegePermission);
                     }
                     foreach (string permission in higherPrivilegePermissions)
                     {
-                        if (permission.Equals("None.", StringComparison.OrdinalIgnoreCase) || permission.Equals("Not supported.", StringComparison.OrdinalIgnoreCase))
+                        if (permission.Equals("None.", StringComparison.OrdinalIgnoreCase) || permission.Equals("Not supported.", StringComparison.OrdinalIgnoreCase) ||  permission.Equals("Not available.", StringComparison.OrdinalIgnoreCase))
                             continue;
                         if (!permissionsDict["DelegatedPersonal"]["leastPrivilegePermissions"].Contains(permission))
                         {
@@ -3104,13 +3104,13 @@ namespace ApiDoctor.ConsoleApp
 
                 if (cells[0].Equals("Application", StringComparison.OrdinalIgnoreCase))
                 {
-                    if (!string.IsNullOrWhiteSpace(leastPrivilegePermission) && !leastPrivilegePermission.Equals("None.", StringComparison.OrdinalIgnoreCase) && !leastPrivilegePermission.Equals("Not supported.", StringComparison.OrdinalIgnoreCase))
+                    if (!string.IsNullOrWhiteSpace(leastPrivilegePermission) && !leastPrivilegePermission.Equals("None.", StringComparison.OrdinalIgnoreCase) && !leastPrivilegePermission.Equals("Not supported.", StringComparison.OrdinalIgnoreCase) &&  !leastPrivilegePermission.Equals("Not available.", StringComparison.OrdinalIgnoreCase))
                     {
                         permissionsDict["Application"]["leastPrivilegePermissions"].Add(leastPrivilegePermission);
                     }
                     foreach (string permission in higherPrivilegePermissions)
                     {
-                        if (permission.Equals("None.", StringComparison.OrdinalIgnoreCase) || permission.Equals("Not supported.", StringComparison.OrdinalIgnoreCase))
+                        if (permission.Equals("None.", StringComparison.OrdinalIgnoreCase) || permission.Equals("Not supported.", StringComparison.OrdinalIgnoreCase) ||  permission.Equals("Not available.", StringComparison.OrdinalIgnoreCase))
                             continue;
 
                         if (!permissionsDict["Application"]["leastPrivilegePermissions"].Contains(permission))
