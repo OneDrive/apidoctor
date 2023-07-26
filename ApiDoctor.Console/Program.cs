@@ -3077,7 +3077,7 @@ namespace ApiDoctor.ConsoleApp
                     }                  
                     foreach (string permission in higherPrivilegePermissions)
                     {
-                        if (permission.Equals("None.", StringComparison.OrdinalIgnoreCase) || permission.Equals("Not supported.", StringComparison.OrdinalIgnoreCase) ||  permission.Equals("Not available.", StringComparison.OrdinalIgnoreCase)))
+                        if (permission.Equals("None.", StringComparison.OrdinalIgnoreCase) || permission.Equals("Not supported.", StringComparison.OrdinalIgnoreCase) ||  permission.Equals("Not available.", StringComparison.OrdinalIgnoreCase))
                             continue;
                         if (!permissionsDict["DelegatedWork"]["leastPrivilegePermissions"].Contains(permission))
                         {
