@@ -413,7 +413,7 @@ namespace ApiDoctor.Validation
 
                 foreach (var param in resource.Parameters)
                 {
-                    if (param.Type.CustomTypeName != null)
+                    if (param.Type?.CustomTypeName != null)
                     {
                         EnsureDefinedInDocs(param.Type.CustomTypeName, definedTypes, resource.SourceFile, resourceIssues.For(param.Name));
                     }
