@@ -52,6 +52,7 @@ namespace ApiDoctor.ConsoleApp
         public const string VerbGenerateSnippets = "generate-snippets";
         public const string VerbDeduplicateExampleNames = "deduplicate-example-names";
         public const string VerbGeneratePermissionFiles = "generate-permission-files";
+        public const string VerbFindMissingExamples = "find-missing-examples";
     }
 
     [Verb(CommandLineOptions.VerbAbout, HelpText = "Print about information for this application.")]
@@ -645,5 +646,11 @@ namespace ApiDoctor.ConsoleApp
             }
             return !missingArguments.Any();
         }
+    }
+
+    [Verb(CommandLineOptions.VerbFindMissingExamples, HelpText = "Find missing and ignored example request blocks in documentation")]
+    class FindMissingExamplesOptions : BasicCheckOptions
+    {
+
     }
 }
