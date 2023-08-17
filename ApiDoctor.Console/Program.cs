@@ -2254,8 +2254,7 @@ namespace ApiDoctor.ConsoleApp
                 }
                 else
                 {
-                    FancyConsole.WriteLine(FancyConsole.ConsoleErrorColor, "Error when generating code snippets!!!");
-                    FancyConsole.Write(FancyConsole.ConsoleErrorColor, e.Data);
+                    FancyConsole.Write(FancyConsole.ConsoleDefaultColor, e.Data);
                 }
             };
             process.ErrorDataReceived += (sender, e) =>
@@ -2266,7 +2265,8 @@ namespace ApiDoctor.ConsoleApp
                 }
                 else
                 {
-                    FancyConsole.Write(FancyConsole.ConsoleDefaultColor, e.Data);
+                    FancyConsole.WriteLine(FancyConsole.ConsoleErrorColor, "Error when generating code snippets!!!");
+                    FancyConsole.Write(FancyConsole.ConsoleErrorColor, e.Data);
                 }
             };
             process.Start();
