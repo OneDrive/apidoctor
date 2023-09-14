@@ -2921,6 +2921,8 @@ namespace ApiDoctor.ConsoleApp
                 var allPrevPermissions = $"{string.Join(",", oldTable[permissionType]["leastPrivilegePermissions"])}, {string.Join(",", oldTable[permissionType]["higherPermissions"])}";
                 var allNewPermissions = $"{string.Join(",", newTable[permissionType]["leastPrivilegePermissions"])}, {string.Join(",", newTable[permissionType]["higherPermissions"])}";
                 
+                Console.WriteLine($"Reason: Existing Least Privilege Permissions; FileName: {fileName}; PermissionsTable: {permissionTablePos}; ScopeType: {permissionType};  Scopes: {string.Join(",", oldTable[permissionType]["leastPrivilegePermissions"])};  Request: {httpRequest}; AllPermissions: {allPrevPermissions}; NewPermissions: {allNewPermissions}");
+                
                 if (!newTable.ContainsKey(permissionType))
                 {
                     Console.WriteLine($"Permission type '{permissionType}' is missing for permission table {permissionTablePos} in {fileName}");
