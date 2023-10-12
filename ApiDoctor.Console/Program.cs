@@ -2907,8 +2907,8 @@ namespace ApiDoctor.ConsoleApp
 
         private static string ConvertToThreeColumnPermissionsTable(IEnumerable<string> tableRows)
         {
-            var tableString = "|Permission type|Least privileged permissions|Higher privileged permissions|" +
-                              "\r\n|:---|:---|:---|";
+            var tableString = new StringBuilder("|Permission type|Least privileged permissions|Higher privileged permissions|");
+            tableString.Append("\r\n|:---|:---|:---|");
             foreach (string row in tableRows)
             {
                 string[] cells = Regex.Split(row.Trim(), @"\s*\|\s*").Where(static x => !string.IsNullOrWhiteSpace(x)).ToArray();
@@ -2923,9 +2923,9 @@ namespace ApiDoctor.ConsoleApp
                     : allPermissions.Count() == 1 
                         ? "Not available."  
                         : string.Join(", ", allPermissions.Skip(1).Select(x => x.Trim()).ToList());
-                tableString += $"\r\n|{permissionType}|{leastPrivilegePermission}|{higherPrivilegePermissions}|";
+                tableString.Append($"\r\n|{permissionType}|{leastPrivilegePermission}|{higherPrivilegePermissions}|");
             }
-            return tableString;
+            return tableString.ToString();
         }
 
         private static string GetPermissionsMarkdownTableForHttpRequestBlock(List<string> httpRequests, PermissionsDocument permissionsDoc)
