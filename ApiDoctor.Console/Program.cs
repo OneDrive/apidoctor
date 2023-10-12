@@ -2893,7 +2893,7 @@ namespace ApiDoctor.ConsoleApp
             return true;
         }
 
-        private static List<string> PermissionKeywordsToIgnore = new List<string>()
+        private static HashSet<string> PermissionKeywordsToIgnore = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "None",
             "None.",
@@ -2911,9 +2911,9 @@ namespace ApiDoctor.ConsoleApp
                               "\r\n|:---|:---|:---|";
             foreach (string row in tableRows)
             {
-                string[] cells = Regex.Split(row.Trim(), @"\s*\|\s*").Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
+                string[] cells = Regex.Split(row.Trim(), @"\s*\|\s*").Where(static x => !string.IsNullOrWhiteSpace(x)).ToArray();
                 var allPermissions = cells[1].Trim().Split(',', StringSplitOptions.TrimEntries)
-                    .Where(x => !string.IsNullOrWhiteSpace(x) && !PermissionKeywordsToIgnore.Contains(x, StringComparer.OrdinalIgnoreCase))
+                    .Where(x => !string.IsNullOrWhiteSpace(x) && !PermissionKeywordsToIgnore.Contains(x))
                     .ToList();
 
                 var permissionType = cells[0];
