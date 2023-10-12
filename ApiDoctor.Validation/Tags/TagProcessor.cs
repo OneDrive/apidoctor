@@ -43,7 +43,7 @@ namespace ApiDoctor.Validation.Tags
 
         private static Regex ValidTagFormat = new Regex(@"^\[TAGS=[-\.\w]+(?:,\s?[-\.\w]*)*\]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static Regex GetTagList = new Regex(@"\[TAGS=([-\.,\s\w]+)\]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        private static Regex IncludeFormat = new Regex(@"\[!INCLUDE\s*\[[-/.\w]+\]\(([-/.\w]+)\)\s*\]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static Regex IncludeFormat = new Regex(@"\[!INCLUDE\s*\[[-/.\w~]+\]\(([-/.\w~]+)\)\s*\]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static Regex AlertFormat = new Regex(@"\[(!NOTE|!TIP|!IMPORTANT|!CAUTION|!WARNING)\s*\]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static Regex DivFormat = new Regex(@"\[(!div (([\w]*=""[\w]*"")\s*)*)\s*\]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static Regex VideoFormat = new Regex(@"\[!VIDEO ((https]?):\/)?\/?([^:\/\s]+)((\/\w+)*\/)([\w\-\.]+[^#?\s]+)(.*)?(#[\w\-]+)?\]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
@@ -166,6 +166,13 @@ namespace ApiDoctor.Validation.Tags
                     // Import include file content
                     if (IsIncludeLine(nextLine))
                     {
+                        // if contains tilde, then file is not in current docset and cannot be validated
+                        if (nextLine.Contains("~"))
+                        {
+                            LogMessage(new ValidationError(ValidationErrorCode.MarkdownParserError, nextLine, "Cannot validate INCLUDE links referencing content outside of doc set"));
+                            continue;
+                        }
+
                         var includeFile = GetIncludeFile(nextLine, sourceFile);
                         if (!includeFile.Exists)
                         {
