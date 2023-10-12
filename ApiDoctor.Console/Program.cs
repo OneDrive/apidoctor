@@ -2785,7 +2785,7 @@ namespace ApiDoctor.ConsoleApp
                             break;
                         case PermissionsInsertionState.InsertPermissionBlock:
                             var permissionFileContents = !isBootstrapped
-                                ? string.Join("\r\n", originalFileContents.Skip(insertionStartLine).Take(insertionEndLine + 1 - insertionStartLine))
+                                ? ConvertToThreeColumnPermissionsTable(originalFileContents.Skip(insertionStartLine + 2).Take(insertionEndLine - insertionStartLine - 1))
                                 : string.Empty;
 
                             if (!options.BootstrappingOnly)
@@ -2799,7 +2799,6 @@ namespace ApiDoctor.ConsoleApp
                                 var httpRequests = new List<string>(originalFileContents.Skip(httpRequestStartLine + 1).Take(httpRequestEndLine - httpRequestStartLine - 1));
                                 FancyConsole.WriteLine($"Fetching permissions table ({foundPermissionTablesOrBlocks}) for {docFile.DisplayName}");
                                 var newPermissionFileContents = GetPermissionsMarkdownTableForHttpRequestBlock(httpRequests, permissionsDocument); // get from Kibali
-
                                 if (!string.IsNullOrWhiteSpace(newPermissionFileContents))
                                 {
                                     permissionFileContents = $"---\r\ndescription: \"Automatically generated file. DO NOT MODIFY\"\r\nms.topic: include\r\nms.localizationpriority: medium\r\n---\r\n\r\n{newPermissionFileContents}";
@@ -2808,42 +2807,7 @@ namespace ApiDoctor.ConsoleApp
                                 else
                                 {
                                     FancyConsole.WriteLine($"No permissions data found for '{httpRequests.FirstOrDefault()}' in {docFile.DisplayName}");
-                                    parseStatus = PermissionsInsertionState.FindNextPermissionBlock;
-                                    break;
                                 }
-
-                                // update boilerplate text
-                                if (!isBootstrapped && boilerplateStartLine > -1 && !string.IsNullOrWhiteSpace(newPermissionFileContents))
-                                {
-                                    if (foundPermissionTablesOrBlocks == 1)
-                                    {
-                                        // We do not have a boilerplate text in this case, add new next line
-                                        if(boilerplateStartLine == permissionsHeaderIndex)
-                                        {
-                                            // insert a new line to hold boilerplate text
-                                            originalFileContents = FileSplicer(originalFileContents, boilerplateStartLine, Constants.PermissionConstants.DefaultBoilerPlateText).ToArray();
-                                            boilerplateStartLine++;
-                                            insertionStartLine++;
-                                            insertionEndLine++;
-                                        }
-                                        else {
-                                            if (boilerplateEndLine > boilerplateStartLine)
-                                            {
-                                                int extraLinesToRemove = boilerplateEndLine - boilerplateStartLine;
-                                                originalFileContents = originalFileContents.Splice(boilerplateStartLine + 1, extraLinesToRemove).ToArray();
-                                                insertionStartLine -= extraLinesToRemove;
-                                                insertionEndLine -= extraLinesToRemove;
-                                            }
-                                            originalFileContents[boilerplateStartLine] = Constants.PermissionConstants.DefaultBoilerPlateText;
-                                        }
-                                    }
-                                    else if (foundPermissionTablesOrBlocks == 2) {
-                                        originalFileContents[boilerplateStartLine] = Constants.PermissionConstants.MultipleTableBoilerPlateText;
-                                    }
-                                }
-
-                                if (!isBootstrapped && !string.IsNullOrWhiteSpace(newPermissionFileContents) && boilerplateStartLine == -1)
-                                    FancyConsole.WriteLine(ConsoleColor.Yellow, $"Permissions boilerplate text for {docFile.DisplayName} was not updated");
                             }
 
                             if (string.IsNullOrWhiteSpace(permissionFileContents))
@@ -2851,6 +2815,39 @@ namespace ApiDoctor.ConsoleApp
                                 parseStatus = PermissionsInsertionState.FindNextPermissionBlock;
                                 break;
                             }
+
+                            // update boilerplate text
+                            if (!isBootstrapped && boilerplateStartLine > -1)
+                            {
+                                if (foundPermissionTablesOrBlocks == 1)
+                                {
+                                    // We do not have a boilerplate text in this case, add new next line
+                                    if(boilerplateStartLine == permissionsHeaderIndex)
+                                    {
+                                        // insert a new line to hold boilerplate text
+                                        originalFileContents = FileSplicer(originalFileContents, boilerplateStartLine, Constants.PermissionConstants.DefaultBoilerPlateText).ToArray();
+                                        boilerplateStartLine++;
+                                        insertionStartLine++;
+                                        insertionEndLine++;
+                                    }
+                                    else {
+                                        if (boilerplateEndLine > boilerplateStartLine)
+                                        {
+                                            int extraLinesToRemove = boilerplateEndLine - boilerplateStartLine;
+                                            originalFileContents = originalFileContents.Splice(boilerplateStartLine + 1, extraLinesToRemove).ToArray();
+                                            insertionStartLine -= extraLinesToRemove;
+                                            insertionEndLine -= extraLinesToRemove;
+                                        }
+                                        originalFileContents[boilerplateStartLine] = Constants.PermissionConstants.DefaultBoilerPlateText;
+                                    }
+                                }
+                                else if (foundPermissionTablesOrBlocks == 2) {
+                                    originalFileContents[boilerplateStartLine] = Constants.PermissionConstants.MultipleTableBoilerPlateText;
+                                }
+                            }
+
+                            if (!isBootstrapped && boilerplateStartLine == -1)
+                                FancyConsole.WriteLine(ConsoleColor.Yellow, $"Permissions boilerplate text for {docFile.DisplayName} was not updated");
 
                             // create folder and file names
                             var permissionsFileRelativePath = Path.Combine("includes", "permissions");
@@ -2894,6 +2891,41 @@ namespace ApiDoctor.ConsoleApp
                     FancyConsole.WriteLine(ConsoleColor.Yellow, $"Could not locate permissions table for {docFile.DisplayName}");
             }
             return true;
+        }
+
+        private static HashSet<string> PermissionKeywordsToIgnore = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "None",
+            "None.",
+            "Not supported.",
+            "Not supported",
+            "Not available.",
+            "Not available",
+            "Not applicable",
+            "Not applicable."
+        };
+
+        private static string ConvertToThreeColumnPermissionsTable(IEnumerable<string> tableRows)
+        {
+            var tableString = new StringBuilder("|Permission type|Least privileged permissions|Higher privileged permissions|");
+            tableString.Append("\r\n|:---|:---|:---|");
+            foreach (string row in tableRows)
+            {
+                string[] cells = Regex.Split(row.Trim(), @"\s*\|\s*").Where(static x => !string.IsNullOrWhiteSpace(x)).ToArray();
+                var allPermissions = cells[1].Trim().Split(',', StringSplitOptions.TrimEntries)
+                    .Where(x => !string.IsNullOrWhiteSpace(x) && !PermissionKeywordsToIgnore.Contains(x))
+                    .ToList();
+
+                var permissionType = cells[0];
+                var leastPrivilegePermission = allPermissions.Any() ? allPermissions.First().Trim() : "Not supported.";
+                var higherPrivilegePermissions = !allPermissions.Any() 
+                    ? "Not supported." 
+                    : allPermissions.Count() == 1 
+                        ? "Not available."  
+                        : string.Join(", ", allPermissions.Skip(1).Select(x => x.Trim()).ToList());
+                tableString.Append($"\r\n|{permissionType}|{leastPrivilegePermission}|{higherPrivilegePermissions}|");
+            }
+            return tableString.ToString();
         }
 
         private static string GetPermissionsMarkdownTableForHttpRequestBlock(List<string> httpRequests, PermissionsDocument permissionsDoc)
