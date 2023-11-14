@@ -2364,11 +2364,15 @@ namespace ApiDoctor.ConsoleApp
                 if (duplicates.ContainsKey(fileName))
                 {
                     (var originalSourceFile, var originalIdentifier, var count) = duplicates[fileName];
+                    var docsUrlFileSegment = Path.GetFileNameWithoutExtension(method.SourceFile.FullPath);
+                    var docsUrlVersionSegment = snippetPrefix.Contains("beta") ? "beta" : "1.0";
+                    var documentationLink = $"https://learn.microsoft.com/en-us/graph/api/{docsUrlFileSegment}?view=graph-rest-{docsUrlVersionSegment}&tabs=http";
                     duplicates[fileName] = (originalSourceFile, originalIdentifier, count + 1);
                     var errorMessage = "OriginalFile: " + originalSourceFile + Environment.NewLine
                                     + "OriginalIdentifier: " + originalIdentifier + Environment.NewLine
                                     + "DuplicateFile: " + method.SourceFile.DisplayName + Environment.NewLine
-                                    + "DuplicateIdentifier: " + method.Identifier + Environment.NewLine;
+                                    + "DuplicateIdentifier: " + method.Identifier + Environment.NewLine
+                                    + "DocsLink: " + documentationLink + Environment.NewLine;
 
                     var duplicateFileFullPath = fileFullPath + "-duplicate" + count;
                     FancyConsole.WriteLine(FancyConsole.ConsoleErrorColor, $"Writing {duplicateFileFullPath}");
@@ -2918,10 +2922,10 @@ namespace ApiDoctor.ConsoleApp
 
                 var permissionType = cells[0];
                 var leastPrivilegePermission = allPermissions.Any() ? allPermissions.First().Trim() : "Not supported.";
-                var higherPrivilegePermissions = !allPermissions.Any() 
-                    ? "Not supported." 
-                    : allPermissions.Count() == 1 
-                        ? "Not available."  
+                var higherPrivilegePermissions = !allPermissions.Any()
+                    ? "Not supported."
+                    : allPermissions.Count() == 1
+                        ? "Not available."
                         : string.Join(", ", allPermissions.Skip(1).Select(x => x.Trim()).ToList());
                 tableString.Append($"\r\n|{permissionType}|{leastPrivilegePermission}|{higherPrivilegePermissions}|");
             }
