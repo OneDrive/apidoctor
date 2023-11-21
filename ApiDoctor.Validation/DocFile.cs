@@ -582,7 +582,7 @@ namespace ApiDoctor.Validation
                     {
                         methodDescriptionsData.Add(block.Content);
                         // make sure we omit the namespace description as well as the national cloud deployments paragraphs
-                        methodDescription = string.Join(" ", methodDescriptionsData.Where(static x => !x.StartsWith("Namespace:") && !x.Contains("[national cloud deployments](/graph/deployments)"))).ToStringClean();
+                        methodDescription = string.Join(" ", methodDescriptionsData.Where(static x => !x.StartsWith("Namespace:",StringComparison.OrdinalIgnoreCase) && !x.Contains("[national cloud deployments](/graph/deployments)",StringComparison.OrdinalIgnoreCase))).ToStringClean();
                         issues.Message($"Found description: {methodDescription}");
                     }
                 }
