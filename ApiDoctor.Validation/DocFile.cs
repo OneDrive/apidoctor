@@ -581,7 +581,8 @@ namespace ApiDoctor.Validation
                     else if (previousHeaderBlock.BlockType == BlockType.h1)
                     {
                         methodDescriptionsData.Add(block.Content);
-                        methodDescription = string.Join(" ", methodDescriptionsData.SkipWhile(x => x.StartsWith("Namespace:"))).ToStringClean();
+                        // make sure we omit the namespace description as well as the national cloud deployments paragraphs
+                        methodDescription = string.Join(" ", methodDescriptionsData.Where(static x => !x.StartsWith("Namespace:") && !x.Contains("[national cloud deployments](/graph/deployments)"))).ToStringClean();
                         issues.Message($"Found description: {methodDescription}");
                     }
                 }
