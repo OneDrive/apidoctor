@@ -2788,9 +2788,13 @@ namespace ApiDoctor.ConsoleApp
                             }
                             break;
                         case PermissionsInsertionState.InsertPermissionBlock:
-                            var permissionFileContents = !isBootstrapped
-                                ? ConvertToThreeColumnPermissionsTable(originalFileContents.Skip(insertionStartLine + 2).Take(insertionEndLine - insertionStartLine - 1))
-                                : string.Empty;
+                            var includeFileMetadata = "---\r\ndescription: \"Automatically generated file. DO NOT MODIFY\"\r\nms.topic: include\r\nms.localizationpriority: medium\r\n---\r\n\r\n";
+                            var permissionFileContents = string.Empty;
+                            if (!isBootstrapped)
+                            {
+                                var existingPermissionsTable = originalFileContents.Skip(insertionStartLine + 2).Take(insertionEndLine - insertionStartLine - 1);
+                                permissionFileContents =  $"{includeFileMetadata}{ConvertToThreeColumnPermissionsTable(existingPermissionsTable)}";
+                            }
 
                             if (!options.BootstrappingOnly)
                             {
@@ -2805,7 +2809,7 @@ namespace ApiDoctor.ConsoleApp
                                 var newPermissionFileContents = GetPermissionsMarkdownTableForHttpRequestBlock(httpRequests, permissionsDocument); // get from Kibali
                                 if (!string.IsNullOrWhiteSpace(newPermissionFileContents))
                                 {
-                                    permissionFileContents = $"---\r\ndescription: \"Automatically generated file. DO NOT MODIFY\"\r\nms.topic: include\r\nms.localizationpriority: medium\r\n---\r\n\r\n{newPermissionFileContents}";
+                                    permissionFileContents = $"{includeFileMetadata}{newPermissionFileContents}";
                                     FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"Permissions table ({foundPermissionTablesOrBlocks}) updated for {docFile.DisplayName}");
                                 }
                                 else
