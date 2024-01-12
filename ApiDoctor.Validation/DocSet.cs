@@ -417,6 +417,16 @@ namespace ApiDoctor.Validation
                     {
                         EnsureDefinedInDocs(param.Type.CustomTypeName, definedTypes, resource.SourceFile, resourceIssues.For(param.Name));
                     }
+
+                    // if parameter does not have a description, then it's from the resource JSON definition
+                    if (string.IsNullOrEmpty(param.Description) && !param.Name.Contains('@'))
+                    {
+                        if (string.IsNullOrWhiteSpace(resource.BaseType) || !resource.ResolvedBaseTypeReference.HasOrInheritsProperty(param.Name))
+                        {
+                            issues.Error(ValidationErrorCode.AdditionalPropertyDetected,
+                                $"Property '{param.Name}' found in resource definition for '{resource.Name}', but not described in markdown table.");
+                        }
+                    }
                 }
 
                 if (!string.IsNullOrEmpty(resource.KeyPropertyName) &&

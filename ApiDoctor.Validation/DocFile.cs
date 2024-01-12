@@ -1154,11 +1154,6 @@ namespace ApiDoctor.Validation
                         {
                             paramsToRemove.Add(param);
                         }
-                        else
-                        {
-                            issues.Warning(ValidationErrorCode.AdditionalPropertyDetected,
-                                $"Property '{param.Name}' found in resource definition for '{onlyResource.Name}', but not described in markdown table.");
-                        }
                     }
                 }
 
