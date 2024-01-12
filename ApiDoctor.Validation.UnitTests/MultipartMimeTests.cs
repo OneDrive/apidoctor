@@ -43,8 +43,8 @@ namespace ApiDoctor.Validation.UnitTests
             MultipartMime.MultipartMimeContent message2 = new MultipartMime.MultipartMimeContent(message.ContentType, body1);
             string body2 = message2.ToString();
 
-            Assert.AreEqual(body1.Length, body2.Length, "Body length changed between roundtrips.");
-            Assert.AreEqual(body1, body2, "Body text was different between roundtrips.");
+            Assert.That(body1.Length, Is.EqualTo(body2.Length), "Body length changed between roundtrips.");
+            Assert.That(body1, Is.EqualTo(body2), "Body text was different between roundtrips.");
         }
     }
 }

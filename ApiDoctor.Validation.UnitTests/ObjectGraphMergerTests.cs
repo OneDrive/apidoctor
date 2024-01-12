@@ -49,10 +49,10 @@ namespace ApiDoctor.Validation.UnitTests
             var merger = new ObjectGraphMerger<MergableClass>(itemsToMerge);
             var result = merger.Merge();
 
-            Assert.IsNotNull(result);
-            Assert.AreEqual("Ryan", result.Name);
-            Assert.AreEqual(true, result.IsAuthor);
-            Assert.IsNull(result.ExpectedToBeNull);
+            Assert.That(result, Is.Not.Null);
+            Assert.That("Ryan", Is.EqualTo(result.Name));
+            Assert.That(true, Is.EqualTo(result.IsAuthor));
+            Assert.That(result.ExpectedToBeNull, Is.Null);
         }
 
         [Test]
@@ -80,22 +80,22 @@ namespace ApiDoctor.Validation.UnitTests
             var merger = new ObjectGraphMerger<MergableCollectionPropertyClass>(graphsToMerge);
             var result = merger.Merge();
 
-            Assert.IsNotNull(result);
-            Assert.IsNotNull(result.Authors);
-            Assert.AreEqual(3, result.Authors.Length);
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.Authors, Is.Not.Null);
+            Assert.That(3, Is.EqualTo(result.Authors.Length));
 
             foreach(var author in result.Authors)
             {
                 switch(author.Name)
                 {
                     case "Ryan":
-                        Assert.IsTrue(author.IsAuthor);
+                        Assert.That(author.IsAuthor);
                         break;
                     case "Daron":
-                        Assert.IsFalse(author.IsAuthor);
+                        Assert.That(author.IsAuthor, Is.False);
                         break;
                     case "Brad":
-                        Assert.IsFalse(author.IsAuthor);
+                        Assert.That(author.IsAuthor, Is.False);
                         break;
                     default:
                         Assert.Fail("Unexpected author name was returned");

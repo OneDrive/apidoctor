@@ -58,8 +58,8 @@ namespace ApiDoctor.Validation.UnitTests
             string json = JsonConvert.SerializeObject(newObj, Settings);
 
             var issues = new IssueLogger();
-            Assert.IsTrue(schema.ValidateJson(new JsonExample(json), issues, null, null));
-            Assert.AreEqual(0, issues.Issues.Count());
+            Assert.That(schema.ValidateJson(new JsonExample(json), issues, null, null));
+            Assert.That(0, Is.EqualTo(issues.Issues.Count()));
         }
 
         [Test]
@@ -81,9 +81,9 @@ namespace ApiDoctor.Validation.UnitTests
             string json = JsonConvert.SerializeObject(newObj, Settings);
 
             var issues = new IssueLogger();
-            Assert.IsFalse(schema.ValidateJson(new JsonExample(json), issues, null, null));
-            Assert.IsTrue(issues.Issues.All(error => error.Code == ValidationErrorCode.ExpectedTypeDifferent));
-            Assert.AreEqual(2, issues.Issues.Count(), "Expected 2 errors in the response");
+            Assert.That(schema.ValidateJson(new JsonExample(json), issues, null, null), Is.False);
+            Assert.That(issues.Issues.All(error => error.Code == ValidationErrorCode.ExpectedTypeDifferent));
+            Assert.That(2, Is.EqualTo(issues.Issues.Count()), "Expected 2 errors in the response");
         }
 
         [Test]
@@ -104,9 +104,9 @@ namespace ApiDoctor.Validation.UnitTests
             string json = JsonConvert.SerializeObject(newObj, Settings);
 
             var issues = new IssueLogger();
-            Assert.IsFalse(schema.ValidateJson(new JsonExample(json), issues, null, null));
-            Assert.AreEqual(1, issues.Issues.Count());
-            Assert.AreEqual(ValidationErrorCode.AdditionalPropertyDetected, issues.Issues.First().Code);
+            Assert.That(schema.ValidateJson(new JsonExample(json), issues, null, null), Is.False);
+            Assert.That(1, Is.EqualTo(issues.Issues.Count()));
+            Assert.That(ValidationErrorCode.AdditionalPropertyDetected, Is.EqualTo(issues.Issues.First().Code));
         }
 
         [Test]
@@ -125,9 +125,9 @@ namespace ApiDoctor.Validation.UnitTests
             string json = JsonConvert.SerializeObject(newObj, Settings);
 
             var issues = new IssueLogger();
-            Assert.IsFalse(schema.ValidateJson(new JsonExample(json), issues, null, null));
-            Assert.AreEqual(1, issues.Issues.Count());
-            Assert.AreEqual(ValidationErrorCode.RequiredPropertiesMissing, issues.Issues.First().Code);
+            Assert.That(schema.ValidateJson(new JsonExample(json), issues, null, null), Is.False);
+            Assert.That(1, Is.EqualTo(issues.Issues.Count()));
+            Assert.That(ValidationErrorCode.RequiredPropertiesMissing, Is.EqualTo(issues.Issues.First().Code));
         }
 
         [Test]
@@ -147,9 +147,9 @@ namespace ApiDoctor.Validation.UnitTests
             string json = JsonConvert.SerializeObject(newObj, Settings);
 
             var issues = new IssueLogger();
-            Assert.IsFalse(schema.ValidateJson(new JsonExample(json), issues, null, null));
-            Assert.AreEqual(1, issues.Issues.Count());
-            Assert.AreEqual(ValidationErrorCode.ExpectedNonArrayValue, issues.Issues.First().Code);
+            Assert.That(schema.ValidateJson(new JsonExample(json), issues, null, null), Is.False);
+            Assert.That(1, Is.EqualTo(issues.Issues.Count()));
+            Assert.That(ValidationErrorCode.ExpectedNonArrayValue, Is.EqualTo(issues.Issues.First().Code));
         }
 
         [Test]
@@ -161,7 +161,7 @@ namespace ApiDoctor.Validation.UnitTests
             var issues = new IssueLogger();
             testFile.Scan(string.Empty, issues);
 
-            Assert.IsEmpty(issues.Issues.Where(x => x.IsError));
+            Assert.That(issues.Issues.Where(x => x.IsError), Is.Empty);
 
             docSet.ResourceCollection.RegisterJsonResource(testFile.Resources.First());
 
@@ -172,9 +172,9 @@ namespace ApiDoctor.Validation.UnitTests
 
             testMethod.ValidateResponse(actualResponse, expectedResponse, null, issues);
 
-            Assert.AreEqual(1, issues.Errors.Count());
+            Assert.That(1, Is.EqualTo(issues.Errors.Count()));
             var error = issues.Errors.First();
-            Assert.AreEqual(ValidationErrorCode.RequiredPropertiesMissing, error.Code);
+            Assert.That(ValidationErrorCode.RequiredPropertiesMissing, Is.EqualTo(error.Code));
         }
 
         [Test]
@@ -186,7 +186,7 @@ namespace ApiDoctor.Validation.UnitTests
             var issues = new IssueLogger();
             testFile.Scan(string.Empty, issues);
 
-            Assert.IsEmpty(issues.Issues.Where(x => x.IsError));
+            Assert.That(issues.Issues.Where(x => x.IsError), Is.Empty);
 
             docSet.ResourceCollection.RegisterJsonResource(testFile.Resources.First());
 
@@ -197,7 +197,7 @@ namespace ApiDoctor.Validation.UnitTests
 
             testMethod.ValidateResponse(actualResponse, expectedResponse, null, issues);
 
-            Assert.AreEqual(0, issues.Errors.Count());
+            Assert.That(0, Is.EqualTo(issues.Errors.Count()));
         }
 
         [Test]
@@ -209,7 +209,7 @@ namespace ApiDoctor.Validation.UnitTests
             var issues = new IssueLogger();
             testFile.Scan(string.Empty, issues);
 
-            Assert.IsEmpty(issues.Issues.Where(x => x.IsError));
+            Assert.That(issues.Issues.Where(x => x.IsError), Is.Empty);
 
             docSet.ResourceCollection.RegisterJsonResource(testFile.Resources.First());
 
@@ -220,8 +220,8 @@ namespace ApiDoctor.Validation.UnitTests
 
             testMethod.ValidateResponse(actualResponse, expectedResponse, null, issues);
 
-            Assert.IsTrue(issues.Issues.Any(x => x.Code == ValidationErrorCode.RequiredPropertiesMissing), "Error with Code = RequiredPropertiesMissing");
-            Assert.IsTrue(
+            Assert.That(issues.Issues.Any(x => x.Code == ValidationErrorCode.RequiredPropertiesMissing), "Error with Code = RequiredPropertiesMissing");
+            Assert.That(
                 issues.Issues.Any(x => x.Code == ValidationErrorCode.SkippedSimilarErrors),
                 "Error with Code = SkippedSimilarErrors");
         }

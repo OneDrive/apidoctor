@@ -59,31 +59,31 @@ namespace ApiDoctor.Validation.UnitTests
         {
             JsonSchema schema = SimpleSchemaExample();
 
-            Assert.AreEqual(5, schema.Properties.Length);
+            Assert.That(5, Is.EqualTo(schema.Properties.Length));
 
             foreach (var property in schema.Properties)
             {
                 switch (property.Name)
                 {
                     case "stringProp":
-                        Assert.AreEqual(property.Type, ParameterDataType.String);
-                        Assert.AreEqual("string", property.OriginalValue);
+                        Assert.That(property.Type, Is.EqualTo(ParameterDataType.String));
+                        Assert.That("string", Is.EqualTo(property.OriginalValue));
                         break;
                     case "urlProp":
-                        Assert.AreEqual(property.Type, ParameterDataType.String);
-                        Assert.AreEqual("url", property.OriginalValue);
+                        Assert.That(property.Type, Is.EqualTo(ParameterDataType.String));
+                        Assert.That("url", Is.EqualTo(property.OriginalValue));
                         break;
                     case "numberProp":
-                        Assert.AreEqual(property.Type, ParameterDataType.Int64);
-                        Assert.AreEqual(123, Int32.Parse(property.OriginalValue));
+                        Assert.That(property.Type, Is.EqualTo(ParameterDataType.Int64));
+                        Assert.That(123, Is.EqualTo(int.Parse(property.OriginalValue)));
                         break;
                     case "floatProp":
-                        Assert.AreEqual(property.Type, ParameterDataType.Double);
-                        Assert.AreEqual(123.121, double.Parse(property.OriginalValue));
+                        Assert.That(property.Type, Is.EqualTo(ParameterDataType.Double));
+                        Assert.That(123.121, Is.EqualTo(double.Parse(property.OriginalValue)));
                         break;
                     case "dateProp":
-                        Assert.AreEqual(property.Type, ParameterDataType.DateTimeOffset);
-                        Assert.AreEqual("datetime", property.OriginalValue);
+                        Assert.That(property.Type, Is.EqualTo(ParameterDataType.DateTimeOffset));
+                        Assert.That("datetime", Is.EqualTo(property.OriginalValue));
                         break;
                     default:
                         Assert.Fail("Unexpected property name: " + property.Name);
@@ -97,21 +97,21 @@ namespace ApiDoctor.Validation.UnitTests
         {
             var schema = FacetSchemaExample();
 
-            Assert.AreEqual(2, schema.Properties.Length);
+            Assert.That(2, Is.EqualTo(schema.Properties.Length));
             foreach (var prop in schema.Properties)
             {
-                Assert.IsTrue(prop.Type.IsObject);
-                Assert.IsNull(prop.Type.CustomMembers);
+                Assert.That(prop.Type.IsObject);
+                Assert.That(prop.Type.CustomMembers, Is.Null);
                 switch (prop.Name)
                 {
                     case "complexTypeA":
-                        Assert.IsTrue(prop.Type.IsObject);
-                        Assert.AreEqual("resource.a", prop.Type.CustomTypeName);
+                        Assert.That(prop.Type.IsObject);
+                        Assert.That("resource.a", Is.EqualTo(prop.Type.CustomTypeName));
                         
                         break;
                     case "complexTypeB":
-                        Assert.IsTrue(prop.Type.IsObject);
-                        Assert.AreEqual("resource.b", prop.Type.CustomTypeName);
+                        Assert.That(prop.Type.IsObject);
+                        Assert.That("resource.b", Is.EqualTo(prop.Type.CustomTypeName));
                         break;
                 }
             }
@@ -123,7 +123,7 @@ namespace ApiDoctor.Validation.UnitTests
         {
             JsonSchema schema = ArraySchemaExample();
 
-            Assert.AreEqual(3, schema.Properties.Length);
+            Assert.That(3, Is.EqualTo(schema.Properties.Length));
             foreach (var prop in schema.Properties)
             {
                 switch (prop.Name)
@@ -167,8 +167,8 @@ namespace ApiDoctor.Validation.UnitTests
             JsonSchema schema = new JsonSchema(json, null);
             var property = schema.Properties.Single();
 
-            Assert.IsTrue(property.Type.IsCollection);
-            Assert.IsTrue(property.Type.CollectionResourceType == SimpleDataType.String);
+            Assert.That(property.Type.IsCollection);
+            Assert.That(property.Type.CollectionResourceType == SimpleDataType.String);
         }
 
         [Test]
@@ -178,18 +178,18 @@ namespace ApiDoctor.Validation.UnitTests
             JsonSchema schema = new JsonSchema(json, null);
             foreach (var prop in schema.Properties)
             {
-                Assert.IsTrue(prop.Type.Type == SimpleDataType.DateTimeOffset);
+                Assert.That(prop.Type.Type == SimpleDataType.DateTimeOffset);
             }
         }
 
         public void CheckJsonProperty(ParameterDefinition prop, ParameterDataType expectedType = null, bool? customMembersIsNull = null)
         {
             if (expectedType != null)
-                Assert.AreEqual(expectedType, prop.Type);
+                Assert.That(expectedType, Is.EqualTo(prop.Type));
             if (customMembersIsNull != null && customMembersIsNull.Value)
-                Assert.IsNull(prop.Type.CustomMembers);
+                Assert.That(prop.Type.CustomMembers, Is.Null);
             else if (customMembersIsNull != null && !customMembersIsNull.Value)
-                Assert.IsNotNull(prop.Type.CustomMembers);
+                Assert.That(prop.Type.CustomMembers, Is.Not.Null);
                 
         }
     }

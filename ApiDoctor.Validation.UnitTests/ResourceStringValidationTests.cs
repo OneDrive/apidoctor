@@ -43,7 +43,7 @@ namespace ApiDoctor.Validation.UnitTests
             var issues = new IssueLogger();
             testFile.Scan(string.Empty, issues);
 
-            Assert.IsFalse(issues.Issues.WereWarningsOrErrors(), "Detected warnings or errors when reading the example markdown file.");
+            Assert.That(issues.Issues.WereWarningsOrErrors(), Is.False, "Detected warnings or errors when reading the example markdown file.");
             
             return testFile;
         }
@@ -64,8 +64,8 @@ namespace ApiDoctor.Validation.UnitTests
 
             var issues = new IssueLogger();
             bool result = schema.ValidateExpectedResponse(method, issues);
-            Assert.IsTrue(result);
-            Assert.IsEmpty(issues.Issues.Where(i => i.IsWarningOrError), "Validation errors were detected");
+            Assert.That(result);
+            Assert.That(issues.Issues.Where(i => i.IsWarningOrError), Is.Empty, "Validation errors were detected");
         }
 
         /// <summary>
@@ -84,10 +84,10 @@ namespace ApiDoctor.Validation.UnitTests
             var issues = new IssueLogger();
             bool result = schema.ValidateExpectedResponse(method, issues);
 
-            Assert.IsFalse(result);
-            Assert.IsTrue(issues.Issues.WereErrors());
+            Assert.That(result, Is.False);
+            Assert.That(issues.Issues.WereErrors());
 
-            Assert.IsNotNull(issues.Issues.SingleOrDefault(x => x.Code == ValidationErrorCode.ExpectedTypeDifferent));
+            Assert.That(issues.Issues.SingleOrDefault(x => x.Code == ValidationErrorCode.ExpectedTypeDifferent), Is.Not.Null);
         }
 
         /// <summary>
@@ -106,10 +106,10 @@ namespace ApiDoctor.Validation.UnitTests
             var issues = new IssueLogger();
             bool result = schema.ValidateExpectedResponse(method, issues);
 
-            Assert.IsFalse(result);
-            Assert.IsTrue(issues.Issues.WereErrors());
+            Assert.That(result, Is.False);
+            Assert.That(issues.Issues.WereErrors());
 
-            Assert.IsNotNull(issues.Issues.SingleOrDefault(x => x.Code == ValidationErrorCode.InvalidEnumeratedValueString));
+            Assert.That(issues.Issues.SingleOrDefault(x => x.Code == ValidationErrorCode.InvalidEnumeratedValueString), Is.Not.Null);
         }
 
         /// <summary>
@@ -128,10 +128,10 @@ namespace ApiDoctor.Validation.UnitTests
             var issues = new IssueLogger();
             bool result = schema.ValidateExpectedResponse(method, issues);
 
-            Assert.IsFalse(result);
-            Assert.IsTrue(issues.Issues.WereErrors());
+            Assert.That(result, Is.False);
+            Assert.That(issues.Issues.WereErrors());
 
-            Assert.IsNotNull(issues.Issues.SingleOrDefault(x => x.Code == ValidationErrorCode.InvalidUrlString));
+            Assert.That(issues.Issues.SingleOrDefault(x => x.Code == ValidationErrorCode.InvalidUrlString), Is.Not.Null);
         }
 
     }
