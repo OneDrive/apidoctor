@@ -46,7 +46,7 @@ namespace ApiDoctor.DocumentationGeneration.UnitTests
             this.AddNavigationProperty(entity, propertyName, propertyType, inlineDescription: description);
             string markDown = this.documentationGenerator.GetMarkDownForType(this.entityFramework, entity);
 
-            Assert.IsTrue(markDown.Contains(expected), "Generated markdown should contain '{0}' Actual:\n{1}", expected, markDown);
+            Assert.That(markDown.Contains(expected), Is.True, "Generated markdown should contain '{0}' Actual:\n{1}", expected, markDown);
         }
 
         [Test]
@@ -62,7 +62,7 @@ namespace ApiDoctor.DocumentationGeneration.UnitTests
             this.AddNavigationProperty(entity, propertyName, propertyType, inlineDescription: description);
             string markDown = this.documentationGenerator.GetMarkDownForType(this.entityFramework, entity);
 
-            Assert.IsTrue(markDown.Contains(expected), "Generated markdown should contain '{0}' Actual:\n{1}", expected, markDown);
+            Assert.That(markDown.Contains(expected), Is.True, "Generated markdown should contain '{0}' Actual:\n{1}", expected, markDown);
         }
     }
 }

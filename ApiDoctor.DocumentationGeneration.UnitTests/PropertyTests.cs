@@ -47,7 +47,7 @@ namespace ApiDoctor.DocumentationGeneration.UnitTests
 
             string markDown = this.documentationGenerator.GetMarkDownForType(this.entityFramework, ct);
 
-            Assert.IsTrue(markDown.Contains(expected), "Generated markdown should contain '{0}' Actual:\n{1}", expected, markDown);
+            Assert.That(markDown.Contains(expected), Is.True, "Generated markdown should contain '{0}' Actual:\n{1}", expected, markDown);
         }
 
         [Test]
@@ -64,7 +64,7 @@ namespace ApiDoctor.DocumentationGeneration.UnitTests
 
             string markDown = this.documentationGenerator.GetMarkDownForType(this.entityFramework, ct);
 
-            Assert.IsTrue(markDown.Contains(expected), "Generated markdown should contain '{0}' Actual:\n{1}", expected, markDown);
+            Assert.That(markDown.Contains(expected), Is.True, "Generated markdown should contain '{0}' Actual:\n{1}", expected, markDown);
         }
 
         [Test]
@@ -78,7 +78,7 @@ namespace ApiDoctor.DocumentationGeneration.UnitTests
             this.AddProperty(ct, propertyName, type: $"Edm.{propertyType}", inlineDescription: description);
             string markDown = this.documentationGenerator.GetMarkDownForType(this.entityFramework, ct);
 
-            Assert.IsTrue(markDown.Contains(expected), "Generated markdown should contain '{0}' Actual:\n{1}", expected, markDown);
+            Assert.That(markDown.Contains(expected), Is.True, "Generated markdown should contain '{0}' Actual:\n{1}", expected, markDown);
         }
 
         [Test]
@@ -92,7 +92,7 @@ namespace ApiDoctor.DocumentationGeneration.UnitTests
             this.AddProperty(ct, propertyName, type: $"Collection(Edm.{propertyType})", inlineDescription: description);
             string markDown = this.documentationGenerator.GetMarkDownForType(this.entityFramework, ct);
 
-            Assert.IsTrue(markDown.Contains(expected), "Generated markdown should contain '{0}' Actual:\n{1}", expected, markDown);
+            Assert.That(markDown.Contains(expected), Is.True, $"Generated markdown should contain '{expected}' Actual:\n{markDown}");
         }
     }
 }

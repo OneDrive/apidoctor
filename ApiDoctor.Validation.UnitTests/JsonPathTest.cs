@@ -73,7 +73,7 @@ namespace ApiDoctor.Validation.UnitTests
             var value = JsonPath.ValueFromJsonPath(json, "$");
 
             var resultJson = JsonConvert.SerializeObject(value);
-            Assert.AreEqual(json, resultJson);
+            Assert.That(json, Is.EqualTo(resultJson));
         }
 
         [Test]
@@ -86,7 +86,7 @@ namespace ApiDoctor.Validation.UnitTests
         public void JsonPathTopLevelValue()
         {
             var value = JsonPath.ValueFromJsonPath(this.GetJson(), "$.id");
-            Assert.AreEqual("1234", value);
+            Assert.That("1234", Is.EqualTo(value));
         }
 
         [Test]
@@ -100,14 +100,14 @@ namespace ApiDoctor.Validation.UnitTests
             var foundObjectJson = JsonConvert.SerializeObject(value);
             var dynamicObjectJson = JsonConvert.SerializeObject(smallThumbnailObject);
 
-            Assert.AreEqual(dynamicObjectJson, foundObjectJson);
+            Assert.That(dynamicObjectJson, Is.EqualTo(foundObjectJson));
         }
 
         [Test]
         public void JsonPathThirdLevelValue()
         {
             var value = JsonPath.ValueFromJsonPath(this.GetJson(), "$.thumbnails.small.url");
-            Assert.AreEqual("http://small", value);
+            Assert.That("http://small", Is.EqualTo(value));
         }
 
         [Test]
@@ -121,21 +121,21 @@ namespace ApiDoctor.Validation.UnitTests
             var foundObjectJson = JsonConvert.SerializeObject(value);
             var dynamicObjectJson = JsonConvert.SerializeObject(firstChild);
 
-            Assert.AreEqual(dynamicObjectJson, foundObjectJson);
+            Assert.That(dynamicObjectJson, Is.EqualTo(foundObjectJson));
         }
 
         [Test]
         public void JsonPathArrayWithSecondLevelTest()
         {
             var value = JsonPath.ValueFromJsonPath(this.GetJson(), "$.children[0].name");
-            Assert.AreEqual("first_file.txt", value);
+            Assert.That("first_file.txt", Is.EqualTo(value));
         }
 
         [Test]
         public void JsonPathWithPeriodInPropertyNameTest()
         {
             var value = JsonPath.ValueFromJsonPath(this.GetJson(), "$.['@content.downloadUrl']");
-            Assert.AreEqual("https://foobar.com/something", value);
+            Assert.That("https://foobar.com/something", Is.EqualTo(value));
         }
 
         [Test]
@@ -144,7 +144,7 @@ namespace ApiDoctor.Validation.UnitTests
             string modifiedJson = JsonPath.SetValueForJsonPath(this.GetJson(), "$.id", "5678");
 
             dynamic result = JsonConvert.DeserializeObject(modifiedJson);
-            Assert.AreEqual(JsonPath.ConvertValueForOutput(result.id), "5678");
+            Assert.That(JsonPath.ConvertValueForOutput(result.id), Is.EqualTo("5678"));
         }
 
         [Test]
@@ -153,7 +153,7 @@ namespace ApiDoctor.Validation.UnitTests
             string modifiedJson = JsonPath.SetValueForJsonPath(this.GetJson(), "$.another.value", "something-else-completely");
 
             dynamic result = JsonConvert.DeserializeObject(modifiedJson);
-            Assert.AreEqual(JsonPath.ConvertValueForOutput(result.another.value), "something-else-completely");
+            Assert.That(JsonPath.ConvertValueForOutput(result.another.value), Is.EqualTo("something-else-completely"));
         }
 
         [Test]
@@ -162,7 +162,7 @@ namespace ApiDoctor.Validation.UnitTests
             string modifiedJson = JsonPath.SetValueForJsonPath(this.GetJson(), "$.children[0].name", "something-else-completely");
 
             dynamic result = JsonConvert.DeserializeObject(modifiedJson);
-            Assert.AreEqual(JsonPath.ConvertValueForOutput(result.children[0].name), "something-else-completely");
+            Assert.That(JsonPath.ConvertValueForOutput(result.children[0].name), Is.EqualTo("something-else-completely"));
         }
 
         [Test]
@@ -171,7 +171,7 @@ namespace ApiDoctor.Validation.UnitTests
             string modifiedJson = JsonPath.SetValueForJsonPath(this.GetJson(), "$.zippy", "do-dah");
 
             dynamic result = JsonConvert.DeserializeObject(modifiedJson);
-            Assert.AreEqual(JsonPath.ConvertValueForOutput(result.zippy), "do-dah");
+            Assert.That(JsonPath.ConvertValueForOutput(result.zippy), Is.EqualTo("do-dah"));
         }
 
         [Test]
@@ -180,7 +180,7 @@ namespace ApiDoctor.Validation.UnitTests
             string modifiedJson = JsonPath.SetValueForJsonPath(this.GetJson(), "$.zippy.foo", "do-dah");
 
             dynamic result = JsonConvert.DeserializeObject(modifiedJson);
-            Assert.AreEqual(JsonPath.ConvertValueForOutput(result.zippy.foo), "do-dah");
+            Assert.That(JsonPath.ConvertValueForOutput(result.zippy.foo), Is.EqualTo("do-dah"));
         }
 
         [Test]
@@ -190,7 +190,7 @@ namespace ApiDoctor.Validation.UnitTests
 
             string modifiedJson = JsonPath.SetValueForJsonPath(json, "$.['@name.conflictBehavior']", "replace");
             dynamic result = JsonConvert.DeserializeObject(modifiedJson);
-            Assert.AreEqual(JsonPath.ConvertValueForOutput(result["@name.conflictBehavior"]), "replace");
+            Assert.That(JsonPath.ConvertValueForOutput(result["@name.conflictBehavior"]), Is.EqualTo("replace"));
 
         }
     }

@@ -59,7 +59,7 @@ namespace ApiDoctor.DocumentationGeneration.UnitTests
 
             DocFile testFile = this.GetDocFileForEntityType(entity);
 
-            Assert.AreEqual(1, testFile.Resources.Length, "Expected to find one resource");
+            Assert.That(1, Is.EqualTo(testFile.Resources.Length), "Expected to find one resource");
             var resource = testFile.Resources[0];
             this.VerifyEntityType(entity, resource);
         }
@@ -76,7 +76,7 @@ namespace ApiDoctor.DocumentationGeneration.UnitTests
 
             DocFile testFile = this.GetDocFileForComplexType(testType);
 
-            Assert.AreEqual(1, testFile.Resources.Length, "Expected to find one resource");
+            Assert.That(1, Is.EqualTo(testFile.Resources.Length), "Expected to find one resource");
             var resource = testFile.Resources[0];
             this.VerifyComplexType(testType, resource);
         }
@@ -90,7 +90,7 @@ namespace ApiDoctor.DocumentationGeneration.UnitTests
             DocFile testFile = new DocFileForTesting(markDown, @"\resources.md", @"\resources.md", docSet);
             var issues = new IssueLogger();
             testFile.Scan(string.Empty, issues.For("testFile"));
-            Assert.IsFalse(issues.Issues.WereWarningsOrErrors(), "Expected no validation warnings/errors: {0}", issues.Issues.ErrorsToString());
+            Assert.That(issues.Issues.WereWarningsOrErrors(), Is.False, "Expected no validation warnings/errors: {0}", issues.Issues.ErrorsToString());
             return testFile;
         }
 
@@ -103,44 +103,44 @@ namespace ApiDoctor.DocumentationGeneration.UnitTests
             DocFile testFile = new DocFileForTesting(markDown, @"\resources.md", @"\resources.md", docSet);
             var issues = new IssueLogger();
             testFile.Scan(string.Empty, issues.For("testFile"));
-            Assert.IsFalse(issues.Issues.WereWarningsOrErrors(), "Expected no validation warnings/errors: {0}", issues.Issues.Where(e => e.IsWarningOrError).ErrorsToString());
+            Assert.That(issues.Issues.WereWarningsOrErrors(), Is.False, "Expected no validation warnings/errors: {0}", issues.Issues.Where(e => e.IsWarningOrError).ErrorsToString());
             return testFile;
         }
 
         private void VerifyComplexType(ComplexType testType, ResourceDefinition resource)
         {
-            Assert.AreEqual($"{this.schema.Namespace}.{testType.Name}", resource.Name, "Resource name does not match");
+            Assert.That($"{this.schema.Namespace}.{testType.Name}", Is.EqualTo(resource.Name), "Resource name does not match");
 
             // Ignore the odata.type property
             var resourceProperties = resource.Parameters.Where(p => p.Name != "@odata.type" && !p.IsNavigatable).ToList();
 
-            Assert.AreEqual(testType.Properties.Count, resourceProperties.Count(), "Property count does not match");
+            Assert.That(testType.Properties.Count, Is.EqualTo(resourceProperties.Count()), "Property count does not match");
 
             for (int i = 0; i < resourceProperties.Count; i++)
             {
-                Assert.AreEqual(testType.Properties[i].Name, resourceProperties[i].Name, "Name of property does not match");
-                Assert.AreEqual(testType.Properties[i].Type, resourceProperties[i].Type.ODataResourceName(), "Type of property {0} does not match", testType.Properties[i].Name);
-                Assert.AreEqual(testType.Properties[i].ToDocumentationProperty(this.entityFramework, testType).Description, resourceProperties[i].Description, "Description for property {0} does not match", testType.Properties[i].Name);
+                Assert.That(testType.Properties[i].Name, Is.EqualTo(resourceProperties[i].Name), "Name of property does not match");
+                Assert.That(testType.Properties[i].Type, Is.EqualTo(resourceProperties[i].Type.ODataResourceName()), "Type of property {0} does not match", testType.Properties[i].Name);
+                Assert.That(testType.Properties[i].ToDocumentationProperty(this.entityFramework, testType).Description, Is.EqualTo(resourceProperties[i].Description), "Description for property {0} does not match", testType.Properties[i].Name);
             }
         }
 
         private void VerifyEntityType(EntityType testType, ResourceDefinition resource)
         {
             this.VerifyComplexType(testType, resource);
-            Assert.AreEqual($"{this.schema.Namespace}.{testType.Name}", resource.Name, "Resource name does not match");
+            Assert.That($"{this.schema.Namespace}.{testType.Name}", Is.EqualTo(resource.Name), "Resource name does not match");
 
             // Ignore the odata.type property
             var navigationProperties = resource.Parameters.Where(p => p.IsNavigatable).ToList();
 
-            Assert.AreEqual(testType.NavigationProperties.Count, navigationProperties.Count(), "Navigation Property count does not match");
+            Assert.That(testType.NavigationProperties.Count, Is.EqualTo(navigationProperties.Count()), "Navigation Property count does not match");
 
             for (int i = 0; i < navigationProperties.Count; i++)
             {
-                Assert.AreEqual(testType.NavigationProperties[i].Name, navigationProperties[i].Name, "Name of navigation property does not match");
+                Assert.That(testType.NavigationProperties[i].Name, Is.EqualTo(navigationProperties[i].Name), "Name of navigation property does not match");
 
                 // TODO: Fix parsing of Navigation Property types
                 // Assert.AreEqual(testType.NavigationProperties[i].Type, navigationProperties[i].Type.ODataResourceName(), "Type of navigation property {0} does not match", testType.NavigationProperties[i].Name);
-                Assert.AreEqual(testType.NavigationProperties[i].ToDocumentationProperty(this.entityFramework, testType).Description, navigationProperties[i].Description, "Description for property {0} does not match", testType.NavigationProperties[i].Name);
+                Assert.That(testType.NavigationProperties[i].ToDocumentationProperty(this.entityFramework, testType).Description, Is.EqualTo(navigationProperties[i].Description), "Description for property {0} does not match", testType.NavigationProperties[i].Name);
             }
         }
     }

@@ -49,11 +49,11 @@ namespace ApiDoctor.Validation.UnitTests
             TestableDocFile file = new TestableDocFile(markdown);
             var issues = new IssueLogger();
 
-            Assert.IsTrue(file.Scan(string.Empty, issues));
-            Assert.IsEmpty(issues.Issues.WarningsOrErrorsOnly());
+            Assert.That(file.Scan(string.Empty, issues));
+            Assert.That(issues.Issues.WarningsOrErrorsOnly(), Is.Empty);
 
-            Assert.IsTrue(file.ValidateNoBrokenLinks(false, issues, true));
-            Assert.IsEmpty(issues.Issues.WarningsOrErrorsOnly());
+            Assert.That(file.ValidateNoBrokenLinks(false, issues, true));
+            Assert.That(issues.Issues.WarningsOrErrorsOnly(), Is.Empty);
         }
 
 
@@ -75,14 +75,14 @@ This link goes [up one level](../anotherfile.md)
 
             var issues = new IssueLogger();
 
-            Assert.IsTrue(file.Scan(string.Empty, issues));
+            Assert.That(file.Scan(string.Empty, issues));
             var realErrors = from e in issues.Issues where e.IsWarning || e.IsError select e;
-            Assert.IsEmpty(realErrors);
+            Assert.That(realErrors, Is.Empty);
 
-            Assert.IsFalse(file.ValidateNoBrokenLinks(false, issues, false));
+            Assert.That(file.ValidateNoBrokenLinks(false, issues, false), Is.False);
             realErrors = from e in issues.Issues where e.IsWarning || e.IsError select e;
-            Assert.AreEqual(1, realErrors.Count());
-            Assert.IsTrue(realErrors.First().Code == ValidationErrorCode.MissingLinkSourceId);
+            Assert.That(1, Is.EqualTo(realErrors.Count()));
+            Assert.That(realErrors.First().Code == ValidationErrorCode.MissingLinkSourceId);
         }
 
 
@@ -115,12 +115,12 @@ This link goes [up one level](../anotherfile.md)
 
             var issues = new IssueLogger();
 
-            Assert.IsTrue(file.Scan(string.Empty, issues));
-            Assert.IsEmpty(issues.Issues.WarningsOrErrorsOnly());
+            Assert.That(file.Scan(string.Empty, issues));
+            Assert.That(issues.Issues.WarningsOrErrorsOnly(), Is.Empty);
 
-            Assert.IsFalse(file.ValidateNoBrokenLinks(false, issues, false));
-            Assert.AreEqual(1, issues.Issues.WarningsOrErrorsOnly().Count());
-            Assert.IsTrue(issues.Issues.Any(i => i.Code == ValidationErrorCode.LinkDestinationNotFound));
+            Assert.That(file.ValidateNoBrokenLinks(false, issues, false), Is.False);
+            Assert.That(1, Is.EqualTo(issues.Issues.WarningsOrErrorsOnly().Count()));
+            Assert.That(issues.Issues.Any(i => i.Code == ValidationErrorCode.LinkDestinationNotFound));
         }
 
         [Test]
@@ -142,13 +142,13 @@ This link goes [up one level](../anotherfile.md)
 
             var issues = new IssueLogger();
 
-            Assert.IsTrue(file.Scan(string.Empty, issues));
-            Assert.IsEmpty(issues.Issues.WarningsOrErrorsOnly());
+            Assert.That(file.Scan(string.Empty, issues));
+            Assert.That(issues.Issues.WarningsOrErrorsOnly(), Is.Empty);
 
-            Assert.IsFalse(file.ValidateNoBrokenLinks(false, issues, false));
-            Assert.AreEqual(2, issues.Issues.WarningsOrErrorsOnly().Count());
-            Assert.IsTrue(issues.Issues.Any(i => i.Code == ValidationErrorCode.MissingLinkSourceId));
-            Assert.IsTrue(issues.Issues.Any(i => i.Code == ValidationErrorCode.LinkDestinationNotFound));
+            Assert.That(file.ValidateNoBrokenLinks(false, issues, false), Is.False);
+            Assert.That(2, Is.EqualTo(issues.Issues.WarningsOrErrorsOnly().Count()));
+            Assert.That(issues.Issues.Any(i => i.Code == ValidationErrorCode.MissingLinkSourceId));
+            Assert.That(issues.Issues.Any(i => i.Code == ValidationErrorCode.LinkDestinationNotFound));
         }
     }
 

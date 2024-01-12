@@ -17,7 +17,7 @@ namespace ApiDoctor.Validation.UnitTests
         public void ParseOdataUrl(string odataUrl, string actualUrl)
         {
             var request = HttpParser.ParseHttpRequest(odataUrl);
-            Assert.AreEqual(actualUrl, request.Url, "Parsed Url should be equal to request header url");
+            Assert.That(actualUrl, Is.EqualTo(request.Url), "Parsed Url should be equal to request header url");
         }
 
         [Test]
@@ -27,7 +27,7 @@ namespace ApiDoctor.Validation.UnitTests
         public void HttpVersionShouldBeRespected(string odataUrl, string httpVersion)
         {
             var request = HttpParser.ParseHttpRequest(odataUrl);
-            Assert.AreEqual(httpVersion, request.HttpVersion, "When HttpVersion is specified, should be respected");
+            Assert.That(httpVersion, Is.EqualTo(request.HttpVersion), "When HttpVersion is specified, should be respected");
         }
 
         [Test]
@@ -36,7 +36,7 @@ namespace ApiDoctor.Validation.UnitTests
         public void HttpVersionShouldDefaultToHttp1(string odataUrl)
         {
             var request = HttpParser.ParseHttpRequest(odataUrl);
-            Assert.AreEqual("HTTP/1.1", request.HttpVersion, "When HttpVersion is not specified, default to HTTP/1.1");
+            Assert.That("HTTP/1.1", Is.EqualTo(request.HttpVersion), "When HttpVersion is not specified, default to HTTP/1.1");
         }
 
         [Test]
@@ -44,7 +44,7 @@ namespace ApiDoctor.Validation.UnitTests
         {
             var exampleRequest = FullHttpRequest;
             var parsedRequest = HttpParser.ParseHttpRequest(exampleRequest);
-            Assert.NotNull(parsedRequest);
+            Assert.That(parsedRequest, Is.Not.Null);
         }
 
         [Test]
@@ -54,7 +54,7 @@ namespace ApiDoctor.Validation.UnitTests
         public void ParseOdataMethod(string odataUrl, string method)
         {
             var request = HttpParser.ParseHttpRequest(odataUrl);
-            Assert.AreEqual(method, request.Method, "Parsed Method should be equal to request header method");
+            Assert.That(method, Is.EqualTo(request.Method), "Parsed Method should be equal to request header method");
         }
     }
 }

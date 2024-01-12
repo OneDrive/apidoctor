@@ -51,8 +51,8 @@ namespace ApiDoctor.Validation.UnitTests
             var testExample = new JsonExample(json);
             var issues = new IssueLogger();
 
-            Assert.IsTrue(nullableSchema.ValidateJson(testExample, issues, new Dictionary<string,JsonSchema>(), new ValidationOptions()));
-            Assert.AreEqual(0, issues.Issues.Count());
+            Assert.That(nullableSchema.ValidateJson(testExample, issues, new Dictionary<string,JsonSchema>(), new ValidationOptions()));
+            Assert.That(0, Is.EqualTo(issues.Issues.Count()));
         }
 
         [Test]
@@ -71,11 +71,11 @@ namespace ApiDoctor.Validation.UnitTests
             var testExample = new JsonExample(json);
             var issues = new IssueLogger();
 
-            Assert.IsFalse(nullableSchema.ValidateJson(testExample, issues, new Dictionary<string, JsonSchema>(), new ValidationOptions()));
-            Assert.AreEqual(1, issues.Issues.Count());
+            Assert.That(nullableSchema.ValidateJson(testExample, issues, new Dictionary<string, JsonSchema>(), new ValidationOptions()), Is.False);
+            Assert.That(1, Is.EqualTo(issues.Issues.Count()));
 
             var error = issues.Issues.First();
-            Assert.AreEqual(ValidationErrorCode.NullPropertyValue, error.Code);
+            Assert.That(ValidationErrorCode.NullPropertyValue, Is.EqualTo(error.Code));
         }
 
         public JsonSchema SchemaForNullTest(bool expectNulls)

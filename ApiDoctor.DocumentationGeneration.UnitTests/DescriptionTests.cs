@@ -39,7 +39,7 @@ namespace ApiDoctor.DocumentationGeneration.Tests
             ComplexType ct = this.GetComplexType(this.schema, "Test", inlineDescription: inlineDescription);
             string markDown = this.documentationGenerator.GetMarkDownForType(this.entityFramework, ct);
 
-            Assert.IsTrue(markDown.Contains(inlineDescription), "Generated markdown should contain inline description annotation");
+            Assert.That(markDown.Contains(inlineDescription), "Generated markdown should contain inline description annotation");
         }
 
         [Test]
@@ -50,7 +50,7 @@ namespace ApiDoctor.DocumentationGeneration.Tests
             this.AddProperty(ct, "TestProperty", inlineDescription: inlineDescription);
             string markDown = this.documentationGenerator.GetMarkDownForType(this.entityFramework, ct);
 
-            Assert.IsTrue(markDown.Contains(inlineDescription), "Generated markdown should contain inline description annotation");
+            Assert.That(markDown.Contains(inlineDescription), "Generated markdown should contain inline description annotation");
         }
 
         [Test]
@@ -60,7 +60,7 @@ namespace ApiDoctor.DocumentationGeneration.Tests
             ComplexType ct = this.GetComplexType(this.schema, "Test", schemaDescription: schemaDescription);
             string markDown = this.documentationGenerator.GetMarkDownForType(this.entityFramework, ct);
 
-            Assert.IsTrue(markDown.Contains(schemaDescription), "Generated markdown should contain schema description annotation");
+            Assert.That(markDown.Contains(schemaDescription), "Generated markdown should contain schema description annotation");
         }
 
         [Test]
@@ -70,7 +70,7 @@ namespace ApiDoctor.DocumentationGeneration.Tests
             ComplexType ct = this.GetComplexType(this.schema, "Test", schemaDescription: schemaDescription);
             string markDown = this.documentationGenerator.GetMarkDownForType(this.entityFramework, ct);
 
-            Assert.IsTrue(markDown.Contains(schemaDescription), "Generated markdown should contain schema description annotation");
+            Assert.That(markDown.Contains(schemaDescription), "Generated markdown should contain schema description annotation");
         }
     }
 }
