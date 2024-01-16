@@ -31,7 +31,7 @@ namespace ApiDoctor.Validation.Config
         public string SourcePath { get; set; }
 
         /// <summary>
-        /// Provide oppertunity to post-process a valid configuration after the file is loaded.
+        /// Provide opportunity to post-process a valid configuration after the file is loaded.
         /// </summary>
         public virtual void LoadComplete()
         {

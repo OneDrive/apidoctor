@@ -97,7 +97,7 @@ namespace ApiDoctor.Validation
 
         public MetadataValidationConfigs MetadataValidationConfigs { get; internal set; }
 
-        public DocumentOutlineFile DocumentStructure { get; internal set; }
+        public DocumentOutlineFile DocumentStructure { get; internal set; } = new DocumentOutlineFile();
 
         public LinkValidationConfigFile LinkValidationConfig { get; private set; }
 
@@ -160,6 +160,10 @@ namespace ApiDoctor.Validation
             {
                 Console.WriteLine("Using document structure file: {0}", foundOutlines.SourcePath);
                 this.DocumentStructure = foundOutlines;
+            }
+            else
+            {
+                Console.WriteLine("Document structure file has been incorrectly formatted or is missing");
             }
 
             LinkValidationConfigFile[] linkConfigs = TryLoadConfigurationFiles<LinkValidationConfigFile>(this.SourceFolderPath);
