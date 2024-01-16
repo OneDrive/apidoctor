@@ -113,6 +113,8 @@ namespace ApiDoctor.Validation.Error
         ExtraDocumentHeaderFound,
         RequiredDocumentHeaderMissing,
         DocumentHeaderInWrongPosition,
+        DocumentHeaderInWrongCase,
+        MisspeltDocumentHeader,
         RequiredYamlHeaderMissing,
         IncorrectYamlHeaderFormat,
         SkippedSimilarErrors,
