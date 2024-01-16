@@ -1,42 +1,42 @@
 ﻿/*
- * API Doctor
- * Copyright (c) Microsoft Corporation
- * All rights reserved. 
- * 
- * MIT License
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of 
- * this software and associated documentation files (the ""Software""), to deal in 
- * the Software without restriction, including without limitation the rights to use, 
- * copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
- * Software, and to permit persons to whom the Software is furnished to do so, 
- * subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in all 
- * copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED *AS IS*, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
- * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
- * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT 
- * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION 
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
- * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- */
+* API Doctor
+* Copyright (c) Microsoft Corporation
+* All rights reserved. 
+* 
+* MIT License
+* 
+* Permission is hereby granted, free of charge, to any person obtaining a copy of 
+* this software and associated documentation files (the ""Software""), to deal in 
+* the Software without restriction, including without limitation the rights to use, 
+* copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+* Software, and to permit persons to whom the Software is furnished to do so, 
+* subject to the following conditions:
+* 
+* The above copyright notice and this permission notice shall be included in all 
+* copies or substantial portions of the Software.
+* 
+* THE SOFTWARE IS PROVIDED *AS IS*, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
+* INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
+* PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT 
+* HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION 
+* OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
+* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
 
 namespace ApiDoctor.Validation
 {
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
+    using System.Globalization;
     using System.IO;
     using System.Linq;
     using System.Text;
     using System.Text.RegularExpressions;
-    using ApiDoctor.Validation.Error;
-    using ApiDoctor.Validation.Json;
     using MarkdownDeep;
+    using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
-    using System.Globalization;
+    using ApiDoctor.Validation.Error;
     using ApiDoctor.Validation.OData.Transformation;
 
     public static class ExtensionMethods
@@ -50,9 +50,9 @@ namespace ApiDoctor.Validation
         private static readonly Regex markdownLinkRegex = new(@"\[(.*?)\]((\(.*?\))|(\s*:\s*\w+))", RegexOptions.Compiled);
 
         private static readonly Regex markdownBoldRegex = new(@"\*\*(.*?)\*\*", RegexOptions.Compiled);
-       
+
         private static readonly Regex markdownItalicRegex = new(@"_(.*?)_", RegexOptions.Compiled);
-       
+
         private static readonly Regex markdownCodeRegex = new(@"`(.*?)`", RegexOptions.Compiled);
 
         private static readonly string[] Iso8601Formats =
@@ -194,7 +194,7 @@ namespace ApiDoctor.Validation
             }
         }
 
-        public static bool TryGetPropertyValue<T>(this JContainer container, string propertyName, out T value ) where T : class
+        public static bool TryGetPropertyValue<T>(this JContainer container, string propertyName, out T value) where T : class
         {
             JProperty prop;
             if (TryGetProperty(container, propertyName, out prop))
@@ -238,14 +238,14 @@ namespace ApiDoctor.Validation
             markdownText = markdownBoldRegex.Replace(markdownText, "$1");
 
             // Remove italic (_text_)
-            markdownText = markdownItalicRegex .Replace(markdownText, "$1");
+            markdownText = markdownItalicRegex.Replace(markdownText, "$1");
 
             // Remove code (`code`)
-            markdownText = markdownCodeRegex .Replace(markdownText, "$1");
+            markdownText = markdownCodeRegex.Replace(markdownText, "$1");
 
             // Remove links [text](link_target) or [text]: link_reference    
             markdownText = markdownLinkRegex.Replace(markdownText, "$1");
-            
+
             return markdownText;
         }
 
@@ -308,7 +308,7 @@ namespace ApiDoctor.Validation
                 }
             }
 
-            Debug.WriteLine("Failed to find header matching '{0}' in table with headers: {1}", 
+            Debug.WriteLine("Failed to find header matching '{0}' in table with headers: {1}",
                 possibleHeaderNames.ComponentsJoinedByString(","),
                 table.ColumnHeaders.ComponentsJoinedByString(","));
             return null;
@@ -330,7 +330,7 @@ namespace ApiDoctor.Validation
         /// <param name="value"></param>
         /// <param name="addErrorAction"></param>
         /// <returns></returns>
-        public static ParameterDataType ParseParameterDataType(this string value, bool isCollection = false, Action<ValidationError> addErrorAction = null, ParameterDataType defaultValue = null )
+        public static ParameterDataType ParseParameterDataType(this string value, bool isCollection = false, Action<ValidationError> addErrorAction = null, ParameterDataType defaultValue = null)
         {
             const string collectionPrefix = "collection(";
             const string collectionOfPrefix = "collection of";
@@ -360,7 +360,7 @@ namespace ApiDoctor.Validation
             // Value could have markdown formatting in it, so we do some basic work to try and remove that if it exists
             if (value.IndexOf('[') != -1)
             {
-                value = value.TextBetweenCharacters('[', ']');   
+                value = value.TextBetweenCharacters('[', ']');
             }
 
             SimpleDataType simpleType = ParseSimpleTypeString(value.ToLowerInvariant());
@@ -682,11 +682,11 @@ namespace ApiDoctor.Validation
             if (startIndex == -1)
                 return source;
 
-            int endIndex = source.IndexOf(second, startIndex+1);
+            int endIndex = source.IndexOf(second, startIndex + 1);
             if (endIndex == -1)
-                return source.Substring(startIndex+1);
+                return source.Substring(startIndex + 1);
             else
-                return source.Substring(startIndex+1, endIndex - startIndex - 1);
+                return source.Substring(startIndex + 1, endIndex - startIndex - 1);
         }
 
         public static string TextBetweenCharacters(this string source, char character)
@@ -707,7 +707,7 @@ namespace ApiDoctor.Validation
             char first,
             char second,
             string replacement,
-            bool requireSecondChar = true, 
+            bool requireSecondChar = true,
             bool removeTargetChars = false)
         {
             StringBuilder output = new StringBuilder(source);
@@ -737,7 +737,7 @@ namespace ApiDoctor.Validation
                             output.Remove(i + 1, j - i - (foundLastChar ? 1 : 0));
                             output.Insert(i + 1, replacement);
                         }
-                        
+
                         i += replacement.Length;
                     }
                 }
@@ -751,7 +751,7 @@ namespace ApiDoctor.Validation
             if (param.Type != ParameterDataType.String)
                 return ExpectedStringFormat.Generic;
 
-            if (param.OriginalValue == "timestamp" || param.OriginalValue == "datetime" || param.OriginalValue.Contains("timestamp") )
+            if (param.OriginalValue == "timestamp" || param.OriginalValue == "datetime" || param.OriginalValue.Contains("timestamp"))
                 return ExpectedStringFormat.Iso8601Date;
             if (param.OriginalValue == "url" || param.OriginalValue == "absolute url")
                 return ExpectedStringFormat.AbsoluteUrl;
@@ -826,6 +826,24 @@ namespace ApiDoctor.Validation
             }
 
             return null;
+        }
+
+        public static bool TryParseJson<T>(this string obj, out T result)
+        {
+            try
+            {
+                var settings = new JsonSerializerSettings
+                {
+                    MissingMemberHandling = MissingMemberHandling.Error
+                };
+                result = JsonConvert.DeserializeObject<T>(obj, settings);
+                return true;
+            }
+            catch (Exception)
+            {
+                result = default;
+                return false;
+            }
         }
 
         /// <summary>
