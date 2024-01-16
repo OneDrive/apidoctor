@@ -91,9 +91,7 @@ namespace ApiDoctor.Validation.Config
         internal bool Matches(DocumentHeader found, bool ignoreCase = false, bool checkStringDistance = false)
         {
             if (checkStringDistance)
-            {
                 return IsMisspelt(found);
-            }
 
             return this.Level == found.Level && DoTitlesMatch(this.Title, found.Title, ignoreCase);
         }
@@ -101,13 +99,21 @@ namespace ApiDoctor.Validation.Config
         private static bool DoTitlesMatch(string expectedTitle, string foundTitle, bool ignoreCase)
         {
             StringComparison comparisonType = StringComparison.Ordinal;
-            if (ignoreCase) comparisonType = StringComparison.OrdinalIgnoreCase;
+            if (ignoreCase) 
+                comparisonType = StringComparison.OrdinalIgnoreCase;
 
             if (expectedTitle.Equals(foundTitle, comparisonType))
                 return true;
-            if (string.IsNullOrEmpty(expectedTitle) || expectedTitle == "*") return true;
-            if (expectedTitle.StartsWith("* ") && foundTitle.EndsWith(expectedTitle.Substring(2), comparisonType)) return true;
-            if (expectedTitle.EndsWith(" *") && foundTitle.StartsWith(expectedTitle.Substring(0, expectedTitle.Length - 2), comparisonType)) return true;
+
+            if (string.IsNullOrEmpty(expectedTitle) || expectedTitle == "*") 
+                return true;
+
+            if (expectedTitle.StartsWith("* ") && foundTitle.EndsWith(expectedTitle.Substring(2), comparisonType)) 
+                return true;
+
+            if (expectedTitle.EndsWith(" *") && foundTitle.StartsWith(expectedTitle[..^2], comparisonType)) 
+                return true;
+
             return false;
         }
         internal bool IsMisspelt(DocumentHeader found)
@@ -143,16 +149,14 @@ namespace ApiDoctor.Validation.Config
 
         public ExpectedHeader Clone()
         {
-            var header = (ExpectedHeader)this.MemberwiseClone();
-            List<object> childHeaders = new List<object>();
+            var header = this.MemberwiseClone() as ExpectedHeader;
+            var childHeaders = new List<object>();
             foreach (var childHeader in this.ChildHeaders)
             {
-                if (childHeader is ExpectedHeader)
-                {
-                    childHeaders.Add(((ExpectedHeader)childHeader).Clone());
-                    continue;
-                }
-                childHeaders.Add(((ConditionalHeader)childHeader).Clone());
+                if (childHeader is ExpectedHeader expectedChildHeader)
+                    childHeaders.Add(expectedChildHeader.Clone());
+                else
+                    childHeaders.Add(((ConditionalHeader)childHeader).Clone());
             }
             header.ChildHeaders = childHeaders;
             return header;
@@ -171,23 +175,20 @@ namespace ApiDoctor.Validation.Config
         {
             get
             {
-                ConditionalOperator op;
-                return Enum.TryParse(this.Condition, true, out op) ? op : (ConditionalOperator?)null;
+                return Enum.TryParse(this.Condition, true, out ConditionalOperator op) ? op : null;
             }
         }
 
         public ConditionalHeader Clone()
         {
             var header = (ConditionalHeader)this.MemberwiseClone();
-            List<object> arguments = new List<object>();
+            var arguments = new List<object>();
             foreach (var arg in this.Arguments)
             {
-                if (arg is ExpectedHeader)
-                {
-                    arguments.Add(((ExpectedHeader)arg).Clone());
-                    continue;
-                }
-                arguments.Add(((ConditionalHeader)arg).Clone());
+                if (arg is ExpectedHeader headerArg)
+                    arguments.Add(headerArg.Clone());
+                else
+                    arguments.Add(((ConditionalHeader)arg).Clone());
             }
             header.Arguments = arguments;
             return header;
@@ -212,27 +213,27 @@ namespace ApiDoctor.Validation.Config
             if (reader.TokenType == JsonToken.StartArray)
             {
                 var jArray = JArray.Load(reader);
-                var expectedHeaders = new List<object>();
+                var allowedHeaders = new List<object>();
                 foreach (var item in jArray)
                 {
                     bool isConditionalHeader = item.ToString().TryParseJson(out ConditionalHeader conditionalHeader);
                     if (isConditionalHeader)
                     {
-                        expectedHeaders.Add(conditionalHeader);
+                        allowedHeaders.Add(conditionalHeader);
                         continue;
                     }
 
                     bool isExpectedHeader = item.ToString().TryParseJson(out ExpectedHeader header);
                     if (isExpectedHeader)
                     {
-                        expectedHeaders.Add(header);
+                        allowedHeaders.Add(header);
                         continue;
                     }
 
                     // Object is neither of type ExpectedHeader nor ConditionalHeader
                     throw new JsonReaderException("Invalid document header definition");
                 }
-                return expectedHeaders;
+                return allowedHeaders;
             }
             else if (reader.TokenType == JsonToken.StartObject)
             {
