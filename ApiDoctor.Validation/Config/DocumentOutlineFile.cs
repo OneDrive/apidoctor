@@ -30,6 +30,7 @@ namespace ApiDoctor.Validation.Config
     using System.Collections.Generic;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
+    using Fastenshtein;
 
     public class DocumentOutlineFile : ConfigFile
     {
@@ -118,7 +119,7 @@ namespace ApiDoctor.Validation.Config
         }
         internal bool IsMisspelt(DocumentHeader found)
         {
-            return this.Level == found.Level && this.Title.StringDistance(found.Title) < 5;
+            return this.Level == found.Level && Levenshtein.Distance(this.Title, found.Title) < 3;
         }
 
         public override string ToString()
