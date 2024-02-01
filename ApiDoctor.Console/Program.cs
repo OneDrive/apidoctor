@@ -2570,7 +2570,7 @@ namespace ApiDoctor.ConsoleApp
             if (!(request.Url.Substring(0, 6).Equals("/beta/") || request.Url.Substring(0, 6).Equals("/v1.0/")))
             {
                 //Log the error for the documentation to be fixed.
-                issues.Warning(ValidationErrorCode.InvalidUrlString, $"The url: {request.Url} does not start a supported api version( /v1.0/ or /beta/ ). File: {method.SourceFile}");
+                issues.Warning(ValidationErrorCode.InvalidUrlString, $"The url: {request.Url} does not start with a supported api version( /v1.0/ or /beta/ ). File: {method.SourceFile}");
 
                 if (method.SourceFile.DisplayName.Contains("beta"))
                 {
