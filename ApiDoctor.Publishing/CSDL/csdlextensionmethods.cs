@@ -41,6 +41,8 @@ namespace ApiDoctor.Publishing.CSDL
     internal static class CsdlExtensionMethods
     {
         private static readonly Regex GuidRegex = new(@"[0-9a-f\-]{32,36}", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+        private static readonly Regex FunctionParamsRegex = new(@",(?![^\[]*])", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         public static string RequestUriPathOnly(this MethodDefinition method, IssueLogger issues = null)
         {
             issues ??= new IssueLogger();
@@ -121,9 +123,9 @@ namespace ApiDoctor.Publishing.CSDL
 
         private static string NormalizeFunctionParameters(string funcParams, IssueLogger issues)
         {
-            // foo=bar, baz ='qux',x= 9
+            // foo=bar,baz='qux',x= 9,quux=['corge','grault']
             var normalized = new StringBuilder();
-            var allParams = funcParams.Split(',');
+            var allParams = FunctionParamsRegex.Split(funcParams);
             for (int i = 0; i < allParams.Length; i++)
             {
                 var param = allParams[i].Trim();
