@@ -67,6 +67,7 @@ namespace ApiDoctor.Publishing.CSDL
             {
                 if (path.StartsWith(scheme, StringComparison.OrdinalIgnoreCase))
                 {
+                    issues.For(method.Identifier).Error(ValidationErrorCode.InvalidUrlString, $"Unexpected base URL found in '{method.Request.FirstLineOnly()}'");
                     int pathStartIndex = path.IndexOf('/', scheme.Length);
                     if (pathStartIndex != -1)
                     {
