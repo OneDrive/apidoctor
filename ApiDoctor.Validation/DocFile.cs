@@ -586,6 +586,20 @@ namespace ApiDoctor.Validation
                         issues.Message($"Found description: {methodDescription}");
                     }
                 }
+                else if (block.BlockType == BlockType.codeblock && (block.CodeLanguage == "json" || block.CodeLanguage == "http"))
+                {
+                    //If the previous block is html (metadata)
+                    var previousBlockIndex = i - 1;
+                    if (previousBlockIndex >= 0)
+                    {
+                        var previousBlock = this.OriginalMarkdownBlocks[previousBlockIndex];
+                        if (null != previousBlock && previousBlock.BlockType != BlockType.html)
+                        {
+                            issues.Error(ValidationErrorCode.MissingMetadataBlock,
+                                $"Missing metadata for code block:{Environment.NewLine}{block}");
+                        }
+                    }
+                }
                 else if (block.BlockType == BlockType.html)
                 {
                     // If the next block is a codeblock we've found a metadata + codeblock pair
