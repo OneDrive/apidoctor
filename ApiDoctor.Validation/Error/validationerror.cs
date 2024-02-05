@@ -130,6 +130,7 @@ namespace ApiDoctor.Validation.Error
 
         AmbiguousExample,
         HttpMethodOutOfRange,
+        MissingMetadataBlock,
 
         DeduplicationWasUnsuccessful,
         IncorrectSampleKey,
