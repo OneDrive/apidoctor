@@ -46,6 +46,7 @@ namespace ApiDoctor.Validation.OData
             { "Edm.DateTimeOffset", SimpleDataType.DateTimeOffset },
             { "Edm.Duration", SimpleDataType.Duration },
             { "Edm.Double", SimpleDataType.Double },
+            { "Edm.Decimal", SimpleDataType.Decimal },
             { "Edm.Float", SimpleDataType.Float },
             { "Edm.Guid", SimpleDataType.Guid },
             { "Edm.TimeOfDay", SimpleDataType.TimeOfDay},

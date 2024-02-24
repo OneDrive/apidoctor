@@ -297,10 +297,12 @@ namespace ApiDoctor.Validation
                         type.Type != SimpleDataType.Int16 &&
                         type.Type != SimpleDataType.Int32 &&
                         type.Type != SimpleDataType.Int64;
+                case SimpleDataType.Decimal:
                 case SimpleDataType.Double:
                 case SimpleDataType.Float:
                 case SimpleDataType.Single:
                     return
+                        type.Type != SimpleDataType.Decimal &&
                         type.Type != SimpleDataType.Double &&
                         type.Type != SimpleDataType.Float &&
                         type.Type != SimpleDataType.Single;
@@ -334,6 +336,7 @@ namespace ApiDoctor.Validation
 
                 float
                 -> double
+                -> decimal
 
                 object
                 -> complex type
@@ -374,7 +377,11 @@ namespace ApiDoctor.Validation
             {
                 return true;
             }
-            else if (this.Type == SimpleDataType.Double && (type.Type == SimpleDataType.Float))
+            else if (this.Type == SimpleDataType.Decimal && (type.Type == SimpleDataType.Double || type.Type == SimpleDataType.Float))
+            {
+                return true;
+            }
+            else if (this.Type == SimpleDataType.Double && type.Type == SimpleDataType.Float)
             {
                 return true;
             }
@@ -418,6 +425,7 @@ namespace ApiDoctor.Validation
             GenericObject = new ParameterDataType(SimpleDataType.Object);
             GenericCollection = new ParameterDataType(SimpleDataType.Object, true);
             Boolean = new ParameterDataType(SimpleDataType.Boolean);
+            Decimal = new ParameterDataType(SimpleDataType.Decimal);
             Double = new ParameterDataType(SimpleDataType.Double);
             Float = new ParameterDataType(SimpleDataType.Float);
             Guid = new ParameterDataType(SimpleDataType.Guid);
@@ -440,6 +448,10 @@ namespace ApiDoctor.Validation
             get; private set;
         }
         public static ParameterDataType Boolean
+        {
+            get; private set;
+        } 
+        public static ParameterDataType Decimal
         {
             get; private set;
         }
@@ -493,6 +505,7 @@ namespace ApiDoctor.Validation
 
         Float,
         Double,
+        Decimal,
 
         Date,
         DateTimeOffset,

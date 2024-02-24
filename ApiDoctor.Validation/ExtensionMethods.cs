@@ -460,6 +460,7 @@ namespace ApiDoctor.Validation
                 case "single":
                     simpleType = SimpleDataType.Single;
                     break;
+                case "decimal":
                 case "double":
                     simpleType = SimpleDataType.Double;
                     break;

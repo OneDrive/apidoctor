@@ -90,6 +90,7 @@ namespace ApiDoctor.Validation
                         return new JValue(DateTime.Now.ToString("yyyy-MM-dd"));
                     case SimpleDataType.DateTimeOffset:
                         return new JValue(DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"));
+                    case SimpleDataType.Decimal:
                     case SimpleDataType.Double:
                     case SimpleDataType.Float:
                     case SimpleDataType.Single:
