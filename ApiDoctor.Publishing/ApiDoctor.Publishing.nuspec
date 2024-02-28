@@ -12,12 +12,12 @@
         <licenseUrl>http://msdn.microsoft.com/en-US/cc300389</licenseUrl>
         <copyright>© Microsoft Corporation. All rights reserved.</copyright>
         <dependencies>
-            <group targetFramework="netcore60">
+            <group targetFramework="netcore80">
                 <dependency id="ApiDoctor.Validation" version="$version$" />
             </group>
         </dependencies>
     </metadata>
     <files>
-        <file src="bin\Release\net6.0\ApiDoctor.Publishing.dll" target="lib\netcore60\ApiDoctor.Publishing.dll" />
+        <file src="bin\Release\net8.0\ApiDoctor.Publishing.dll" target="lib\netcore80\ApiDoctor.Publishing.dll" />
     </files>
 </package>

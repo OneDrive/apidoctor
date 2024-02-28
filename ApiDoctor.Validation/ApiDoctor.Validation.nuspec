@@ -13,13 +13,13 @@
         <projectUrl>http://github.com/onedrive/apidoctor</projectUrl>
         <copyright>© Microsoft Corporation. All rights reserved.</copyright>
         <dependencies>
-            <group targetFramework="netcore60">
+            <group targetFramework="netcore80">
                 <dependency id="Newtonsoft.Json" version="12.0.3" />
             </group>
         </dependencies>
     </metadata>
     <files>
-        <file src="bin\Release\net6.0\ApiDoctor.Validation.dll" target="lib\netcore60\ApiDoctor.Validation.dll" />
-        <file src="bin\Release\net6.0\MarkdownDeep.dll" target="lib\netcore60\MarkdownDeep.dll" />
+        <file src="bin\Release\net8.0\ApiDoctor.Validation.dll" target="lib\netcore80\ApiDoctor.Validation.dll" />
+        <file src="bin\Release\net8.0\MarkdownDeep.dll" target="lib\netcore80\MarkdownDeep.dll" />
     </files>
 </package>
