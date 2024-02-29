@@ -3492,6 +3492,9 @@ namespace ApiDoctor.ConsoleApp
 
             foreach (string row in rows.Skip(1))
             {
+                if (!row.StartsWith('|'))
+                    continue;
+
                 string[] cells = Regex.Split(row.Trim(), @"\s*\|\s*").Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
 
                 var leastPrivilegePermissions = cells[1].Trim();
