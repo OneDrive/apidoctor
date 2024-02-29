@@ -3183,12 +3183,12 @@ namespace ApiDoctor.ConsoleApp
                 "networkaccess-filteringrule-post.md"
             };
 
-            List<(string requestUrl, string scopeType, string leastPrivilegedPermissions, string higherPrivilegedPermissions)> allPermissions = [];
+            List<(string requestUrl, string fileName, string scopeType, string leastPrivilegedPermissions, string higherPrivilegedPermissions)> allPermissions = [];
 
             foreach (var docFile in docFiles)
             {
-                if (!listOfFiles.Contains(docFile.DisplayName))
-                    continue;
+                // if (!listOfFiles.Contains(docFile.DisplayName))
+                //     continue;
                 var originalFileContents = await File.ReadAllLinesAsync(docFile.FullPath);
                 var parseStatus = PermissionsInsertionState.FindPermissionsHeader;
                 int foundPermissionTablesOrBlocks = 0, foundHttpRequestBlocks = 0;
@@ -3337,12 +3337,11 @@ namespace ApiDoctor.ConsoleApp
                             }
                             break;
                         case PermissionsInsertionState.InsertPermissionBlock:
-                            var includeFileMetadata = "---\r\ndescription: \"Automatically generated file. DO NOT MODIFY\"\r\nms.topic: include\r\nms.localizationpriority: medium\r\n---\r\n\r\n";
                             var permissionsFileContents = string.Empty;
                             if (!isBootstrapped)
                             {
                                 var existingPermissionsTable = originalFileContents.Skip(insertionStartLine + 2).Take(insertionEndLine - insertionStartLine - 1);
-                                permissionsFileContents =  $"{includeFileMetadata}{ConvertToThreeColumnPermissionsTable(existingPermissionsTable)}";
+                                permissionsFileContents =  $"{ConvertToThreeColumnPermissionsTable(existingPermissionsTable)}";
                             }
 
                             if (httpRequestStartLine == -1)
@@ -3387,7 +3386,7 @@ namespace ApiDoctor.ConsoleApp
                                     }
                                     else
                                     {
-                                        allPermissions.Add((httpRequest, scopeType, leastPrivilegePermissions, higherPrivilegedPermissions));
+                                        allPermissions.Add((httpRequest, docFile.DisplayName, scopeType, leastPrivilegePermissions, higherPrivilegedPermissions));
                                     }
                                 }
                             }
@@ -3416,10 +3415,10 @@ namespace ApiDoctor.ConsoleApp
 
             //var filePath = "C:\\Users\\miachien\\Downloads\\file.txt";
             //using StreamWriter writer = new(filePath);
-            foreach (var (requestUrl, scopeType, leastPrivilegedPermissions, higherPrivilegedPermissions) in allPermissions)
+            foreach (var (requestUrl, fileName, scopeType, leastPrivilegedPermissions, higherPrivilegedPermissions) in allPermissions)
             {
                 // writer.WriteLine($"{requestUrl},{scopeType},{leastPrivilegedPermissions},{higherPrivilegedPermissions}");
-                Console.WriteLine($"{requestUrl},{scopeType},{leastPrivilegedPermissions},{higherPrivilegedPermissions}");
+                Console.WriteLine($"{requestUrl},{fileName},{scopeType},{leastPrivilegedPermissions},{higherPrivilegedPermissions}");
             }
 
             return true;
