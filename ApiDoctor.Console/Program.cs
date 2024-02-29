@@ -1,4 +1,4 @@
-/*
+﻿/*
  * API Doctor
  * Copyright (c) Microsoft Corporation
  * All rights reserved.
@@ -43,6 +43,7 @@ namespace ApiDoctor.ConsoleApp
     using AppVeyor;
     using CommandLine;
     using Kibali;
+    using Microsoft.OpenApi.Writers;
     using Newtonsoft.Json;
     using Publishing.Html;
     using Publishing.Swagger;
@@ -2638,8 +2639,556 @@ namespace ApiDoctor.ConsoleApp
                     return false;
             }
 
+            var listOfFiles = new List<string>()
+            {
+                "privilegedaccessgroupassignmentschedule-filterbycurrentuser.md",
+                "user-retryserviceprovisioning.md",
+                "accesspackagecatalog-list-resources.md",
+                "educationassignment-post-gradingcategory.md",
+                "payloaddetail-get.md",
+                "worksheet-cell.md",
+                "serviceprincipal-delete-remotedesktopsecurityconfiguration.md",
+                "domain-list-federationconfiguration.md",
+                "entitlementmanagement-list-resourceenvironments.md",
+                "educationmodule-post-resources.md",
+                "accesspackageassignmentworkflowextension-delete.md",
+                "targetdevicegroup-update.md",
+                "simulationreportoverview-get.md",
+                "virtualeventwebinar-get.md",
+                "privilegedaccessgroup-post-assignmentschedulerequests.md",
+                "subjectrightsrequest-getfinalreport.md",
+                "security-hostport-get.md",
+                "accesspackagecatalog-list-resourceroles.md",
+                "security-host-list-sslcertificates.md",
+                "entitlementmanagement-post-resourcerequests.md",
+                "accesspackageassignmentworkflowextension-get.md",
+                "security-threatintelligence-list-sslcertificates.md",
+                "remotedesktopsecurityconfiguration-list-targetdevicegroups.md",
+                "educationclass-post-module.md",
+                "call-senddtmftones.md",
+                "samlorwsfedexternaldomainfederation-update.md",
+                "orgcontact-retryserviceprovisioning.md",
+                "privilegedaccessgroupassignmentscheduleinstance-get.md",
+                "identitygovernance-userprocessingresult-summary.md",
+                "applicationtemplate-get.md",
+                "educationmodule-get.md",
+                "remotedesktopsecurityconfiguration-update.md",
+                "profilecardproperty-delete.md",
+                "educationassignment-delete-gradingcategory.md",
+                "privilegedaccessgroupassignmentschedulerequest-filterbycurrentuser.md",
+                "user-reminderview.md",
+                "educationmodule-pin.md",
+                "privilegedaccessgroup-post-eligibilityschedulerequests.md",
+                "accesspackageassignmentrequestworkflowextension-get.md",
+                "privilegedaccessgroupassignmentschedulerequest-cancel.md",
+                "educationassignment-activate.md",
+                "identitygovernance-taskreport-summary.md",
+                "applicationtemplate-list.md",
+                "tablerowcollection-itemat.md",
+                "privilegedaccessgroup-list-assignmentschedules.md",
+                "peopleadminsettings-post-profilecardproperties.md",
+                "educationgradingcategory-update.md",
+                "learningcourseactivity-update.md",
+                "remotedesktopsecurityconfiguration-get.md",
+                "remotedesktopsecurityconfiguration-post-targetdevicegroups.md",
+                "accesspackageassignmentrequestworkflowextension-delete.md",
+                "educationmoduleresource-delete.md",
+                "privilegedaccessgroupassignmentschedule-get.md",
+                "educationmodule-delete.md",
+                "remotedesktopsecurityconfiguration-delete-targetdevicegroups.md",
+                "targetdevicegroup-get.md",
+                "accesspackagecatalog-post-accesspackagecustomworkflowextensions.md",
+                "educationmoduleresource-get.md",
+                "fido2authenticationmethod-get.md",
+                "security-host-list-parenthostpairs.md",
+                "itemactivitystat-getactivitybyinterval.md",
+                "devicelocalcredentialinfo-get.md",
+                "workbookrangeview-itemat.md",
+                "security-whoisrecord-list-history.md",
+                "privilegedaccessgroupeligibilityschedulerequest-get.md",
+                "security-host-list-childhostpairs.md",
+                "privilegedaccessgroup-list-assignmentschedulerequests.md",
+                "security-intelligenceprofileindicator-get.md",
+                "identitygovernance-userprocessingresult-get.md",
+                "call-reject.md",
+                "virtualeventwebinar-getbyuseridandrole.md",
+                "security-hostsslcertificate-get.md",
+                "security-host-list-ports.md",
+                "privilegedaccessgroup-list-eligibilityschedules.md",
+                "virtualeventwebinar-list-registrations.md",
+                "educationclass-list-modules.md",
+                "agreementfile-list-localizations.md",
+                "accesspackage-post-resourcerolescopes.md",
+                "privilegedaccessgroupassignmentschedulerequest-get.md",
+                "virtualeventwebinar-getbyuserrole.md",
+                "educationmoduleresource-update.md",
+                "accesspackageassignmentrequestworkflowextension-update.md",
+                "privilegedaccessgroupeligibilityschedule-get.md",
+                "educationmodule-list-resources.md",
+                "security-whoisrecord-get.md",
+                "reports-getgrouparchivedprintjobs.md",
+                "privilegedaccessgroupassignmentscheduleinstance-filterbycurrentuser.md",
+                "reports-getuserarchivedprintjobs.md",
+                "addlargegalleryviewoperation-get.md",
+                "educationassignment-deactivate.md",
+                "accesspackagecatalog-list-accesspackagecustomworkflowextensions.md",
+                "reports-getprinterarchivedprintjobs.md",
+                "accesspackage-delete-resourcerolescopes.md",
+                "virtualeventsession-get.md",
+                "entitlementmanagement-list-resourcerequests.md",
+                "educationmodule-publish.md",
+                "channel-doesuserhaveaccess.md",
+                "privilegedaccessgroupeligibilityscheduleinstance-filterbycurrentuser.md",
+                "educationmodule-unpin.md",
+                "samlorwsfedexternaldomainfederation-post.md",
+                "security-host-list-subdomains.md",
+                "privilegedaccessgroupeligibilityschedulerequest-filterbycurrentuser.md",
+                "security-sslcertificate-get.md",
+                "educationmodule-update.md",
+                "identitygovernance-workflow-list-userprocessingresults.md",
+                "virtualevent-list-sessions.md",
+                "usersimulationdetails-list.md",
+                "directory-list-devicelocalcredentials.md",
+                "serviceprincipal-post-remotedesktopsecurityconfiguration.md",
+                "educationmodule-setupresourcesfolder.md",
+                "workbookrange-resizedrange.md",
+                "privilegedaccessgroup-list-assignmentscheduleinstances.md",
+                "accesspackageassignmentworkflowextension-update.md",
+                "privilegedaccessgroupeligibilityscheduleinstance-get.md",
+                "virtualeventregistration-get.md",
+                "partners-billing-billedusage-export.md",
+                "privilegedaccessgroup-list-eligibilityscheduleinstances.md",
+                "driveitem-permanentdelete.md",
+                "virtualeventsroot-list-webinars.md",
+                "privilegedaccessgroupeligibilityschedule-filterbycurrentuser.md",
+                "security-subdomain-get.md",
+                "group-retryserviceprovisioning.md",
+                "security-threatintelligence-list-whoisrecords.md",
+                "profilecardproperty-update.md",
+                "privilegedaccessgroupeligibilityschedulerequest-cancel.md",
+                "accesspackageassignmentrequest-resume.md",
+                "security-whoishistoryrecord-get.md",
+                "security-hostpair-get.md",
+                "privilegedaccessgroup-list-eligibilityschedulerequests.md",
+                "security-host-list-hostpairs.md",
+                "profilecardproperty-get.md",
+                "azureauthorizationsystem-list-services.md",
+                "hardwareoathauthenticationmethodconfiguration-get.md",
+                "awsauthorizationsystem-list.md",
+                "hardwareoathauthenticationmethodconfiguration-update.md",
+                "awspolicy-get.md",
+                "security-labelsroot-delete-citations.md",
+                "admindynamics-update.md",
+                "pendingexternaluserprofile-update.md",
+                "openawssecuritygroupfinding-get.md",
+                "dailyuserinsightmetricsroot-list-requests.md",
+                "inactiveawsrolefinding-get.md",
+                "networkaccess-branchsite-get.md",
+                "directory-list-pendingexternaluserprofile.md",
+                "networkaccess-enrichedauditlogs-update.md",
+                "filestoragecontainer-get.md",
+                "message-markasjunk.md",
+                "secretinformationaccessawsresourcefinding-get.md",
+                "azureassociatedidentities-list-serviceprincipals.md",
+                "networkaccess-filteringpolicylink-list.md",
+                "encryptedazurestorageaccountfinding-get.md",
+                "gcpauthorizationsystem-list-services.md",
+                "synchronization-synchronizationjob-post-bulkupload.md",
+                "supergcpserviceaccountfinding-get.md",
+                "networkaccess-branchsite-list-devicelinks.md",
+                "securitytoolawsuseradministratorfinding-get.md",
+                "azureadauthentication-get.md",
+                "networkaccess-reports-transactionsummaries.md",
+                "superserverlessfunctionfinding-aggregatedsummary.md",
+                "networkaccess-filteringpolicy-post-policyrules.md",
+                "verticalsection-update.md",
+                "networkaccess-connectivity-post-branches.md",
+                "regionalandlanguagesettings-get.md",
+                "dynamics-create-customerpaymentsjournal.md",
+                "verticalsection-delete.md",
+                "approval-list-steps.md",
+                "privilegeescalationawsresourcefinding-get.md",
+                "gcpauthorizationsystem-list-resources.md",
+                "networkaccess-branchsite-update.md",
+                "security-labelsroot-post-categories.md",
+                "horizontalsection-delete.md",
+                "b2cidentityuserflow-userflowidentityproviders-update.md",
+                "filestoragecontainer-post-permissions.md",
+                "deletedchat-undodelete.md",
+                "security-labelsroot-post-departments.md",
+                "secretinformationaccessawsrolefinding-get.md",
+                "networkaccess-filteringpolicylink-delete-policy.md",
+                "accessreviewinstance-stopapplydecisions.md",
+                "unifiedroleassignmentmultiple-update.md",
+                "security-subcategorytemplate-get.md",
+                "gcpauthorizationsystemtypeaction-get.md",
+                "awsuser-get.md",
+                "serviceactivity-getmetricsformfasigninsuccess.md",
+                "permissionscreepindexdistribution-get.md",
+                "externallyaccessibleazureblobcontainerfinding-get.md",
+                "networkaccess-conditionalaccesssettings-get.md",
+                "security-labelsroot-list-citations.md",
+                "appcredentialsigninactivity-get.md",
+                "security-labelsroot-list-authorities.md",
+                "inactivegroupfinding-get.md",
+                "gcpuser-get.md",
+                "multitenantorganizationidentitysyncpolicytemplate-resettodefaultsettings.md",
+                "filestoragecontainer-list-permissions.md",
+                "virtualmachinewithawsstoragebucketaccessfinding-get.md",
+                "dailyuserinsightmetricsroot-list-activeusers.md",
+                "unifiedrolemanagementalertincident-get.md",
+                "networkaccess-policylink-list-policy.md",
+                "onpremisesagentgroup-post.md",
+                "networkaccess-branchsite-post-devicelinks.md",
+                "user-get-transitivereports.md",
+                "awsidentityaccessmanagementkeyusagefinding-get.md",
+                "security-labelsroot-list-categories.md",
+                "filestorage-list-containers.md",
+                "workbookdocumenttask-get.md",
+                "networkaccess-remotenetworkhealthstatusevent-list.md",
+                "networkaccess-branchconnectivityconfiguration-get.md",
+                "superuserfinding-aggregatedsummary.md",
+                "onattributecollectionexternalusersselfservicesignup-post-attributes.md",
+                "attacksimulationroot-get-includedaccounttarget.md",
+                "gcpassociatedidentities-list-users.md",
+                "approvalstep-get.md",
+                "awsidentity-get.md",
+                "networkaccess-forwardingpolicylink-delete.md",
+                "webpart-delete.md",
+                "certificateauthorityasentity-get.md",
+                "inactiveazureserviceprincipalfinding-get.md",
+                "onpremisesagentgroup-delete.md",
+                "message-markasnotjunk.md",
+                "platformcredentialauthenticationmethod-list.md",
+                "networkaccess-reports-getdestinationsummaries.md",
+                "networkaccess-filteringpolicy-get.md",
+                "unifiedrolemanagementalert-list-alertincidents.md",
+                "security-labelsroot-list-fileplanreferences.md",
+                "openawssecuritygroupfinding-list-assignedcomputeinstancesdetails.md",
+                "networkaccess-reports-userreport.md",
+                "search-qna-update.md",
+                "awsassociatedidentities-list-users.md",
+                "security-labelsroot-delete-authorities.md",
+                "filestoragecontainer-list-customproperty.md",
+                "sitepage-update.md",
+                "networkaccess-forwardingpolicy-updatepolicyrules.md",
+                "networkaccess-reports-devicereport.md",
+                "gcpserviceaccount-get.md",
+                "changetrackedentity-stagefordeletion.md",
+                "filestoragecontainer-get-drive.md",
+                "auditlogroot-list-customsecurityattributeaudits.md",
+                "awsidentityaccessmanagementkeyagefinding-get.md",
+                "gcpidentity-get.md",
+                "azureauthorizationsystem-list-resources.md",
+                "attacksimulationroot-get-excludedaccounttarget.md",
+                "reportroot-list-serviceprincipalsigninactivities.md",
+                "windowsupdates-deploymentaudience-updateaudience.md",
+                "assignedcomputeinstancedetails-get.md",
+                "inactiveawsresourcefinding-aggregatedsummary.md",
+                "security-categorytemplate-delete-subcategories.md",
+                "externaluserprofile-get.md",
+                "awsauthorizationsystem-list-policies.md",
+                "azureauthorizationsystem-list.md",
+                "monthlyuserinsightmetricsroot-list-authentications.md",
+                "security-labelsroot-post-authorities.md",
+                "awsuser-list-assumableroles.md",
+                "inactiveuserfinding-aggregatedsummary.md",
+                "networkaccess-forwardingpolicylink-get.md",
+                "azureassociatedidentities-list-managedidentities.md",
+                "networkaccess-branchsite-delete.md",
+                "networkaccess-crosstenantaccesssettings-update.md",
+                "onauthenticationmethodloadstartexternalusersselfservicesignup-post-identityproviders.md",
+                "rolemanagementalert-list-alertconfigurations.md",
+                "superserverlessfunctionfinding-get.md",
+                "externalconnectors-external-list-authorizationsystems.md",
+                "certificatebasedapplicationconfiguration-post-trustedcertificateauthorities.md",
+                "authorizationsystem-get.md",
+                "privilegeescalationgcpserviceaccountfinding-get.md",
+                "multitenantorganizationpartnerconfigurationtemplate-update.md",
+                "gcprole-get.md",
+                "authentication-get.md",
+                "certificateauthoritypath-list-certificatebasedapplicationconfigurations.md",
+                "overprovisioneduserfinding-get.md",
+                "dailyuserinsightmetricsroot-list-usercount.md",
+                "filestoragecontainer-post-customproperty.md",
+                "horizontalsection-get.md",
+                "monthlyuserinsightmetricsroot-list-signups.md",
+                "admindynamics-get.md",
+                "awsassociatedidentities-list-roles.md",
+                "workbookdocumenttaskchange-get.md",
+                "horizontalsection-list.md",
+                "encryptedgcpstoragebucketfinding-get.md",
+                "certificateauthorityasentity-update.md",
+                "awsauthorizationsystemresource-get.md",
+                "networkaccess-policy-list-policyrules.md",
+                "multitenantorganizationpartnerconfigurationtemplate-get.md",
+                "reportroot-getrelyingpartydetailedsummary.md",
+                "directory-delete-pendingexternaluserprofiles.md",
+                "dailyuserinsightmetricsroot-list-signups.md",
+                "informationprotectionlabel-evaluateclassificationresults.md",
+                "security-categorytemplate-get.md",
+                "unifiedrolemanagementalertconfiguration-update.md",
+                "dailyuserinsightmetricsroot-list-authentications.md",
+                "networkaccess-forwardingprofile-get.md",
+                "networkaccess-filteringrule-update.md",
+                "accesspackage-delete-accesspackageresourcerolescopes.md",
+                "inactiveuserfinding-get.md",
+                "cloudpcreports-getfrontlinereport.md",
+                "awsauthorizationsystem-list-services.md",
+                "security-departmenttemplate-get.md",
+                "security-emailthreatsubmission-review.md",
+                "networkaccess-reports-crosstenantaccessreport.md",
+                "multitenantorganizationpartnerconfigurationtemplate-resettodefaultsettings.md",
+                "networkaccess-networkaccessroot-list-forwardingprofiles.md",
+                "cloudpcreports-getrawremoteconnectionreports.md",
+                "gcpauthorizationsystem-list-actions.md",
+                "scheduledpermissionsrequest-cancelall.md",
+                "onauthenticationmethodloadstartexternalusersselfservicesignup-delete-identityproviders.md",
+                "networkaccess-reports-getcrosstenantsummary.md",
+                "platformcredentialauthenticationmethod-delete.md",
+                "networkaccess-filteringrule-list.md",
+                "networkaccess-conditionalaccesssettings-update.md",
+                "networkaccess-filteringprofile-delete-policies.md",
+                "directory-list-subscriptions.md",
+                "security-emailthreatsubmissionpolicy-delete.md",
+                "security-citationtemplate-get.md",
+                "networkaccess-connectivity-list-branches.md",
+                "dailyuserinsightmetricsroot-list-summary.md",
+                "privilegeescalationawsrolefinding-get.md",
+                "awsauthorizationsystem-list-resources.md",
+                "monthlyuserinsightmetricsroot-list-mfacompletions.md",
+                "cloudpcreports-getactionstatusreports.md",
+                "unifiedrolemanagementalertconfiguration-get.md",
+                "networkaccess-policyrule-get.md",
+                "azureauthorizationsystemtypeaction-get.md",
+                "security-categorytemplate-list-subcategories.md",
+                "callrecords-cloudcommunications-list-callrecords.md",
+                "certificateauthoritypath-post-certificatebasedapplicationconfigurations.md",
+                "managedtenants-managedtenant-list-auditevents.md",
+                "orgcontact-get-transitivereports.md",
+                "permissionsmanagement-list-permissionsrequestchanges.md",
+                "networkaccess-crosstenantaccesssettings-get.md",
+                "authorizationsystemtypeservice-get.md",
+                "cloudpc-validatebulkresize.md",
+                "serviceprincipal-list-permissiongrantpreapprovalpolicies.md",
+                "sitepage-create-webpart.md",
+                "plannerplan-movetocontainer.md",
+                "m365appsinstallationoptions-update.md",
+                "networkaccess-filteringrule-get.md",
+                "tenantrelationship-put-multitenantorganization.md",
+                "dynamics-create-taxarea.md",
+                "sitepage-getwebpartsbyposition.md",
+                "approvalstep-update.md",
+                "reportroot-list-appcredentialsigninactivities.md",
+                "awsassociatedidentities-list-all.md",
+                "pendingexternaluserprofile-get.md",
+                "externaluserprofile-update.md",
+                "security-labelsroot-delete-categories.md",
+                "monthlyuserinsightmetricsroot-list-activeusersbreakdown.md",
+                "networkaccess-forwardingoptions-update.md",
+                "m365appsinstallationoptions-get.md",
+                "cloudpcreports-getconnectionqualityreports.md",
+                "supergcpserviceaccountfinding-aggregatedsummary.md",
+                "security-labelsroot-post-citations.md",
+                "security-labelsroot-delete-departments.md",
+                "networkaccess-devicelink-get.md",
+                "networkaccess-forwardingoptions-get.md",
+                "filestoragecontainer-delete-permissions.md",
+                "gcpauthorizationsystem-list-roles.md",
+                "azureidentity-get.md",
+                "azureauthorizationsystem-list-roledefinitions.md",
+                "secretinformationaccessawsuserfinding-get.md",
+                "cloudpc-getfrontlinecloudpcaccessstate.md",
+                "awsrole-get.md",
+                "networkaccess-devicelink-update.md",
+                "serviceprincipal-delete-permissiongrantpreapprovalpolicies.md",
+                "networkaccess-reports-destinationreport.md",
+                "networkaccess-branchsite-delete-devicelinks.md",
+                "networkaccess-reports-entitiessummaries.md",
+                "monthlyuserinsightmetricsroot-list-activeusers.md",
+                "filestoragecontainer-update.md",
+                "callrecording-delta.md",
+                "webpart-list.md",
+                "networkaccess-settings-list-enrichedauditlogs.md",
+                "superawsrolefinding-get.md",
+                "azuremanagedidentity-get.md",
+                "unifiedrolemanagementalertincident-remediate.md",
+                "overprovisionedazureserviceprincipalfinding-get.md",
+                "filestoragecontainer-activate.md",
+                "security-fileplanreferencetemplate-get.md",
+                "policyroot-list-permissiongrantpreapprovalpolicies.md",
+                "networkaccess-filteringprofile-update.md",
+                "encryptedawsstoragebucketfinding-get.md",
+                "onattributecollectionsubmitcustomextension-update.md",
+                "superazureserviceprincipalfinding-get.md",
+                "adminappsandservices-update.md",
+                "unenforcedmfaawsuserfinding-get.md",
+                "team-gettimesoff.md",
+                "superuserfinding-get.md",
+                "workbookdocumenttask-list-changes.md",
+                "horizontalsectioncolumn-list.md",
+                "externallyaccessiblegcpstoragebucketfinding-get.md",
+                "superawsresourcefinding-get.md",
+                "networkaccess-forwardingprofile-update.md",
+                "certificateauthorityasentity-delete.md",
+                "opennetworkazuresecuritygroupfinding-get.md",
+                "networkaccess-filteringprofile-list.md",
+                "callrecords-callrecord-list-participants_v2.md",
+                "secretinformationaccessawsserverlessfunctionfinding-get.md",
+                "awsauthorizationsystemtypeaction-get.md",
+                "hardwareoathauthenticationmethodconfiguration-delete.md",
+                "networkaccess-policyrule-update.md",
+                "overprovisionedawsrolefinding-get.md",
+                "horizontalsectioncolumn-get.md",
+                "inactivegcpserviceaccountfinding-aggregatedsummary.md",
+                "filestoragecontainer-delete-customproperty.md",
+                "dynamics-create-journalline.md",
+                "certificatebasedapplicationconfiguration-get.md",
+                "unifiedrolemanagementalertdefinition-get.md",
+                "permissionsanalytics-list-permissionscreepindexdistributions.md",
+                "networkaccess-forwardingpolicylink-update.md",
+                "virtualendpoint-retrievescopedpermissions.md",
+                "webpart-update.md",
+                "chat-delete.md",
+                "adminforms-get.md",
+                "networkaccess-forwardingpolicy-get.md",
+                "privilegeescalationuserfinding-get.md",
+                "directory-list-externaluserprofiles.md",
+                "serviceactivity-getmetricsforconditionalaccesscompliantdevicessigninsuccess.md",
+                "workbookworksheet-list-tasks.md",
+                "longrunningoperation-get.md",
+                "inactiveserverlessfunctionfinding-aggregatedsummary.md",
+                "filestorage-delete-containers.md",
+                "educationsubmission-excuse.md",
+                "deletedchat-get.md",
+                "adminappsandservices-get.md",
+                "customsecurityattributeaudit-get.md",
+                "networkaccess-branchsite-post-forwardingprofiles.md",
+                "sitepage-post-verticalsection.md",
+                "security-categorytemplate-post-subcategories.md",
+                "accesspackagesubject-update.md",
+                "directory-delete-externaluserprofiles.md",
+                "inactiveawsrolefinding-aggregatedsummary.md",
+                "securitytoolawsroleadministratorfinding-get.md",
+                "inactiveawsresourcefinding-get.md",
+                "networkaccess-reports-webcategoryreport.md",
+                "gcpauthorizationsystem-list.md",
+                "inactiveazureserviceprincipalfinding-aggregatedsummary.md",
+                "onattributecollectionstartcustomextension-update.md",
+                "azureserviceprincipal-get.md",
+                "rangeborder-get.md",
+                "certificatebasedapplicationconfiguration-delete.md",
+                "virtualendpoint-list-frontlineserviceplans.md",
+                "onpremisesagentgroup-update.md",
+                "multitenantorganizationidentitysyncpolicytemplate-get.md",
+                "filestoragecontainer-update-permissions.md",
+                "accesspackageassignment-additionalaccess.md",
+                "sitepage-publish.md",
+                "accesspackagesubject-get.md",
+                "sitepage-get.md",
+                "certificatebasedapplicationconfiguration-update.md",
+                "regionalandlanguagesettings-update.md",
+                "gcpassociatedidentities-list-serviceaccounts.md",
+                "networkaccess-tenantstatus-get.md",
+                "authentication-update.md",
+                "monthlyuserinsightmetricsroot-list-summary.md",
+                "networkaccess-filteringrule-delete.md",
+                "permissiongrantpreapprovalpolicy-delete.md",
+                "gcpauthorizationsystemresource-get.md",
+                "networkaccess-networkaccessroot-list-forwardingpolicies.md",
+                "serviceactivity-getmetricsformfasigninfailure.md",
+                "directory-post-pendingexternaluserprofile.md",
+                "networkaccess-networkaccessroot-onboard.md",
+                "security-labelsroot-post-fileplanreferences.md",
+                "serviceprincipal-post-permissiongrantpreapprovalpolicies.md",
+                "externallyaccessibleawsstoragebucketfinding-get.md",
+                "certificatebasedapplicationconfiguration-list-trustedcertificateauthorities.md",
+                "permissiongrantpreapprovalpolicy-update.md",
+                "verticalsection-get.md",
+                "inactivegcpserviceaccountfinding-get.md",
+                "ediscovery-unifiedgroupsource-delete.md",
+                "cloudpcusersetting-update.md",
+                "adminforms-update.md",
+                "serviceactivity-getmetricsforconditionalaccessmanageddevicessigninsuccess.md",
+                "security-labelsroot-delete-fileplanreferences.md",
+                "networkaccess-branchsite-list-forwardingprofiles.md",
+                "networkaccess-filteringprofile-get.md",
+                "azureuser-get.md",
+                "networkaccess-forwardingprofile-list-policies.md",
+                "policyroot-post-permissiongrantpreapprovalpolicies.md",
+                "webpart-getposition.md",
+                "cloudpcreports-getinaccessiblecloudpcreports.md",
+                "rolemanagementalert-list-alerts.md",
+                "azureauthorizationsystemresource-get.md",
+                "azureroledefinition-get.md",
+                "horizontalsection-update.md",
+                "webpart-get.md",
+                "sitepage-post-horizontalsection.md",
+                "team-getopenshifts.md",
+                "networkaccess-filteringpolicylink-get.md",
+                "networkaccess-logs-list-traffic.md",
+                "networkaccess-filteringpolicylink-update.md",
+                "networkaccess-networkaccessroot-list-filteringpolicies.md",
+                "security-labelsroot-list-departments.md",
+                "multitenantorganization-update.md",
+                "serviceprincipalsigninactivity-get.md",
+                "unifiedrolemanagementalert-refresh.md",
+                "b2xidentityuserflow-delete-userflowidentityproviders.md",
+                "overprovisionedgcpserviceaccountfinding-get.md",
+                "overprovisionedawsresourcefinding-get.md",
+                "serviceactivity-getmetricsforsamlsigninsuccess.md",
+                "permissiongrantpreapprovalpolicy-get.md",
+                "ediscovery-custodian-post-unifiedgroupsources.md",
+                "superawsrolefinding-aggregatedsummary.md",
+                "dailyuserinsightmetricsroot-list-mfacompletions.md",
+                "unifiedrolemanagementalert-update.md",
+                "virtualeventregistration-list.md",
+                "inactiveserverlessfunctionfinding-get.md",
+                "cloudpcreports-getcloudpcrecommendationreports.md",
+                "dailyuserinsightmetricsroot-list-activeusersbreakdown.md",
+                "cloudpc-bulkresize.md",
+                "awsexternalsystemaccessfinding-get.md",
+                "azureassociatedidentities-list-users.md",
+                "unifiedrolemanagementalert-get.md",
+                "superawsresourcefinding-aggregatedsummary.md",
+                "team-getshifts.md",
+                "unifiedroledefinition-assignedprincipals.md",
+                "filestoragecontainer-update-customproperty.md",
+                "admintodo-get.md",
+                "dynamics-create-journal.md",
+                "gcpassociatedidentities-list-all.md",
+                "azureauthorizationsystem-list-actions.md",
+                "awsexternalsystemaccessrolefinding-get.md",
+                "overprovisionedserverlessfunctionfinding-get.md",
+                "cloudpcfrontlineserviceplan-get.md",
+                "rolemanagementalert-list-alertdefinitions.md",
+                "partners-billing-billedreconciliation-export.md",
+                "filestoragecontainer-post.md",
+                "itemactivity-getbyinterval.md",
+                "awsauthorizationsystem-list-actions.md",
+                "permissionsrequestchange-get.md",
+                "networkaccess-reports-getdeviceusagesummary.md",
+                "dynamics-create-customerpayment.md",
+                "multitenantorganizationidentitysyncpolicytemplate-update.md",
+                "platformcredentialauthenticationmethod-get.md",
+                "calltranscript-delta.md",
+                "monthlyuserinsightmetricsroot-list-requests.md",
+                "azureassociatedidentities-list-all.md",
+                "security-authoritytemplate-get.md",
+                "companysubscription-get.md",
+                "onattributecollectionexternalusersselfservicesignup-delete-attributes.md",
+                "rangeborder-update.md",
+                "recyclebin-list-items.md",
+                "networkaccess-filteringpolicylink-delete.md",
+                "networkaccess-filteringrule-post.md"
+            };
+
+            List<(string requestUrl, string scopeType, string leastPrivilegedPermissions, string higherPrivilegedPermissions)> allPermissions = [];
+
             foreach (var docFile in docFiles)
             {
+                if (!listOfFiles.Contains(docFile.DisplayName))
+                    continue;
                 var originalFileContents = await File.ReadAllLinesAsync(docFile.FullPath);
                 var parseStatus = PermissionsInsertionState.FindPermissionsHeader;
                 int foundPermissionTablesOrBlocks = 0, foundHttpRequestBlocks = 0;
@@ -2789,73 +3338,20 @@ namespace ApiDoctor.ConsoleApp
                             break;
                         case PermissionsInsertionState.InsertPermissionBlock:
                             var includeFileMetadata = "---\r\ndescription: \"Automatically generated file. DO NOT MODIFY\"\r\nms.topic: include\r\nms.localizationpriority: medium\r\n---\r\n\r\n";
-                            var permissionFileContents = string.Empty;
+                            var permissionsFileContents = string.Empty;
                             if (!isBootstrapped)
                             {
                                 var existingPermissionsTable = originalFileContents.Skip(insertionStartLine + 2).Take(insertionEndLine - insertionStartLine - 1);
-                                permissionFileContents =  $"{includeFileMetadata}{ConvertToThreeColumnPermissionsTable(existingPermissionsTable)}";
+                                permissionsFileContents =  $"{includeFileMetadata}{ConvertToThreeColumnPermissionsTable(existingPermissionsTable)}";
                             }
 
-                            if (!options.BootstrappingOnly)
+                            if (httpRequestStartLine == -1)
                             {
-                                if (httpRequestStartLine == -1)
-                                {
-                                    finishedParsing = true;
-                                    break;
-                                }
-
-                                var httpRequests = new List<string>(originalFileContents.Skip(httpRequestStartLine + 1).Take(httpRequestEndLine - httpRequestStartLine - 1));
-                                FancyConsole.WriteLine($"Fetching permissions table ({foundPermissionTablesOrBlocks}) for {docFile.DisplayName}");
-                                var newPermissionFileContents = GetPermissionsMarkdownTableForHttpRequestBlock(httpRequests, permissionsDocument); // get from Kibali
-                                if (!string.IsNullOrWhiteSpace(newPermissionFileContents))
-                                {
-                                    permissionFileContents = $"{includeFileMetadata}{newPermissionFileContents}";
-                                    FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"Permissions table ({foundPermissionTablesOrBlocks}) updated for {docFile.DisplayName}");
-                                }
-                                else
-                                {
-                                    FancyConsole.WriteLine($"No permissions data found for '{httpRequests.FirstOrDefault()}' in {docFile.DisplayName}");
-                                }
-                            }
-
-                            if (string.IsNullOrWhiteSpace(permissionFileContents))
-                            {
-                                parseStatus = PermissionsInsertionState.FindNextPermissionBlock;
+                                finishedParsing = true;
                                 break;
                             }
 
-                            // update boilerplate text
-                            if (!isBootstrapped && boilerplateStartLine > -1)
-                            {
-                                if (foundPermissionTablesOrBlocks == 1)
-                                {
-                                    // We do not have a boilerplate text in this case, add new next line
-                                    if(boilerplateStartLine == permissionsHeaderIndex)
-                                    {
-                                        // insert a new line to hold boilerplate text
-                                        originalFileContents = FileSplicer(originalFileContents, boilerplateStartLine, Constants.PermissionConstants.DefaultBoilerPlateText).ToArray();
-                                        boilerplateStartLine++;
-                                        insertionStartLine++;
-                                        insertionEndLine++;
-                                    }
-                                    else {
-                                        if (boilerplateEndLine > boilerplateStartLine)
-                                        {
-                                            int extraLinesToRemove = boilerplateEndLine - boilerplateStartLine;
-                                            originalFileContents = originalFileContents.Splice(boilerplateStartLine + 1, extraLinesToRemove).ToArray();
-                                            insertionStartLine -= extraLinesToRemove;
-                                            insertionEndLine -= extraLinesToRemove;
-                                        }
-                                        originalFileContents[boilerplateStartLine] = Constants.PermissionConstants.DefaultBoilerPlateText;
-                                    }
-                                }
-                                else if (foundPermissionTablesOrBlocks == 2) {
-                                    originalFileContents[boilerplateStartLine] = Constants.PermissionConstants.MultipleTableBoilerPlateText;
-                                }
-                            }
-
-                            if (!isBootstrapped && boilerplateStartLine == -1)
-                                FancyConsole.WriteLine(ConsoleColor.Yellow, $"Permissions boilerplate text for {docFile.DisplayName} was not updated");
+                            var httpRequests = new List<string>(originalFileContents.Skip(httpRequestStartLine + 1).Take(httpRequestEndLine - httpRequestStartLine - 1));
 
                             // create folder and file names
                             var permissionsFileRelativePath = Path.Combine("includes", "permissions");
@@ -2864,18 +3360,37 @@ namespace ApiDoctor.ConsoleApp
 
                             // write permissions to separate Markdown file
                             var permissionsDirectory = Path.Combine(Directory.GetParent(Path.GetDirectoryName(docFile.FullPath)).FullName, permissionsFileRelativePath);
-                            Directory.CreateDirectory(permissionsDirectory); // make sure the '/includes/permissions' directory exists
                             var permissionsMarkdownFilePath = Path.Combine(permissionsDirectory, permissionsFileName);
-                            FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"Writing permissions table to {permissionsMarkdownFilePath}");
-                            await File.WriteAllTextAsync(permissionsMarkdownFilePath, permissionFileContents);
 
-                            // insert permissions block text into doc file
-                            var permissionsBlockText = $"<!-- {{ \"blockType\": \"permissions\", \"name\": \"{docFileName.Replace("-", "_")}\" }} -->\r\n" +
-                                $"[!INCLUDE [permissions-table](../{ReplaceWindowsByLinuxPathSeparators(Path.Combine(permissionsFileRelativePath, permissionsFileName))})]";
-                            IEnumerable<string> updatedFileContents = originalFileContents;
-                            updatedFileContents = updatedFileContents.Splice(insertionStartLine, insertionEndLine + 1 - insertionStartLine);
-                            updatedFileContents = FileSplicer(updatedFileContents.ToArray(), insertionStartLine - 1, permissionsBlockText);
-                            await File.WriteAllLinesAsync(docFile.FullPath, updatedFileContents);
+                            if (string.IsNullOrEmpty(permissionsFileContents))
+                            {
+                                permissionsFileContents = await File.ReadAllTextAsync(permissionsMarkdownFilePath);
+                            }
+                            var foundPermissions = GetPermissionsFromNewTable(permissionsFileContents);
+                            foreach (var httpRequest in httpRequests)
+                            {
+                                if (string.IsNullOrWhiteSpace(httpRequest))
+                                    continue;
+
+                                foreach (var (scopeType, leastPrivilegePermissions, higherPrivilegedPermissions) in foundPermissions)
+                                {
+                                    var existingPermissions = allPermissions.Where(x => x.scopeType == scopeType && x.requestUrl == httpRequest).FirstOrDefault();
+                                    if (existingPermissions != default)
+                                    {
+                                        existingPermissions.leastPrivilegedPermissions = string.IsNullOrEmpty(existingPermissions.leastPrivilegedPermissions) && !string.IsNullOrEmpty(leastPrivilegePermissions)
+                                            ? leastPrivilegePermissions
+                                            : $"{existingPermissions.leastPrivilegedPermissions}, {leastPrivilegePermissions}";
+
+                                        existingPermissions.higherPrivilegedPermissions = string.IsNullOrEmpty(existingPermissions.higherPrivilegedPermissions) && !string.IsNullOrEmpty(higherPrivilegedPermissions)
+                                            ? higherPrivilegedPermissions
+                                            : $"{existingPermissions.higherPrivilegedPermissions}, {higherPrivilegedPermissions}";
+                                    }
+                                    else
+                                    {
+                                        allPermissions.Add((httpRequest, scopeType, leastPrivilegePermissions, higherPrivilegedPermissions));
+                                    }
+                                }
+                            }
                             parseStatus = PermissionsInsertionState.FindNextPermissionBlock;
                             break;
                         case PermissionsInsertionState.FindNextPermissionBlock:
@@ -2898,6 +3413,15 @@ namespace ApiDoctor.ConsoleApp
                 if (foundPermissionTablesOrBlocks == 0)
                     FancyConsole.WriteLine(ConsoleColor.Yellow, $"Could not locate permissions table for {docFile.DisplayName}");
             }
+
+            //var filePath = "C:\\Users\\miachien\\Downloads\\file.txt";
+            //using StreamWriter writer = new(filePath);
+            foreach (var (requestUrl, scopeType, leastPrivilegedPermissions, higherPrivilegedPermissions) in allPermissions)
+            {
+                // writer.WriteLine($"{requestUrl},{scopeType},{leastPrivilegedPermissions},{higherPrivilegedPermissions}");
+                Console.WriteLine($"{requestUrl},{scopeType},{leastPrivilegedPermissions},{higherPrivilegedPermissions}");
+            }
+
             return true;
         }
 
@@ -2959,6 +3483,77 @@ namespace ApiDoctor.ConsoleApp
                 }
             }
             return null;
+        }
+
+        public static List<(string scopeType, string leastPrivilegePermissions, string higherPrivilegedPermissions)> GetPermissionsFromNewTable(string markdownTable)
+        {
+            List<(string scopeType, string leastPrivilegePermissions, string higherPrivilegedPermissions)> permissionsTuple = [];
+
+            string[] rows = markdownTable.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (string row in rows.Skip(1))
+            {
+                string[] cells = Regex.Split(row.Trim(), @"\s*\|\s*").Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
+
+                var leastPrivilegePermissions = cells[1].Trim();
+                var higherPrivilegePermissions = cells[2].Trim();
+                if (cells[0].Trim().StartsWith("Delegated", StringComparison.OrdinalIgnoreCase) && cells[0].Contains("work", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (!string.IsNullOrWhiteSpace(leastPrivilegePermissions) && !PermissionKeywordsToIgnore.Contains(leastPrivilegePermissions, StringComparer.OrdinalIgnoreCase))
+                    {
+                        leastPrivilegePermissions = "";
+                    }
+                    if (!string.IsNullOrWhiteSpace(higherPrivilegePermissions) && !PermissionKeywordsToIgnore.Contains(higherPrivilegePermissions, StringComparer.OrdinalIgnoreCase))
+                    {
+                        higherPrivilegePermissions = "";
+                    }
+
+                    if (string.IsNullOrEmpty(leastPrivilegePermissions) && string.IsNullOrEmpty(higherPrivilegePermissions))
+                    {
+                        continue;
+                    }
+
+                    permissionsTuple.Add(("DelegatedWork", leastPrivilegePermissions, higherPrivilegePermissions));
+                }
+                else if (cells[0].Trim().StartsWith("Delegated", StringComparison.OrdinalIgnoreCase) && cells[0].Contains("personal", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (!string.IsNullOrWhiteSpace(leastPrivilegePermissions) && !PermissionKeywordsToIgnore.Contains(leastPrivilegePermissions, StringComparer.OrdinalIgnoreCase))
+                    {
+                        leastPrivilegePermissions = "";
+                    }
+                    if (!string.IsNullOrWhiteSpace(higherPrivilegePermissions) && !PermissionKeywordsToIgnore.Contains(higherPrivilegePermissions, StringComparer.OrdinalIgnoreCase))
+                    {
+                        higherPrivilegePermissions = "";
+                    }
+
+                    if (string.IsNullOrEmpty(leastPrivilegePermissions) && string.IsNullOrEmpty(higherPrivilegePermissions))
+                    {
+                        continue;
+                    }
+
+                    permissionsTuple.Add(("DelegatedPersonal", leastPrivilegePermissions, higherPrivilegePermissions));
+                }
+
+                else if (cells[0].Trim().Equals("Application", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (!string.IsNullOrWhiteSpace(leastPrivilegePermissions) && !PermissionKeywordsToIgnore.Contains(leastPrivilegePermissions, StringComparer.OrdinalIgnoreCase))
+                    {
+                        leastPrivilegePermissions = "";
+                    }
+                    if (!string.IsNullOrWhiteSpace(higherPrivilegePermissions) && !PermissionKeywordsToIgnore.Contains(higherPrivilegePermissions, StringComparer.OrdinalIgnoreCase))
+                    {
+                        higherPrivilegePermissions = "";
+                    }
+
+                    if (string.IsNullOrEmpty(leastPrivilegePermissions) && string.IsNullOrEmpty(higherPrivilegePermissions))
+                    {
+                        continue;
+                    }
+
+                    permissionsTuple.Add(("Application", leastPrivilegePermissions, higherPrivilegePermissions));
+                }
+            }
+            return permissionsTuple;
         }
 
         private static async Task<PermissionsDocument> GetPermissionsDocumentAsync(string filePathOrUrl)
