@@ -3550,7 +3550,7 @@ namespace ApiDoctor.ConsoleApp
             foreach (var (requestUrl, fileName, scopeType, leastPrivilegedPermissions, higherPrivilegedPermissions) in allPermissions)
             {
                 // writer.WriteLine($"{requestUrl},{scopeType},{leastPrivilegedPermissions},{higherPrivilegedPermissions}");
-                Console.WriteLine($"{requestUrl},{fileName},{scopeType},{leastPrivilegedPermissions},{higherPrivilegedPermissions}");
+                Console.WriteLine($"{requestUrl};{fileName};{scopeType};{leastPrivilegedPermissions};{higherPrivilegedPermissions}");
             }
 
             return true;
