@@ -3633,11 +3633,11 @@ namespace ApiDoctor.ConsoleApp
                 var higherPrivilegePermissions = cells[2].Trim();
                 if (cells[0].Trim().StartsWith("Delegated", StringComparison.OrdinalIgnoreCase) && cells[0].Contains("work", StringComparison.OrdinalIgnoreCase))
                 {
-                    if (!string.IsNullOrWhiteSpace(leastPrivilegePermissions) && !PermissionKeywordsToIgnore.Contains(leastPrivilegePermissions, StringComparer.OrdinalIgnoreCase))
+                    if (!string.IsNullOrWhiteSpace(leastPrivilegePermissions) && PermissionKeywordsToIgnore.Contains(leastPrivilegePermissions, StringComparer.OrdinalIgnoreCase))
                     {
                         leastPrivilegePermissions = "";
                     }
-                    if (!string.IsNullOrWhiteSpace(higherPrivilegePermissions) && !PermissionKeywordsToIgnore.Contains(higherPrivilegePermissions, StringComparer.OrdinalIgnoreCase))
+                    if (!string.IsNullOrWhiteSpace(higherPrivilegePermissions) && PermissionKeywordsToIgnore.Contains(higherPrivilegePermissions, StringComparer.OrdinalIgnoreCase))
                     {
                         higherPrivilegePermissions = "";
                     }
@@ -3651,11 +3651,11 @@ namespace ApiDoctor.ConsoleApp
                 }
                 else if (cells[0].Trim().StartsWith("Delegated", StringComparison.OrdinalIgnoreCase) && cells[0].Contains("personal", StringComparison.OrdinalIgnoreCase))
                 {
-                    if (!string.IsNullOrWhiteSpace(leastPrivilegePermissions) && !PermissionKeywordsToIgnore.Contains(leastPrivilegePermissions, StringComparer.OrdinalIgnoreCase))
+                    if (!string.IsNullOrWhiteSpace(leastPrivilegePermissions) && PermissionKeywordsToIgnore.Contains(leastPrivilegePermissions, StringComparer.OrdinalIgnoreCase))
                     {
                         leastPrivilegePermissions = "";
                     }
-                    if (!string.IsNullOrWhiteSpace(higherPrivilegePermissions) && !PermissionKeywordsToIgnore.Contains(higherPrivilegePermissions, StringComparer.OrdinalIgnoreCase))
+                    if (!string.IsNullOrWhiteSpace(higherPrivilegePermissions) && PermissionKeywordsToIgnore.Contains(higherPrivilegePermissions, StringComparer.OrdinalIgnoreCase))
                     {
                         higherPrivilegePermissions = "";
                     }
@@ -3670,11 +3670,11 @@ namespace ApiDoctor.ConsoleApp
 
                 else if (cells[0].Trim().Equals("Application", StringComparison.OrdinalIgnoreCase))
                 {
-                    if (!string.IsNullOrWhiteSpace(leastPrivilegePermissions) && !PermissionKeywordsToIgnore.Contains(leastPrivilegePermissions, StringComparer.OrdinalIgnoreCase))
+                    if (!string.IsNullOrWhiteSpace(leastPrivilegePermissions) && PermissionKeywordsToIgnore.Contains(leastPrivilegePermissions, StringComparer.OrdinalIgnoreCase))
                     {
                         leastPrivilegePermissions = "";
                     }
-                    if (!string.IsNullOrWhiteSpace(higherPrivilegePermissions) && !PermissionKeywordsToIgnore.Contains(higherPrivilegePermissions, StringComparer.OrdinalIgnoreCase))
+                    if (!string.IsNullOrWhiteSpace(higherPrivilegePermissions) && PermissionKeywordsToIgnore.Contains(higherPrivilegePermissions, StringComparer.OrdinalIgnoreCase))
                     {
                         higherPrivilegePermissions = "";
                     }
