@@ -201,7 +201,7 @@ namespace ApiDoctor.Validation
 
         /// <summary>
         /// Indicates that a resource is extensible with additional properties that 
-        /// may not be defined in the documtnation.
+        /// may not be defined in the documentation.
         /// </summary>
         [JsonProperty("openType")]
         public bool IsOpenType { get; set; }
