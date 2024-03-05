@@ -36,7 +36,6 @@ namespace ApiDoctor.Validation
     using MarkdownDeep;
     using Newtonsoft.Json;
 
-
     /// <summary>
     /// A documentation file that may contain one more resources or API methods
     /// </summary>
@@ -503,7 +502,7 @@ namespace ApiDoctor.Validation
             return contentPreview;
         }
 
-        protected Config.DocumentHeader CreateHeaderFromBlock(Block block)
+        protected static Config.DocumentHeader CreateHeaderFromBlock(Block block)
         {
             var header = new Config.DocumentHeader();
             switch (block.BlockType)
@@ -1131,10 +1130,22 @@ namespace ApiDoctor.Validation
                                 return;
                             }
 
+                            var listOfTextToRemoveFromPropertyNames = DocSet.SchemaConfig?.TextToRemoveFromPropertyNames ?? [];
+                            var parametersFromTableDefinition = table.Rows.Cast<ParameterDefinition>()
+                            .Select(param =>
+                            {
+                                foreach (string text in listOfTextToRemoveFromPropertyNames)
+                                {
+                                    param.Name = param.Name.Replace(text, "").Trim();
+                                }
+                                return param;
+                            });
+
+
                             table.UsedIn.Add(onlyResource);
                             MergeParametersIntoCollection(
                                 onlyResource.Parameters,
-                                table.Rows.Cast<ParameterDefinition>(),
+                                parametersFromTableDefinition,
                                 issues.For(onlyResource.Name),
                                 addMissingParameters: true,
                                 expectedInResource: true,

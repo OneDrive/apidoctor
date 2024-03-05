@@ -43,11 +43,12 @@ namespace ApiDoctor.Validation.OData.Transformation
     {
         public SchemaConfig()
         {
-            RequiredYamlHeaders = new string[] {};
-            FoldersToSkip = new List<string>();
-            FilesToSkip = new List<string>();
-            TreatErrorsAsWarningsWorkloads = new List<string>();
-            SkipPermissionTableUpdateForWorkloads = new List<string>();
+            RequiredYamlHeaders = [];
+            FoldersToSkip = [];
+            FilesToSkip = [];
+            TreatErrorsAsWarningsWorkloads = [];
+            SkipPermissionTableUpdateForWorkloads = [];
+
         }
 
         /// <summary>
@@ -103,6 +104,12 @@ namespace ApiDoctor.Validation.OData.Transformation
         /// </summary>
         [JsonProperty("skipPermissionTableUpdateForWorkloads")]
         public List<string> SkipPermissionTableUpdateForWorkloads { get; set; }
+
+        /// <summary>
+        /// Text to remove from property names
+        /// </summary>
+        [JsonProperty("textToRemoveFromPropertyNames")]
+        public List<string> TextToRemoveFromPropertyNames { get; set; }
     }
 
     public class SchemaDiffConfig
