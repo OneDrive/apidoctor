@@ -23,14 +23,12 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+using ApiDoctor.Validation.Error;
+using MarkdownDeep;
 using System;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
-using ApiDoctor.Validation.Error;
 using System.Text.RegularExpressions;
-using MarkdownDeep;
-using System.Collections.Generic;
 
 namespace ApiDoctor.Validation.Tags
 {
@@ -49,6 +47,7 @@ namespace ApiDoctor.Validation.Tags
         private static Regex VideoFormat = new Regex(@"\[!VIDEO ((https]?):\/)?\/?([^:\/\s]+)((\/\w+)*\/)([\w\-\.]+[^#?\s]+)(.*)?(#[\w\-]+)?\]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static Regex CodeSnippetFormat = new Regex(@"\[!(code)(-)(\w*)\[(\w*)\]\((.*\))\]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static Regex TabHeaderFormat = new Regex(@"#\s\[[#-/.\w]+\]\(#tab\/([-/.\w]+)\)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static Regex MarkdownLintFormat = new Regex(@"<!--\s*markdownlint-(disable|enable)\s+(.*?)-->", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         private Action<ValidationError> LogMessage = null;
 
@@ -167,16 +166,17 @@ namespace ApiDoctor.Validation.Tags
                     if (IsIncludeLine(nextLine))
                     {
                         // if contains tilde, then file is not in current docset and cannot be validated
-                        if (nextLine.Contains("~"))
+                        if (nextLine.Contains('~'))
                         {
                             LogMessage(new ValidationError(ValidationErrorCode.MarkdownParserError, nextLine, "Cannot validate INCLUDE links referencing content outside of doc set"));
                             continue;
                         }
-
-                        var includeFile = GetIncludeFile(nextLine, sourceFile);
+                        var match = IncludeFormat.Match(nextLine);
+                        string includePath = match.Value;
+                        var includeFile = GetIncludeFile(includePath, sourceFile);
                         if (!includeFile.Exists)
                         {
-                            LogMessage(new ValidationError(ValidationErrorCode.ErrorOpeningFile, nextLine, "The included file {0} was not found", includeFile.FullName));
+                            LogMessage(new ValidationError(ValidationErrorCode.ErrorOpeningFile, includePath, "The included file {0} was not found", includeFile.FullName));
                             continue;
                         }
 
@@ -184,14 +184,18 @@ namespace ApiDoctor.Validation.Tags
                         {
                             if (includeFile.FullName.Equals(sourceFile.FullName))
                             {
-                                LogMessage(new ValidationError(ValidationErrorCode.MarkdownParserError, nextLine, "A Markdown file cannot include itself"));
+                                LogMessage(new ValidationError(ValidationErrorCode.MarkdownParserError, includePath, "A Markdown file cannot include itself"));
                                 continue;
                             }
 
                             // Include Files can have Yaml Front Matter as well.
                             var includeContent = Preprocess(includeFile, issues);
                             var (_, processedContent) = DocFile.ParseAndRemoveYamlFrontMatter(includeContent, issues,true);
-                            writer.WriteLine(processedContent);
+                            
+                            // removing Markdown lint and new lines from the beginning of markdown content since it breaks table structure if include link is within table
+                            processedContent = MarkdownLintFormat.Replace(processedContent, "").TrimStart(Environment.NewLine.ToCharArray());
+                            
+                            writer.WriteLine(nextLine.Replace(includePath, processedContent));
                         }
                         else
                         {
@@ -340,9 +344,9 @@ namespace ApiDoctor.Validation.Tags
             return text.Trim().ToUpper().Equals("[END]");
         }
 
-        private bool IsIncludeLine(string text)
+        private static bool IsIncludeLine(string text)
         {
-            if (text.ToUpper().Contains("INCLUDE"))
+            if (text.Contains("INCLUDE", StringComparison.OrdinalIgnoreCase))
             {
                 return IncludeFormat.IsMatch(text);
             }
