@@ -193,7 +193,7 @@ namespace ApiDoctor.Validation.Tags
                             var (_, processedContent) = DocFile.ParseAndRemoveYamlFrontMatter(includeContent, issues,true);
                             
                             // removing Markdown lint and new lines from the beginning of markdown content since it breaks table structure if include link is within table
-                            processedContent = MarkdownLintFormat.Replace(processedContent, "").TrimStart(Environment.NewLine.ToCharArray());
+                            processedContent = MarkdownLintFormat.Replace(processedContent, "").Trim();
                             
                             writer.WriteLine(nextLine.Replace(includePath, processedContent));
                         }

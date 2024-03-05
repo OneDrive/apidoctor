@@ -1805,7 +1805,12 @@ namespace ApiDoctor.Publishing.CSDL
                 }
 
                 var verb = method.HttpMethodVerb();
+                if (string.IsNullOrWhiteSpace(verb))
+                    continue;
+
                 var restrictionTerm = GetRestrictionTermForMethod(verb);
+                if (string.IsNullOrWhiteSpace(restrictionTerm))
+                    continue;
 
                 bool targetExists = targets.TryGetValue(path, out var targetAnnotations);
                 IODataAnnotatable readAnnotatable = targetAnnotations?
