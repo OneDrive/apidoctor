@@ -411,6 +411,7 @@ namespace ApiDoctor.Validation
                         $"Missing value for referenced base type in resource {resource.Name}");
                 }
 
+                var docIssues = issues.For(resource.SourceFile.DisplayName);
                 foreach (var param in resource.Parameters)
                 {
                     if (param.Type?.CustomTypeName != null)
@@ -423,7 +424,7 @@ namespace ApiDoctor.Validation
                     {
                         if (string.IsNullOrWhiteSpace(resource.BaseType) || !resource.ResolvedBaseTypeReference.HasOrInheritsProperty(param.Name))
                         {
-                            issues.Error(ValidationErrorCode.AdditionalPropertyDetected,
+                            docIssues.Error(ValidationErrorCode.AdditionalPropertyDetected,
                                 $"Property '{param.Name}' found in resource definition for '{resource.Name}', but not described in markdown table.");
                         }
                     }
