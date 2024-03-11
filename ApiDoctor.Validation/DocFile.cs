@@ -580,7 +580,8 @@ namespace ApiDoctor.Validation
                     else if (previousHeaderBlock.BlockType == BlockType.h1)
                     {
                         methodDescriptionsData.Add(block.Content);
-                        methodDescription = string.Join(" ", methodDescriptionsData.SkipWhile(x => x.StartsWith("Namespace:"))).ToStringClean();
+                        // make sure we omit the namespace description as well as the national cloud deployments paragraphs
+                        methodDescription = string.Join(" ", methodDescriptionsData.Where(static x => !x.StartsWith("Namespace:", StringComparison.OrdinalIgnoreCase) && !x.Contains("[national cloud deployments](/graph/deployments)", StringComparison.OrdinalIgnoreCase))).ToStringClean();
                         issues.Message($"Found description: {methodDescription}");
                     }
                 }
@@ -693,17 +694,20 @@ namespace ApiDoctor.Validation
         /// <returns></returns>
         public void CheckDocumentStructure(IssueLogger issues)
         {
-            var expectedHeaders = this.DocumentPageType switch
+            if (this.Parent.DocumentStructure != null)
             {
-                PageType.ApiPageType => ExpectedDocumentHeader.CopyHeaders(this.Parent.DocumentStructure.ApiPageType),
-                PageType.ResourcePageType => ExpectedDocumentHeader.CopyHeaders(this.Parent.DocumentStructure.ResourcePageType),
-                PageType.EnumPageType => ExpectedDocumentHeader.CopyHeaders(this.Parent.DocumentStructure.EnumPageType),
-                PageType.ConceptualPageType => ExpectedDocumentHeader.CopyHeaders(this.Parent.DocumentStructure.ConceptualPageType),
-                _ => [],
-            };
-            if (expectedHeaders.Count != 0)
-            {
-                CheckDocumentHeaders(expectedHeaders, this.DocumentHeaders, issues);
+                var expectedHeaders = this.DocumentPageType switch
+                {
+                    PageType.ApiPageType => ExpectedDocumentHeader.CopyHeaders(this.Parent.DocumentStructure.ApiPageType),
+                    PageType.ResourcePageType => ExpectedDocumentHeader.CopyHeaders(this.Parent.DocumentStructure.ResourcePageType),
+                    PageType.EnumPageType => ExpectedDocumentHeader.CopyHeaders(this.Parent.DocumentStructure.EnumPageType),
+                    PageType.ConceptualPageType => ExpectedDocumentHeader.CopyHeaders(this.Parent.DocumentStructure.ConceptualPageType),
+                    _ => [],
+                };
+                if (expectedHeaders.Count != 0)
+                {
+                    CheckDocumentHeaders(expectedHeaders, this.DocumentHeaders, issues);
+                }
             }
             ValidateTabStructure(issues);
         }
