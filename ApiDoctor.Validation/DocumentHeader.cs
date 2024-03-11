@@ -1,9 +1,7 @@
-﻿using ApiDoctor.Validation.Config;
-using Fastenshtein;
+﻿using Fastenshtein;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Runtime.Serialization;
 
 namespace ApiDoctor.Validation
 {
