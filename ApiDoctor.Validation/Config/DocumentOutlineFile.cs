@@ -25,146 +25,75 @@
 
 namespace ApiDoctor.Validation.Config
 {
-    using System;
-    using System.Linq;
-    using System.Collections.Generic;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
-    using Fastenshtein;
+    using System;
+    using System.Collections.Generic;
 
     public class DocumentOutlineFile : ConfigFile
     {
         [JsonProperty("apiPageType"), JsonConverter(typeof(DocumentHeaderJsonConverter))]
-        public List<object> ApiPageType { get; set; }
+        public List<object> ApiPageType { get; set; } = [];
 
         [JsonProperty("resourcePageType"), JsonConverter(typeof(DocumentHeaderJsonConverter))]
-        public List<object> ResourcePageType { get; set; }
+        public List<object> ResourcePageType { get; set; } = [];
 
         [JsonProperty("conceptualPageType"), JsonConverter(typeof(DocumentHeaderJsonConverter))]
-        public List<object> ConceptualPageType { get; set; }
+        public List<object> ConceptualPageType { get; set; } = [];
 
         [JsonProperty("enumPageType"), JsonConverter(typeof(DocumentHeaderJsonConverter))]
-        public List<object> EnumPageType { get; set; }
+        public List<object> EnumPageType { get; set; } = [];
 
-        public override bool IsValid => this.ApiPageType.Any() || this.ResourcePageType.Any() || this.ConceptualPageType.Any() || this.EnumPageType.Any();
-
-        public DocumentOutlineFile()
-        {
-            ApiPageType = new List<object>();
-            ResourcePageType = new List<object>();
-            ConceptualPageType = new List<object>();
-            EnumPageType = new List<object>();
-        }
+        public override bool IsValid => ApiPageType.Count > 0 || ResourcePageType.Count > 0 || ConceptualPageType.Count > 0 || EnumPageType.Count > 0;
     }
 
-    public class DocumentHeader
+
+    public class ExpectedDocumentHeader : DocumentHeader
     {
-        public DocumentHeader()
-        {
-            Level = 1;
-            ChildHeaders = new List<DocumentHeader>();
-        }
-
-        /// <summary>
-        /// Represents the header level using markdown formatting (1=#, 2=##, 3=###, 4=####, 5=#####, 6=######)
-        /// </summary>
-        [JsonProperty("level")]
-        public int Level { get; set; }
-
-        /// <summary>
-        /// Indicates that a header at this level is required.
-        /// </summary>
-        [JsonProperty("required")]
-        public bool Required { get; set; }
-
-        /// <summary>
-        /// The expected value of a title or empty to indicate any value
-        /// </summary>
-        [JsonProperty("title")]
-        public string Title { get; set; }
-
-        /// <summary>
-        /// Specifies the headers that are allowed under this header.
-        /// </summary>
-        [JsonProperty("headers")]
-        public List<DocumentHeader> ChildHeaders { get; set; }
-
-        internal bool Matches(DocumentHeader found, bool ignoreCase = false, bool checkStringDistance = false)
-        {
-            if (checkStringDistance)
-                return IsMisspelt(found);
-
-            return this.Level == found.Level && DoTitlesMatch(this.Title, found.Title, ignoreCase);
-        }
-
-        private static bool DoTitlesMatch(string expectedTitle, string foundTitle, bool ignoreCase)
-        {
-            StringComparison comparisonType = StringComparison.Ordinal;
-            if (ignoreCase) 
-                comparisonType = StringComparison.OrdinalIgnoreCase;
-
-            if (expectedTitle.Equals(foundTitle, comparisonType))
-                return true;
-
-            if (string.IsNullOrEmpty(expectedTitle) || expectedTitle == "*") 
-                return true;
-
-            if (expectedTitle.StartsWith("* ") && foundTitle.EndsWith(expectedTitle.Substring(2), comparisonType)) 
-                return true;
-
-            if (expectedTitle.EndsWith(" *") && foundTitle.StartsWith(expectedTitle[..^2], comparisonType)) 
-                return true;
-
-            return false;
-        }
-        internal bool IsMisspelt(DocumentHeader found)
-        {
-            return this.Level == found.Level && Levenshtein.Distance(this.Title, found.Title) < 3;
-        }
-
-        public override string ToString()
-        {
-            return this.Title;
-        }
-    }
-
-    public class ExpectedHeader : DocumentHeader
-    {
-        public ExpectedHeader()
-        {
-            Level = 1;
-            ChildHeaders = new List<object>();
-        }
-
         /// <summary>
         /// Indicates that a header pattern can be repeated multiple times e.g. in the case of multiple examples
         /// </summary>
-        [JsonProperty("multiple")]
-        public bool Multiple { get; set; }
+        [JsonProperty("allowMultiple")]
+        public bool AllowMultiple { get; set; }
 
         /// <summary>
         /// Specifies the headers that are allowed under this header.
         /// </summary>
         [JsonProperty("headers"), JsonConverter(typeof(DocumentHeaderJsonConverter))]
-        public new List<object> ChildHeaders { get; set; }
+        public new List<object> ChildHeaders { get; set; } = [];
 
-        public ExpectedHeader Clone()
+        public ExpectedDocumentHeader() { }
+
+        public ExpectedDocumentHeader(ExpectedDocumentHeader original) : base(original)
         {
-            var header = this.MemberwiseClone() as ExpectedHeader;
-            var childHeaders = new List<object>();
-            foreach (var childHeader in this.ChildHeaders)
+            if (original == null)
+                return;
+
+           AllowMultiple = original.AllowMultiple;
+
+           ChildHeaders = CopyHeaders(original.ChildHeaders);
+        }
+
+        public static List<object> CopyHeaders(List<object> headers)
+        {
+            if (headers == null) 
+                return null;
+
+            var headersCopy = new List<object>();
+            foreach (var header in headers)
             {
-                if (childHeader is ExpectedHeader expectedChildHeader)
-                    childHeaders.Add(expectedChildHeader.Clone());
-                else
-                    childHeaders.Add(((ConditionalHeader)childHeader).Clone());
+                headersCopy.Add(header switch
+                {
+                    ConditionalDocumentHeader conditionalDocHeader => new ConditionalDocumentHeader(conditionalDocHeader),
+                    ExpectedDocumentHeader expectedDocHeader => new ExpectedDocumentHeader(expectedDocHeader),
+                    _ => throw new InvalidOperationException("Unexpected header type")
+                });
             }
-            header.ChildHeaders = childHeaders;
-            return header;
+            return headersCopy;
         }
     }
 
-    public class ConditionalHeader
+    public class ConditionalDocumentHeader
     {
         [JsonProperty("condition")]
         public string Condition { get; set; }
@@ -180,19 +109,14 @@ namespace ApiDoctor.Validation.Config
             }
         }
 
-        public ConditionalHeader Clone()
+        public ConditionalDocumentHeader(ConditionalDocumentHeader original)
         {
-            var header = (ConditionalHeader)this.MemberwiseClone();
-            var arguments = new List<object>();
-            foreach (var arg in this.Arguments)
-            {
-                if (arg is ExpectedHeader headerArg)
-                    arguments.Add(headerArg.Clone());
-                else
-                    arguments.Add(((ConditionalHeader)arg).Clone());
-            }
-            header.Arguments = arguments;
-            return header;
+           if (original == null)
+                return;
+
+           Condition = original.Condition;
+
+           Arguments = ExpectedDocumentHeader.CopyHeaders(original.Arguments);
         }
     }
 
@@ -204,56 +128,35 @@ namespace ApiDoctor.Validation.Config
 
     public class DocumentHeaderJsonConverter : JsonConverter
     {
-        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        public override bool CanConvert(Type objectType)
         {
-            serializer.Serialize(writer, value);
+            return objectType == typeof(ExpectedDocumentHeader) || objectType == typeof(ConditionalDocumentHeader);
         }
 
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
             if (reader.TokenType == JsonToken.StartArray)
             {
-                var jArray = JArray.Load(reader);
                 var allowedHeaders = new List<object>();
+                var jArray = JArray.Load(reader);
                 foreach (var item in jArray)
                 {
-                    bool isConditionalHeader = item.ToString().TryParseJson(out ConditionalHeader conditionalHeader);
-                    if (isConditionalHeader)
+                    if (item["condition"] != null)
                     {
+                        var conditionalHeader = item.ToObject<ConditionalDocumentHeader>(serializer);
                         allowedHeaders.Add(conditionalHeader);
-                        continue;
                     }
-
-                    bool isExpectedHeader = item.ToString().TryParseJson(out ExpectedHeader header);
-                    if (isExpectedHeader)
+                    else if (item["title"] != null)
                     {
-                        allowedHeaders.Add(header);
-                        continue;
+                        var expectedHeader = item.ToObject<ExpectedDocumentHeader>(serializer);
+                        allowedHeaders.Add(expectedHeader);
                     }
-
-                    // Object is neither of type ExpectedHeader nor ConditionalHeader
-                    throw new JsonReaderException("Invalid document header definition");
+                    else
+                    {
+                        throw new JsonReaderException("Invalid document header definition");
+                    }
                 }
                 return allowedHeaders;
-            }
-            else if (reader.TokenType == JsonToken.StartObject)
-            {
-                var jObject = JObject.Load(reader);
-
-                bool isConditionalHeader = jObject.ToString().TryParseJson(out ConditionalHeader conditionalHeader);
-                if (isConditionalHeader)
-                {
-                    return conditionalHeader;
-                }
-
-                bool isExpectedHeader = jObject.ToString().TryParseJson(out ExpectedHeader header);
-                if (isExpectedHeader)
-                {
-                    return header;
-                }
-
-                // Object is neither of type ExpectedHeader nor ConditionalHeader
-                throw new JsonReaderException($"Invalid document header definition: {jObject.ToString()}");
             }
             else if (reader.TokenType == JsonToken.Null)
             {
@@ -265,9 +168,10 @@ namespace ApiDoctor.Validation.Config
             }
         }
 
-        public override bool CanConvert(Type objectType)
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
-            return false;
+            serializer.Serialize(writer, value);
         }
     }
+
 }

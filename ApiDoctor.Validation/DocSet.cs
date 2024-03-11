@@ -273,11 +273,11 @@ namespace ApiDoctor.Validation
                 }
                 catch (JsonException ex)
                 {
-                    Logging.LogMessage(new ValidationWarning(ValidationErrorCode.JsonParserException, file.FullName, "JSON parser error: {0}", ex.Message));
+                    Logging.LogMessage(new ValidationError(ValidationErrorCode.JsonParserException, file.FullName, "JSON parser error: {0}", ex.Message));
                 }
                 catch (Exception ex)
                 {
-                    Logging.LogMessage(new ValidationWarning(ValidationErrorCode.JsonParserException, file.FullName, "Exception reading file: {0}", ex.Message));
+                    Logging.LogMessage(new ValidationError(ValidationErrorCode.JsonParserException, file.FullName, "Exception reading file: {0}", ex.Message));
                 }
 
             }
