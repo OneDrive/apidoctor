@@ -47,7 +47,7 @@ namespace ApiDoctor.Validation
 
         private static readonly Regex likelyBase64Regex = new("^[a-fA-F0-9+=/]+$", RegexOptions.Compiled);
 
-        private static readonly Regex markdownLinkRegex = new(@"\[(.*?)\]((\(.*?\))|(\s*:\s*\w+))", RegexOptions.Compiled);
+        private static readonly Regex markdownLinkRegex = new(@"\[(.*?)\]((\(.*?\))|(\[.*?\])|(\s*:\s*\w+))", RegexOptions.Compiled);
 
         private static readonly Regex markdownBoldRegex = new(@"\*\*(.*?)\*\*", RegexOptions.Compiled);
        
@@ -243,7 +243,7 @@ namespace ApiDoctor.Validation
             // Remove code (`code`)
             markdownText = markdownCodeRegex .Replace(markdownText, "$1");
 
-            // Remove links [text](link_target) or [text]: link_reference    
+            // Remove links [text](link_target) or [text]: link_reference  or [text][] or [text][link_reference]   
             markdownText = markdownLinkRegex.Replace(markdownText, "$1");
             
             return markdownText;
