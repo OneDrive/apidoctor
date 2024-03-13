@@ -1940,10 +1940,10 @@ namespace ApiDoctor.Publishing.CSDL
 
 
         #region Links Annotations
-        private static string CreateHrefValue(string sourceFilePath)
+        private static string CreateHrefValue(MethodDefinition method)
         {
-            sourceFilePath = sourceFilePath.Remove(sourceFilePath.Length - 3); // remove .md file extension
-            var version = sourceFilePath.Contains("beta") ? "beta" : "1.0";
+            var sourceFilePath = method.SourceFile.DisplayName[..^3]; // remove .md file extension
+            var version = method.SourceFile.FullPath.Contains("beta") ? "beta" : "1.0";
 
             var uriBuilder = new UriBuilder()
             {
@@ -1955,7 +1955,7 @@ namespace ApiDoctor.Publishing.CSDL
             return uriBuilder.ToString();
         }
 
-        private static Record CreateLinksRecord(string sourceFilePath, string linkRel)
+        private static Record CreateLinksRecord(MethodDefinition method, string linkRel)
         {
             return new Record
             {
@@ -1969,7 +1969,7 @@ namespace ApiDoctor.Publishing.CSDL
                     new()
                     {
                         Property = "href",
-                        String = CreateHrefValue(sourceFilePath)
+                        String = CreateHrefValue(method)
                     }
                 }
             };
@@ -2002,7 +2002,7 @@ namespace ApiDoctor.Publishing.CSDL
             var linkRel = GetLinkRelValueForMethod(annotatable, method.HttpMethodVerb());
             if (linkRel == null) return;
 
-            var linkRecord = CreateLinksRecord(method.SourceFile.DisplayName, linkRel);
+            var linkRecord = CreateLinksRecord(method, linkRel);
 
             annotatable.Annotation ??= new List<Annotation>();
             var linkAnnotation = annotatable.Annotation.FirstOrDefault(x => x.Term == Term.LinksTerm);
@@ -2036,7 +2036,7 @@ namespace ApiDoctor.Publishing.CSDL
         {
             var readRestriction = annotatable.Annotation
                 .FirstOrDefault(annotation => annotation.Term == Term.LinksTerm);
-            var currentLinkRecord = CreateLinksRecord(sourceMethod.SourceFile.DisplayName, Term.LinkRel.ReadByKey);
+            var currentLinkRecord = CreateLinksRecord(sourceMethod, Term.LinkRel.ReadByKey);
             if (readRestriction != null)
             {
                 var propertyValue = readRestriction.Collection.Records
