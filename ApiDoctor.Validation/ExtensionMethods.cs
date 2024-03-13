@@ -245,6 +245,9 @@ namespace ApiDoctor.Validation
 
             // Remove links [text](link_target) or [text]: link_reference  or [text][] or [text][link_reference]   
             markdownText = markdownLinkRegex.Replace(markdownText, "$1");
+
+            // Remove line break character
+            markdownText = markdownText.Replace("&#xA;", " ");
             
             return markdownText;
         }
