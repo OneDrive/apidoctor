@@ -934,10 +934,17 @@ namespace ApiDoctor.Validation
             }
             else if (expectedConditionalHeader.Operator == ConditionalOperator.AND)
             {
-                expectedHeaders[expectedIndex] = expectedConditionalHeader.Arguments.First();
-                expectedHeaders.InsertRange(expectedIndex + 1, expectedConditionalHeader.Arguments.Skip(1));
+                if (expectedConditionalHeader.Arguments != null && expectedConditionalHeader.Arguments.Count > 0)
+                {
+                    expectedHeaders[expectedIndex] = expectedConditionalHeader.Arguments.First();
+                    expectedHeaders.InsertRange(expectedIndex + 1, expectedConditionalHeader.Arguments.Skip(1));
 
-                validationResult = ValidateDocumentHeader(expectedHeaders, foundHeaders, expectedIndex, foundIndex);
+                    validationResult = ValidateDocumentHeader(expectedHeaders, foundHeaders, expectedIndex, foundIndex);
+                }
+                else
+                {
+                    validationResult = DocumentHeaderValidationResult.ExtraDocumentHeaderFound;
+                }
             }
             return validationResult;
         }
