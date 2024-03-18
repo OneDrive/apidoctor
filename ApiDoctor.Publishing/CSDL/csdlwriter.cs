@@ -425,18 +425,18 @@ namespace ApiDoctor.Publishing.CSDL
                     var prefix = schema.Namespace + "." + container.Name;
                     foreach (var entitySet in container.EntitySets)
                     {
-                        var annotationName = prefix + "/" + entitySet.Name;
+                        var annotationTarget = prefix + "/" + entitySet.Name;
                         AddLinkAndRestrictionAnnotations(edmx, annotationsMap, entitySet,
                             entitySet.SourceMethods as MethodCollection,
-                            annotationName, issues.For(annotationName));
+                            annotationTarget, issues.For(annotationTarget));
                     }
 
                     foreach (var singleton in container.Singletons)
                     {
-                        var annotationName = prefix + "/" + singleton.Name;
+                        var annotationTarget = prefix + "/" + singleton.Name;
                         AddLinkAndRestrictionAnnotations(edmx, annotationsMap, singleton,
                             singleton.SourceMethods as MethodCollection,
-                            annotationName, issues.For(annotationName));
+                            annotationTarget, issues.For(annotationTarget));
                     }
                 }
                 schema.Annotations = annotationsMap.Values.ToList();
@@ -638,29 +638,22 @@ namespace ApiDoctor.Publishing.CSDL
         {
             if (annotatable.Annotation?.Count > 0)
             {
-                Annotations annotations;
-                if (schemaLevelAnnotations.TryGetValue(fullName, out annotations))
+                if (schemaLevelAnnotations.TryGetValue(fullName, out Annotations targetAnnotations))
                 {
                     foreach (var annotation in annotatable.Annotation)
                     {
-                        var existingAnnotation = annotations.AnnotationList.FirstOrDefault(a => a.Term == annotation.Term);
+                        var existingAnnotation = targetAnnotations.AnnotationList.FirstOrDefault(a => a.Term == annotation.Term);
                         if (existingAnnotation != null && annotation.Collection != null && annotation.Collection.Records?.Count > 0)
                         {
-                            if (existingAnnotation.Collection == null)
-                            {
-                                existingAnnotation.Collection = new RecordCollection();
-                            }
+                            existingAnnotation.Collection ??= new RecordCollection();
 
-                            if (existingAnnotation.Collection.Records == null)
-                            {
-                                existingAnnotation.Collection.Records = new List<Record>();
-                            }
+                            existingAnnotation.Collection.Records ??= new List<Record>();
 
                             existingAnnotation.Collection.Records.AddRange(annotation.Collection.Records);
                         }
                         else
                         {
-                            annotations.AnnotationList.Add(annotation);
+                            targetAnnotations.AnnotationList.Add(annotation);
                         }
                     }
                 }
@@ -1632,7 +1625,7 @@ namespace ApiDoctor.Publishing.CSDL
         private static ActionOrFunctionBase FindActionOrFunctionTarget(string path, EntityFramework edmx, IssueLogger issues)
         {
             ActionOrFunctionBase actionOrFunction = null;
-            string[] requestParts = path.Substring(1).Split(new char[] { '/' });
+            string[] requestParts = path[1..].Split(['/']);
 
             if (requestParts.Length < 2 || requestParts.Last() == "{var}")
                 return null;
@@ -1654,13 +1647,15 @@ namespace ApiDoctor.Publishing.CSDL
                     if (requestTarget.QualifiedType.IsCollection())
                         bindingParameterType = $"Collection({bindingParameterType})";
 
+                    int bracketStartIndex = requestParts.Last().IndexOf('(');
+                    var actionOrFunctionName = bracketStartIndex == 1 ? requestParts.Last() : requestParts.Last()[..bracketStartIndex];      
                     var matches = actionsAndFunctions.Where(x =>
                         x.IsBound &&
-                        (x.Name.IEquals(requestParts.Last()) || x.ParameterizedName.IEquals(requestParts.Last())) &&
+                        (x.Name.IEquals(actionOrFunctionName) || x.ParameterizedName.IEquals(requestParts.Last())) &&
                         x.Parameters.Any(x => x.Type == bindingParameterType))
                         .ToList();
 
-                    if (matches.Any())
+                    if (matches.Count != 0)
                     {
                         actionOrFunction = matches.Where(x => x.Parameters.Any(x => x.Name == "bindingParameter")).FirstOrDefault();
                         if (actionOrFunction == null && matches.Count == 1) // bindingParameter not specified but can be deduced
@@ -1681,6 +1676,8 @@ namespace ApiDoctor.Publishing.CSDL
         private static string FindNavigationPropertyTarget(string path, EntityFramework edmx, IssueLogger issues)
         {
             var requestParts = path.Substring(1).Split(new char[] { '/' }).ToList();
+
+            var req = path.Split(new char[] { '/' }).ToList();
 
             if (requestParts.Count < 2)
                 return null;
