@@ -1087,7 +1087,7 @@ namespace ApiDoctor.Publishing.CSDL
         private static readonly System.Text.RegularExpressions.Regex EntitySetPathRegEx = new(@"^\/(\w*)\/{var}$", System.Text.RegularExpressions.RegexOptions.Compiled);
         // Singleton is something in the format of /name or /root/child/subChild where root is the singleton
         private static readonly System.Text.RegularExpressions.Regex SingletonPathRegEx = new(@"^\/(\w*)$", System.Text.RegularExpressions.RegexOptions.Compiled);
-        private static readonly System.Text.RegularExpressions.Regex FullPathRegEx = new(@"\/(\w+)", System.Text.RegularExpressions.RegexOptions.Compiled);
+        private static readonly System.Text.RegularExpressions.Regex FullPathRegEx = new(@"\/([\w\.]+)", System.Text.RegularExpressions.RegexOptions.Compiled);
 
         /// <summary>
         /// Parse the URI paths for methods defined in the documentation and construct an entity container that contains these
