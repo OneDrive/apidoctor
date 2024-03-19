@@ -868,7 +868,7 @@ namespace ApiDoctor.Publishing.CSDL
                 }
             }
 
-            if (target.Name.Contains("("))
+            if (target.Name.Contains('('))
             {
                 target.ParameterizedName = target.Name;
                 var pathParameters = target.Name.TextBetweenCharacters('(', ')').Split(',');
@@ -979,7 +979,7 @@ namespace ApiDoctor.Publishing.CSDL
         /// <returns></returns>
         private static ODataTargetInfo ParseRequestTargetType(string requestPath, EntityFramework edmx, IssueLogger issues)
         {
-            string[] requestParts = requestPath.Substring(1).Split(new char[] { '/' });
+            string[] requestParts = requestPath[1..].Split(['/']);
 
             EntityContainer entryPoint = (from s in edmx.DataServices.Schemas
                                           where s.EntityContainers.Count > 0
@@ -1648,7 +1648,7 @@ namespace ApiDoctor.Publishing.CSDL
                         bindingParameterType = $"Collection({bindingParameterType})";
 
                     int bracketStartIndex = requestParts.Last().IndexOf('(');
-                    var actionOrFunctionName = bracketStartIndex == 1 ? requestParts.Last() : requestParts.Last()[..bracketStartIndex];      
+                    var actionOrFunctionName = bracketStartIndex == -1 ? requestParts.Last() : requestParts.Last()[..bracketStartIndex];      
                     var matches = actionsAndFunctions.Where(x =>
                         x.IsBound &&
                         (x.Name.IEquals(actionOrFunctionName) || x.ParameterizedName.IEquals(requestParts.Last())) &&
@@ -1670,50 +1670,8 @@ namespace ApiDoctor.Publishing.CSDL
             {
                 issues.Error(ValidationErrorCode.Unknown, path, ex);
             }
+
             return actionOrFunction;
-        }
-
-        private static string FindNavigationPropertyTarget(string path, EntityFramework edmx, IssueLogger issues)
-        {
-            var requestParts = path.Substring(1).Split(new char[] { '/' }).ToList();
-
-            var req = path.Split(new char[] { '/' }).ToList();
-
-            if (requestParts.Count < 2)
-                return null;
-            try
-            {
-                if (requestParts.Last() == "{var}")
-                    requestParts.RemoveAt(requestParts.Count - 1);
-
-                var targetPath = string.Join('/', requestParts.SkipLast(1));
-                ODataTargetInfo requestTarget = ParseRequestTargetType($"/{targetPath}", edmx, issues);
-
-                if (requestTarget?.QualifiedType != null)
-                {
-                    var requestTargetNamespace = requestTarget.QualifiedType.NamespaceOnly();
-                    var schema = edmx.DataServices.Schemas.FirstOrDefault(x => x.Namespace == requestTargetNamespace || x.Alias == requestTargetNamespace);
-                    if (schema == null)
-                        throw new Exception($"Unknown namespace: {requestTargetNamespace}");
-
-                    var typeOnly = requestTarget.QualifiedType.TypeOnly();
-                    var complexType = schema.ComplexTypes.Concat(schema.EntityTypes)
-                        .Where(x => x.Name == typeOnly).FirstOrDefault();
-                    if (complexType != null)
-                    {
-                        var navProperty = complexType.NavigateByUriComponent(requestParts.Last(), edmx, issues, true);
-                        if (navProperty != null)
-                        {
-                            return $"{schema.Namespace}.{typeOnly}/{requestParts.Last()}";
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                issues.Error(ValidationErrorCode.Unknown, path, ex);
-            }
-            return null;
         }
 
         private static void AddLinkAndRestrictionAnnotations(EntityFramework edmx, Dictionary<string, Annotations> annotationsMap, ISet set, MethodCollection methodCollection, string target, IssueLogger issues)
@@ -1780,20 +1738,11 @@ namespace ApiDoctor.Publishing.CSDL
                     requestTargetMapping.TryGetValue(url, out var requestTargetName);
                     if (requestTargetName == null)
                     {
-                        var navPropertyTargetName = FindNavigationPropertyTarget(url, edmx, issues);
-                        if (navPropertyTargetName != null)
-                        {
-                            path = navPropertyTargetName;
-                            requestTargetMapping.Add(url, navPropertyTargetName);
-                        }
+                        ActionOrFunctionBase actionOrFunction = FindActionOrFunctionTarget(url, edmx, issues);
+                        if (actionOrFunction != null)
+                            annotatable = actionOrFunction;
                         else
-                        {
-                            ActionOrFunctionBase actionOrFunction = FindActionOrFunctionTarget(url, edmx, issues);
-                            if (actionOrFunction != null)
-                            {
-                                annotatable = actionOrFunction;
-                            }
-                        }
+                            requestTargetMapping.Add(url, path);
                     }
                     else
                     {
