@@ -141,15 +141,22 @@ namespace ApiDoctor.Validation.Config
                 var jArray = JArray.Load(reader);
                 foreach (var item in jArray)
                 {
-                    if (item["condition"] != null)
+                    if (item is JObject jObject)
                     {
-                        var conditionalHeader = item.ToObject<ConditionalDocumentHeader>(serializer);
-                        allowedHeaders.Add(conditionalHeader);
-                    }
-                    else if (item["title"] != null)
-                    {
-                        var expectedHeader = item.ToObject<ExpectedDocumentHeader>(serializer);
-                        allowedHeaders.Add(expectedHeader);
+                        object header;
+                        if (jObject.ContainsKey("condition"))
+                        {
+                            header = jObject.ToObject<ConditionalDocumentHeader>(serializer);
+                        }
+                        else if (jObject.ContainsKey("title"))
+                        {
+                            header = jObject.ToObject<ExpectedDocumentHeader>(serializer);
+                        }
+                        else
+                        {
+                            throw new JsonReaderException("Invalid document header definition");
+                        }
+                        allowedHeaders.Add(header);
                     }
                     else
                     {
