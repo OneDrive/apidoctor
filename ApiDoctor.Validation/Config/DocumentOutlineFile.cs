@@ -1,92 +1,183 @@
 ﻿/*
- * API Doctor
- * Copyright (c) Microsoft Corporation
- * All rights reserved. 
- * 
- * MIT License
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of 
- * this software and associated documentation files (the ""Software""), to deal in 
- * the Software without restriction, including without limitation the rights to use, 
- * copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
- * Software, and to permit persons to whom the Software is furnished to do so, 
- * subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in all 
- * copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED *AS IS*, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
- * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
- * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT 
- * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION 
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
- * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- */
+* API Doctor
+* Copyright (c) Microsoft Corporation
+* All rights reserved. 
+* 
+* MIT License
+* 
+* Permission is hereby granted, free of charge, to any person obtaining a copy of 
+* this software and associated documentation files (the ""Software""), to deal in 
+* the Software without restriction, including without limitation the rights to use, 
+* copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+* Software, and to permit persons to whom the Software is furnished to do so, 
+* subject to the following conditions:
+* 
+* The above copyright notice and this permission notice shall be included in all 
+* copies or substantial portions of the Software.
+* 
+* THE SOFTWARE IS PROVIDED *AS IS*, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
+* INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
+* PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT 
+* HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION 
+* OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
+* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
 
 namespace ApiDoctor.Validation.Config
 {
+    using Newtonsoft.Json;
+    using Newtonsoft.Json.Linq;
     using System;
     using System.Collections.Generic;
-    using Newtonsoft.Json;
 
     public class DocumentOutlineFile : ConfigFile
     {
-        [JsonProperty("allowedDocumentHeaders")]
-        public DocumentHeader[] AllowedHeaders { get; set; }
+        [JsonProperty("apiPageType"), JsonConverter(typeof(DocumentHeaderJsonConverter))]
+        public List<object> ApiPageType { get; set; } = [];
 
-        public override bool IsValid
-        {
-            get
-            {
-                return this.AllowedHeaders != null;
-            }
-        }
+        [JsonProperty("resourcePageType"), JsonConverter(typeof(DocumentHeaderJsonConverter))]
+        public List<object> ResourcePageType { get; set; } = [];
+
+        [JsonProperty("conceptualPageType"), JsonConverter(typeof(DocumentHeaderJsonConverter))]
+        public List<object> ConceptualPageType { get; set; } = [];
+
+        [JsonProperty("enumPageType"), JsonConverter(typeof(DocumentHeaderJsonConverter))]
+        public List<object> EnumPageType { get; set; } = [];
+
+        public override bool IsValid => ApiPageType.Count > 0 || ResourcePageType.Count > 0 || ConceptualPageType.Count > 0 || EnumPageType.Count > 0;
     }
 
-    public class DocumentHeader
+
+    public class ExpectedDocumentHeader : DocumentHeader
     {
-        public DocumentHeader()
-        {
-            Level = 1;
-            ChildHeaders = new List<DocumentHeader>();
-        }
-
         /// <summary>
-        /// Represents the header level using markdown formatting (1=#, 2=##, 3=###, 4=####, 5=#####, 6=######)
+        /// Indicates that a header pattern can be repeated multiple times e.g. in the case of multiple examples
         /// </summary>
-        [JsonProperty("level")]
-        public int Level { get; set; }
-
-        /// <summary>
-        /// Indicates that a header at this level is required.
-        /// </summary>
-        [JsonProperty("required")]
-        public bool Required { get; set; }
-
-        /// <summary>
-        /// The expected value of a title or empty to indicate any value
-        /// </summary>
-        [JsonProperty("title")]
-        public string Title { get; set; }
+        [JsonProperty("allowMultiple")]
+        public bool AllowMultiple { get; set; }
 
         /// <summary>
         /// Specifies the headers that are allowed under this header.
         /// </summary>
-        [JsonProperty("headers")]
-        public List<DocumentHeader> ChildHeaders { get; set; }
+        [JsonProperty("headers"), JsonConverter(typeof(DocumentHeaderJsonConverter))]
+        public new List<object> ChildHeaders { get; set; } = [];
 
-        internal bool Matches(DocumentHeader found)
+        public ExpectedDocumentHeader() { }
+
+        public ExpectedDocumentHeader(ExpectedDocumentHeader original) : base(original)
         {
-            return this.Level == found.Level && DoTitlesMatch(this.Title, found.Title);
+            if (original == null)
+                return;
+
+           AllowMultiple = original.AllowMultiple;
+
+           ChildHeaders = CopyHeaders(original.ChildHeaders);
         }
 
-        private static bool DoTitlesMatch(string expectedTitle, string foundTitle)
+        public static List<object> CopyHeaders(List<object> headers)
         {
-            if (expectedTitle == foundTitle) return true;
-            if (string.IsNullOrEmpty(expectedTitle) || expectedTitle == "*") return true;
-            if (expectedTitle.StartsWith("* ") && foundTitle.EndsWith(expectedTitle.Substring(2))) return true;
-            if (expectedTitle.EndsWith(" *") && foundTitle.StartsWith(expectedTitle.Substring(0, expectedTitle.Length - 2))) return true;
-            return false;
+            if (headers == null) 
+                return null;
+
+            var headersCopy = new List<object>();
+            foreach (var header in headers)
+            {
+                headersCopy.Add(header switch
+                {
+                    ConditionalDocumentHeader conditionalDocHeader => new ConditionalDocumentHeader(conditionalDocHeader),
+                    ExpectedDocumentHeader expectedDocHeader => new ExpectedDocumentHeader(expectedDocHeader),
+                    _ => throw new InvalidOperationException("Unexpected header type")
+                });
+            }
+            return headersCopy;
+        }
+    }
+
+    public class ConditionalDocumentHeader
+    {
+        [JsonProperty("condition")]
+        public string Condition { get; set; }
+
+        [JsonProperty("arguments"), JsonConverter(typeof(DocumentHeaderJsonConverter))]
+        public List<object> Arguments { get; set; }
+
+        public ConditionalOperator? Operator
+        {
+            get
+            {
+                return Enum.TryParse(this.Condition, true, out ConditionalOperator op) ? op : null;
+            }
+        }
+
+        public ConditionalDocumentHeader(ConditionalDocumentHeader original)
+        {
+           if (original == null)
+                return;
+
+           Condition = original.Condition;
+
+           Arguments = ExpectedDocumentHeader.CopyHeaders(original.Arguments);
+        }
+    }
+
+    public enum ConditionalOperator
+    {
+        OR,
+        AND
+    }
+
+    public class DocumentHeaderJsonConverter : JsonConverter
+    {
+        public override bool CanConvert(Type objectType)
+        {
+            return objectType == typeof(ExpectedDocumentHeader) || objectType == typeof(ConditionalDocumentHeader);
+        }
+
+        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+        {
+            if (reader.TokenType == JsonToken.StartArray)
+            {
+                var allowedHeaders = new List<object>();
+                var jArray = JArray.Load(reader);
+                foreach (var item in jArray)
+                {
+                    if (item is JObject jObject)
+                    {
+                        object header;
+                        if (jObject.ContainsKey("condition"))
+                        {
+                            header = jObject.ToObject<ConditionalDocumentHeader>(serializer);
+                        }
+                        else if (jObject.ContainsKey("title"))
+                        {
+                            header = jObject.ToObject<ExpectedDocumentHeader>(serializer);
+                        }
+                        else
+                        {
+                            throw new JsonReaderException("Invalid document header definition");
+                        }
+                        allowedHeaders.Add(header);
+                    }
+                    else
+                    {
+                        throw new JsonReaderException("Invalid document header definition");
+                    }
+                }
+                return allowedHeaders;
+            }
+            else if (reader.TokenType == JsonToken.Null)
+            {
+                return null;
+            }
+            else
+            {
+                throw new JsonSerializationException($"Unexpected token: {existingValue}");
+            }
+        }
+
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        {
+            serializer.Serialize(writer, value);
         }
     }
 
