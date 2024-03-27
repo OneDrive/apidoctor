@@ -75,7 +75,7 @@ namespace ApiDoctor.Validation.TableSpec
         /// <summary>
         /// Convert a tablespec block into one of our internal object model representations
         /// </summary>
-        public TableDefinition ParseTableSpec(Block tableSpecBlock, Stack<Config.DocumentHeader> headerStack, IssueLogger issues)
+        public TableDefinition ParseTableSpec(Block tableSpecBlock, Stack<DocumentHeader> headerStack, IssueLogger issues)
         {
             List<ValidationError> discoveredErrors = new List<ValidationError>();
             List<ItemDefinition> items = new List<ItemDefinition>();
@@ -250,7 +250,7 @@ namespace ApiDoctor.Validation.TableSpec
             return records;
         }
 
-        private TableDecoder FindDecoderFromHeaderText(Stack<Config.DocumentHeader> headerStack)
+        private TableDecoder FindDecoderFromHeaderText(Stack<DocumentHeader> headerStack)
         {
             foreach (var kvp in this.CommonHeaderContentMap)
             {

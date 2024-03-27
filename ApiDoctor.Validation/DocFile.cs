@@ -1,27 +1,27 @@
 ﻿/*
- * API Doctor
- * Copyright (c) Microsoft Corporation
- * All rights reserved. 
- * 
- * MIT License
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of 
- * this software and associated documentation files (the ""Software""), to deal in 
- * the Software without restriction, including without limitation the rights to use, 
- * copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
- * Software, and to permit persons to whom the Software is furnished to do so, 
- * subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in all 
- * copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED *AS IS*, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
- * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
- * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT 
- * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION 
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
- * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- */
+* API Doctor
+* Copyright (c) Microsoft Corporation
+* All rights reserved. 
+* 
+* MIT License
+* 
+* Permission is hereby granted, free of charge, to any person obtaining a copy of 
+* this software and associated documentation files (the ""Software""), to deal in 
+* the Software without restriction, including without limitation the rights to use, 
+* copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+* Software, and to permit persons to whom the Software is furnished to do so, 
+* subject to the following conditions:
+* 
+* The above copyright notice and this permission notice shall be included in all 
+* copies or substantial portions of the Software.
+* 
+* THE SOFTWARE IS PROVIDED *AS IS*, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
+* INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
+* PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT 
+* HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION 
+* OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
+* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
 
 namespace ApiDoctor.Validation
 {
@@ -35,6 +35,7 @@ namespace ApiDoctor.Validation
     using Tags;
     using MarkdownDeep;
     using Newtonsoft.Json;
+    using ApiDoctor.Validation.Config;
 
     /// <summary>
     /// A documentation file that may contain one more resources or API methods
@@ -196,7 +197,7 @@ namespace ApiDoctor.Validation
         protected DocFile()
         {
             this.ContentOutline = new List<string>();
-            this.DocumentHeaders = new List<Config.DocumentHeader>();
+            this.DocumentHeaders = new List<DocumentHeader>();
         }
 
         public DocFile(string basePath, string relativePath, DocSet parent)
@@ -206,7 +207,7 @@ namespace ApiDoctor.Validation
             this.FullPath = Path.Combine(basePath, relativePath.Substring(1));
             this.DisplayName = relativePath;
             this.Parent = parent;
-            this.DocumentHeaders = new List<Config.DocumentHeader>();
+            this.DocumentHeaders = new List<DocumentHeader>();
         }
 
         #endregion
@@ -487,7 +488,6 @@ namespace ApiDoctor.Validation
             return false;
         }
 
-
         protected string PreviewOfBlockContent(Block block)
         {
             if (block == null) return string.Empty;
@@ -502,9 +502,9 @@ namespace ApiDoctor.Validation
             return contentPreview;
         }
 
-        protected static Config.DocumentHeader CreateHeaderFromBlock(Block block)
+        protected static DocumentHeader CreateHeaderFromBlock(Block block)
         {
-            var header = new Config.DocumentHeader();
+            var header = new DocumentHeader();
             switch (block.BlockType)
             {
                 case BlockType.h1:
@@ -529,7 +529,7 @@ namespace ApiDoctor.Validation
         /// <summary>
         /// Headers found in the markdown input (#, h1, etc)
         /// </summary>
-        public List<Config.DocumentHeader> DocumentHeaders
+        public List<DocumentHeader> DocumentHeaders
         {
             get; set;
         }
@@ -550,7 +550,7 @@ namespace ApiDoctor.Validation
 
             List<object> foundElements = new List<object>();
 
-            Stack<Config.DocumentHeader> headerStack = new Stack<Config.DocumentHeader>();
+            Stack<DocumentHeader> headerStack = new Stack<DocumentHeader>();
             for (int i = 0; i < this.OriginalMarkdownBlocks.Length; i++)
             {
                 var block = this.OriginalMarkdownBlocks[i];
@@ -581,7 +581,7 @@ namespace ApiDoctor.Validation
                     {
                         methodDescriptionsData.Add(block.Content);
                         // make sure we omit the namespace description as well as the national cloud deployments paragraphs
-                        methodDescription = string.Join(" ", methodDescriptionsData.Where(static x => !x.StartsWith("Namespace:",StringComparison.OrdinalIgnoreCase) && !x.Contains("[national cloud deployments](/graph/deployments)",StringComparison.OrdinalIgnoreCase))).ToStringClean();
+                        methodDescription = string.Join(" ", methodDescriptionsData.Where(static x => !x.StartsWith("Namespace:", StringComparison.OrdinalIgnoreCase) && !x.Contains("[national cloud deployments](/graph/deployments)", StringComparison.OrdinalIgnoreCase))).ToStringClean();
                         issues.Message($"Found description: {methodDescription}");
                     }
                 }
@@ -694,93 +694,275 @@ namespace ApiDoctor.Validation
         /// <returns></returns>
         public void CheckDocumentStructure(IssueLogger issues)
         {
-            List<ValidationError> errors = new List<ValidationError>();
             if (this.Parent.DocumentStructure != null)
             {
-                ValidateDocumentHeaders(this.Parent.DocumentStructure.AllowedHeaders, this.DocumentHeaders, issues);
+                var expectedHeaders = this.DocumentPageType switch
+                {
+                    PageType.ApiPageType => ExpectedDocumentHeader.CopyHeaders(this.Parent.DocumentStructure.ApiPageType),
+                    PageType.ResourcePageType => ExpectedDocumentHeader.CopyHeaders(this.Parent.DocumentStructure.ResourcePageType),
+                    PageType.EnumPageType => ExpectedDocumentHeader.CopyHeaders(this.Parent.DocumentStructure.EnumPageType),
+                    PageType.ConceptualPageType => ExpectedDocumentHeader.CopyHeaders(this.Parent.DocumentStructure.ConceptualPageType),
+                    _ => [],
+                };
+                if (expectedHeaders.Count != 0)
+                {
+                    CheckDocumentHeaders(expectedHeaders, this.DocumentHeaders, issues);
+                }
             }
             ValidateTabStructure(issues);
         }
 
-        private static bool ContainsMatchingDocumentHeader(Config.DocumentHeader expectedHeader, IReadOnlyList<Config.DocumentHeader> collection)
+        private static bool ContainsMatchingDocumentHeader(DocumentHeader header, IReadOnlyList<DocumentHeader> headerCollection,
+            bool ignoreCase = false, bool checkStringDistance = false)
         {
-            return collection.Any(h => h.Matches(expectedHeader));
+            return headerCollection.Any(h => h.Matches(header, ignoreCase, checkStringDistance));
         }
 
-        private void ValidateDocumentHeaders(IReadOnlyList<Config.DocumentHeader> expectedHeaders, IReadOnlyList<Config.DocumentHeader> foundHeaders, IssueLogger issues)
+        /// <summary>
+        /// Match headers found in doc against expected headers for doc type and report discrepancies
+        /// </summary>
+        /// <param name="expectedHeaders">Allowed headers to match against</param>
+        /// <param name="foundHeaders">Headers to evaluate</param>
+        /// <param name="issues"></param>
+        private void CheckDocumentHeaders(List<object> expectedHeaders, IReadOnlyList<DocumentHeader> foundHeaders, IssueLogger issues)
         {
             int expectedIndex = 0;
             int foundIndex = 0;
 
             while (expectedIndex < expectedHeaders.Count && foundIndex < foundHeaders.Count)
             {
-                var expected = expectedHeaders[expectedIndex];
                 var found = foundHeaders[foundIndex];
-
-                if (expected.Matches(found))
+                var result = ValidateDocumentHeader(expectedHeaders, foundHeaders, expectedIndex, foundIndex); 
+                var expected = expectedHeaders[expectedIndex] as ExpectedDocumentHeader; // at this point, if header was conditional, the condition has been removed
+                switch (result)
                 {
-                    ValidateDocumentHeaders(expected.ChildHeaders, found.ChildHeaders, issues);
+                    case DocumentHeaderValidationResult.Found:
+                        CheckDocumentHeaders(expected.ChildHeaders, found.ChildHeaders, issues);
+                        foundIndex++;
 
-                    // Found an expected header, keep going!
-                    expectedIndex++;
-                    foundIndex++;
-                    continue;
-                }
+                        //if expecting multiple headers of the same pattern, do not increment expected until last header matching pattern is found
+                        if (!expected.AllowMultiple || (expected.AllowMultiple && foundIndex == foundHeaders.Count))
+                            expectedIndex++;
+                        
+                        break;
 
-                if (!ContainsMatchingDocumentHeader(found, expectedHeaders))
-                {
-                    // This is an additional header that isn't in the expected header collection
-                    issues.Warning(ValidationErrorCode.ExtraDocumentHeaderFound, $"A extra document header was found: {found.Title}");
-                    ValidateDocumentHeaders(new Config.DocumentHeader[0], found.ChildHeaders, issues);
-                    foundIndex++;
-                    continue;
-                }
-                else
-                {
-                    // If the current expected header is optional, we can move past it 
-                    if (!expected.Required)
-                    {
+                    case DocumentHeaderValidationResult.FoundInWrongCase:
+                        issues.Error(ValidationErrorCode.DocumentHeaderInWrongCase, $"Incorrect letter case in document header: {found.Title}");
                         expectedIndex++;
-                        continue;
-                    }
+                        foundIndex++;
+                        break;
 
-                    bool expectedMatchesInFoundHeaders = ContainsMatchingDocumentHeader(expected, foundHeaders);
-                    if (expectedMatchesInFoundHeaders)
-                    {
-                        // This header exists, but is in the wrong position
+                    case DocumentHeaderValidationResult.MisspeltDocumentHeader:
+                        issues.Error(ValidationErrorCode.MisspeltDocumentHeader, $"Found header: {found.Title}. Did you mean: {expected.Title}?");
+                        expectedIndex++;
+                        foundIndex++;
+                        break;
+
+                    case DocumentHeaderValidationResult.MisspeltDocumentHeaderInWrongPosition:
+                        issues.Error(ValidationErrorCode.MisspeltDocumentHeader, $"An expected document header (possibly misspelt) was found in the wrong position: {found.Title}");
+                        foundIndex++;
+                        break;
+
+                    case DocumentHeaderValidationResult.ExtraDocumentHeaderFound:
+                        issues.Warning(ValidationErrorCode.ExtraDocumentHeaderFound, $"An extra document header was found: {found.Title}");
+                        foundIndex++;
+                        break;
+
+                    case DocumentHeaderValidationResult.DocumentHeaderInWrongPosition:
                         issues.Warning(ValidationErrorCode.DocumentHeaderInWrongPosition, $"An expected document header was found in the wrong position: {found.Title}");
                         foundIndex++;
-                        continue;
-                    }
-                    else if (!expectedMatchesInFoundHeaders && expected.Required)
-                    {
-                        // Missing a required header!
+                        break;
+
+                    case DocumentHeaderValidationResult.RequiredDocumentHeaderMissing:
                         issues.Error(ValidationErrorCode.RequiredDocumentHeaderMissing, $"A required document header is missing from the document: {expected.Title}");
                         expectedIndex++;
-                    }
-                    else
-                    {
-                        // Expected wasn't found and is optional, that's fine.
+                        break;
+
+                    case DocumentHeaderValidationResult.OptionalDocumentHeaderMissing:
                         expectedIndex++;
-                        continue;
-                    }
+                        break;
+
+                    default:
+                        break;
+
+                }
+
+                //if expecting multiple headers of the same pattern, increment expected when last header matching pattern is found
+                if (expected.AllowMultiple && foundIndex == foundHeaders.Count)
+                {
+                    expectedIndex++;
                 }
             }
 
             for (int i = foundIndex; i < foundHeaders.Count; i++)
             {
-                issues.Warning(ValidationErrorCode.ExtraDocumentHeaderFound, $"A extra document header was found: {foundHeaders[i].Title}");
+                issues.Warning(ValidationErrorCode.ExtraDocumentHeaderFound, $"An extra document header was found: {foundHeaders[i].Title}");
             }
+
             for (int i = expectedIndex; i < expectedHeaders.Count; i++)
             {
-                if (expectedHeaders[i].Required)
+                ExpectedDocumentHeader missingHeader;
+                if (expectedHeaders[i] is ExpectedDocumentHeader expectedMissingHeader)
                 {
-                    issues.Error(ValidationErrorCode.RequiredDocumentHeaderMissing, $"A required document header is missing from the document: {expectedHeaders[i].Title}");
+                    missingHeader = expectedMissingHeader;
+                }
+                else
+                {
+                    missingHeader = (expectedHeaders[i] as ConditionalDocumentHeader).Arguments.OfType<ExpectedDocumentHeader>().First();
+                }
+
+                if (!ContainsMatchingDocumentHeader(missingHeader, foundHeaders, true, true) && missingHeader.Required)
+                {
+                    issues.Error(ValidationErrorCode.RequiredDocumentHeaderMissing, $"A required document header is missing from the document: {missingHeader.Title}");
                 }
             }
         }
 
-        private void AddHeaderToHierarchy(Stack<Config.DocumentHeader> headerStack, Block block)
+        /// <summary>
+        /// Validates a document header against the found headers.
+        /// </summary>
+        /// <param name="expectedHeaders">The list of expected headers, which may include conditional headers.</param>
+        /// <param name="foundHeaders">The list of found headers.</param>
+        /// <param name="expectedIndex">Index of the expected header being validated.</param>
+        /// <param name="foundIndex">Index of the found header being compared.</param>
+        /// <returns>The validation result.</returns>
+        private DocumentHeaderValidationResult ValidateDocumentHeader(List<object> expectedHeaders, IReadOnlyList<DocumentHeader> foundHeaders, int expectedIndex, int foundIndex)
+        {
+            if (expectedHeaders[expectedIndex] is ConditionalDocumentHeader)
+            {
+                return ValidateConditionalDocumentHeader(expectedHeaders, foundHeaders, expectedIndex, foundIndex);
+            }
+
+            var found = foundHeaders[foundIndex];
+            var expected = expectedHeaders[expectedIndex] as ExpectedDocumentHeader;
+
+            if (expected.Matches(found))
+            {
+                return DocumentHeaderValidationResult.Found;
+            }
+
+            // Try case insensitive match
+            if (expected.Matches(found, true))
+            {
+                return DocumentHeaderValidationResult.FoundInWrongCase;
+            }
+
+            // Check if header is misspelt
+            if (expected.IsMisspelt(found))
+            {
+                return DocumentHeaderValidationResult.MisspeltDocumentHeader;
+            }
+
+            // Check if expected header is in the list of found headers
+            if (!ContainsMatchingDocumentHeader(expected, foundHeaders, ignoreCase: true, checkStringDistance: true))
+            {
+                if (expected.Required)
+                {
+                    return DocumentHeaderValidationResult.RequiredDocumentHeaderMissing;
+                }
+                else
+                {
+                    return DocumentHeaderValidationResult.OptionalDocumentHeaderMissing;
+                }
+            }
+
+            // Check if found header is in wrong position or is an extra header
+            var mergedExpectedHeaders = FlattenDocumentHeaderHierarchy(expectedHeaders);
+            if (ContainsMatchingDocumentHeader(found, mergedExpectedHeaders, ignoreCase: true))
+            {
+                return DocumentHeaderValidationResult.DocumentHeaderInWrongPosition;
+            }
+            else if (ContainsMatchingDocumentHeader(found, mergedExpectedHeaders, ignoreCase: true, checkStringDistance: true))
+            {
+                return DocumentHeaderValidationResult.MisspeltDocumentHeaderInWrongPosition;
+            }
+            else
+            {
+                return DocumentHeaderValidationResult.ExtraDocumentHeaderFound;
+            }
+        }
+
+        /// <summary>
+        /// Flattens a hierarchical structure of document headers into a single list.
+        /// </summary>
+        /// <param name="headers">The list of headers, which may contain nested conditional headers.</param>
+        /// <returns>A flat list containing all document headers.</returns>
+        private static List<DocumentHeader> FlattenDocumentHeaderHierarchy(IReadOnlyList<object> headers)
+        {
+            var mergedHeaders = new List<DocumentHeader>();
+            foreach (var header in headers) 
+            {
+                if (header is ExpectedDocumentHeader expectedHeader)
+                {
+                    mergedHeaders.Add(expectedHeader);
+                }
+                else if (header is ConditionalDocumentHeader conditionalHeader)
+                {
+                    mergedHeaders.AddRange(FlattenDocumentHeaderHierarchy(conditionalHeader.Arguments));
+                }
+            }
+            return mergedHeaders;
+        }
+
+        /// <summary>
+        /// Validates a conditional document header against the found headers.
+        /// </summary>
+        /// <param name="expectedHeaders">The list of expected headers.</param>
+        /// <param name="foundHeaders">The list of found headers.</param>
+        /// <param name="expectedIndex">Index of the expected header being validated.</param>
+        /// <param name="foundIndex">Index of the found header being compared.</param>
+        /// <returns>The validation result.</returns>
+        private DocumentHeaderValidationResult ValidateConditionalDocumentHeader(List<object> expectedHeaders, IReadOnlyList<DocumentHeader> foundHeaders, int expectedIndex, int foundIndex)
+        {
+            var validationResult = DocumentHeaderValidationResult.None;
+            var expectedConditionalHeader = expectedHeaders[expectedIndex] as ConditionalDocumentHeader;
+            if (expectedConditionalHeader.Operator == ConditionalOperator.OR)
+            {
+                foreach (var header in expectedConditionalHeader.Arguments)
+                {
+                    // Replace conditional header with this argument for validation
+                    expectedHeaders[expectedIndex] = header;
+                    validationResult = ValidateDocumentHeader(expectedHeaders, foundHeaders, expectedIndex, foundIndex);
+
+                    // If header has been found, stop looking
+                    if (validationResult != DocumentHeaderValidationResult.RequiredDocumentHeaderMissing &&
+                        validationResult != DocumentHeaderValidationResult.OptionalDocumentHeaderMissing)
+                    {
+                        break;
+                    }
+                }
+            }
+            else if (expectedConditionalHeader.Operator == ConditionalOperator.AND)
+            {
+                if (expectedConditionalHeader.Arguments != null && expectedConditionalHeader.Arguments.Count > 0)
+                {
+                    expectedHeaders[expectedIndex] = expectedConditionalHeader.Arguments.First();
+                    expectedHeaders.InsertRange(expectedIndex + 1, expectedConditionalHeader.Arguments.Skip(1));
+
+                    validationResult = ValidateDocumentHeader(expectedHeaders, foundHeaders, expectedIndex, foundIndex);
+                }
+                else
+                {
+                    validationResult = DocumentHeaderValidationResult.ExtraDocumentHeaderFound;
+                }
+            }
+            return validationResult;
+        }
+
+        private enum DocumentHeaderValidationResult
+        {
+            None,
+            Found,
+            FoundInWrongCase,
+            ExtraDocumentHeaderFound,
+            RequiredDocumentHeaderMissing,
+            OptionalDocumentHeaderMissing,
+            DocumentHeaderInWrongPosition,
+            MisspeltDocumentHeader,
+            MisspeltDocumentHeaderInWrongPosition
+        }
+
+        private void AddHeaderToHierarchy(Stack<DocumentHeader> headerStack, Block block)
         {
             var header = CreateHeaderFromBlock(block);
             if (header.Level == 1 || headerStack.Count == 0)
@@ -855,7 +1037,7 @@ namespace ApiDoctor.Validation
                         }
 
                         if (currentLine.Contains("# Example", StringComparison.OrdinalIgnoreCase))
-                            currentState = TabDetectionState.FindStartOfTabGroup; 
+                            currentState = TabDetectionState.FindStartOfTabGroup;
                         break;
                     case TabDetectionState.FindStartOfTabGroup:
                         if (isTabHeader)
@@ -865,7 +1047,7 @@ namespace ApiDoctor.Validation
 
                             if (foundTabIndex == 0 && !currentLine.Contains("#tab/http"))
                                 issues.Error(ValidationErrorCode.TabHeaderError, $"The first tab should be 'HTTP' in tab group #{foundTabGroups}");
-                            
+
                             if (foundTabGroups == 1)
                                 tabHeaders.Add(currentLine);
 
@@ -914,7 +1096,7 @@ namespace ApiDoctor.Validation
 
                 }
             }
-            
+
             if (currentState == TabDetectionState.FindEndOfTabGroup)
                 issues.Error(ValidationErrorCode.TabHeaderError, $"Missing tab boundary in document for tab group #{foundTabGroups}");
         }
@@ -1491,7 +1673,7 @@ namespace ApiDoctor.Validation
                                 MethodDefinition pairedRequest = (from m in this.requests where m.Identifier == requestMethodName select m).FirstOrDefault();
                                 if (pairedRequest != null)
                                 {
-                                    try 
+                                    try
                                     {
                                         pairedRequest.AddExpectedResponse(GetBlockContent(code), annotation);
                                         responses.Add(pairedRequest);
