@@ -1647,8 +1647,8 @@ namespace ApiDoctor.Publishing.CSDL
                     if (requestTarget.QualifiedType.IsCollection())
                         bindingParameterType = $"Collection({bindingParameterType})";
 
-                    int bracketStartIndex = requestParts.Last().IndexOf('(');
-                    var actionOrFunctionName = bracketStartIndex == -1 ? requestParts.Last() : requestParts.Last()[..bracketStartIndex];      
+                    int bracketStartIndex = requestParts[^1].IndexOf('(');
+                    var actionOrFunctionName = bracketStartIndex == -1 ? requestParts[^1] : requestParts[^1][..bracketStartIndex];      
                     var matches = actionsAndFunctions.Where(x =>
                         x.IsBound &&
                         (x.Name.IEquals(actionOrFunctionName) || x.ParameterizedName.IEquals(requestParts.Last())) &&
