@@ -25,6 +25,7 @@
 
 namespace ApiDoctor.Validation.UnitTests
 {
+    using System.Linq;
     using ApiDoctor.Validation;
     using ApiDoctor.Validation.Error;
     using NUnit.Framework;
@@ -33,6 +34,18 @@ namespace ApiDoctor.Validation.UnitTests
     public class YamlParserTests
     {
         private static readonly string yamlWithMultiLineArray = @"title: ""Define the /me as singleton""
+description: ""These are things I had to add in the docs to make sure the Markdown-Scanner""
+ms.localizationpriority: medium
+author: """"
+ms.prod: """"
+doc_type: conceptualPageType
+toc.keywords:
+- foo
+- bar
+";
+
+        // Missing closing double-quote on title property
+        private static readonly string malformedYaml = @"title: ""Define the /me as singleton
 description: ""These are things I had to add in the docs to make sure the Markdown-Scanner""
 ms.localizationpriority: medium
 author: """"
@@ -55,6 +68,24 @@ toc.keywords:
 
             // Assert
             Assert.That(!issues.Issues.WereErrors());
+        }
+
+        [Test]
+        public void MalformedYamlGeneratesError()
+        {
+            // Arrange
+            _ = new DocSet();
+            var issues = new IssueLogger();
+
+            // Act
+            DocFile.ParseYamlMetadata(malformedYaml, issues);
+
+            // Assert
+            Assert.That(issues.Issues.WereErrors());
+            var error = issues.Issues.FirstOrDefault();
+            Assert.That(error != null);
+            Assert.That(error.IsError);
+            Assert.That(error.Message == "Incorrect YAML header format");
         }
     }
 }

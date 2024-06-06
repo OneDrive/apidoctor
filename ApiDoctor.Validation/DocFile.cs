@@ -1,25 +1,25 @@
 ﻿/*
 * API Doctor
 * Copyright (c) Microsoft Corporation
-* All rights reserved. 
-* 
+* All rights reserved.
+*
 * MIT License
-* 
-* Permission is hereby granted, free of charge, to any person obtaining a copy of 
-* this software and associated documentation files (the ""Software""), to deal in 
-* the Software without restriction, including without limitation the rights to use, 
+*
+* Permission is hereby granted, free of charge, to any person obtaining a copy of
+* this software and associated documentation files (the ""Software""), to deal in
+* the Software without restriction, including without limitation the rights to use,
 * copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
-* Software, and to permit persons to whom the Software is furnished to do so, 
+* Software, and to permit persons to whom the Software is furnished to do so,
 * subject to the following conditions:
-* 
-* The above copyright notice and this permission notice shall be included in all 
+*
+* The above copyright notice and this permission notice shall be included in all
 * copies or substantial portions of the Software.
-* 
-* THE SOFTWARE IS PROVIDED *AS IS*, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
-* INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
-* PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT 
-* HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION 
-* OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
+*
+* THE SOFTWARE IS PROVIDED *AS IS*, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+* INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+* PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+* HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+* OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
@@ -30,12 +30,13 @@ namespace ApiDoctor.Validation
     using System.Diagnostics;
     using System.IO;
     using System.Linq;
+    using ApiDoctor.Validation.Config;
     using ApiDoctor.Validation.Error;
     using ApiDoctor.Validation.TableSpec;
     using Tags;
     using MarkdownDeep;
     using Newtonsoft.Json;
-    using ApiDoctor.Validation.Config;
+    using YamlDotNet.Serialization;
 
     /// <summary>
     /// A documentation file that may contain one more resources or API methods
@@ -49,6 +50,8 @@ namespace ApiDoctor.Validation
         private readonly List<SamplesDefinition> samples = new List<SamplesDefinition>();
         private readonly List<EnumerationDefinition> enums = new List<EnumerationDefinition>();
         private readonly List<string> bookmarks = new List<string>();
+
+        private static readonly IDeserializer yamlDeserializer = new DeserializerBuilder().Build();
 
         protected bool HasScanRun;
         protected string BasePath;
@@ -389,29 +392,23 @@ namespace ApiDoctor.Validation
 
         internal static void ParseYamlMetadata(string yamlMetadata, IssueLogger issues)
         {
-            Dictionary<string, string> dictionary = new Dictionary<string, string>();
-            string[] items = yamlMetadata.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
-            foreach (string item in items)
+            Dictionary<string, object> dictionary = null;
+            try
             {
-                try
-                {
-                    string[] keyValue = item.Split(':');
-                    dictionary.Add(keyValue[0].Trim(), keyValue[1].Trim());
-                }
-                catch (Exception)
-                {
-                    issues.Error(ValidationErrorCode.IncorrectYamlHeaderFormat, $"Incorrect YAML header format after `{dictionary.Keys.Last()}`");
-                }
+                dictionary = yamlDeserializer.Deserialize<Dictionary<string, object>>(yamlMetadata);
+            }
+            catch (Exception)
+            {
+                issues.Error(ValidationErrorCode.IncorrectYamlHeaderFormat, "Incorrect YAML header format");
             }
 
             List<string> missingHeaders = new List<string>();
             foreach (var header in DocSet.SchemaConfig.RequiredYamlHeaders)
             {
-                string value;
-                if (dictionary.TryGetValue(header, out value))
+                if (dictionary.TryGetValue(header, out object value) && value is string stringValue)
                 {
-                    value = value.Replace("\"", string.Empty);
-                    if (string.IsNullOrWhiteSpace(value))
+                    stringValue = stringValue.Replace("\"", string.Empty);
+                    if (string.IsNullOrWhiteSpace(stringValue))
                     {
                         issues.Warning(ValidationErrorCode.RequiredYamlHeaderMissing, $"Missing value for YAML header: {header}");
                     }
@@ -732,7 +729,7 @@ namespace ApiDoctor.Validation
             while (expectedIndex < expectedHeaders.Count && foundIndex < foundHeaders.Count)
             {
                 var found = foundHeaders[foundIndex];
-                var result = ValidateDocumentHeader(expectedHeaders, foundHeaders, expectedIndex, foundIndex); 
+                var result = ValidateDocumentHeader(expectedHeaders, foundHeaders, expectedIndex, foundIndex);
                 var expected = expectedHeaders[expectedIndex] as ExpectedDocumentHeader; // at this point, if header was conditional, the condition has been removed
                 switch (result)
                 {
@@ -743,7 +740,7 @@ namespace ApiDoctor.Validation
                         //if expecting multiple headers of the same pattern, do not increment expected until last header matching pattern is found
                         if (!expected.AllowMultiple || (expected.AllowMultiple && foundIndex == foundHeaders.Count))
                             expectedIndex++;
-                        
+
                         break;
 
                     case DocumentHeaderValidationResult.FoundInWrongCase:
@@ -890,7 +887,7 @@ namespace ApiDoctor.Validation
         private static List<DocumentHeader> FlattenDocumentHeaderHierarchy(IReadOnlyList<object> headers)
         {
             var mergedHeaders = new List<DocumentHeader>();
-            foreach (var header in headers) 
+            foreach (var header in headers)
             {
                 if (header is ExpectedDocumentHeader expectedHeader)
                 {
@@ -1002,7 +999,7 @@ namespace ApiDoctor.Validation
         }
 
         /// <summary>
-        /// Validates code snippets tab section. 
+        /// Validates code snippets tab section.
         /// Checks:
         /// - No duplicated tabs
         /// - Existence of tab boundary at the end of tab group definition
@@ -1224,7 +1221,7 @@ namespace ApiDoctor.Validation
             // add all the enum values
             this.enums.AddRange(foundEnums.Where(e => !string.IsNullOrEmpty(e.MemberName) && !string.IsNullOrEmpty(e.TypeName)));
 
-            // if we thought it was a table of type EnumerationValues, it probably holds enum values. 
+            // if we thought it was a table of type EnumerationValues, it probably holds enum values.
             // throw error if member name is null which could mean a wrong column name
             foreach (var enumType in foundEnums.Where(e => string.IsNullOrEmpty(e.MemberName) && !string.IsNullOrEmpty(e.TypeName))
                 .Select(x => new { x.TypeName, x.Namespace }).Distinct())
