@@ -2804,9 +2804,22 @@ namespace ApiDoctor.ConsoleApp
                                     break;
                                 }
 
-                                var httpRequests = new List<string>(originalFileContents.Skip(httpRequestStartLine + 1).Take(httpRequestEndLine - httpRequestStartLine - 1));
+                                var httpRequests = originalFileContents.Skip(httpRequestStartLine + 1).Take(httpRequestEndLine - httpRequestStartLine - 1)
+                                    .Where(x => !string.IsNullOrWhiteSpace(x));
+
                                 FancyConsole.WriteLine($"Fetching permissions table ({foundPermissionTablesOrBlocks}) for {docFile.DisplayName}");
-                                var newPermissionFileContents = GetPermissionsMarkdownTableForHttpRequestBlock(httpRequests, permissionsDocument); // get from Kibali
+                                string newPermissionFileContents = null;
+                                foreach (var request in httpRequests)
+                                {
+                                    var requestPermissions = GetPermissionsMarkdownTableForHttpRequestBlock(request, permissionsDocument); // get from Kibali
+                                    newPermissionFileContents ??= requestPermissions;
+
+                                    if (newPermissionFileContents != requestPermissions)
+                                    {
+                                        FancyConsole.WriteLine(ConsoleColor.Yellow, $"Encountered request URL(s) for permissions table ({foundPermissionTablesOrBlocks}) in {docFile.DisplayName} with a different set of permissions");
+                                    }
+                                }
+           
                                 if (!string.IsNullOrWhiteSpace(newPermissionFileContents))
                                 {
                                     permissionFileContents = $"{includeFileMetadata}{newPermissionFileContents}";
@@ -2936,10 +2949,8 @@ namespace ApiDoctor.ConsoleApp
             return tableString.ToString();
         }
 
-        private static string GetPermissionsMarkdownTableForHttpRequestBlock(List<string> httpRequests, PermissionsDocument permissionsDoc)
+        private static string GetPermissionsMarkdownTableForHttpRequestBlock(string request, PermissionsDocument permissionsDoc)
         {
-            // use the first HTTP Request, we are assuming the group of URLs will have the same set of permissions
-            var request = httpRequests.Where(x => !string.IsNullOrWhiteSpace(x)).FirstOrDefault();
             if (HttpParser.TryParseHttpRequest(request, out var parsedRequest))
             {
                 try
