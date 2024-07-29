@@ -2643,7 +2643,7 @@ namespace ApiDoctor.ConsoleApp
                 var originalFileContents = await File.ReadAllLinesAsync(docFile.FullPath);
                 var parseStatus = PermissionsInsertionState.FindPermissionsHeader;
                 int foundPermissionTablesOrBlocks = 0, foundHttpRequestBlocks = 0;
-                bool finishedParsing = false, isBootstrapped = false, ignorePermissionTableUpdate = false;
+                bool finishedParsing = false, isBootstrapped = false, ignorePermissionTableUpdate = false, foundAllPermissionTables = false, isUpdated = false;
                 int insertionStartLine = -1, insertionEndLine = -1, httpRequestStartLine = -1, httpRequestEndLine = -1,
                     boilerplateStartLine = -1, boilerplateEndLine = -1, permissionsHeaderIndex = -1;
                 for (var currentIndex = 0; currentIndex < originalFileContents.Length && !finishedParsing; currentIndex++)
@@ -2688,7 +2688,7 @@ namespace ApiDoctor.ConsoleApp
                                     }
                                 }
                             }
-                            else if (currentLine.Contains('|') && currentLine.Trim().Contains("Permission type", StringComparison.OrdinalIgnoreCase)) // found the permissions table
+                            else if (currentLine.Contains('|') && currentLine.Contains("Permission type", StringComparison.OrdinalIgnoreCase)) // found the permissions table
                             {
                                 foundPermissionTablesOrBlocks++;
                                 if (ignorePermissionTableUpdate)
@@ -2716,6 +2716,11 @@ namespace ApiDoctor.ConsoleApp
                                        }
                                     }
                                 }
+                            }
+                            else if (currentLine.StartsWith("## ") && foundPermissionTablesOrBlocks > 0) // We have traversed through all permissions tables. Now check if there's a hanging HTTP request block
+                            {
+                                parseStatus = PermissionsInsertionState.FindHttpRequestStartLine;
+                                foundAllPermissionTables = true;
                             }
                             break;
                         case PermissionsInsertionState.FindInsertionEndLine: // if we are here, we need to find the end of the permissions table
@@ -2751,18 +2756,19 @@ namespace ApiDoctor.ConsoleApp
                             }
                             break;
                         case PermissionsInsertionState.FindHttpRequestHeading:
-                            if (currentLine.Trim().Equals("## HTTP request", StringComparison.OrdinalIgnoreCase) || foundHttpRequestBlocks > 0)
+                            if (currentLine.Equals("## HTTP request", StringComparison.OrdinalIgnoreCase) || foundHttpRequestBlocks > 0)
                                 parseStatus = PermissionsInsertionState.FindHttpRequestStartLine;
                             break;
                         case PermissionsInsertionState.FindHttpRequestStartLine:
-                            if (currentLine.Trim().StartsWith("## ") && !currentLine.Trim().Equals("## HTTP request", StringComparison.OrdinalIgnoreCase)) // if we get to another header 2, break
+                            if (!foundAllPermissionTables && currentLine.StartsWith("## ") && !currentLine.Equals("## HTTP request", StringComparison.OrdinalIgnoreCase)) // if we get to another header 2, break
                             {
-                                if (!options.BootstrappingOnly)
-                                {
-                                    FancyConsole.WriteLine(ConsoleColor.Yellow, $"The number of permission tables does not match the HTTP request blocks in {docFile.DisplayName}");
-                                    finishedParsing = true;
-                                }
-                                parseStatus = PermissionsInsertionState.InsertPermissionBlock;
+                                FancyConsole.WriteLine(ConsoleColor.Yellow, $"The number of permissions tables does not match the HTTP request blocks in {docFile.DisplayName}");
+                                finishedParsing = true;
+                                break;
+                            }
+                            else if (foundAllPermissionTables && currentLine.StartsWith("## "))
+                            {
+                                finishedParsing = true;
                                 break;
                             }
 
@@ -2776,14 +2782,19 @@ namespace ApiDoctor.ConsoleApp
                         case PermissionsInsertionState.FindHttpRequestEndLine:
                             if (currentLine.Contains("```"))
                             {
-                                if (foundHttpRequestBlocks == foundPermissionTablesOrBlocks)
+                                if (foundAllPermissionTables && foundHttpRequestBlocks > foundPermissionTablesOrBlocks)
+                                {
+                                    FancyConsole.WriteLine(ConsoleColor.Yellow, $"The number of HTTP request blocks does not match the number of permissions table(s) in {docFile.DisplayName}");
+                                    finishedParsing = true;
+                                }
+                                else if (!foundAllPermissionTables && foundHttpRequestBlocks == foundPermissionTablesOrBlocks)
                                 {
                                     httpRequestEndLine = currentIndex;
                                     parseStatus = PermissionsInsertionState.InsertPermissionBlock;
                                 }
                                 else
                                 {
-                                    parseStatus = PermissionsInsertionState.FindHttpRequestStartLine;
+                                    parseStatus = PermissionsInsertionState.FindHttpRequestStartLine; // keep searching until we find the correct position of permissions table to update
                                 }
                             }
                             break;
@@ -2822,6 +2833,7 @@ namespace ApiDoctor.ConsoleApp
            
                                 if (!string.IsNullOrWhiteSpace(newPermissionFileContents))
                                 {
+                                    isUpdated = true;
                                     permissionFileContents = $"{includeFileMetadata}{newPermissionFileContents}";
                                     FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"Permissions table ({foundPermissionTablesOrBlocks}) updated for {docFile.DisplayName}");
                                 }
@@ -2895,12 +2907,11 @@ namespace ApiDoctor.ConsoleApp
                             if (!ignorePermissionTableUpdate)
                             {
                                 foundHttpRequestBlocks = 0;
-                                currentIndex = insertionStartLine + 2;
+                                currentIndex = isUpdated ? insertionStartLine + 2 : insertionEndLine;
                                 originalFileContents = await File.ReadAllLinesAsync(docFile.FullPath);
                                 insertionStartLine = insertionEndLine = httpRequestStartLine = httpRequestEndLine = -1;
                             }
-                            isBootstrapped = false;
-                            ignorePermissionTableUpdate = false;
+                            isBootstrapped = ignorePermissionTableUpdate = isUpdated = false;
                             parseStatus = PermissionsInsertionState.FindInsertionStartLine;
                             break;
                         default:
