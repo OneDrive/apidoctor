@@ -397,9 +397,10 @@ namespace ApiDoctor.Validation
             {
                 dictionary = yamlDeserializer.Deserialize<Dictionary<string, object>>(yamlMetadata);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                issues.Error(ValidationErrorCode.IncorrectYamlHeaderFormat, "Incorrect YAML header format");
+                issues.Error(ValidationErrorCode.IncorrectYamlHeaderFormat, "Incorrect YAML header format", ex);
+                return;
             }
 
             List<string> missingHeaders = new List<string>();
