@@ -85,7 +85,7 @@ toc.keywords:
             var error = issues.Issues.FirstOrDefault();
             Assert.That(error != null);
             Assert.That(error.IsError);
-            Assert.That(error.Message == "Incorrect YAML header format");
+            Assert.That(error.Message.FirstLineOnly() == "Incorrect YAML header format");
         }
     }
 }
