@@ -1111,7 +1111,7 @@ namespace ApiDoctor.Validation
         /// </summary>
         /// <param name="content"></param>
         /// <returns></returns>
-        private static string StripHtmlCommentTags(string content)
+        public static string StripHtmlCommentTags(string content)
         {
             const string startComment = "<!--";
             const string endComment = "-->";
