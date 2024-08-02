@@ -2690,7 +2690,7 @@ namespace ApiDoctor.ConsoleApp
                             {
                                 codeBlockAnnotationEndLine = currentIndex;
                             }
-                            else if (currentLine.Contains("[!INCLUDE [permissions-table](")) // bootstrapping already took place
+                            else if (currentLine.Contains("[!INCLUDE [permissions-table](", StringComparison.OrdinalIgnoreCase)) // bootstrapping already took place
                             {
                                 foundPermissionTablesOrBlocks++;
                                 if (ignorePermissionTableUpdate)
@@ -2986,7 +2986,7 @@ namespace ApiDoctor.ConsoleApp
                 : string.Empty;
 
             string mergePermissionsJson = mergePermissions
-                ? $",{newLineSpaces}\"mergePermissions\": {mergePermissions.ToString().ToLower()}"
+                ? $",{newLineSpaces}\"mergePermissions\": true"
                 : string.Empty;
 
 
@@ -3028,7 +3028,7 @@ namespace ApiDoctor.ConsoleApp
             {
                 try
                 {
-                    var generator = new PermissionsStubGenerator(permissionsDocument, concatenatedRequests, requestPaths.First().Method, false, true)
+                    var generator = new PermissionsStubGenerator(permissionsDocument, concatenatedRequests, requestPaths[0].Method, false, true)
                     {
                         MergeMultiplePaths = true
                     };
@@ -3036,7 +3036,7 @@ namespace ApiDoctor.ConsoleApp
                 }
                 catch (Exception ex)
                 {
-                    FancyConsole.WriteLine($"Could not fetch permissions for '{requestPaths.First().Method} {concatenatedRequests}': {ex.Message}");
+                    FancyConsole.WriteLine($"Could not fetch permissions for '{requestPaths[0].Method} {concatenatedRequests}': {ex.Message}");
                     return null;
                 }
             }
