@@ -303,6 +303,19 @@ namespace ApiDoctor.Validation
         public string KeyPropertyName { get; set; }
 
         /// <summary>
+        /// Request URLs to use to populate permissions table.
+        /// </summary>
+        [JsonProperty("requestUrls", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public string[] RequestUrls { get; set; }
+
+        /// <summary>
+        /// Instruction to merge permissions of requestUrls into one table. 
+        /// If false, there'll be an error if requestUrls do not share the same set of permissions.
+        /// </summary>
+        [JsonProperty("mergePermissions", DefaultValueHandling=DefaultValueHandling.Ignore)]
+        public bool MergePermissions { get; set; }
+
+        /// <summary>
         /// Use this property to declare that a custom function request is idempotent (has no side-effects).
         /// </summary>
         [JsonProperty("idempotent", DefaultValueHandling = DefaultValueHandling.Ignore)]
@@ -571,5 +584,10 @@ namespace ApiDoctor.Validation
         /// A block representing a test parameter definition for the preceding example
         /// </summary>
         TestParams,
+
+        /// <summary>
+        /// Permissions code block. A block representing parameters to use to populate permissions table
+        /// </summary>
+        Permissions
     }
 }
