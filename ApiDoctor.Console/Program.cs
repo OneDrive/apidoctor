@@ -3051,7 +3051,7 @@ namespace ApiDoctor.ConsoleApp
                     var requestPermissions = generator.GenerateTable();
                     newPermissionFileContents ??= requestPermissions;
 
-                    if (newPermissionFileContents != requestPermissions)
+                   if (!newPermissionFileContents.Equals(requestPermissions, StringComparison.OrdinalIgnoreCase))
                     {
                         FancyConsole.WriteLine(ConsoleColor.Yellow, $"Encountered request URL(s) for permissions table ({permissionsTablePosition}) in {docFileName} with a different set of permissions");
                     }
