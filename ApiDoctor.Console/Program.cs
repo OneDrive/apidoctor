@@ -2683,14 +2683,14 @@ namespace ApiDoctor.ConsoleApp
                                 {
                                     // find the permissions block start line
                                     var previousContents = "";
-                                    for (var i = currentIndex; i > 0; i--)
+                                    for (var i = currentIndex - 1; i > 0; i--)
                                     {
                                         var lineContents = originalFileContents[i].Trim();
                                         if (lineContents.EndsWith("-->"))
                                         {
                                             codeBlockAnnotationEndLine = i;
                                         }
-                                        else if (lineContents.StartsWith("<!--") && (lineContents[4..].Trim().StartsWith('{') || previousContents.StartsWith('{')))
+                                        if (lineContents.StartsWith("<!--") && (lineContents[4..].Trim().StartsWith('{') || previousContents.StartsWith('{')))
                                         {
                                             insertionStartLine = i;
                                             parseStatus = PermissionsInsertionState.FindHttpRequestHeading;
