@@ -2674,8 +2674,16 @@ namespace ApiDoctor.ConsoleApp
                                     : string.Join(" ", originalFileContents.Skip(insertionStartLine).Take(codeBlockAnnotationEndLine + 1 - insertionStartLine));
                                 var metadataJsonString = DocFile.StripHtmlCommentTags(htmlComment);
                                 var annotation = CodeBlockAnnotation.ParseMetadata(metadataJsonString);
-                                requestUrlsForPermissions = annotation?.RequestUrls;
-                                mergePermissions = annotation?.MergePermissions ?? false;
+                                if (annotation.BlockType == CodeBlockType.Permissions)
+                                {
+                                    requestUrlsForPermissions = annotation?.RequestUrls;
+                                    mergePermissions = annotation?.MergePermissions ?? false;
+                                }
+                                else
+                                {
+                                    insertionStartLine = -1;
+                                    codeBlockAnnotationEndLine = -1;
+                                }
                             }
 
                             var nextLine = currentIndex + 1 < originalFileContents.Length ? originalFileContents[currentIndex + 1].Trim() : "";
