@@ -2666,16 +2666,24 @@ namespace ApiDoctor.ConsoleApp
                                 ignorePermissionTableUpdate = true;
                             }
 
-                            // Extract HTML comment
-                            if (codeBlockAnnotationEndLine != -1 && (requestUrlsForPermissions != null || !mergePermissions))
+                            try
                             {
-                                var htmlComment = insertionStartLine == codeBlockAnnotationEndLine
-                                    ? originalFileContents[insertionStartLine]
-                                    : string.Join(" ", originalFileContents.Skip(insertionStartLine).Take(codeBlockAnnotationEndLine + 1 - insertionStartLine));
-                                var metadataJsonString = DocFile.StripHtmlCommentTags(htmlComment);
-                                var annotation = CodeBlockAnnotation.ParseMetadata(metadataJsonString);
-                                requestUrlsForPermissions = annotation?.RequestUrls;
-                                mergePermissions = annotation?.MergePermissions ?? false;
+
+                                // Extract HTML comment
+                                if (codeBlockAnnotationEndLine != -1 && (requestUrlsForPermissions != null || !mergePermissions))
+                                {
+                                    var htmlComment = insertionStartLine == codeBlockAnnotationEndLine
+                                        ? originalFileContents[insertionStartLine]
+                                        : string.Join(" ", originalFileContents.Skip(insertionStartLine).Take(codeBlockAnnotationEndLine + 1 - insertionStartLine));
+                                    var metadataJsonString = DocFile.StripHtmlCommentTags(htmlComment);
+                                    var annotation = CodeBlockAnnotation.ParseMetadata(metadataJsonString);
+                                    requestUrlsForPermissions = annotation?.RequestUrls;
+                                    mergePermissions = annotation?.MergePermissions ?? false;
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                FancyConsole.WriteLine(ConsoleColor.Red, $"Error encountered in {docFile.DisplayName}: {ex.Message}");
                             }
 
                             if (currentLine.StartsWith("<!-- {") || currentLine.Contains("<!--{"))
