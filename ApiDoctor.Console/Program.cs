@@ -2678,15 +2678,18 @@ namespace ApiDoctor.ConsoleApp
                                 mergePermissions = annotation?.MergePermissions ?? false;
                             }
 
-                            if (currentLine.StartsWith("<!-- {") || currentLine.Contains("<!--{"))
+                            var nextLine = currentIndex + 1 < originalFileContents.Length ? originalFileContents[currentIndex + 1].Trim() : "";
+                            if (currentLine.StartsWith("<!-- {")
+                                || currentLine.StartsWith("<!--{")
+                                || (currentLine.StartsWith("<!--") && nextLine.StartsWith('{')))
                             {
                                 insertionStartLine = currentIndex;
-                                if (currentLine.Contains("} -->") || currentLine.Contains("}-->"))
+                                if (currentLine.EndsWith("-->"))
                                 {
                                     codeBlockAnnotationEndLine = currentIndex;
                                 }
                             }
-                            else if (currentLine.Contains("} -->") || currentLine.Contains("}-->"))
+                            else if (insertionStartLine >= 0 && currentLine.EndsWith("-->"))
                             {
                                 codeBlockAnnotationEndLine = currentIndex;
                             }
