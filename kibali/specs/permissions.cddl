@@ -1,0 +1,47 @@
+; Graph Permissions Document
+
+permissionDocument = {
+    permission: {* permissionName => permission }  ; Map of permission name to definition"
+}
+
+permissionName = tstr .pcre "[\\w]+\\.[\\w]+[\\.[\\w]+]?"
+
+permission = {
+    ? note: tstr,
+    ? implicit: bool .default false,
+    ? ownerInfo: ownerInfo,
+    ? privilegeLevel: low / medium / high .default high,
+    schemes: {+ schemeKeys => scheme}, ; Table of supported schemes
+    pathSets: [+ pathSet]  ; List of pathSets
+}
+
+ownerInfo = {
+    ownerSecurityGroup: tstr,
+}
+
+schemeKeys = DelegatedWork / DelegatedPersonal / Application
+
+scheme = {
+    ? requiresAdminConsent: bool .default true,
+    ? isPreauthorizationOnly: bool .default false,
+    adminDisplayName: tstr,
+    adminDescription: tstr,
+    ? userConsentDisplayName: tstr,
+    ? userConsentDescription: tstr
+}
+
+pathSet = {
+    schemeKeys: [+ schemeKeys],     ; List of schemes supported by this pathSet
+    methods: [+ method],            ; List of methods supported by this pathSet
+    ? alsoRequires: tstr,
+    paths: {+ tstr => path},        ; Map of path to path definition
+    ? includeProperties: [+ tstr],
+    ? excludeProperties: [+ tstr]
+}
+
+method = GET / PUT / POST / DELETE / PATCH / HEAD / OPTIONS / "<WriteMethods>" / "<ReadMethods>"
+
+path = {
+    ? leastPrivilegePermission: [* tstr]
+}
+

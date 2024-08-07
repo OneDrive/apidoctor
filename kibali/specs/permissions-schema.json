@@ -1,0 +1,151 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "title": "Schema for OAuth Permissions",
+    "type": "object",
+    "properties": {
+        "additionalProperties": false,
+        "permissions": {
+            "title": "Map of permission name to definition",
+            "additionalProperties": false,
+            "type": "object",
+            "patternProperties": {
+                "[\\w]+\\.[\\w]+[\\.[\\w]+]?": {
+                    "$ref": "#/definitions/permission"
+                }
+            }
+        }
+    },
+    "definitions": {
+        "permission": {
+            "type": "object",
+            "title": "Permission definition",
+            "additionalProperties": false,
+            "properties": {
+                "note": {
+                    "type": "string"
+                },
+
+                "implicit": {
+                    "type": "boolean"
+                },
+
+                "ownerInfo": {
+                    "$ref": "#/definitions/ownerInfo"
+                },
+                
+                "schemes": {
+                    "type": "object",
+                    "patternProperties": {
+                        "\\w+": {
+                            "$ref": "#/definitions/scheme"
+                        }
+                    }
+                },
+                "pathSets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pathSet"
+                    }
+                }
+            }
+        },
+        "ownerInfo":{
+            "type": "object",
+            "properties": {
+                "ownerSecurityGroup": {
+                    "type": "string"
+                }
+            }
+        },
+        "pathSet": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "schemeKeys": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "enum": [
+                            "Application",
+                            "DelegatedWork",
+                            "DelegatedPersonal"
+                        ]
+                    }
+                },
+                "methods": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "enum": [
+                            "GET",
+                            "PUT",
+                            "POST",
+                            "DELETE",
+                            "PATCH",
+                            "HEAD",
+                            "OPTIONS",
+                            "<WriteMethods>",
+                            "<ReadMethods>"
+                        ]
+                    }
+                },
+                "alsoRequires": {
+                    "type": "string"
+                },
+                "paths": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "patternProperties": {
+                        "^/": {
+                            "$ref": "#/definitions/path"
+                        }
+                    }
+                },
+                "includeProperties": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "excludeProperties": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "path": {
+            "type": "string",
+            "pattern": "^([\\w]+=[\\w,.]+;)*([\\w]+=[\\w,.]+)?$"
+        },
+        "scheme": {
+            "type": "object",
+            "properties": {
+                "requiresAdminConsent": {
+                    "type": "boolean"
+                },
+                "isPreauthorizationOnly": {
+                    "type": "boolean"
+                },
+                "adminDisplayName": {
+                    "type": "string"
+                },
+                "adminDescription": {
+                    "type": "string"
+                },
+                "userConsentDisplayName": {
+                    "type": "string"
+                },
+                "userConsentDescription": {
+                    "type": "string"
+                },
+                "privilegeLevel": {
+                    "type": "number",
+                    "minimum": 1,
+                    "maximum": 5
+                }
+            }
+        }
+    }
+}

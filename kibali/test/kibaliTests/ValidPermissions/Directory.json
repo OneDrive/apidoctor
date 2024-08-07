@@ -1,0 +1,114 @@
+{
+  "$schema": "https://raw.githubusercontent.com/microsoftgraph/kibali/main/specs/permissions-schema.json",
+  "permissions": {
+    "Directory.AccessAsUser.All": {
+      "schemes": {
+        "DelegatedWork": {
+          "adminDisplayName": "Access directory as the signed in user",
+          "adminDescription": "Allows the app to have the same access to information in the directory as the signed-in user.",
+          "userDisplayName": "Access the directory as you",
+          "userDescription": "Allows the app to have the same access to information in your work or school directory as you do.",
+          "requiresAdminConsent": true,
+          "privilegeLevel": 4
+        }
+      },
+      "pathSets": [
+        {
+          "schemeKeys": [
+            "DelegatedWork"
+          ],
+          "methods": [
+            "POST"
+          ],
+          "paths": {
+            "/devices": "least=DelegatedWork",
+            "/devices(deviceid={value})/registeredowners": "least=DelegatedWork",
+            "/devices(deviceid={value})/registeredusers": "least=DelegatedWork",
+            "/devices/{id}/registeredowners": "least=DelegatedWork",
+            "/devices/{id}/registeredusers": "least=DelegatedWork",
+            "/directory/administrativeunits/{id}/members": "least=DelegatedWork",
+            "/me/changepassword": "least=DelegatedWork",
+            "/privilegedapproval": "least=DelegatedWork",
+            "/privilegedroleassignments/{id}/makeeligible": "least=DelegatedWork",
+            "/privilegedroleassignments/{id}/makepermanent": "least=DelegatedWork",
+            "/privilegedroles/{id}/selfactivate": "least=DelegatedWork",
+            "/privilegedroles/{id}/selfdeactivate": "least=DelegatedWork",
+            "/users/{id}/changepassword": "least=DelegatedWork",
+            "/users/{id}/getpasswordsinglesignoncredentials": "least=DelegatedWork",
+            "/users/{id}/deletepasswordsinglesignoncredentials": "least=DelegatedWork"
+          }
+        },
+        {
+          "schemeKeys": [
+            "DelegatedWork"
+          ],
+          "methods": [
+            "DELETE",
+            "PATCH"
+          ],
+          "paths": {
+            "/devices(deviceid={value})": "least=DelegatedWork",
+            "/devices/{id}": "least=DelegatedWork"
+          }
+        },
+        {
+          "schemeKeys": [
+            "DelegatedWork"
+          ],
+          "methods": [
+            "DELETE"
+          ],
+          "paths": {
+            "/devices/{id}/registeredowners/{id}": "least=DelegatedWork",
+            "/devices/{id}/registeredusers/{id}": "least=DelegatedWork"
+          }
+        },
+        {
+          "schemeKeys": [
+            "DelegatedWork"
+          ],
+          "methods": [
+            "GET"
+          ],
+          "paths": {
+            "/privilegedapproval/myrequests": "least=DelegatedWork",
+            "/privilegedoperationevents": "least=DelegatedWork",
+            "/privilegedroleassignments/{id}/roleinfo": "least=DelegatedWork",
+            "/privilegedroleassignments/my": "least=DelegatedWork",
+            "/privilegedroles": "least=DelegatedWork",
+            "/privilegedroles/{id}": "least=DelegatedWork",
+            "/privilegedroles/{id}/assignments": "least=DelegatedWork",
+            "/privilegedroles/{id}/settings": "least=DelegatedWork"
+          }
+        },
+        {
+          "schemeKeys": [
+            "DelegatedWork"
+          ],
+          "methods": [
+            "GET",
+            "POST"
+          ],
+          "paths": {
+            "/privilegedroleassignments": "least=DelegatedWork"
+          }
+        },
+        {
+          "schemeKeys": [
+            "DelegatedWork"
+          ],
+          "methods": [
+            "DELETE",
+            "GET"
+          ],
+          "paths": {
+            "/privilegedroleassignments/{id}": "least=DelegatedWork"
+          }
+        }
+      ],
+      "ownerInfo": {
+        "ownerSecurityGroup": "IdentityReq"
+      }
+    }
+  }
+}

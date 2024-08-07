@@ -1,0 +1,16 @@
+; Graph Permissions Deployment Document
+
+permissionDeployments = {
+    permissionDeployments: {* permissionName => permissionDeployment} 
+}
+
+permissionDeployment = {
+    id: tstr
+    ? resourceAppId: tstr,
+    environment: tstr
+    scheme: tstr
+    ? isHidden: bool .default false,
+    ? isEnabled: bool .default false,
+}
+
+

@@ -1,0 +1,26 @@
+
+{
+    "permissionDeployments": {
+        "Sites.Read.All": [
+            {
+                "id": "234324-3424-234234-23424",
+                "scheme": "DelegatedWork",
+                "environment": "public",
+                "resourceAppId":"00000000-0000-0000-0000-000000000000"
+            },
+            {
+                "id": "678768-3424-234234-23424",
+                "scheme": "DelegatedPersonal",
+                "environment": "public",
+                "resourceAppId":"00000000-0000-0000-0000-00000000000" 
+            },
+            {
+                "id": "678768-3424-234234-23424",
+                "scheme": "Application",
+                "environment": "public",
+                "resourceAppId":"00000000-0000-0000-0000-00000000000"
+                "isHidden": true
+            }
+        ]
+    } 
+}

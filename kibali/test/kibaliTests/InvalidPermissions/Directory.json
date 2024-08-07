@@ -1,0 +1,920 @@
+{
+    "$schema": "https://microsoftgraph.github.io/msgraph-metadata/graph-permissions-schema.json",
+    "permissions": {
+        "Directory.AccessAsUser.All": {
+            "schemes": {
+                "DelegatedWork": {
+                    "adminDisplayName": "Access directory as the signed in user",
+                    "adminDescription": "Allows the app to have the same access to information in the directory as the signed-in user.",
+                    "userDisplayName": "Access the directory as you",
+                    "userDescription": "Allows the app to have the same access to information in your work or school directory as you do.",
+                    "requiresAdminConsent": true
+                }
+            },
+            "pathSets": [
+                {
+                    "methods": [
+                        "POST"
+                    ],
+                    "schemeKeys": [
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/devices": "least=DelegatedWork",
+                        "/devices/{id}/registeredowners": "least=DelegatedWork",
+                        "/devices/{id}/registeredusers": "least=DelegatedWork",
+                        "/privilegedapproval": "least=DelegatedWork",
+                        "/me/changepassword": "least=DelegatedWork",
+                        "/privilegedroleassignments/{id}/makeeligible": "least=DelegatedWork",
+                        "/privilegedroleassignments/{id}/makepermanent": "least=DelegatedWork",
+                        "/privilegedroles/{id}/selfactivate": "least=DelegatedWork",
+                        "/privilegedroles/{id}/selfdeactivate": "least=DelegatedWork",
+                        "/users/{id}/changepassword": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "PATCH",
+                        "DELETE"
+                    ],
+                    "schemeKeys": [
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/devices/{id}": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "DELETE"
+                    ],
+                    "schemeKeys": [
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/devices/{id}/registeredowners/{id}": "least=DelegatedWork",
+                        "/devices/{id}/registeredusers/{id}": "least=DelegatedWork"
+                    }
+                },
+                {
+                    "methods": [
+                        "DELETE",
+                        "GET"
+                    ],
+                    "schemeKeys": [
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/privilegedroleassignments/{id}": "least=DelegatedWork"
+                    }
+                },
+                {
+                    "methods": [
+                        "GET"
+                    ],
+                    "schemeKeys": [
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/privilegedapproval/myrequests": "least=DelegatedWork",
+                        "/privilegedoperationevents": "least=DelegatedWork",
+                        "/privilegedroleassignments/my": "least=DelegatedWork",
+                        "/privilegedroleassignments/{id}/roleinfo": "least=DelegatedWork",
+                        "/privilegedroles": "least=DelegatedWork",
+                        "/privilegedroles/{id}": "least=DelegatedWork",
+                        "/privilegedroles/{id}/assignments": "least=DelegatedWork",
+                        "/privilegedroles/{id}/settings": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "GET",
+                        "POST"
+                    ],
+                    "schemeKeys": [
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/privilegedroleassignments": "least=DelegatedWork"
+                    }
+                }
+            ]
+        },
+        "Directory.Read.All": {
+            "schemes": {
+                "DelegatedWork": {
+                    "adminDisplayName": "Read directory data",
+                    "adminDescription": "Allows the app to read data in your organization's directory, such as users, groups and apps.",
+                    "userDisplayName": "Read directory data",
+                    "userDescription": "Allows the app to read data in your organization's directory.",
+                    "requiresAdminConsent": true
+                },
+                "Application": {
+                    "adminDisplayName": "Read directory data",
+                    "adminDescription": "Allows the app to read data in your organization's directory, such as users, groups and apps, without a signed-in user.",
+                    "requiresAdminConsent": true
+                }
+            },
+            "pathSets": [
+                {
+                    "methods": [
+                        "GET"
+                    ],
+                    "schemeKeys": [
+                        "Application",
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/administrativeunits": "",
+                        "/administrativeunits/{id}": "",
+                        "/administrativeunits/{id}/members": "",
+                        "/administrativeunits/{id}/members/{id}": "",
+                        "/directory/administrativeunits": "",
+                        "/directory/administrativeunits/{id}": "",
+                        "/groups/{id}/approleassignments": "",
+                        "/users/{id}/approleassignments": "",
+                        "/serviceprincipals/{id}/approleassignments": "",
+                        "/applications": "",
+                        "/applications/delta": "",
+                        "/applications/{id}": "",
+                        "/applications/{id}/extensionproperties": "",
+                        "/directory/deleteditems/microsoft.graph.application": "",
+                        "/directory/deleteditems/microsoft.graph.group": "",
+                        "/directory/deleteditems/microsoft.graph.serviceprincipal": "",
+                        "/directory/deleteditems/microsoft.graph.user": "",
+                        "/directory/deleteditems/{id}": "",
+                        "/policies/claimsmappingpolicies/{id}/appliesto": "",
+                        "/policies/homerealmdiscoverypolicies/{id}/appliesto": "",
+                        "/policies/tokenissuancepolicies/{id}/appliesto": "",
+                        "/policies/tokenlifetimepolicies/{id}/appliesto": "",
+                        "/serviceprincipals/delta": "",
+                        "/serviceprincipals/{id}": "",
+                        "/serviceprincipals/{id}/createdobjects": "",
+                        "/serviceprincipals/{id}/delegatedpermissionclassifications": "",
+                        "/serviceprincipals/{id}/memberof": "",
+                        "/serviceprincipals/{id}/ownedobjects": "",
+                        "/serviceprincipals/{id}/transitivememberof": "",
+                        "/directoryobjects/{id}": "least=Application,DelegatedWork",
+                        "/serviceprincipals": "",
+                        "/auditlogs/directoryaudits": "",
+                        "/auditlogs/directoryaudits/{id}": "",
+                        "/auditlogs/provisioning": "",
+                        "/auditlogs/signins": "",
+                        "/auditlogs/signins/{id}": "",
+                        "/teams/{id}/channels": "",
+                        "/teams/{id}/channels/{id}": "",
+                        "/rolemanagement/cloudpc/roledefinitions": "",
+                        "/rolemanagement/cloudpc/roledefinitions/{id}": "",
+                        "/rolemanagement/devicemanagement/roledefinitions": "",
+                        "/rolemanagement/devicemanagement/roledefinitions/{id}": "",
+                        "/rolemanagement/directory/roledefinitions": "",
+                        "/rolemanagement/directory/roledefinitions/{id}": "",
+                        "/rolemanagement/entitlementmanagement/roledefinitions": "",
+                        "/rolemanagement/entitlementmanagement/roledefinitions/{id}": "",
+                        "/oauth2permissiongrants/{id}": "least=Application,DelegatedWork",
+                        "/me/oauth2permissiongrants": "least=Application",
+                        "/oauth2permissiongrants": "least=Application,DelegatedWork",
+                        "/serviceprincipals/{id}/oauth2permissiongrants": "least=Application,DelegatedWork",
+                        "/users/{id}/oauth2permissiongrants": "least=Application",
+                        "/devices": "",
+                        "/devices/{id}": "least=Application",
+                        "/devices/{id}/memberof": "",
+                        "/devices/{id}/registeredowners": "",
+                        "/devices/{id}/registeredusers": "",
+                        "/devices/{id}/transitivememberof": "",
+                        "/devices/{id}/usagerights": "",
+                        "/organization": "",
+                        "/administrativeunits/{id}/scopedrolemembers": "",
+                        "/administrativeunits/{id}/scopedrolemembers/{id}": "",
+                        "/contacts": "",
+                        "/contacts/delta": "",
+                        "/contacts/{id}": "",
+                        "/contacts/{id}/directreports": "least=Application,DelegatedWork",
+                        "/contacts/{id}/manager": "least=Application,DelegatedWork",
+                        "/contacts/{id}/memberof": "least=Application,DelegatedWork",
+                        "/contacts/{id}/transitivereports/$count": "",
+                        "/contracts": "least=Application,DelegatedWork",
+                        "/contracts/{id}": "least=Application,DelegatedWork",
+                        "/dataclassification/jobs": "",
+                        "/dataclassification/jobs/{id}": "",
+                        "/dataclassification/sensitivetypes": "",
+                        "/dataclassification/sensitivetypes/{id}": "",
+                        "/directoryroles": "",
+                        "/directoryroles/delta": "",
+                        "/directoryroles/roletemplateid={roletemplateid}": "",
+                        "/directoryroles/roletemplateid={roletemplateid}/members": "",
+                        "/directoryroles/roletemplateid={roletemplateid}/scopedmembers": "",
+                        "/directoryroles/{id}": "",
+                        "/directoryroles/{id}/members": "",
+                        "/directoryroles/{id}/scopedmembers": "",
+                        "/directoryroletemplates": "",
+                        "/directoryroletemplates/{id}": "",
+                        "/directorysettingtemplates": "least=Application,DelegatedWork",
+                        "/directorysettingtemplates/{id}": "least=Application,DelegatedWork",
+                        "/domains": "",
+                        "/domains/{id}": "",
+                        "/education/classes/{id}/group": "",
+                        "/education/me/user": "",
+                        "/education/schools/{id}/administrativeunit": "",
+                        "/education/users/{id}/user": "",
+                        "/grouplifecyclepolicies": "least=Application,DelegatedWork",
+                        "/grouplifecyclepolicies/{id}": "least=Application,DelegatedWork",
+                        "/groups": "",
+                        "/groups/delta": "",
+                        "/groups/{id}": "least=Application",
+                        "/groups/{id}/grouplifecyclepolicies": "least=Application,DelegatedWork",
+                        "/groups/{id}/memberof": "",
+                        "/groups/{id}/members": "",
+                        "/groups/{id}/owners": "",
+                        "/groups/{id}/settings": "",
+                        "/groups/{id}/settings/{id}": "",
+                        "/groups/{id}/transitivememberof": "least=Application,DelegatedWork",
+                        "/groups/{id}/transitivemembers": "",
+                        "/groupsettings": "",
+                        "/groupsettings/{id}": "",
+                        "/me": "least=Application,DelegatedWork",
+                        "/me/createdobjects": "",
+                        "/me/directreports": "",
+                        "/me/joinedteams": "",
+                        "/me/licensedetails": "",
+                        "/me/manager": "",
+                        "/me/memberof": "least=Application",
+                        "/me/ownedobjects": "",
+                        "/me/registereddevices": "",
+                        "/me/scopedrolememberof": "least=Application,DelegatedWork",
+                        "/policies/adminconsentrequestpolicy": "",
+                        "/policies/permissiongrantpolicies/{id}/excludes": "",
+                        "/policies/permissiongrantpolicies/{id}/includes": "",
+                        "/rolemanagement/directory/roleassignments": "",
+                        "/rolemanagement/directory/roleassignments/{id}": "",
+                        "/rolemanagement/directory/transitiveroleassignments": "",
+                        "/rolemanagement/entitlementmanagement/roleassignments": "",
+                        "/rolemanagement/entitlementmanagement/roleassignments/{id}": "",
+                        "/settings": "",
+                        "/settings/{id}": "",
+                        "/subscribedskus": "",
+                        "/subscribedskus/{id}": "",
+                        "/teams/{id}": "",
+                        "/teams/{id}/channels/{id}/tabs": "",
+                        "/teams/{id}/channels/{id}/tabs/{id}": "",
+                        "/teams/{id}/installedapps": "",
+                        "/teams/{id}/installedapps/{id}": "",
+                        "/users": "",
+                        "/users/delta": "",
+                        "/users/{id}": "",
+                        "/users/{id}/createdobjects": "",
+                        "/users/{id}/directreports": "",
+                        "/users/{id}/joinedteams": "",
+                        "/users/{id}/licensedetails": "",
+                        "/users/{id}/manager": "",
+                        "/users/{id}/memberof": "least=Application",
+                        "/users/{id}/owneddevices": "",
+                        "/users/{id}/ownedobjects": "",
+                        "/users/{id}/registereddevices": "",
+                        "/users/{id}/scopedrolememberof": "least=Application,DelegatedWork",
+                        "/users/{id}/transitivememberof": "least=Application,DelegatedWork",
+                        "/users/{id}/transitivereports/$count": "",
+                        "/users/{id}/usagerights": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "GET"
+                    ],
+                    "schemeKeys": [
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/appcatalogs/teamsapps": "",
+                        "/applications/{id}/extensionproperties/{id}": "",
+                        "/applications/{id}/synchronization/templates/{id}/schema": "",
+                        "/serviceprincipals/{id}/synchronization/jobs/{id}": "least=DelegatedWork",
+                        "/serviceprincipals/{id}/synchronization/jobs/{id}/schema": "",
+                        "/applications/{id}/synchronization/templates": "least=DelegatedWork",
+                        "/applications/{id}/synchronization/templates/{id}": "",
+                        "/applications/{id}/synchronization/templates/{id}/schema/filteroperators": "least=DelegatedWork",
+                        "/applications/{id}/synchronization/templates/{id}/schema/functions": "least=DelegatedWork",
+                        "/serviceprincipals/{id}/synchronization/jobs/{id}/schema/filteroperators": "least=DelegatedWork",
+                        "/serviceprincipals/{id}/synchronization/jobs/{id}/schema/functions": "least=DelegatedWork",
+                        "/serviceprincipals/{id}/synchronization/templates": "least=DelegatedWork",
+                        "/serviceprincipals/{id}/synchronization/templates/{id}": "least=DelegatedWork",
+                        "/serviceprincipals/{id}/synchronization/templates/{id}/schema": "least=DelegatedWork",
+                        "/serviceprincipals/{id}/synchronization/templates/{id}/schema/filteroperators": "least=DelegatedWork",
+                        "/serviceprincipals/{id}/synchronization/templates/{id}/schema/functions": "least=DelegatedWork",
+                        "/privilegedroleassignmentrequests": "",
+                        "/administrativeunits/delta": "",
+                        "/oauth2permissiongrants/delta": "least=DelegatedWork"
+                    }
+                },
+                {
+                    "methods": [
+                        "POST",
+                        "GET"
+                    ],
+                    "schemeKeys": [
+                        "Application",
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/serviceprincipals/{id}/approleassignedto": "",
+                        "/applications/{id}/owners": "",
+                        "/serviceprincipals/{id}/owners": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "POST"
+                    ],
+                    "schemeKeys": [
+                        "Application",
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/contacts/{id}/checkmembergroups": "",
+                        "/contacts/{id}/checkmemberobjects": "least=Application,DelegatedWork",
+                        "/contacts/{id}/getmembergroups": "",
+                        "/contacts/{id}/getmemberobjects": "least=Application,DelegatedWork",
+                        "/devices/{id}/checkmembergroups": "",
+                        "/devices/{id}/checkmemberobjects": "least=Application,DelegatedWork",
+                        "/devices/{id}/getmembergroups": "",
+                        "/devices/{id}/getmemberobjects": "least=Application,DelegatedWork",
+                        "/directoryobjects/{id}/checkmembergroups": "",
+                        "/directoryobjects/{id}/checkmemberobjects": "least=Application,DelegatedWork",
+                        "/directoryobjects/{id}/getmembergroups": "",
+                        "/directoryobjects/{id}/getmemberobjects": "least=Application,DelegatedWork",
+                        "/groups/{id}/checkmembergroups": "",
+                        "/groups/{id}/checkmemberobjects": "least=Application,DelegatedWork",
+                        "/groups/{id}/getmembergroups": "",
+                        "/groups/{id}/getmemberobjects": "least=Application,DelegatedWork",
+                        "/me/checkmembergroups": "",
+                        "/me/checkmemberobjects": "least=Application,DelegatedWork",
+                        "/me/getmembergroups": "",
+                        "/me/getmemberobjects": "least=Application,DelegatedWork",
+                        "/serviceprincipals/{id}/checkmembergroups": "",
+                        "/serviceprincipals/{id}/checkmemberobjects": "least=Application,DelegatedWork",
+                        "/serviceprincipals/{id}/getmembergroups": "",
+                        "/serviceprincipals/{id}/getmemberobjects": "least=Application,DelegatedWork",
+                        "/users/{id}/checkmembergroups": "",
+                        "/users/{id}/checkmemberobjects": "least=Application,DelegatedWork",
+                        "/users/{id}/getmembergroups": "",
+                        "/users/{id}/getmemberobjects": "least=Application,DelegatedWork",
+                        "/serviceprincipals/{id}/createpasswordsinglesignoncredentials": "",
+                        "/serviceprincipals/{id}/deletepasswordsinglesignoncredentials": "",
+                        "/serviceprincipals/{id}/getpasswordsinglesignoncredentials": "",
+                        "/serviceprincipals/{id}/updatepasswordsinglesignoncredentials": "",
+                        "/dataclassification/classifyfile": "",
+                        "/dataclassification/classifytext": "",
+                        "/directoryobjects/getbyids": "least=Application,DelegatedWork",
+                        "/directoryobjects/validateproperties": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "POST"
+                    ],
+                    "schemeKeys": [
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/groups/evaluatedynamicmembership": "",
+                        "/groups/{id}/evaluatedynamicmembership": "",
+                        "/privilegedroleassignmentrequests/my": ""
+                    }
+                }
+            ]
+        },
+        "Directory.ReadWrite.All": {
+            "schemes": {
+                "DelegatedWork": {
+                    "adminDisplayName": "Read and write directory data",
+                    "adminDescription": "Allows the app to read and write data in your organization's directory, such as users, and groups.  It does not allow the app to delete users or groups, or reset user passwords.",
+                    "userDisplayName": "Read and write directory data",
+                    "userDescription": "Allows the app to read and write data in your organization's directory, such as other users, groups.  It does not allow the app to delete users or groups, or reset user passwords.",
+                    "requiresAdminConsent": true
+                },
+                "Application": {
+                    "adminDisplayName": "Read and write directory data",
+                    "adminDescription": "Allows the app to read and write data in your organization's directory, such as users, and groups, without a signed-in user.  Does not allow user or group deletion.",
+                    "requiresAdminConsent": true
+                }
+            },
+            "pathSets": [
+                {
+                    "methods": [
+                        "GET"
+                    ],
+                    "schemeKeys": [
+                        "Application",
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/administrativeunits": "",
+                        "/administrativeunits/{id}": "",
+                        "/administrativeunits/{id}/members/{id}": "",
+                        "/directory/administrativeunits": "",
+                        "/directory/administrativeunits/{id}": "",
+                        "/groups/{id}/approleassignments": "",
+                        "/applications/delta": "",
+                        "/directory/deleteditems/microsoft.graph.application": "",
+                        "/directory/deleteditems/microsoft.graph.group": "",
+                        "/directory/deleteditems/microsoft.graph.serviceprincipal": "",
+                        "/directory/deleteditems/microsoft.graph.user": "",
+                        "/serviceprincipals/delta": "",
+                        "/serviceprincipals/{id}/createdobjects": "",
+                        "/serviceprincipals/{id}/memberof": "",
+                        "/serviceprincipals/{id}/ownedobjects": "",
+                        "/serviceprincipals/{id}/transitivememberof": "",
+                        "/rolemanagement/entitlementmanagement/roledefinitions": "",
+                        "/rolemanagement/entitlementmanagement/roledefinitions/{id}": "",
+                        "/serviceprincipals/{id}/oauth2permissiongrants": "",
+                        "/devices": "",
+                        "/devices/{id}/memberof": "",
+                        "/devices/{id}/registeredowners": "",
+                        "/devices/{id}/registeredusers": "",
+                        "/devices/{id}/transitivememberof": "",
+                        "/devices/{id}/usagerights": "",
+                        "/organization": "",
+                        "/administrativeunits/{id}/scopedrolemembers": "",
+                        "/administrativeunits/{id}/scopedrolemembers/{id}": "",
+                        "/contacts": "",
+                        "/contacts/delta": "",
+                        "/contacts/{id}": "",
+                        "/contacts/{id}/directreports": "",
+                        "/contacts/{id}/manager": "",
+                        "/contacts/{id}/memberof": "",
+                        "/contracts": "",
+                        "/contracts/{id}": "",
+                        "/directoryroles": "",
+                        "/directoryroles/delta": "",
+                        "/directoryroles/roletemplateid={roletemplateid}": "",
+                        "/directoryroles/roletemplateid={roletemplateid}/members": "",
+                        "/directoryroles/roletemplateid={roletemplateid}/scopedmembers": "",
+                        "/directoryroles/{id}": "",
+                        "/directoryroles/{id}/members": "",
+                        "/directoryroles/{id}/scopedmembers": "",
+                        "/directoryroletemplates": "",
+                        "/directoryroletemplates/{id}": "",
+                        "/directorysettingtemplates": "",
+                        "/directorysettingtemplates/{id}": "",
+                        "/groups/delta": "",
+                        "/groups/{id}/grouplifecyclepolicies": "",
+                        "/groups/{id}/memberof": "",
+                        "/groups/{id}/transitivememberof": "",
+                        "/me": "",
+                        "/me/createdobjects": "",
+                        "/me/directreports": "",
+                        "/me/joinedteams": "",
+                        "/me/licensedetails": "",
+                        "/me/manager": "",
+                        "/me/memberof": "",
+                        "/me/ownedobjects": "",
+                        "/me/registereddevices": "",
+                        "/me/scopedrolememberof": "",
+                        "/rolemanagement/directory/roleassignments": "",
+                        "/rolemanagement/directory/roleassignments/{id}": "",
+                        "/rolemanagement/directory/transitiveroleassignments": "",
+                        "/rolemanagement/entitlementmanagement/roleassignments": "",
+                        "/rolemanagement/entitlementmanagement/roleassignments/{id}": "",
+                        "/subscribedskus": "",
+                        "/subscribedskus/{id}": "",
+                        "/users/delta": "",
+                        "/users/{id}/createdobjects": "",
+                        "/users/{id}/directreports": "",
+                        "/users/{id}/joinedteams": "",
+                        "/users/{id}/licensedetails": "",
+                        "/users/{id}/memberof": "",
+                        "/users/{id}/owneddevices": "",
+                        "/users/{id}/ownedobjects": "",
+                        "/users/{id}/registereddevices": "",
+                        "/users/{id}/scopedrolememberof": "",
+                        "/users/{id}/transitivememberof": "",
+                        "/users/{id}/usagerights": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "GET",
+                        "POST"
+                    ],
+                    "schemeKeys": [
+                        "Application",
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/administrativeunits/{id}/members": "",
+                        "/serviceprincipals/{id}/approleassignedto": "",
+                        "/serviceprincipals/{id}/approleassignments": "",
+                        "/applications": "",
+                        "/applications/{id}/extensionproperties": "",
+                        "/applications/{id}/owners": "",
+                        "/serviceprincipals/{id}/owners": "",
+                        "/serviceprincipals": "",
+                        "/serviceprincipals/{id}/synchronization/jobs": "least=DelegatedWork",
+                        "/teams/{id}/channels": "",
+                        "/rolemanagement/cloudpc/roledefinitions": "",
+                        "/rolemanagement/devicemanagement/roledefinitions": "",
+                        "/rolemanagement/directory/roledefinitions": "",
+                        "/oauth2permissiongrants": "",
+                        "/grouplifecyclepolicies": "",
+                        "/groups": "",
+                        "/groups/{id}/settings": "least=Application,DelegatedWork",
+                        "/settings": "least=Application,DelegatedWork",
+                        "/teams/{id}/channels/{id}/tabs": "",
+                        "/teams/{id}/installedapps": "",
+                        "/users": "",
+                        "/onpremisespublishingprofiles/applicationproxy/connectorgroups": "least=DelegatedWork"
+                    }
+                },
+                {
+                    "methods": [
+                        "GET",
+                        "POST"
+                    ],
+                    "schemeKeys": [
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/appcatalogs/teamsapps": "",
+                        "/onpremisespublishingprofiles/applicationproxy/connectorgroups/{id}/members": "least=DelegatedWork",
+                        "/onpremisespublishingprofiles/applicationproxy/connectors/{id}/memberof": "least=DelegatedWork",
+                        "/policies/featurerolloutpolicies": "least=DelegatedWork"
+                    }
+                },
+                {
+                    "methods": [
+                        "GET",
+                        "DELETE",
+                        "PATCH"
+                    ],
+                    "schemeKeys": [
+                        "Application",
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/applications/{id}": "",
+                        "/serviceprincipals/{id}": "",
+                        "/teams/{id}/channels/{id}": "",
+                        "/rolemanagement/cloudpc/roledefinitions/{id}": "",
+                        "/rolemanagement/devicemanagement/roledefinitions/{id}": "",
+                        "/rolemanagement/directory/roledefinitions/{id}": "",
+                        "/oauth2permissiongrants/{id}": "",
+                        "/grouplifecyclepolicies/{id}": "",
+                        "/groups/{id}/settings/{id}": "least=Application,DelegatedWork",
+                        "/settings/{id}": "least=Application,DelegatedWork",
+                        "/teams/{id}/channels/{id}/tabs/{id}": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "DELETE"
+                    ],
+                    "schemeKeys": [
+                        "Application",
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/applications/{id}/extensionproperties/{id}": "",
+                        "/applications/{id}/owners/{id}": "",
+                        "/serviceprincipals/{id}/owners/{id}": "",
+                        "/groups/{id}/members/{id}": "",
+                        "/groups/{id}/owners/{id}": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "GET",
+                        "DELETE"
+                    ],
+                    "schemeKeys": [
+                        "Application",
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/directory/deleteditems/{id}": "",
+                        "/serviceprincipals/{id}/synchronization/jobs/{id}": "",
+                        "/teams/{id}/installedapps/{id}": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "POST"
+                    ],
+                    "schemeKeys": [
+                        "Application"
+                    ],
+                    "paths": {
+                        "/schemaextensions": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "PATCH"
+                    ],
+                    "schemeKeys": [
+                        "Application"
+                    ],
+                    "paths": {
+                        "/schemaextensions/{id}": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "POST"
+                    ],
+                    "schemeKeys": [
+                        "Application",
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/contacts/{id}/checkmembergroups": "",
+                        "/contacts/{id}/checkmemberobjects": "",
+                        "/contacts/{id}/getmembergroups": "",
+                        "/contacts/{id}/getmemberobjects": "",
+                        "/devices/{id}/checkmembergroups": "",
+                        "/devices/{id}/checkmemberobjects": "",
+                        "/devices/{id}/getmembergroups": "",
+                        "/devices/{id}/getmemberobjects": "",
+                        "/directoryobjects/{id}/checkmembergroups": "",
+                        "/directoryobjects/{id}/checkmemberobjects": "",
+                        "/directoryobjects/{id}/getmembergroups": "",
+                        "/directoryobjects/{id}/getmemberobjects": "",
+                        "/groups/{id}/checkmembergroups": "",
+                        "/groups/{id}/checkmemberobjects": "",
+                        "/groups/{id}/getmembergroups": "",
+                        "/groups/{id}/getmemberobjects": "",
+                        "/me/checkmembergroups": "",
+                        "/me/checkmemberobjects": "",
+                        "/me/getmembergroups": "",
+                        "/me/getmemberobjects": "",
+                        "/serviceprincipals/{id}/checkmembergroups": "",
+                        "/serviceprincipals/{id}/checkmemberobjects": "",
+                        "/serviceprincipals/{id}/getmembergroups": "",
+                        "/serviceprincipals/{id}/getmemberobjects": "",
+                        "/users/{id}/checkmembergroups": "",
+                        "/users/{id}/checkmemberobjects": "",
+                        "/users/{id}/getmembergroups": "",
+                        "/users/{id}/getmemberobjects": "",
+                        "/applications/{id}/addpassword": "",
+                        "/applications/{id}/removepassword": "",
+                        "/applicationtemplates/{id}/instantiate": "",
+                        "/serviceprincipals/{id}/addkey": "",
+                        "/serviceprincipals/{id}/addpassword": "",
+                        "/serviceprincipals/{id}/addtokensigningcertificate": "",
+                        "/serviceprincipals/{id}/createpasswordsinglesignoncredentials": "",
+                        "/serviceprincipals/{id}/deletepasswordsinglesignoncredentials": "",
+                        "/serviceprincipals/{id}/getpasswordsinglesignoncredentials": "",
+                        "/serviceprincipals/{id}/removekey": "",
+                        "/serviceprincipals/{id}/removepassword": "",
+                        "/serviceprincipals/{id}/updatepasswordsinglesignoncredentials": "",
+                        "/applications/{id}/synchronization/acquireaccesstoken": "least=DelegatedWork",
+                        "/serviceprincipals/{id}/synchronization/acquireaccesstoken": "least=DelegatedWork",
+                        "/serviceprincipals/{id}/synchronization/jobs/{id}/pause": "least=DelegatedWork",
+                        "/serviceprincipals/{id}/synchronization/jobs/{id}/provisionondemand": "least=DelegatedWork",
+                        "/serviceprincipals/{id}/synchronization/jobs/{id}/restart": "least=DelegatedWork",
+                        "/serviceprincipals/{id}/synchronization/jobs/{id}/schema/directories/{id}/discover": "least=DelegatedWork",
+                        "/serviceprincipals/{id}/synchronization/jobs/{id}/schema/parseexpression": "least=DelegatedWork",
+                        "/serviceprincipals/{id}/synchronization/jobs/{id}/start": "least=DelegatedWork",
+                        "/serviceprincipals/{id}/synchronization/jobs/{id}/validatecredentials": "least=DelegatedWork",
+                        "/serviceprincipals/{id}/synchronization/templates/{id}/schema/parseexpression": "least=DelegatedWork",
+                        "/groups/{id}/members": "",
+                        "/groups/{id}/owners": "",
+                        "/groupsettings": "",
+                        "/directoryobjects/validateproperties": "",
+                        "/grouplifecyclepolicies/renewgroup": "",
+                        "/grouplifecyclepolicies/{id}/addgroup": "least=Application,DelegatedWork",
+                        "/grouplifecyclepolicies/{id}/removegroup": "least=Application,DelegatedWork",
+                        "/groups/{id}/assignlicense": "",
+                        "/groups/{id}/renew": "",
+                        "/invitations": "",
+                        "/me/revokesigninsessions": "",
+                        "/organization/{id}/activateservice": "least=Application,DelegatedWork",
+                        "/teams": "",
+                        "/teams/87654321-0abc-zqf0-321456789q/installedapps": "",
+                        "/teams/{id}/archive": "",
+                        "/teams/{id}/clone": "",
+                        "/teams/{id}/installedapps/{id}/upgrade": "",
+                        "/teams/{id}/unarchive": "",
+                        "/users/{id}/activateserviceplan": "least=Application,DelegatedWork",
+                        "/users/{id}/assignlicense": "",
+                        "/users/{id}/reprocesslicenseassignment": "",
+                        "/users/{id}/revokesigninsessions": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "DELETE",
+                        "GET",
+                        "PUT"
+                    ],
+                    "schemeKeys": [
+                        "Application",
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/applications/{id}/synchronization/templates/{id}/schema": "least=DelegatedWork",
+                        "/serviceprincipals/{id}/synchronization/jobs/{id}/schema": "least=DelegatedWork"
+                    }
+                },
+                {
+                    "methods": [
+                        "GET"
+                    ],
+                    "schemeKeys": [
+                        "Application"
+                    ],
+                    "paths": {
+                        "/applications/{id}/synchronization/templates": "",
+                        "/applications/{id}/synchronization/templates/{id}/schema/filteroperators": "",
+                        "/applications/{id}/synchronization/templates/{id}/schema/functions": "",
+                        "/serviceprincipals/{id}/synchronization/jobs/{id}/schema/filteroperators": "",
+                        "/serviceprincipals/{id}/synchronization/jobs/{id}/schema/functions": "",
+                        "/serviceprincipals/{id}/synchronization/templates": "",
+                        "/serviceprincipals/{id}/synchronization/templates/{id}": "",
+                        "/serviceprincipals/{id}/synchronization/templates/{id}/schema": "",
+                        "/serviceprincipals/{id}/synchronization/templates/{id}/schema/filteroperators": "",
+                        "/serviceprincipals/{id}/synchronization/templates/{id}/schema/functions": "",
+                        "/group/{id}/settings": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "GET",
+                        "PATCH"
+                    ],
+                    "schemeKeys": [
+                        "Application",
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/applications/{id}/synchronization/templates/{id}": "least=DelegatedWork",
+                        "/devices/{id}": "",
+                        "/groups/{id}": "",
+                        "/teams/{id}": "",
+                        "/users/{id}": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "PUT"
+                    ],
+                    "schemeKeys": [
+                        "Application",
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/serviceprincipals/{id}/synchronization/secrets": "least=DelegatedWork",
+                        "/groups/{id}/team": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "PATCH"
+                    ],
+                    "schemeKeys": [
+                        "Application",
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/teams/{id}/channels/{id}/members/{id}": "",
+                        "/teams/{id}/members/{id}": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "DELETE",
+                        "PATCH"
+                    ],
+                    "schemeKeys": [
+                        "Application",
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/groupsettings/{id}": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "GET",
+                        "PUT"
+                    ],
+                    "schemeKeys": [
+                        "Application",
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/policies/adminconsentrequestpolicy": "",
+                        "/users/{id}/manager": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "DELETE"
+                    ],
+                    "schemeKeys": [
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/appcatalogs/teamsapps/{id}": "",
+                        "/appcatalogs/teamsapps/{id}/appdefinitions/{id}": "",
+                        "/onpremisespublishingprofiles/{id}/agents/{id}/agentgroups/{id}": "least=DelegatedWork",
+                        "/policies/featurerolloutpolicies/{id}/appliesto/{id}": "least=DelegatedWork"
+                    }
+                },
+                {
+                    "methods": [
+                        "DELETE",
+                        "GET",
+                        "PATCH"
+                    ],
+                    "schemeKeys": [
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/onpremisespublishingprofiles/applicationproxy/connectorgroups/{id}": "least=DelegatedWork",
+                        "/policies/featurerolloutpolicies/{id}": "least=DelegatedWork"
+                    }
+                },
+                {
+                    "methods": [
+                        "DELETE",
+                        "GET"
+                    ],
+                    "schemeKeys": [
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/onpremisespublishingprofiles/{id}/agentgroups/{id}": "least=DelegatedWork"
+                    }
+                },
+                {
+                    "methods": [
+                        "GET"
+                    ],
+                    "schemeKeys": [
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/onpremisespublishingprofiles/applicationproxy/connectorgroups/{id}/applications": "least=DelegatedWork",
+                        "/onpremisespublishingprofiles/applicationproxy/connectors": "least=DelegatedWork",
+                        "/onpremisespublishingprofiles/applicationproxy/connectors/{id}": "least=DelegatedWork",
+                        "/onpremisespublishingprofiles/{id}": "least=DelegatedWork",
+                        "/onpremisespublishingprofiles/{id}/agents": "least=DelegatedWork",
+                        "/onpremisespublishingprofiles/{id}/agents/{id}": "least=DelegatedWork",
+                        "/administrativeunits/delta": "",
+                        "/oauth2permissiongrants/delta": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "GET",
+                        "PATCH"
+                    ],
+                    "schemeKeys": [
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/onpremisespublishingprofiles/{id}/agentgroups": "least=DelegatedWork"
+                    }
+                },
+                {
+                    "methods": [
+                        "PATCH"
+                    ],
+                    "schemeKeys": [
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/onpremisespublishingprofiles/{id}/hybridagentupdaterconfiguration": "least=DelegatedWork"
+                    }
+                },
+                {
+                    "methods": [
+                        "POST"
+                    ],
+                    "schemeKeys": [
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/appcatalogs/teamsapps/{id}/appdefinitions": "",
+                        "/me/invalidateallrefreshtokens": "",
+                        "/onpremisespublishingprofiles/{id}/agentgroups/{id}/agents": "least=DelegatedWork",
+                        "/onpremisespublishingprofiles/{id}/agents/{id}/agentgroups": "least=DelegatedWork",
+                        "/policies/featurerolloutpolicies/{id}/appliesto": "least=DelegatedWork",
+                        "/users/{id}/invalidateallrefreshtokens": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "PUT"
+                    ],
+                    "schemeKeys": [
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/applications/{id}/connectorgroup": "least=DelegatedWork"
+                    }
+                }
+            ]
+        }
+    }
+}

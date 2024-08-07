@@ -1,0 +1,407 @@
+{
+  "$schema": "https://microsoftgraph.github.io/msgraph-metadata/graph-permissions-schema.json",
+  "permissions": {
+    "UserAuthenticationMethod.Read": {
+      "schemes": {
+        "DelegatedWork": {
+          "adminDisplayName": "Read user authentication methods.",
+          "adminDescription": "Allows the app to read the signed-in user\u0027s authentication methods, including phone numbers and Authenticator app settings. This does not allow the app to see secret information like the signed-in user\u0027s passwords, or to sign-in  or otherwise use the signed-in user\u0027s authentication methods.",
+          "userDisplayName": "Read your authentication methods.",
+          "userDescription": "Allows the app to read your authentication methods, including phone numbers and Authenticator app settings. This does not allow the app to see secret information like your passwords, or to sign-in or otherwise use your authentication methods.",
+          "requiresAdminConsent": true
+        }
+      },
+      "pathSets": [
+        {
+          "schemeKeys": [
+            "DelegatedWork"
+          ],
+          "methods": [
+            "GET"
+          ],
+          "paths": {
+            "/me/authentication/microsoftauthenticatormethods/{id}": "",
+            "/me/authentication/phonemethods/{id}": "",
+            "/me/authentication/temporaryaccesspassmethods/{id}": "",
+            "/me/authentication/windowshelloforbusinessmethods/{id}": "",
+            "/users/{id}/authentication/emailmethods/{id}": "",
+            "/users/{id}/authentication/microsoftauthenticatormethods/{id}": "",
+            "/users/{id}/authentication/passwordlessmicrosoftauthenticatormethods/{id}": "",
+            "/users/{id}/authentication/phonemethods/{id}": "",
+            "/users/{id}/authentication/softwareoathmethods/{id}": "",
+            "/users/{id}/authentication/temporaryaccesspassmethods/{id}": "",
+            "/users/{id}/authentication/windowshelloforbusinessmethods/{id}": "",
+            "/me/authentication/emailmethods": "",
+            "/me/authentication/emailmethods/{id}": "",
+            "/me/authentication/fido2methods": "",
+            "/me/authentication/fido2methods/{id}": "",
+            "/me/authentication/methods": "",
+            "/me/authentication/microsoftauthenticatormethods": "",
+            "/me/authentication/passwordlessmicrosoftauthenticatormethods": "",
+            "/me/authentication/passwordlessmicrosoftauthenticatormethods/{id}": "",
+            "/me/authentication/passwordmethods": "",
+            "/me/authentication/passwordmethods/{id}": "",
+            "/me/authentication/phonemethods": "",
+            "/me/authentication/softwareoathmethods": "",
+            "/me/authentication/softwareoathmethods/{id}": "",
+            "/me/authentication/temporaryaccesspassmethods": "",
+            "/me/authentication/windowshelloforbusinessmethods": "",
+            "/users/{id}/authentication/emailmethods": "",
+            "/users/{id}/authentication/fido2methods": "",
+            "/users/{id}/authentication/fido2methods/{id}": "",
+            "/users/{id}/authentication/methods": "",
+            "/users/{id}/authentication/microsoftauthenticatormethods": "",
+            "/users/{id}/authentication/operations/{id}": "",
+            "/users/{id}/authentication/passwordlessmicrosoftauthenticatormethods": "",
+            "/users/{id}/authentication/passwordmethods": "",
+            "/users/{id}/authentication/passwordmethods/{id}": "",
+            "/users/{id}/authentication/phonemethods": "",
+            "/users/{id}/authentication/softwareoathmethods": "",
+            "/users/{id}/authentication/temporaryaccesspassmethods": "",
+            "/users/{id}/authentication/windowshelloforbusinessmethods": "",
+            "/me/authentication/methods/{id}": "",
+            "/users/{id}/authentication/methods/{id}": ""
+          }
+        }
+      ]
+    },
+    "UserAuthenticationMethod.Read.All": {
+      "schemes": {
+        "DelegatedWork": {
+          "adminDisplayName": "Read all users\u0027 authentication methods",
+          "adminDescription": "Allows the app to read authentication methods of all users in your organization that the signed-in user has access to. Authentication methods include things like a user\u2019s phone numbers and Authenticator app settings. This does not allow the app to see secret information like passwords, or to sign-in or otherwise use the authentication methods.",
+          "userDisplayName": "Read all users\u0027 authentication methods",
+          "userDescription": "Allows the app to read authentication methods of all users you have access to in your organization. Authentication methods include things like a user\u2019s phone numbers and Authenticator app settings. This does not allow the app to see secret information like passwords, or to sign-in or otherwise use the authentication methods.",
+          "requiresAdminConsent": true
+        },
+        "Application": {
+          "adminDisplayName": " Read all users\u0027 authentication methods",
+          "adminDescription": " Allows the app to read authentication methods of all users in your organization, without a signed-in user.                       Authentication methods include things like a user\u2019s phone numbers and Authenticator app settings. This does not allow the                      app to see secret information like passwords, or to sign-in or otherwise use the authentication methods."
+        }
+      },
+      "pathSets": [
+        {
+          "schemeKeys": [
+            "Application",
+            "DelegatedWork"
+          ],
+          "methods": [
+            "GET"
+          ],
+          "paths": {
+            "/reports/authenticationmethods/userregistrationdetails": "",
+            "/reports/authenticationmethods/userregistrationdetails/{id}": "",
+            "/me/authentication/microsoftauthenticatormethods/{id}": "",
+            "/me/authentication/phonemethods/{id}": "",
+            "/me/authentication/temporaryaccesspassmethods/{id}": "",
+            "/me/authentication/windowshelloforbusinessmethods/{id}": "",
+            "/users/{id}/authentication/emailmethods/{id}": "",
+            "/users/{id}/authentication/microsoftauthenticatormethods/{id}": "",
+            "/users/{id}/authentication/passwordlessmicrosoftauthenticatormethods/{id}": "",
+            "/users/{id}/authentication/phonemethods/{id}": "",
+            "/users/{id}/authentication/softwareoathmethods/{id}": "",
+            "/users/{id}/authentication/temporaryaccesspassmethods/{id}": "",
+            "/users/{id}/authentication/windowshelloforbusinessmethods/{id}": "",
+            "/me/authentication/emailmethods": "",
+            "/me/authentication/emailmethods/{id}": "",
+            "/me/authentication/fido2methods": "",
+            "/me/authentication/fido2methods/{id}": "",
+            "/me/authentication/methods": "",
+            "/me/authentication/microsoftauthenticatormethods": "",
+            "/me/authentication/passwordlessmicrosoftauthenticatormethods": "",
+            "/me/authentication/passwordlessmicrosoftauthenticatormethods/{id}": "",
+            "/me/authentication/passwordmethods": "",
+            "/me/authentication/passwordmethods/{id}": "",
+            "/me/authentication/phonemethods": "",
+            "/me/authentication/softwareoathmethods": "",
+            "/me/authentication/softwareoathmethods/{id}": "",
+            "/me/authentication/temporaryaccesspassmethods": "",
+            "/me/authentication/windowshelloforbusinessmethods": "",
+            "/users/{id}/authentication/emailmethods": "",
+            "/users/{id}/authentication/fido2methods": "",
+            "/users/{id}/authentication/fido2methods/{id}": "",
+            "/users/{id}/authentication/methods": "",
+            "/users/{id}/authentication/microsoftauthenticatormethods": "",
+            "/users/{id}/authentication/passwordlessmicrosoftauthenticatormethods": "",
+            "/users/{id}/authentication/passwordmethods": "",
+            "/users/{id}/authentication/passwordmethods/{id}": "",
+            "/users/{id}/authentication/phonemethods": "",
+            "/users/{id}/authentication/softwareoathmethods": "",
+            "/users/{id}/authentication/temporaryaccesspassmethods": "",
+            "/users/{id}/authentication/windowshelloforbusinessmethods": "",
+            "/me/authentication/methods/{id}": "",
+            "/users/{id}/authentication/methods/{id}": ""
+          }
+        },
+        {
+          "schemeKeys": [
+            "DelegatedWork"
+          ],
+          "methods": [
+            "GET"
+          ],
+          "paths": {
+            "/users/{id}/authentication/operations/{id}": ""
+          }
+        }
+      ]
+    },
+    "UserAuthenticationMethod.ReadWrite": {
+      "schemes": {
+        "DelegatedWork": {
+          "adminDisplayName": "Read and write user authentication methods",
+          "adminDescription": "Allows the app to read and write the signed-in user\u0027s authentication methods, including phone numbers and Authenticator app settings.                       This does not allow the app to see secret information like the signed-in user\u0027s passwords, or                      to sign-in or otherwise use the signed-in user\u0027s authentication methods.  ",
+          "userDisplayName": "Read and write your authentication methods",
+          "userDescription": "Allows the app to read and write your authentication methods, including phone numbers and Authenticator app settings.This does not allow the app to see secret information like your passwords, or to sign-in or otherwise use your authentication methods.",
+          "requiresAdminConsent": true
+        }
+      },
+      "pathSets": [
+        {
+          "schemeKeys": [
+            "DelegatedWork"
+          ],
+          "methods": [
+            "DELETE",
+            "GET"
+          ],
+          "paths": {
+            "/me/authentication/microsoftauthenticatormethods/{id}": "",
+            "/me/authentication/temporaryaccesspassmethods/{id}": "",
+            "/me/authentication/windowshelloforbusinessmethods/{id}": "",
+            "/users/{id}/authentication/microsoftauthenticatormethods/{id}": "",
+            "/users/{id}/authentication/passwordlessmicrosoftauthenticatormethods/{id}": "",
+            "/users/{id}/authentication/softwareoathmethods/{id}": "",
+            "/users/{id}/authentication/temporaryaccesspassmethods/{id}": "",
+            "/users/{id}/authentication/windowshelloforbusinessmethods/{id}": "",
+            "/users/{id}/authentication/fido2methods/{id}": ""
+          }
+        },
+        {
+          "schemeKeys": [
+            "DelegatedWork"
+          ],
+          "methods": [
+            "DELETE",
+            "GET",
+            "PUT"
+          ],
+          "paths": {
+            "/me/authentication/phonemethods/{id}": "",
+            "/users/{id}/authentication/emailmethods/{id}": "",
+            "/users/{id}/authentication/phonemethods/{id}": ""
+          }
+        },
+        {
+          "schemeKeys": [
+            "DelegatedWork"
+          ],
+          "methods": [
+            "GET"
+          ],
+          "paths": {
+            "/me/authentication/emailmethods": "",
+            "/me/authentication/emailmethods/{id}": "",
+            "/me/authentication/fido2methods": "",
+            "/me/authentication/fido2methods/{id}": "",
+            "/me/authentication/methods": "",
+            "/me/authentication/microsoftauthenticatormethods": "",
+            "/me/authentication/passwordlessmicrosoftauthenticatormethods": "",
+            "/me/authentication/passwordlessmicrosoftauthenticatormethods/{id}": "",
+            "/me/authentication/passwordmethods": "",
+            "/me/authentication/passwordmethods/{id}": "",
+            "/me/authentication/softwareoathmethods": "",
+            "/me/authentication/softwareoathmethods/{id}": "",
+            "/me/authentication/temporaryaccesspassmethods": "",
+            "/me/authentication/windowshelloforbusinessmethods": "",
+            "/users/{id}/authentication/fido2methods": "",
+            "/users/{id}/authentication/methods": "",
+            "/users/{id}/authentication/microsoftauthenticatormethods": "",
+            "/users/{id}/authentication/operations/{id}": "",
+            "/users/{id}/authentication/passwordlessmicrosoftauthenticatormethods": "",
+            "/users/{id}/authentication/passwordmethods": "",
+            "/users/{id}/authentication/passwordmethods/{id}": "",
+            "/users/{id}/authentication/softwareoathmethods": "",
+            "/users/{id}/authentication/temporaryaccesspassmethods": "",
+            "/users/{id}/authentication/windowshelloforbusinessmethods": "",
+            "/me/authentication/methods/{id}": "",
+            "/users/{id}/authentication/methods/{id}": ""
+          }
+        },
+        {
+          "schemeKeys": [
+            "DelegatedWork"
+          ],
+          "methods": [
+            "GET",
+            "POST"
+          ],
+          "paths": {
+            "/me/authentication/phonemethods": "",
+            "/users/{id}/authentication/emailmethods": "",
+            "/users/{id}/authentication/phonemethods": ""
+          }
+        },
+        {
+          "schemeKeys": [
+            "DelegatedWork"
+          ],
+          "methods": [
+            "POST"
+          ],
+          "paths": {
+            "/me/authentication/phonemethods/{id}/disablesmssignin": "",
+            "/me/authentication/phonemethods/{id}/enablesmssignin": "",
+            "/users/{id}/authentication/phonemethods/{id}/disablesmssignin": "",
+            "/users/{id}/authentication/phonemethods/{id}/enablesmssignin": ""
+          }
+        }
+      ]
+    },
+    "UserAuthenticationMethod.ReadWrite.All": {
+      "schemes": {
+        "DelegatedWork": {
+          "adminDisplayName": "Read and write all users\u0027 authentication methods.",
+          "adminDescription": " Allows the app to read and write authentication methods of all users in your organization that the signed-in user has access to.                       Authentication methods include things like a user\u2019s phone numbers and Authenticator app settings. This                      does not allow the app to see secret information like passwords, or to sign-in or otherwise use the authentication methods.",
+          "userDisplayName": "Read and write all users\u0027 authentication methods",
+          "userDescription": "Allows the app to read and write authentication methods of all users you have access to in your organization.                       Authentication methods include things like a user\u2019s phone numbers and Authenticator app settings. This does not allow                      the app to see secret information like passwords, or to sign-in or otherwise use the authentication methods.",
+          "requiresAdminConsent": true
+        },
+        "Application": {
+          "adminDisplayName": "Read and write all users\u0027 authentication methods ",
+          "adminDescription": "Allows the application to read and write authentication methods of all users in your organization, without a signed-in user.                       Authentication methods include things like a user\u2019s phone numbers and Authenticator app settings. This                      does not allow the app to see secret information like passwords, or to sign-in or otherwise use the authentication methods"
+        }
+      },
+      "pathSets": [
+        {
+          "schemeKeys": [
+            "Application",
+            "DelegatedWork"
+          ],
+          "methods": [
+            "DELETE",
+            "GET"
+          ],
+          "paths": {
+            "/me/authentication/microsoftauthenticatormethods/{id}": "",
+            "/me/authentication/temporaryaccesspassmethods/{id}": "",
+            "/me/authentication/windowshelloforbusinessmethods/{id}": "",
+            "/users/{id}/authentication/microsoftauthenticatormethods/{id}": "",
+            "/users/{id}/authentication/passwordlessmicrosoftauthenticatormethods/{id}": "",
+            "/users/{id}/authentication/softwareoathmethods/{id}": "",
+            "/users/{id}/authentication/temporaryaccesspassmethods/{id}": "",
+            "/users/{id}/authentication/windowshelloforbusinessmethods/{id}": "",
+            "/users/{id}/authentication/fido2methods/{id}": ""
+          }
+        },
+        {
+          "schemeKeys": [
+            "Application",
+            "DelegatedWork"
+          ],
+          "methods": [
+            "DELETE",
+            "GET",
+            "PUT"
+          ],
+          "paths": {
+            "/me/authentication/phonemethods/{id}": "",
+            "/users/{id}/authentication/emailmethods/{id}": "",
+            "/users/{id}/authentication/phonemethods/{id}": "",
+            "/users/{id}/authentication/methods/{id}": ""
+          }
+        },
+        {
+          "schemeKeys": [
+            "Application",
+            "DelegatedWork"
+          ],
+          "methods": [
+            "GET"
+          ],
+          "paths": {
+            "/me/authentication/emailmethods": "",
+            "/me/authentication/emailmethods/{id}": "",
+            "/me/authentication/fido2methods": "",
+            "/me/authentication/fido2methods/{id}": "",
+            "/me/authentication/methods": "",
+            "/me/authentication/microsoftauthenticatormethods": "",
+            "/me/authentication/passwordlessmicrosoftauthenticatormethods": "",
+            "/me/authentication/passwordlessmicrosoftauthenticatormethods/{id}": "",
+            "/me/authentication/passwordmethods": "",
+            "/me/authentication/passwordmethods/{id}": "",
+            "/me/authentication/softwareoathmethods": "",
+            "/me/authentication/softwareoathmethods/{id}": "",
+            "/me/authentication/temporaryaccesspassmethods": "",
+            "/me/authentication/windowshelloforbusinessmethods": "",
+            "/users/{id}/authentication/fido2methods": "",
+            "/users/{id}/authentication/methods": "",
+            "/users/{id}/authentication/microsoftauthenticatormethods": "",
+            "/users/{id}/authentication/passwordlessmicrosoftauthenticatormethods": "",
+            "/users/{id}/authentication/passwordmethods": "",
+            "/users/{id}/authentication/passwordmethods/{id}": "",
+            "/users/{id}/authentication/softwareoathmethods": "",
+            "/users/{id}/authentication/windowshelloforbusinessmethods": "",
+            "/me/authentication/methods/{id}": ""
+          }
+        },
+        {
+          "schemeKeys": [
+            "Application",
+            "DelegatedWork"
+          ],
+          "methods": [
+            "GET",
+            "POST"
+          ],
+          "paths": {
+            "/me/authentication/phonemethods": "",
+            "/users/{id}/authentication/emailmethods": "",
+            "/users/{id}/authentication/phonemethods": "",
+            "/users/{id}/authentication/temporaryaccesspassmethods": ""
+          }
+        },
+        {
+          "schemeKeys": [
+            "DelegatedWork"
+          ],
+          "methods": [
+            "GET"
+          ],
+          "paths": {
+            "/users/{id}/authentication/operations/{id}": ""
+          }
+        },
+        {
+          "schemeKeys": [
+            "Application",
+            "DelegatedWork"
+          ],
+          "methods": [
+            "POST"
+          ],
+          "paths": {
+            "/me/authentication/phonemethods/{id}/disablesmssignin": "",
+            "/me/authentication/phonemethods/{id}/enablesmssignin": "",
+            "/users/{id}/authentication/phonemethods/{id}/disablesmssignin": "",
+            "/users/{id}/authentication/phonemethods/{id}/enablesmssignin": ""
+          }
+        },
+        {
+          "schemeKeys": [
+            "DelegatedWork"
+          ],
+          "methods": [
+            "POST"
+          ],
+          "paths": {
+            "/users/{id}/authentication/passwordmethods/{id}/resetpassword": "",
+            "/users/{id}/authentication/methods/{id}/disablesmssignin": "",
+            "/users/{id}/authentication/methods/{id}/enablesmssignin": "",
+            "/users/{id}/authentication/methods/{id}/resetpassword": ""
+          }
+        }
+      ]
+    }
+  }
+}

@@ -42,6 +42,7 @@
     <ProjectReference Include="..\ApiDoctor.DocumentationGeneration\ApiDoctor.DocumentationGeneration.csproj" />
     <ProjectReference Include="..\ApiDoctor.Publishing\ApiDoctor.Publishing.csproj" />
     <ProjectReference Include="..\ApiDoctor.Validation\ApiDoctor.Validation.csproj" />
+    <ProjectReference Include="..\kibali\src\kibali\Kibali.csproj" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.5">
@@ -63,7 +64,6 @@
   <ItemGroup>
     <PackageReference Include="CommandLineParser" Version="2.9.1" />
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
-    <PackageReference Include="Microsoft.Graph.Kibali" Version="0.21.0" />
     <PackageReference Include="System.Data.DataSetExtensions" Version="4.5.0" />
   </ItemGroup>
 </Project>

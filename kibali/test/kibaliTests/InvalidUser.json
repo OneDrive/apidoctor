@@ -1,0 +1,1627 @@
+{
+    "$schema": "https://microsoftgraph.github.io/msgraph-metadata/graph-permissions-schema.json",
+    "permissions": {
+        "User.Export.All": {
+            "schemes": {
+                "DelegatedWork": {
+                    "adminDisplayName": "Export user's data",
+                    "adminDescription": "Allows the app to export data (e.g. customer content or system-generated logs), associated with any user in your company, when the app is used by a privileged user (e.g. a Company Administrator).",
+                    "userDisplayName": "Export user's data",
+                    "userDescription": "Allows the app to export data (e.g. customer content or system-generated logs), associated with any user in your company, when the app is used by a privileged user (e.g. a Company Administrator).",
+                    "requiresAdminConsent": true
+                },
+                "Application": {
+                    "adminDisplayName": "Export user's data",
+                    "adminDescription": "Allows the app to export data (e.g. customer content or system-generated logs), associated with any user in your company, when the app is used by a privileged user (e.g. a Company Administrator).",
+                    "requiresAdminConsent": true
+                }
+            },
+            "pathSets": [
+                {
+                    "methods": [
+                        "GET"
+                    ],
+                    "schemeKeys": [
+                        "Application",
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/datapolicyoperations/{id}": "least=Application,DelegatedWork"
+                    }
+                },
+                {
+                    "methods": [
+                        "POST"
+                    ],
+                    "schemeKeys": [
+                        "Application",
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/users/{id}/exportpersonaldata": "least=Application,DelegatedWork"
+                    }
+                }
+            ]
+        },
+        "User.Invite.All": {
+            "schemes": {
+                "DelegatedWork": {
+                    "adminDisplayName": "Invite guest users to the organization",
+                    "adminDescription": "Allows the app to invite guest users to the organization, on behalf of the signed-in user.",
+                    "userDisplayName": "Invite guest users to the organization",
+                    "userDescription": "Allows the app to invite guest users to the organization, on your behalf.",
+                    "requiresAdminConsent": true
+                },
+                "Application": {
+                    "adminDisplayName": "Invite guest users to the organization",
+                    "adminDescription": "Allows the app to invite guest users to the organization, without a signed-in user.",
+                    "requiresAdminConsent": true
+                }
+            },
+            "pathSets": [
+                {
+                    "methods": [
+                        "POST"
+                    ],
+                    "schemeKeys": [
+                        "Application",
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/invitations": "least=Application,DelegatedWork"
+                    }
+                }
+            ]
+        },
+        "User.ManageIdentities.All": {
+            "schemes": {
+                "DelegatedWork": {
+                    "adminDisplayName": "Manage  user identities",
+                    "adminDescription": "Allows the app to read, update and delete identities that are associated with a user's account that the signed-in user has access to. This controls the identities users can sign-in with.",
+                    "userDisplayName": "Manage  user identities",
+                    "userDescription": "Allows the app to read, update and delete identities that are associated with a user's account that you have access to. This controls the identities users can sign-in with.",
+                    "requiresAdminConsent": true
+                },
+                "Application": {
+                    "adminDisplayName": "Manage all users' identities",
+                    "adminDescription": "Allows the app to read, update and delete identities that are associated with a user's account, without a signed in user. This controls the identities users can sign-in with.",
+                    "requiresAdminConsent": true
+                }
+            },
+            "pathSets": [
+                {
+                    "methods": [
+                        "PATCH"
+                    ],
+                    "schemeKeys": [
+                        "Application",
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/users/{id}": ""
+                    }
+                }
+            ]
+        },
+        "User.Read": {
+            "schemes": {
+                "DelegatedWork": {
+                    "adminDisplayName": "Sign in and read user profile",
+                    "adminDescription": "Allows users to sign-in to the app, and allows the app to read the profile of signed-in users. It also allows the app to read basic company information of signed-in users.",
+                    "userDisplayName": "Sign you in and read your profile",
+                    "userDescription": "Allows you to sign in to the app with your organizational account and let the app read your profile. It also allows the app to read basic company information.",
+                    "requiresAdminConsent": false
+                },
+                "DelegatedPersonal": {
+                    "adminDisplayName": "Sign in and read user profile",
+                    "adminDescription": "Allows users to sign-in to the app, and allows the app to read the profile of signed-in users. It also allows the app to read basic company information of signed-in users.",
+                    "userDisplayName": "Sign you in and read your profile",
+                    "userDescription": "Allows you to sign in to the app with your organizational account and let the app read your profile. It also allows the app to read basic company information.",
+                    "requiresAdminConsent": false
+                }
+            },
+            "pathSets": [
+                {
+                    "methods": [
+                        "GET"
+                    ],
+                    "schemeKeys": [
+                        "DelegatedPersonal"
+                    ],
+                    "paths": {
+                        "/applications": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "GET"
+                    ],
+                    "schemeKeys": [
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/schemaextensions": "",
+                        "/schemaextensions/{id}": "",
+                        "/organization": "",
+                        "/education/me/user": "",
+                        "/education/users/{id}/user": "",
+                        "/me/directreports": "",
+                        "/me/memberof": "least=DelegatedWork",
+                        "/me/ownedobjects": "least=DelegatedWork",
+                        "/me/registereddevices": "least=DelegatedWork",
+                        "/users/delta": "least=DelegatedWork",
+                        "/users/{id}/memberof": "least=DelegatedWork",
+                        "/users/{id}/ownedobjects": "least=DelegatedWork",
+                        "/users/{id}/registereddevices": "least=DelegatedWork",
+                        "/users/{id}/transitivememberof": "",
+                        "/users/{id}/usagerights": "least=DelegatedWork",
+                        "/me/drive": "",
+                        "/me/drives": "",
+                        "/organization/{id}/branding": "least=DelegatedWork",
+                        "/organization/{id}/branding/localizations/{id}": "",
+                        "/me/analytics/settings": "least=DelegatedWork",
+                        "/me/settings/contactmergesuggestions": "",
+                        "/me/settings/iteminsights": "",
+                        "/organization/{id}/branding/localizations": "",
+                        "/users/{id}/analytics/settings": "",
+                        "/users/{id}/settings/contactmergesuggestions": "",
+                        "/users/{id}/settings/iteminsights": "",
+                        "/me/findmeetingtimes": "",
+                        "/me/findroomlists": "",
+                        "/me/findrooms": "",
+                        "/me/memberof/{id}": "",
+                        "/me/settings": "",
+                        "/users/{id}/accountenabled": "",
+                        "/users/{id}/agegroup": "",
+                        "/users/{id}/assignedlicenses": "",
+                        "/users/{id}/assignedplans": "",
+                        "/users/{id}/businessphones": "",
+                        "/users/{id}/city": "",
+                        "/users/{id}/companyname": "",
+                        "/users/{id}/consentprovidedforminor": "",
+                        "/users/{id}/country": "",
+                        "/users/{id}/createddatetime": "",
+                        "/users/{id}/creationtype": "",
+                        "/users/{id}/deleteddatetime": "",
+                        "/users/{id}/department": "",
+                        "/users/{id}/devicekeys": "",
+                        "/users/{id}/employeeid": "",
+                        "/users/{id}/externaluserstate": "",
+                        "/users/{id}/externaluserstatechangedatetime": "",
+                        "/users/{id}/faxnumber": "",
+                        "/users/{id}/imaddresses": "",
+                        "/users/{id}/isresourceaccount": "",
+                        "/users/{id}/jobtitle": "",
+                        "/users/{id}/legalagegroupclassification": "",
+                        "/users/{id}/mailnickname": "",
+                        "/users/{id}/memberof/{id}": "",
+                        "/users/{id}/mobilephone": "",
+                        "/users/{id}/officelocation": "",
+                        "/users/{id}/onpremisesdistinguishedname": "",
+                        "/users/{id}/onpremisesdomainname": "",
+                        "/users/{id}/onpremisesextensionattributes": "",
+                        "/users/{id}/onpremisesimmutableid": "",
+                        "/users/{id}/onpremiseslastsyncdatetime": "",
+                        "/users/{id}/onpremisesprovisioningerrors": "",
+                        "/users/{id}/onpremisessamaccountname": "",
+                        "/users/{id}/onpremisessecurityidentifier": "",
+                        "/users/{id}/onpremisessyncenabled": "",
+                        "/users/{id}/onpremisesuserprincipalname": "",
+                        "/users/{id}/othermails": "",
+                        "/users/{id}/passwordpolicies": "",
+                        "/users/{id}/passwordprofile": "",
+                        "/users/{id}/photo": "",
+                        "/users/{id}/photos": "",
+                        "/users/{id}/photos/{id}": "least=DelegatedWork",
+                        "/users/{id}/postalcode": "",
+                        "/users/{id}/preferreddatalocation": "",
+                        "/users/{id}/provisionedplans": "",
+                        "/users/{id}/proxyaddresses": "",
+                        "/users/{id}/refreshtokensvalidfromdatetime": "",
+                        "/users/{id}/showinaddresslist": "",
+                        "/users/{id}/signinsessionsvalidfromdatetime": "",
+                        "/users/{id}/state": "",
+                        "/users/{id}/streetaddress": "",
+                        "/users/{id}/usagelocation": "",
+                        "/users/{id}/usertype": "",
+                        "/me/exportpersonaldata": "",
+                        "/me/extensions": "",
+                        "/me/onenote": "",
+                        "/me/outlook": "",
+                        "/me/owneddevices": "",
+                        "/me/photo": "",
+                        "/me/photos": "",
+                        "/me/photos/{id}": "least=DelegatedWork"
+                    }
+                },
+                {
+                    "methods": [
+                        "POST"
+                    ],
+                    "schemeKeys": [
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/contacts/{id}/checkmemberobjects": "",
+                        "/contacts/{id}/getmemberobjects": "",
+                        "/devices/{id}/checkmemberobjects": "",
+                        "/devices/{id}/getmemberobjects": "",
+                        "/directoryobjects/{id}/checkmemberobjects": "",
+                        "/directoryobjects/{id}/getmemberobjects": "",
+                        "/groups/{id}/checkmemberobjects": "",
+                        "/groups/{id}/getmemberobjects": "",
+                        "/me/checkmemberobjects": "",
+                        "/me/getmemberobjects": "",
+                        "/serviceprincipals/{id}/checkmemberobjects": "",
+                        "/serviceprincipals/{id}/getmemberobjects": "",
+                        "/users/{id}/checkmemberobjects": "",
+                        "/users/{id}/getmemberobjects": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "GET"
+                    ],
+                    "schemeKeys": [
+                        "DelegatedWork",
+                        "DelegatedPersonal"
+                    ],
+                    "paths": {
+                        "/me": "least=DelegatedWork,DelegatedPersonal",
+                        "/me/createdobjects": "least=DelegatedWork,DelegatedPersonal",
+                        "/me/licensedetails": "least=DelegatedWork,DelegatedPersonal",
+                        "/users/{id}": "",
+                        "/users/{id}/createdobjects": "least=DelegatedWork,DelegatedPersonal",
+                        "/users/{id}/licensedetails": "least=DelegatedWork,DelegatedPersonal",
+                        "/me/outlook/supportedlanguages": "least=DelegatedWork,DelegatedPersonal",
+                        "/me/outlook/supportedtimezones": "least=DelegatedWork,DelegatedPersonal",
+                        "/me/outlook/supportedtimezones(timezonestandard={value})": "",
+                        "/me/profile": "least=DelegatedWork,DelegatedPersonal",
+                        "/me/profile/account": "least=DelegatedWork,DelegatedPersonal",
+                        "/me/profile/account/{id}": "",
+                        "/me/profile/addresses": "least=DelegatedWork,DelegatedPersonal",
+                        "/me/profile/addresses/{id}": "",
+                        "/me/profile/anniversaries": "",
+                        "/me/profile/anniversaries/{id}": "",
+                        "/me/profile/awards": "",
+                        "/me/profile/awards/{id}": "",
+                        "/me/profile/certifications": "",
+                        "/me/profile/certifications/{id}": "",
+                        "/me/profile/educationalactivities": "",
+                        "/me/profile/educationalactivities/{id}": "",
+                        "/me/profile/emails": "",
+                        "/me/profile/emails/{id}": "",
+                        "/me/profile/interests": "",
+                        "/me/profile/interests/{id}": "",
+                        "/me/profile/languages": "",
+                        "/me/profile/languages/{id}": "least=DelegatedWork,DelegatedPersonal",
+                        "/me/profile/names/{id}": "",
+                        "/me/profile/notes": "",
+                        "/me/profile/patents": "",
+                        "/me/profile/patents/{id}": "",
+                        "/me/profile/phones": "",
+                        "/me/profile/phones/{id}": "",
+                        "/me/profile/positions": "",
+                        "/me/profile/positions/{id}": "",
+                        "/me/profile/projects": "",
+                        "/me/profile/projects/{id}": "",
+                        "/me/profile/publications": "",
+                        "/me/profile/publications/{id}": "",
+                        "/me/profile/skills": "least=DelegatedWork,DelegatedPersonal",
+                        "/me/profile/skills/{id}": "",
+                        "/me/profile/webaccounts": "least=DelegatedWork,DelegatedPersonal",
+                        "/me/profile/webaccounts/{id}": "least=DelegatedWork,DelegatedPersonal",
+                        "/me/profile/websites": "least=DelegatedWork,DelegatedPersonal",
+                        "/me/profile/websites/{id}": "",
+                        "/me/responsibilities": "",
+                        "/users/{id}/outlook/supportedlanguages": "least=DelegatedWork,DelegatedPersonal",
+                        "/users/{id}/outlook/supportedtimezones": "least=DelegatedWork,DelegatedPersonal",
+                        "/users/{id}/outlook/supportedtimezones(timezonestandard={value})": "",
+                        "/users/{id}/profile": "least=DelegatedWork,DelegatedPersonal",
+                        "/users/{id}/profile/account": "least=DelegatedWork,DelegatedPersonal",
+                        "/users/{id}/profile/account/{id}": "",
+                        "/users/{id}/profile/addresses": "least=DelegatedWork,DelegatedPersonal",
+                        "/users/{id}/profile/addresses/{id}": "",
+                        "/users/{id}/profile/anniversaries": "",
+                        "/users/{id}/profile/anniversaries/{id}": "",
+                        "/users/{id}/profile/awards": "",
+                        "/users/{id}/profile/awards/{id}": "",
+                        "/users/{id}/profile/certifications": "",
+                        "/users/{id}/profile/certifications/{id}": "",
+                        "/users/{id}/profile/educationalactivities": "",
+                        "/users/{id}/profile/educationalactivities/{id}": "",
+                        "/users/{id}/profile/emails": "",
+                        "/users/{id}/profile/emails/{id}": "",
+                        "/users/{id}/profile/interests": "",
+                        "/users/{id}/profile/interests/{id}": "",
+                        "/users/{id}/profile/languages": "",
+                        "/users/{id}/profile/languages/{id}": "least=DelegatedWork,DelegatedPersonal",
+                        "/users/{id}/profile/names/{id}": "",
+                        "/users/{id}/profile/notes": "",
+                        "/users/{id}/profile/patents": "",
+                        "/users/{id}/profile/patents/{id}": "",
+                        "/users/{id}/profile/phones": "",
+                        "/users/{id}/profile/phones/{id}": "",
+                        "/users/{id}/profile/positions": "",
+                        "/users/{id}/profile/positions/{id}": "",
+                        "/users/{id}/profile/projects": "",
+                        "/users/{id}/profile/projects/{id}": "",
+                        "/users/{id}/profile/publications": "",
+                        "/users/{id}/profile/publications/{id}": "",
+                        "/users/{id}/profile/skills": "least=DelegatedWork,DelegatedPersonal",
+                        "/users/{id}/profile/skills/{id}": "",
+                        "/users/{id}/profile/webaccounts": "least=DelegatedWork,DelegatedPersonal",
+                        "/users/{id}/profile/webaccounts/{id}": "least=DelegatedWork,DelegatedPersonal",
+                        "/users/{id}/profile/websites": "least=DelegatedWork,DelegatedPersonal",
+                        "/users/{id}/profile/websites/{id}": "",
+                        "/users/{id}/responsibilities": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "GET"
+                    ],
+                    "schemeKeys": [
+                        "Application",
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/users/{id}/transitivereports/$count": "",
+                        "/settings/regionalandlanguagesettings": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "DELETE",
+                        "GET",
+                        "PATCH"
+                    ],
+                    "schemeKeys": [
+                        "DelegatedWork",
+                        "DelegatedPersonal"
+                    ],
+                    "paths": {
+                        "/me/profile/notes/{id}": "least=DelegatedWork,DelegatedPersonal",
+                        "/me/responsibilities/{id}": "",
+                        "/users/{id}/profile/notes/{id}": "least=DelegatedWork,DelegatedPersonal",
+                        "/users/{id}/responsibilities/{id}": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "GET",
+                        "POST"
+                    ],
+                    "schemeKeys": [
+                        "DelegatedWork",
+                        "DelegatedPersonal"
+                    ],
+                    "paths": {
+                        "/me/profile/names": "least=DelegatedWork,DelegatedPersonal",
+                        "/users/{id}/profile/names": "least=DelegatedWork,DelegatedPersonal"
+                    }
+                },
+                {
+                    "methods": [
+                        "POST"
+                    ],
+                    "schemeKeys": [
+                        "DelegatedWork",
+                        "DelegatedPersonal"
+                    ],
+                    "paths": {
+                        "/me/translateexchangeids": "",
+                        "/users/{id}/translateexchangeids": ""
+                    }
+                }
+            ]
+        },
+        "User.Read.All": {
+            "schemes": {
+                "DelegatedWork": {
+                    "adminDisplayName": "Read all users' full profiles",
+                    "adminDescription": "Allows the app to read the full set of profile properties, reports, and managers of other users in your organization, on behalf of the signed-in user.",
+                    "userDisplayName": "Read all users' full profiles",
+                    "userDescription": "Allows the app to read the full set of profile properties, reports, and managers of other users in your organization, on your behalf.",
+                    "requiresAdminConsent": true
+                },
+                "Application": {
+                    "adminDisplayName": "Read all users' full profiles",
+                    "adminDescription": "Allows the app to read user profiles without a signed in user.",
+                    "requiresAdminConsent": true
+                }
+            },
+            "pathSets": [
+                {
+                    "methods": [
+                        "GET"
+                    ],
+                    "schemeKeys": [
+                        "Application",
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/directory/deleteditems/microsoft.graph.application": "",
+                        "/directory/deleteditems/microsoft.graph.group": "",
+                        "/directory/deleteditems/microsoft.graph.serviceprincipal": "",
+                        "/directory/deleteditems/microsoft.graph.user": "",
+                        "/directory/deleteditems/{id}": "",
+                        "/me": "least=Application,DelegatedWork",
+                        "/me/createdobjects": "least=Application,DelegatedPersonal",
+                        "/me/directreports": "least=Application,DelegatedWork",
+                        "/me/joinedteams": "",
+                        "/me/licensedetails": "least=Application",
+                        "/me/manager": "least=Application,DelegatedWork",
+                        "/me/ownedobjects": "least=Application",
+                        "/me/registereddevices": "least=Application",
+                        "/users": "",
+                        "/users/delta": "least=Application",
+                        "/users/{id}": "",
+                        "/users/{id}/createdobjects": "least=Application",
+                        "/users/{id}/directreports": "least=Application,DelegatedWork",
+                        "/users/{id}/joinedteams": "",
+                        "/users/{id}/licensedetails": "least=Application",
+                        "/users/{id}/manager": "",
+                        "/users/{id}/owneddevices": "least=Application,DelegatedWork",
+                        "/users/{id}/ownedobjects": "least=Application",
+                        "/users/{id}/registereddevices": "least=Application",
+                        "/users/{id}/transitivereports/$count": "",
+                        "/users/{id}/usagerights": "least=Application",
+                        "/datapolicyoperations/{id}": "",
+                        "/settings/regionalandlanguagesettings": "",
+                        "/me/findroomlists": "least=Application",
+                        "/me/findrooms": "least=Application",
+                        "/me/findrooms(roomlist={value})": "",
+                        "/me/settings": "",
+                        "/users/{id}/findroomlists": "least=Application",
+                        "/users/{id}/findrooms": "least=Application",
+                        "/users/{id}/findrooms(roomlist={value})": "",
+                        "/users/{id}/settings": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "POST"
+                    ],
+                    "schemeKeys": [
+                        "Application",
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/contacts/{id}/checkmembergroups": "least=Application",
+                        "/contacts/{id}/checkmemberobjects": "",
+                        "/contacts/{id}/getmembergroups": "least=Application",
+                        "/contacts/{id}/getmemberobjects": "",
+                        "/devices/{id}/checkmembergroups": "least=Application",
+                        "/devices/{id}/checkmemberobjects": "",
+                        "/devices/{id}/getmembergroups": "least=Application",
+                        "/devices/{id}/getmemberobjects": "",
+                        "/directoryobjects/{id}/checkmembergroups": "least=Application",
+                        "/directoryobjects/{id}/checkmemberobjects": "",
+                        "/directoryobjects/{id}/getmembergroups": "least=Application",
+                        "/directoryobjects/{id}/getmemberobjects": "",
+                        "/groups/{id}/checkmembergroups": "least=Application",
+                        "/groups/{id}/checkmemberobjects": "",
+                        "/groups/{id}/getmembergroups": "least=Application",
+                        "/groups/{id}/getmemberobjects": "",
+                        "/me/checkmembergroups": "least=Application",
+                        "/me/checkmemberobjects": "",
+                        "/me/getmembergroups": "least=Application",
+                        "/me/getmemberobjects": "",
+                        "/serviceprincipals/{id}/checkmembergroups": "least=Application",
+                        "/serviceprincipals/{id}/checkmemberobjects": "",
+                        "/serviceprincipals/{id}/getmembergroups": "least=Application",
+                        "/serviceprincipals/{id}/getmemberobjects": "",
+                        "/users/{id}/checkmembergroups": "least=Application",
+                        "/users/{id}/checkmemberobjects": "",
+                        "/users/{id}/getmembergroups": "least=Application",
+                        "/users/{id}/getmemberobjects": "",
+                        "/me/translateexchangeids": "least=Application",
+                        "/users/{id}/translateexchangeids": "least=Application"
+                    }
+                },
+                {
+                    "methods": [
+                        "GET"
+                    ],
+                    "schemeKeys": [
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/organization/{id}/branding": "",
+                        "/organization/{id}/branding/localizations/{id}": "",
+                        "/organization/{id}/branding/localizations": "",
+                        "/organization/{id}/settings/iteminsights": "least=DelegatedWork",
+                        "/organization/{id}/settings/peopleinsights": "least=DelegatedWork",
+                        "/users/{id}/settings/shiftpreferences": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "POST"
+                    ],
+                    "schemeKeys": [
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/groups/evaluatedynamicmembership": "",
+                        "/groups/{id}/evaluatedynamicmembership": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "DELETE",
+                        "GET",
+                        "PATCH"
+                    ],
+                    "schemeKeys": [
+                        "Application",
+                        "DelegatedWork",
+                        "DelegatedPersonal"
+                    ],
+                    "paths": {
+                        "/me/profile/notes/{id}": "",
+                        "/me/responsibilities/{id}": "",
+                        "/users/{id}/profile/notes/{id}": "",
+                        "/users/{id}/responsibilities/{id}": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "GET"
+                    ],
+                    "schemeKeys": [
+                        "Application"
+                    ],
+                    "paths": {
+                        "/me/memberof/{id}": "",
+                        "/me/outlook/supportedlanguages": "least=Application",
+                        "/me/outlook/supportedtimezones": "least=Application",
+                        "/me/outlook/supportedtimezones(timezonestandard={value})": "",
+                        "/users/{id}/accountenabled": "",
+                        "/users/{id}/agegroup": "",
+                        "/users/{id}/assignedlicenses": "",
+                        "/users/{id}/assignedplans": "",
+                        "/users/{id}/businessphones": "",
+                        "/users/{id}/city": "",
+                        "/users/{id}/companyname": "",
+                        "/users/{id}/consentprovidedforminor": "",
+                        "/users/{id}/country": "",
+                        "/users/{id}/createddatetime": "",
+                        "/users/{id}/creationtype": "",
+                        "/users/{id}/deleteddatetime": "",
+                        "/users/{id}/department": "",
+                        "/users/{id}/devicekeys": "",
+                        "/users/{id}/displayname": "",
+                        "/users/{id}/employeeid": "",
+                        "/users/{id}/externaluserstate": "",
+                        "/users/{id}/externaluserstatechangedatetime": "",
+                        "/users/{id}/faxnumber": "",
+                        "/users/{id}/givenname": "",
+                        "/users/{id}/id": "",
+                        "/users/{id}/identities": "",
+                        "/users/{id}/imaddresses": "",
+                        "/users/{id}/isresourceaccount": "",
+                        "/users/{id}/jobtitle": "",
+                        "/users/{id}/legalagegroupclassification": "",
+                        "/users/{id}/mail": "",
+                        "/users/{id}/mailnickname": "",
+                        "/users/{id}/memberof/{id}": "",
+                        "/users/{id}/mobilephone": "",
+                        "/users/{id}/officelocation": "",
+                        "/users/{id}/onpremisesdistinguishedname": "",
+                        "/users/{id}/onpremisesdomainname": "",
+                        "/users/{id}/onpremisesextensionattributes": "",
+                        "/users/{id}/onpremisesimmutableid": "",
+                        "/users/{id}/onpremiseslastsyncdatetime": "",
+                        "/users/{id}/onpremisesprovisioningerrors": "",
+                        "/users/{id}/onpremisessamaccountname": "",
+                        "/users/{id}/onpremisessecurityidentifier": "",
+                        "/users/{id}/onpremisessyncenabled": "",
+                        "/users/{id}/onpremisesuserprincipalname": "",
+                        "/users/{id}/othermails": "",
+                        "/users/{id}/outlook/supportedlanguages": "least=Application",
+                        "/users/{id}/outlook/supportedtimezones": "least=Application",
+                        "/users/{id}/outlook/supportedtimezones(timezonestandard={value})": "",
+                        "/users/{id}/passwordpolicies": "",
+                        "/users/{id}/passwordprofile": "",
+                        "/users/{id}/photo": "",
+                        "/users/{id}/photos": "",
+                        "/users/{id}/photos/{id}": "least=Application",
+                        "/users/{id}/postalcode": "",
+                        "/users/{id}/preferreddatalocation": "",
+                        "/users/{id}/provisionedplans": "",
+                        "/users/{id}/proxyaddresses": "",
+                        "/users/{id}/refreshtokensvalidfromdatetime": "",
+                        "/users/{id}/showinaddresslist": "",
+                        "/users/{id}/signinsessionsvalidfromdatetime": "",
+                        "/users/{id}/state": "",
+                        "/users/{id}/streetaddress": "",
+                        "/users/{id}/surname": "",
+                        "/users/{id}/usagelocation": "",
+                        "/users/{id}/userprincipalname": "",
+                        "/users/{id}/usertype": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "GET"
+                    ],
+                    "schemeKeys": [
+                        "Application",
+                        "DelegatedWork",
+                        "DelegatedPersonal"
+                    ],
+                    "paths": {
+                        "/me/profile": "",
+                        "/me/profile/account": "",
+                        "/me/profile/account/{id}": "",
+                        "/me/profile/addresses": "",
+                        "/me/profile/addresses/{id}": "",
+                        "/me/profile/anniversaries": "",
+                        "/me/profile/anniversaries/{id}": "",
+                        "/me/profile/awards": "",
+                        "/me/profile/awards/{id}": "",
+                        "/me/profile/certifications": "",
+                        "/me/profile/certifications/{id}": "",
+                        "/me/profile/educationalactivities": "",
+                        "/me/profile/educationalactivities/{id}": "",
+                        "/me/profile/emails": "",
+                        "/me/profile/emails/{id}": "",
+                        "/me/profile/interests": "",
+                        "/me/profile/interests/{id}": "",
+                        "/me/profile/languages": "",
+                        "/me/profile/languages/{id}": "",
+                        "/me/profile/names/{id}": "",
+                        "/me/profile/notes": "",
+                        "/me/profile/patents": "",
+                        "/me/profile/patents/{id}": "",
+                        "/me/profile/phones": "",
+                        "/me/profile/phones/{id}": "",
+                        "/me/profile/positions": "",
+                        "/me/profile/positions/{id}": "",
+                        "/me/profile/projects": "",
+                        "/me/profile/projects/{id}": "",
+                        "/me/profile/publications": "",
+                        "/me/profile/publications/{id}": "",
+                        "/me/profile/skills": "",
+                        "/me/profile/skills/{id}": "",
+                        "/me/profile/webaccounts": "",
+                        "/me/profile/webaccounts/{id}": "",
+                        "/me/profile/websites": "",
+                        "/me/profile/websites/{id}": "",
+                        "/me/responsibilities": "",
+                        "/users/{id}/profile": "",
+                        "/users/{id}/profile/account": "",
+                        "/users/{id}/profile/account/{id}": "",
+                        "/users/{id}/profile/addresses": "",
+                        "/users/{id}/profile/addresses/{id}": "",
+                        "/users/{id}/profile/anniversaries": "",
+                        "/users/{id}/profile/anniversaries/{id}": "",
+                        "/users/{id}/profile/awards": "",
+                        "/users/{id}/profile/awards/{id}": "",
+                        "/users/{id}/profile/certifications": "",
+                        "/users/{id}/profile/certifications/{id}": "",
+                        "/users/{id}/profile/educationalactivities": "",
+                        "/users/{id}/profile/educationalactivities/{id}": "",
+                        "/users/{id}/profile/emails": "",
+                        "/users/{id}/profile/emails/{id}": "",
+                        "/users/{id}/profile/interests": "",
+                        "/users/{id}/profile/interests/{id}": "",
+                        "/users/{id}/profile/languages": "",
+                        "/users/{id}/profile/languages/{id}": "",
+                        "/users/{id}/profile/names/{id}": "",
+                        "/users/{id}/profile/notes": "",
+                        "/users/{id}/profile/patents": "",
+                        "/users/{id}/profile/patents/{id}": "",
+                        "/users/{id}/profile/phones": "",
+                        "/users/{id}/profile/phones/{id}": "",
+                        "/users/{id}/profile/positions": "",
+                        "/users/{id}/profile/positions/{id}": "",
+                        "/users/{id}/profile/projects": "",
+                        "/users/{id}/profile/projects/{id}": "",
+                        "/users/{id}/profile/publications": "",
+                        "/users/{id}/profile/publications/{id}": "",
+                        "/users/{id}/profile/skills": "",
+                        "/users/{id}/profile/skills/{id}": "",
+                        "/users/{id}/profile/webaccounts": "",
+                        "/users/{id}/profile/webaccounts/{id}": "",
+                        "/users/{id}/profile/websites": "",
+                        "/users/{id}/profile/websites/{id}": "",
+                        "/users/{id}/responsibilities": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "GET",
+                        "POST"
+                    ],
+                    "schemeKeys": [
+                        "Application",
+                        "DelegatedWork",
+                        "DelegatedPersonal"
+                    ],
+                    "paths": {
+                        "/me/profile/names": "",
+                        "/users/{id}/profile/names": ""
+                    }
+                }
+            ]
+        },
+        "User.ReadBasic.All": {
+            "schemes": {
+                "DelegatedWork": {
+                    "adminDisplayName": "Read all users' basic profiles",
+                    "adminDescription": "Allows the app to read a basic set of profile properties of other users in your organization on behalf of the signed-in user. This includes display name, first and last name, email address and photo.",
+                    "userDisplayName": "Read all users' basic profiles",
+                    "userDescription": "Allows the app to read a basic set of profile properties of other users in your organization on your behalf. Includes display name, first and last name, email address and photo.",
+                    "requiresAdminConsent": false
+                }
+            },
+            "pathSets": [
+                {
+                    "methods": [
+                        "GET"
+                    ],
+                    "schemeKeys": [
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/users/{id}/approleassignments": "",
+                        "/me/oauth2permissiongrants": "least=DelegatedWork",
+                        "/users/{id}/oauth2permissiongrants": "least=DelegatedWork",
+                        "/me": "",
+                        "/users": "",
+                        "/users/delta": "",
+                        "/users/{id}": "",
+                        "/organization/{id}/branding": "",
+                        "/organization/{id}/branding/localizations/{id}": "",
+                        "/organization/{id}/branding/localizations": "",
+                        "/me/findroomlists": "least=DelegatedWork",
+                        "/me/findrooms": "least=DelegatedWork",
+                        "/me/findrooms(roomlist={value})": "",
+                        "/me/outlook/supportedlanguages": "",
+                        "/me/outlook/supportedtimezones": "",
+                        "/me/outlook/supportedtimezones(timezonestandard={value})": "",
+                        "/users/{id}/displayname": "",
+                        "/users/{id}/findroomlists": "least=DelegatedWork",
+                        "/users/{id}/findrooms": "least=DelegatedWork",
+                        "/users/{id}/findrooms(roomlist={value})": "",
+                        "/users/{id}/givenname": "",
+                        "/users/{id}/id": "",
+                        "/users/{id}/identities": "",
+                        "/users/{id}/mail": "",
+                        "/users/{id}/outlook/supportedlanguages": "",
+                        "/users/{id}/outlook/supportedtimezones": "",
+                        "/users/{id}/outlook/supportedtimezones(timezonestandard={value})": "",
+                        "/users/{id}/surname": "",
+                        "/users/{id}/userprincipalname": "",
+                        "/me/accountenabled": "",
+                        "/me/agegroup": "",
+                        "/me/assignedlicenses": "",
+                        "/me/assignedplans": "",
+                        "/me/businessphones": "",
+                        "/me/city": "",
+                        "/me/companyname": "",
+                        "/me/consentprovidedforminor": "",
+                        "/me/country": "",
+                        "/me/createddatetime": "",
+                        "/me/creationtype": "",
+                        "/me/deleteddatetime": "",
+                        "/me/department": "",
+                        "/me/devicekeys": "",
+                        "/me/displayname": "",
+                        "/me/employeeid": "",
+                        "/me/externaluserstate": "",
+                        "/me/externaluserstatechangedatetime": "",
+                        "/me/faxnumber": "",
+                        "/me/givenname": "",
+                        "/me/id": "",
+                        "/me/identities": "",
+                        "/me/imaddresses": "",
+                        "/me/isresourceaccount": "",
+                        "/me/jobtitle": "",
+                        "/me/legalagegroupclassification": "",
+                        "/me/mail": "",
+                        "/me/mailnickname": "",
+                        "/me/mobilephone": "",
+                        "/me/officelocation": "",
+                        "/me/onpremisesdistinguishedname": "",
+                        "/me/onpremisesdomainname": "",
+                        "/me/onpremisesextensionattributes": "",
+                        "/me/onpremisesimmutableid": "",
+                        "/me/onpremiseslastsyncdatetime": "",
+                        "/me/onpremisesprovisioningerrors": "",
+                        "/me/onpremisessamaccountname": "",
+                        "/me/onpremisessecurityidentifier": "",
+                        "/me/onpremisessyncenabled": "",
+                        "/me/onpremisesuserprincipalname": "",
+                        "/me/othermails": "",
+                        "/me/passwordpolicies": "",
+                        "/me/passwordprofile": "",
+                        "/me/postalcode": "",
+                        "/me/preferreddatalocation": "",
+                        "/me/provisionedplans": "",
+                        "/me/proxyaddresses": "",
+                        "/me/refreshtokensvalidfromdatetime": "",
+                        "/me/showinaddresslist": "",
+                        "/me/signinsessionsvalidfromdatetime": "",
+                        "/me/state": "",
+                        "/me/streetaddress": "",
+                        "/me/surname": "",
+                        "/me/usagelocation": "",
+                        "/me/userprincipalname": "",
+                        "/me/usertype": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "POST"
+                    ],
+                    "schemeKeys": [
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/contacts/{id}/checkmembergroups": "least=DelegatedWork",
+                        "/contacts/{id}/getmembergroups": "least=DelegatedWork",
+                        "/devices/{id}/checkmembergroups": "least=DelegatedWork",
+                        "/devices/{id}/getmembergroups": "least=DelegatedWork",
+                        "/directoryobjects/{id}/checkmembergroups": "least=DelegatedWork",
+                        "/directoryobjects/{id}/getmembergroups": "least=DelegatedWork",
+                        "/groups/{id}/checkmembergroups": "least=DelegatedWork",
+                        "/groups/{id}/getmembergroups": "least=DelegatedWork",
+                        "/me/checkmembergroups": "least=DelegatedWork",
+                        "/me/getmembergroups": "least=DelegatedWork",
+                        "/serviceprincipals/{id}/checkmembergroups": "least=DelegatedWork",
+                        "/serviceprincipals/{id}/getmembergroups": "least=DelegatedWork",
+                        "/users/{id}/checkmembergroups": "least=DelegatedWork",
+                        "/users/{id}/getmembergroups": "least=DelegatedWork"
+                    }
+                },
+                {
+                    "methods": [
+                        "DELETE",
+                        "GET",
+                        "PATCH"
+                    ],
+                    "schemeKeys": [
+                        "Application",
+                        "DelegatedWork",
+                        "DelegatedPersonal"
+                    ],
+                    "paths": {
+                        "/me/profile/notes/{id}": "least=Application",
+                        "/me/responsibilities/{id}": "",
+                        "/users/{id}/profile/notes/{id}": "least=Application",
+                        "/users/{id}/responsibilities/{id}": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "GET"
+                    ],
+                    "schemeKeys": [
+                        "Application",
+                        "DelegatedWork",
+                        "DelegatedPersonal"
+                    ],
+                    "paths": {
+                        "/me/profile": "least=Application",
+                        "/me/profile/account": "least=Application",
+                        "/me/profile/account/{id}": "",
+                        "/me/profile/addresses": "least=Application",
+                        "/me/profile/addresses/{id}": "",
+                        "/me/profile/anniversaries": "",
+                        "/me/profile/anniversaries/{id}": "",
+                        "/me/profile/awards": "",
+                        "/me/profile/awards/{id}": "",
+                        "/me/profile/certifications": "",
+                        "/me/profile/certifications/{id}": "",
+                        "/me/profile/educationalactivities": "",
+                        "/me/profile/educationalactivities/{id}": "",
+                        "/me/profile/emails": "",
+                        "/me/profile/emails/{id}": "",
+                        "/me/profile/interests": "",
+                        "/me/profile/interests/{id}": "",
+                        "/me/profile/languages": "",
+                        "/me/profile/languages/{id}": "least=Application",
+                        "/me/profile/names/{id}": "",
+                        "/me/profile/notes": "",
+                        "/me/profile/patents": "",
+                        "/me/profile/patents/{id}": "",
+                        "/me/profile/phones": "",
+                        "/me/profile/phones/{id}": "",
+                        "/me/profile/positions": "",
+                        "/me/profile/positions/{id}": "",
+                        "/me/profile/projects": "",
+                        "/me/profile/projects/{id}": "",
+                        "/me/profile/publications": "",
+                        "/me/profile/publications/{id}": "",
+                        "/me/profile/skills": "least=Application",
+                        "/me/profile/skills/{id}": "",
+                        "/me/profile/webaccounts": "least=Application",
+                        "/me/profile/webaccounts/{id}": "least=Application",
+                        "/me/profile/websites": "least=Application",
+                        "/me/profile/websites/{id}": "",
+                        "/me/responsibilities": "",
+                        "/users/{id}/profile": "least=Application",
+                        "/users/{id}/profile/account": "least=Application",
+                        "/users/{id}/profile/account/{id}": "",
+                        "/users/{id}/profile/addresses": "least=Application",
+                        "/users/{id}/profile/addresses/{id}": "",
+                        "/users/{id}/profile/anniversaries": "",
+                        "/users/{id}/profile/anniversaries/{id}": "",
+                        "/users/{id}/profile/awards": "",
+                        "/users/{id}/profile/awards/{id}": "",
+                        "/users/{id}/profile/certifications": "",
+                        "/users/{id}/profile/certifications/{id}": "",
+                        "/users/{id}/profile/educationalactivities": "",
+                        "/users/{id}/profile/educationalactivities/{id}": "",
+                        "/users/{id}/profile/emails": "",
+                        "/users/{id}/profile/emails/{id}": "",
+                        "/users/{id}/profile/interests": "",
+                        "/users/{id}/profile/interests/{id}": "",
+                        "/users/{id}/profile/languages": "",
+                        "/users/{id}/profile/languages/{id}": "least=Application",
+                        "/users/{id}/profile/names/{id}": "",
+                        "/users/{id}/profile/notes": "",
+                        "/users/{id}/profile/patents": "",
+                        "/users/{id}/profile/patents/{id}": "",
+                        "/users/{id}/profile/phones": "",
+                        "/users/{id}/profile/phones/{id}": "",
+                        "/users/{id}/profile/positions": "",
+                        "/users/{id}/profile/positions/{id}": "",
+                        "/users/{id}/profile/projects": "",
+                        "/users/{id}/profile/projects/{id}": "",
+                        "/users/{id}/profile/publications": "",
+                        "/users/{id}/profile/publications/{id}": "",
+                        "/users/{id}/profile/skills": "least=Application",
+                        "/users/{id}/profile/skills/{id}": "",
+                        "/users/{id}/profile/webaccounts": "least=Application",
+                        "/users/{id}/profile/webaccounts/{id}": "least=Application",
+                        "/users/{id}/profile/websites": "least=Application",
+                        "/users/{id}/profile/websites/{id}": "",
+                        "/users/{id}/responsibilities": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "GET",
+                        "POST"
+                    ],
+                    "schemeKeys": [
+                        "Application",
+                        "DelegatedWork",
+                        "DelegatedPersonal"
+                    ],
+                    "paths": {
+                        "/me/profile/names": "least=Application",
+                        "/users/{id}/profile/names": "least=Application"
+                    }
+                },
+                {
+                    "methods": [
+                        "POST"
+                    ],
+                    "schemeKeys": [
+                        "DelegatedWork",
+                        "DelegatedPersonal"
+                    ],
+                    "paths": {
+                        "/me/translateexchangeids": "least=DelegatedWork,DelegatedPersonal",
+                        "/users/{id}/translateexchangeids": "least=DelegatedWork,DelegatedPersonal"
+                    }
+                }
+            ]
+        },
+        "User.ReadWrite": {
+            "schemes": {
+                "DelegatedWork": {
+                    "adminDisplayName": "Read and write access to user profile",
+                    "adminDescription": "Allows the app to read your profile. It also allows the app to update your profile information on your behalf.",
+                    "userDisplayName": "Read and update your profile",
+                    "userDescription": "Allows the app to read your profile, and discover your group membership, reports and manager. It also allows the app to update your profile information on your behalf.",
+                    "requiresAdminConsent": false
+                },
+                "DelegatedPersonal": {
+                    "adminDisplayName": "Read and write access to user profile",
+                    "adminDescription": "Allows the app to read your profile. It also allows the app to update your profile information on your behalf.",
+                    "userDisplayName": "Read and update your profile",
+                    "userDescription": "Allows the app to read your profile, and discover your group membership, reports and manager. It also allows the app to update your profile information on your behalf.",
+                    "requiresAdminConsent": false
+                }
+            },
+            "pathSets": [
+                {
+                    "methods": [
+                        "GET"
+                    ],
+                    "schemeKeys": [
+                        "DelegatedWork",
+                        "DelegatedPersonal"
+                    ],
+                    "paths": {
+                        "/me": "",
+                        "/me/createdobjects": "",
+                        "/users/{id}/createdobjects": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "GET"
+                    ],
+                    "schemeKeys": [
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/users/delta": "",
+                        "/users/{id}/usagerights": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "GET",
+                        "PATCH"
+                    ],
+                    "schemeKeys": [
+                        "DelegatedWork",
+                        "DelegatedPersonal"
+                    ],
+                    "paths": {
+                        "/users/{id}": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "GET",
+                        "PATCH"
+                    ],
+                    "schemeKeys": [
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/me/settings/contactmergesuggestions": "least=DelegatedWork",
+                        "/me/settings/iteminsights": "least=DelegatedWork",
+                        "/users/{id}/settings/contactmergesuggestions": "",
+                        "/users/{id}/settings/iteminsights": "least=DelegatedWork"
+                    }
+                },
+                {
+                    "methods": [
+                        "POST"
+                    ],
+                    "schemeKeys": [
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/me/invalidateallrefreshtokens": "least=DelegatedWork",
+                        "/users/validatepassword": "least=DelegatedWork",
+                        "/users/{id}/invalidateallrefreshtokens": "least=DelegatedWork"
+                    }
+                },
+                {
+                    "methods": [
+                        "PATCH",
+                        "PUT"
+                    ],
+                    "schemeKeys": [
+                        "Application",
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/settings/regionalandlanguagesettings": "least=Application,DelegatedWork"
+                    }
+                },
+                {
+                    "methods": [
+                        "DELETE",
+                        "GET",
+                        "PATCH"
+                    ],
+                    "schemeKeys": [
+                        "DelegatedWork",
+                        "DelegatedPersonal"
+                    ],
+                    "paths": {
+                        "/me/profile/notes/{id}": "",
+                        "/me/responsibilities/{id}": "",
+                        "/users/{id}/profile/notes/{id}": "",
+                        "/users/{id}/responsibilities/{id}": "",
+                        "/me/profile/account/{id}": "least=DelegatedWork,DelegatedPersonal",
+                        "/me/profile/addresses/{id}": "least=DelegatedWork,DelegatedPersonal",
+                        "/me/profile/anniversaries/{id}": "least=DelegatedWork,DelegatedPersonal",
+                        "/me/profile/awards/{id}": "least=DelegatedWork,DelegatedPersonal",
+                        "/me/profile/certifications/{id}": "least=DelegatedWork,DelegatedPersonal",
+                        "/me/profile/educationalactivities/{id}": "least=DelegatedWork,DelegatedPersonal",
+                        "/me/profile/emails/{id}": "least=DelegatedWork,DelegatedPersonal",
+                        "/me/profile/interests/{id}": "least=DelegatedWork,DelegatedPersonal",
+                        "/me/profile/languages/{id}": "",
+                        "/me/profile/names/{id}": "least=DelegatedWork,DelegatedPersonal",
+                        "/me/profile/patents/{id}": "least=DelegatedWork,DelegatedPersonal",
+                        "/me/profile/phones/{id}": "least=DelegatedWork,DelegatedPersonal",
+                        "/me/profile/positions/{id}": "least=DelegatedWork,DelegatedPersonal",
+                        "/me/profile/projects/{id}": "least=DelegatedWork,DelegatedPersonal",
+                        "/me/profile/publications/{id}": "least=DelegatedWork,DelegatedPersonal",
+                        "/me/profile/skills/{id}": "least=DelegatedWork,DelegatedPersonal",
+                        "/me/profile/webaccounts/{id}": "",
+                        "/me/profile/websites/{id}": "least=DelegatedWork,DelegatedPersonal",
+                        "/users/{id}/profile/account/{id}": "least=DelegatedWork,DelegatedPersonal",
+                        "/users/{id}/profile/addresses/{id}": "least=DelegatedWork,DelegatedPersonal",
+                        "/users/{id}/profile/anniversaries/{id}": "least=DelegatedWork,DelegatedPersonal",
+                        "/users/{id}/profile/awards/{id}": "least=DelegatedWork,DelegatedPersonal",
+                        "/users/{id}/profile/certifications/{id}": "least=DelegatedWork,DelegatedPersonal",
+                        "/users/{id}/profile/educationalactivities/{id}": "least=DelegatedWork,DelegatedPersonal",
+                        "/users/{id}/profile/emails/{id}": "least=DelegatedWork,DelegatedPersonal",
+                        "/users/{id}/profile/interests/{id}": "least=DelegatedWork,DelegatedPersonal",
+                        "/users/{id}/profile/languages/{id}": "",
+                        "/users/{id}/profile/names/{id}": "least=DelegatedWork,DelegatedPersonal",
+                        "/users/{id}/profile/patents/{id}": "least=DelegatedWork,DelegatedPersonal",
+                        "/users/{id}/profile/phones/{id}": "least=DelegatedWork,DelegatedPersonal",
+                        "/users/{id}/profile/positions/{id}": "least=DelegatedWork,DelegatedPersonal",
+                        "/users/{id}/profile/projects/{id}": "least=DelegatedWork,DelegatedPersonal",
+                        "/users/{id}/profile/publications/{id}": "least=DelegatedWork,DelegatedPersonal",
+                        "/users/{id}/profile/skills/{id}": "least=DelegatedWork,DelegatedPersonal",
+                        "/users/{id}/profile/webaccounts/{id}": "",
+                        "/users/{id}/profile/websites/{id}": "least=DelegatedWork,DelegatedPersonal"
+                    }
+                },
+                {
+                    "methods": [
+                        "GET",
+                        "DELETE"
+                    ],
+                    "schemeKeys": [
+                        "DelegatedWork",
+                        "DelegatedPersonal"
+                    ],
+                    "paths": {
+                        "/me/profile": "",
+                        "/users/{id}/profile": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "GET",
+                        "POST"
+                    ],
+                    "schemeKeys": [
+                        "DelegatedWork",
+                        "DelegatedPersonal"
+                    ],
+                    "paths": {
+                        "/me/profile/account": "",
+                        "/me/profile/addresses": "",
+                        "/me/profile/anniversaries": "least=DelegatedWork,DelegatedPersonal",
+                        "/me/profile/awards": "least=DelegatedWork,DelegatedPersonal",
+                        "/me/profile/certifications": "least=DelegatedWork,DelegatedPersonal",
+                        "/me/profile/educationalactivities": "least=DelegatedWork,DelegatedPersonal",
+                        "/me/profile/emails": "least=DelegatedWork,DelegatedPersonal",
+                        "/me/profile/interests": "least=DelegatedWork,DelegatedPersonal",
+                        "/me/profile/languages": "least=DelegatedWork,DelegatedPersonal",
+                        "/me/profile/names": "",
+                        "/me/profile/notes": "least=DelegatedWork,DelegatedPersonal",
+                        "/me/profile/patents": "least=DelegatedWork,DelegatedPersonal",
+                        "/me/profile/phones": "least=DelegatedWork,DelegatedPersonal",
+                        "/me/profile/positions": "least=DelegatedWork,DelegatedPersonal",
+                        "/me/profile/projects": "least=DelegatedWork,DelegatedPersonal",
+                        "/me/profile/publications": "least=DelegatedWork,DelegatedPersonal",
+                        "/me/profile/skills": "",
+                        "/me/profile/webaccounts": "",
+                        "/me/profile/websites": "",
+                        "/me/responsibilities": "",
+                        "/users/{id}/profile/account": "",
+                        "/users/{id}/profile/addresses": "",
+                        "/users/{id}/profile/anniversaries": "least=DelegatedWork,DelegatedPersonal",
+                        "/users/{id}/profile/awards": "least=DelegatedWork,DelegatedPersonal",
+                        "/users/{id}/profile/certifications": "least=DelegatedWork,DelegatedPersonal",
+                        "/users/{id}/profile/educationalactivities": "least=DelegatedWork,DelegatedPersonal",
+                        "/users/{id}/profile/emails": "least=DelegatedWork,DelegatedPersonal",
+                        "/users/{id}/profile/interests": "least=DelegatedWork,DelegatedPersonal",
+                        "/users/{id}/profile/languages": "least=DelegatedWork,DelegatedPersonal",
+                        "/users/{id}/profile/names": "",
+                        "/users/{id}/profile/notes": "least=DelegatedWork,DelegatedPersonal",
+                        "/users/{id}/profile/patents": "least=DelegatedWork,DelegatedPersonal",
+                        "/users/{id}/profile/phones": "least=DelegatedWork,DelegatedPersonal",
+                        "/users/{id}/profile/positions": "least=DelegatedWork,DelegatedPersonal",
+                        "/users/{id}/profile/projects": "least=DelegatedWork,DelegatedPersonal",
+                        "/users/{id}/profile/publications": "least=DelegatedWork,DelegatedPersonal",
+                        "/users/{id}/profile/skills": "",
+                        "/users/{id}/profile/webaccounts": "",
+                        "/users/{id}/profile/websites": "",
+                        "/users/{id}/responsibilities": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "PATCH"
+                    ],
+                    "schemeKeys": [
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/me/settings": "least=DelegatedWork",
+                        "/users/{id}/settings": "least=DelegatedWork"
+                    }
+                },
+                {
+                    "methods": [
+                        "PATCH",
+                        "PUT"
+                    ],
+                    "schemeKeys": [
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/users/{id}/photo": "least=DelegatedWork",
+                        "/me/photo": "least=DelegatedWork"
+                    }
+                },
+                {
+                    "methods": [
+                        "POST"
+                    ],
+                    "schemeKeys": [
+                        "DelegatedWork",
+                        "DelegatedPersonal"
+                    ],
+                    "paths": {
+                        "/me/translateexchangeids": "",
+                        "/users/{id}/translateexchangeids": ""
+                    }
+                }
+            ]
+        },
+        "User.ReadWrite.All": {
+            "schemes": {
+                "DelegatedWork": {
+                    "adminDisplayName": "Read and write all users' full profiles",
+                    "adminDescription": "Allows the app to read and write the full set of profile properties, reports, and managers of other users in your organization, on behalf of the signed-in user.",
+                    "userDisplayName": "Read and write all users' full profiles",
+                    "userDescription": "Allows the app to read and write the full set of profile properties, reports, and managers of other users in your organization, on your behalf.",
+                    "requiresAdminConsent": true
+                },
+                "Application": {
+                    "adminDisplayName": "Read and write all users' full profiles",
+                    "adminDescription": "Allows the app to read and update user profiles without a signed in user.",
+                    "requiresAdminConsent": true
+                }
+            },
+            "pathSets": [
+                {
+                    "methods": [
+                        "GET"
+                    ],
+                    "schemeKeys": [
+                        "Application",
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/directory/deleteditems/microsoft.graph.application": "",
+                        "/directory/deleteditems/microsoft.graph.group": "",
+                        "/directory/deleteditems/microsoft.graph.serviceprincipal": "",
+                        "/directory/deleteditems/microsoft.graph.user": "",
+                        "/me": "",
+                        "/me/createdobjects": "",
+                        "/me/directreports": "",
+                        "/me/joinedteams": "",
+                        "/me/licensedetails": "",
+                        "/me/manager": "",
+                        "/me/ownedobjects": "",
+                        "/me/registereddevices": "",
+                        "/users/delta": "",
+                        "/users/{id}/createdobjects": "",
+                        "/users/{id}/directreports": "",
+                        "/users/{id}/joinedteams": "",
+                        "/users/{id}/licensedetails": "",
+                        "/users/{id}/owneddevices": "",
+                        "/users/{id}/ownedobjects": "",
+                        "/users/{id}/registereddevices": "",
+                        "/users/{id}/usagerights": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "GET",
+                        "DELETE"
+                    ],
+                    "schemeKeys": [
+                        "Application",
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/directory/deleteditems/{id}": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "POST"
+                    ],
+                    "schemeKeys": [
+                        "Application",
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/contacts/{id}/checkmembergroups": "",
+                        "/contacts/{id}/checkmemberobjects": "",
+                        "/contacts/{id}/getmemberobjects": "",
+                        "/devices/{id}/checkmembergroups": "",
+                        "/devices/{id}/checkmemberobjects": "",
+                        "/devices/{id}/getmemberobjects": "",
+                        "/directoryobjects/{id}/checkmembergroups": "",
+                        "/directoryobjects/{id}/checkmemberobjects": "",
+                        "/directoryobjects/{id}/getmemberobjects": "",
+                        "/groups/{id}/checkmembergroups": "",
+                        "/groups/{id}/checkmemberobjects": "",
+                        "/groups/{id}/getmemberobjects": "",
+                        "/me/checkmembergroups": "",
+                        "/me/checkmemberobjects": "",
+                        "/me/getmemberobjects": "",
+                        "/serviceprincipals/{id}/checkmembergroups": "",
+                        "/serviceprincipals/{id}/checkmemberobjects": "",
+                        "/serviceprincipals/{id}/getmemberobjects": "",
+                        "/users/{id}/checkmembergroups": "",
+                        "/users/{id}/checkmemberobjects": "",
+                        "/users/{id}/getmemberobjects": "",
+                        "/directory/deleteditems/{id}/restore": "",
+                        "/invitations": "",
+                        "/me/revokesigninsessions": "least=Application,DelegatedWork",
+                        "/users/{id}/assignlicense": "least=Application,DelegatedWork",
+                        "/users/{id}/reprocesslicenseassignment": "least=Application,DelegatedWork",
+                        "/users/{id}/revokesigninsessions": "least=Application,DelegatedWork",
+                        "/me/translateexchangeids": "",
+                        "/users/{id}/translateexchangeids": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "DELETE"
+                    ],
+                    "schemeKeys": [
+                        "Application",
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/directoryobjects/{id}": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "GET",
+                        "POST"
+                    ],
+                    "schemeKeys": [
+                        "Application",
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/users": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "GET",
+                        "PATCH",
+                        "DELETE"
+                    ],
+                    "schemeKeys": [
+                        "Application",
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/users/{id}": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "GET",
+                        "PUT"
+                    ],
+                    "schemeKeys": [
+                        "Application",
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/users/{id}/manager": "least=Application,DelegatedWork"
+                    }
+                },
+                {
+                    "methods": [
+                        "GET",
+                        "PATCH"
+                    ],
+                    "schemeKeys": [
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/organization/{id}/settings/iteminsights": "",
+                        "/organization/{id}/settings/peopleinsights": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "GET",
+                        "PUT"
+                    ],
+                    "schemeKeys": [
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/users/{id}/settings/shiftpreferences": "least=DelegatedWork"
+                    }
+                },
+                {
+                    "methods": [
+                        "POST"
+                    ],
+                    "schemeKeys": [
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/users/validatepassword": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "PATCH",
+                        "PUT"
+                    ],
+                    "schemeKeys": [
+                        "Application",
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/settings/regionalandlanguagesettings": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "DELETE",
+                        "GET",
+                        "PATCH"
+                    ],
+                    "schemeKeys": [
+                        "Application",
+                        "DelegatedWork",
+                        "DelegatedPersonal"
+                    ],
+                    "paths": {
+                        "/me/profile/notes/{id}": "",
+                        "/me/responsibilities/{id}": "",
+                        "/users/{id}/profile/notes/{id}": "",
+                        "/users/{id}/responsibilities/{id}": "",
+                        "/me/profile/account/{id}": "least=Application",
+                        "/me/profile/addresses/{id}": "least=Application",
+                        "/me/profile/anniversaries/{id}": "least=Application",
+                        "/me/profile/awards/{id}": "least=Application",
+                        "/me/profile/certifications/{id}": "least=Application",
+                        "/me/profile/educationalactivities/{id}": "least=Application",
+                        "/me/profile/emails/{id}": "least=Application",
+                        "/me/profile/interests/{id}": "least=Application",
+                        "/me/profile/languages/{id}": "",
+                        "/me/profile/names/{id}": "least=Application",
+                        "/me/profile/patents/{id}": "least=Application",
+                        "/me/profile/phones/{id}": "least=Application",
+                        "/me/profile/positions/{id}": "least=Application",
+                        "/me/profile/projects/{id}": "least=Application",
+                        "/me/profile/publications/{id}": "least=Application",
+                        "/me/profile/skills/{id}": "least=Application",
+                        "/me/profile/webaccounts/{id}": "",
+                        "/me/profile/websites/{id}": "least=Application",
+                        "/users/{id}/profile/account/{id}": "least=Application",
+                        "/users/{id}/profile/addresses/{id}": "least=Application",
+                        "/users/{id}/profile/anniversaries/{id}": "least=Application",
+                        "/users/{id}/profile/awards/{id}": "least=Application",
+                        "/users/{id}/profile/certifications/{id}": "least=Application",
+                        "/users/{id}/profile/educationalactivities/{id}": "least=Application",
+                        "/users/{id}/profile/emails/{id}": "least=Application",
+                        "/users/{id}/profile/interests/{id}": "least=Application",
+                        "/users/{id}/profile/languages/{id}": "",
+                        "/users/{id}/profile/names/{id}": "least=Application",
+                        "/users/{id}/profile/patents/{id}": "least=Application",
+                        "/users/{id}/profile/phones/{id}": "least=Application",
+                        "/users/{id}/profile/positions/{id}": "least=Application",
+                        "/users/{id}/profile/projects/{id}": "least=Application",
+                        "/users/{id}/profile/publications/{id}": "least=Application",
+                        "/users/{id}/profile/skills/{id}": "least=Application",
+                        "/users/{id}/profile/webaccounts/{id}": "",
+                        "/users/{id}/profile/websites/{id}": "least=Application"
+                    }
+                },
+                {
+                    "methods": [
+                        "GET",
+                        "DELETE"
+                    ],
+                    "schemeKeys": [
+                        "Application",
+                        "DelegatedWork",
+                        "DelegatedPersonal"
+                    ],
+                    "paths": {
+                        "/me/profile": "",
+                        "/users/{id}/profile": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "GET",
+                        "POST"
+                    ],
+                    "schemeKeys": [
+                        "Application",
+                        "DelegatedWork",
+                        "DelegatedPersonal"
+                    ],
+                    "paths": {
+                        "/me/profile/account": "",
+                        "/me/profile/addresses": "",
+                        "/me/profile/anniversaries": "least=Application",
+                        "/me/profile/awards": "least=Application",
+                        "/me/profile/certifications": "least=Application",
+                        "/me/profile/educationalactivities": "least=Application",
+                        "/me/profile/emails": "least=Application",
+                        "/me/profile/interests": "least=Application",
+                        "/me/profile/languages": "least=Application",
+                        "/me/profile/names": "",
+                        "/me/profile/notes": "least=Application",
+                        "/me/profile/patents": "least=Application",
+                        "/me/profile/phones": "least=Application",
+                        "/me/profile/positions": "least=Application",
+                        "/me/profile/projects": "least=Application",
+                        "/me/profile/publications": "least=Application",
+                        "/me/profile/skills": "",
+                        "/me/profile/webaccounts": "",
+                        "/me/profile/websites": "",
+                        "/me/responsibilities": "",
+                        "/users/{id}/profile/account": "",
+                        "/users/{id}/profile/addresses": "",
+                        "/users/{id}/profile/anniversaries": "least=Application",
+                        "/users/{id}/profile/awards": "least=Application",
+                        "/users/{id}/profile/certifications": "least=Application",
+                        "/users/{id}/profile/educationalactivities": "least=Application",
+                        "/users/{id}/profile/emails": "least=Application",
+                        "/users/{id}/profile/interests": "least=Application",
+                        "/users/{id}/profile/languages": "least=Application",
+                        "/users/{id}/profile/names": "",
+                        "/users/{id}/profile/notes": "least=Application",
+                        "/users/{id}/profile/patents": "least=Application",
+                        "/users/{id}/profile/phones": "least=Application",
+                        "/users/{id}/profile/positions": "least=Application",
+                        "/users/{id}/profile/projects": "least=Application",
+                        "/users/{id}/profile/publications": "least=Application",
+                        "/users/{id}/profile/skills": "",
+                        "/users/{id}/profile/webaccounts": "",
+                        "/users/{id}/profile/websites": "",
+                        "/users/{id}/responsibilities": ""
+                    }
+                },
+                {
+                    "methods": [
+                        "GET",
+                        "PATCH"
+                    ],
+                    "schemeKeys": [
+                        "Application",
+                        "DelegatedWork"
+                    ],
+                    "paths": {
+                        "/me/settings": "least=Application",
+                        "/users/{id}/settings": "least=Application"
+                    }
+                },
+                {
+                    "methods": [
+                        "PATCH",
+                        "PUT"
+                    ],
+                    "schemeKeys": [
+                        "Application"
+                    ],
+                    "paths": {
+                        "/users/{id}/photo": "least=Application"
+                    }
+                }
+            ]
+        }
+    }
+}
