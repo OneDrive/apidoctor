@@ -2648,301 +2648,308 @@ namespace ApiDoctor.ConsoleApp
                 int insertionStartLine = -1, insertionEndLine = -1, httpRequestStartLine = -1, httpRequestEndLine = -1,
                     boilerplateStartLine = -1, boilerplateEndLine = -1, permissionsHeaderIndex = -1, codeBlockAnnotationEndLine = -1;
                 string[] requestUrlsForPermissions = null;
-                for (var currentIndex = 0; currentIndex < originalFileContents.Length && !finishedParsing; currentIndex++)
+                try
                 {
-                    var currentLine = originalFileContents[currentIndex].Trim();
-                    switch (parseStatus)
+                    for (var currentIndex = 0; currentIndex < originalFileContents.Length && !finishedParsing; currentIndex++)
                     {
-                        case PermissionsInsertionState.FindPermissionsHeader:
-                            if (currentLine.Equals("## Permissions", StringComparison.OrdinalIgnoreCase) || currentLine.Equals("## Prerequisites", StringComparison.OrdinalIgnoreCase))
-                            {
-                                permissionsHeaderIndex = currentIndex;
-                                parseStatus = PermissionsInsertionState.FindInsertionStartLine;
-                            }
-                            break;
-                        case PermissionsInsertionState.FindInsertionStartLine:
-                            if (currentLine.Contains("blockType", StringComparison.OrdinalIgnoreCase) && currentLine.Contains("\"ignored\""))
-                            {
-                                ignorePermissionTableUpdate = true;
-                            }
+                        var currentLine = originalFileContents[currentIndex].Trim();
+                        switch (parseStatus)
+                        {
+                            case PermissionsInsertionState.FindPermissionsHeader:
+                                if (currentLine.Equals("## Permissions", StringComparison.OrdinalIgnoreCase) || currentLine.Equals("## Prerequisites", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    permissionsHeaderIndex = currentIndex;
+                                    parseStatus = PermissionsInsertionState.FindInsertionStartLine;
+                                }
+                                break;
+                            case PermissionsInsertionState.FindInsertionStartLine:
+                                if (currentLine.Contains("blockType", StringComparison.OrdinalIgnoreCase) && currentLine.Contains("\"ignored\""))
+                                {
+                                    ignorePermissionTableUpdate = true;
+                                }
 
-                            // Extract HTML comment
-                            if (codeBlockAnnotationEndLine != -1 && (requestUrlsForPermissions != null || !mergePermissions))
-                            {
-                                var htmlComment = insertionStartLine == codeBlockAnnotationEndLine
-                                    ? originalFileContents[insertionStartLine]
-                                    : string.Join(" ", originalFileContents.Skip(insertionStartLine).Take(codeBlockAnnotationEndLine + 1 - insertionStartLine));
-                                var metadataJsonString = DocFile.StripHtmlCommentTags(htmlComment);
-                                var annotation = CodeBlockAnnotation.ParseMetadata(metadataJsonString);
-                                requestUrlsForPermissions = annotation?.RequestUrls;
-                                mergePermissions = annotation?.MergePermissions ?? false;
-                            }
-                            
-                            if (currentLine.StartsWith("<!-- {") || currentLine.Contains("<!--{"))
-                            {
-                                insertionStartLine = currentIndex;
-                                if (currentLine.Contains("} -->") || currentLine.Contains("}-->"))
+                                // Extract HTML comment
+                                if (codeBlockAnnotationEndLine != -1 && (requestUrlsForPermissions != null || !mergePermissions))
+                                {
+                                    var htmlComment = insertionStartLine == codeBlockAnnotationEndLine
+                                        ? originalFileContents[insertionStartLine]
+                                        : string.Join(" ", originalFileContents.Skip(insertionStartLine).Take(codeBlockAnnotationEndLine + 1 - insertionStartLine));
+                                    var metadataJsonString = DocFile.StripHtmlCommentTags(htmlComment);
+                                    var annotation = CodeBlockAnnotation.ParseMetadata(metadataJsonString);
+                                    requestUrlsForPermissions = annotation?.RequestUrls;
+                                    mergePermissions = annotation?.MergePermissions ?? false;
+                                }
+
+                                if (currentLine.StartsWith("<!-- {") || currentLine.Contains("<!--{"))
+                                {
+                                    insertionStartLine = currentIndex;
+                                    if (currentLine.Contains("} -->") || currentLine.Contains("}-->"))
+                                    {
+                                        codeBlockAnnotationEndLine = currentIndex;
+                                    }
+                                }
+                                else if (currentLine.Contains("} -->") || currentLine.Contains("}-->"))
                                 {
                                     codeBlockAnnotationEndLine = currentIndex;
                                 }
-                            }
-                            else if (currentLine.Contains("} -->") || currentLine.Contains("}-->"))
-                            {
-                                codeBlockAnnotationEndLine = currentIndex;
-                            }
-                            else if (currentLine.Contains("[!INCLUDE [permissions-table](", StringComparison.OrdinalIgnoreCase)) // bootstrapping already took place
-                            {
-                                foundPermissionTablesOrBlocks++;
-                                if (ignorePermissionTableUpdate)
+                                else if (currentLine.Contains("[!INCLUDE [permissions-table](", StringComparison.OrdinalIgnoreCase)) // bootstrapping already took place
                                 {
-                                    FancyConsole.WriteLine(ConsoleColor.Yellow, $"Skipping update of permissions table ({foundPermissionTablesOrBlocks}) in {docFile.DisplayName}");
-                                    parseStatus = PermissionsInsertionState.FindNextPermissionBlock;
-                                    break;
-                                }
-
-                                isBootstrapped = true;
-                                if (!options.BootstrappingOnly)
-                                {
-                                    insertionEndLine = currentIndex; // [!INCLUDE [permissions-table]... is the end of the insertion block
-                                    parseStatus = (requestUrlsForPermissions?.Length ?? 0) == 0
-                                        ? PermissionsInsertionState.FindHttpRequestHeading
-                                        : PermissionsInsertionState.InsertPermissionBlock;
-                                    break;
-                                }
-                            }
-                            else if (currentLine.Contains('|') && currentLine.Contains("Permission type", StringComparison.OrdinalIgnoreCase)) // found the permissions table
-                            {
-                                foundPermissionTablesOrBlocks++;
-                                if (ignorePermissionTableUpdate)
-                                {
-                                    FancyConsole.WriteLine(ConsoleColor.Yellow, $"Skipping update of permissions table ({foundPermissionTablesOrBlocks}) in {docFile.DisplayName}");
-                                    parseStatus = PermissionsInsertionState.FindNextPermissionBlock;
-                                    break;
-                                }
-
-                                insertionStartLine = currentIndex;
-                                parseStatus = PermissionsInsertionState.FindInsertionEndLine;
-
-                                // Find position to add boileplate text
-                                if (foundPermissionTablesOrBlocks == 1)
-                                {
-                                    boilerplateStartLine = permissionsHeaderIndex;
-                                    for (int index = permissionsHeaderIndex + 1; index < currentIndex; index++)
+                                    foundPermissionTablesOrBlocks++;
+                                    if (ignorePermissionTableUpdate)
                                     {
-                                        // if the line is not empty and is not a sub header, this is the boilerplate start line
-                                       if (!string.IsNullOrWhiteSpace(originalFileContents[index]) && !originalFileContents[index].StartsWith('#'))
-                                       {
-                                            if (boilerplateStartLine == permissionsHeaderIndex)
-                                                boilerplateStartLine = index;
-                                            boilerplateEndLine = index;
-                                       }
-                                    }
-                                }
-                            }
-                            else if (currentLine.StartsWith("## ") && foundPermissionTablesOrBlocks > 0) // We have traversed through all permissions tables. Now check if there's a hanging HTTP request block
-                            {
-                                parseStatus = PermissionsInsertionState.FindHttpRequestStartLine;
-                                foundAllPermissionTables = true;
-                            }
-                            break;
-                        case PermissionsInsertionState.FindInsertionEndLine: // if we are here, we need to find the end of the permissions table
-                            int numberOfRows = 1;
-                            for (int index = currentIndex; index < originalFileContents.Length; index++)
-                            {
-                                if (originalFileContents[index].Contains('|'))
-                                {
-                                    numberOfRows++;
-                                    if (numberOfRows > 5)
-                                    {
-                                        FancyConsole.WriteLine(ConsoleColor.Yellow, $"Permissions table ({foundPermissionTablesOrBlocks}) in {docFile.DisplayName} was not updated because extra rows were found");
+                                        FancyConsole.WriteLine(ConsoleColor.Yellow, $"Skipping update of permissions table ({foundPermissionTablesOrBlocks}) in {docFile.DisplayName}");
                                         parseStatus = PermissionsInsertionState.FindNextPermissionBlock;
                                         break;
                                     }
 
-                                    if (originalFileContents[index].Contains("<sup>") || originalFileContents[index].Contains("*"))
+                                    isBootstrapped = true;
+                                    if (!options.BootstrappingOnly)
                                     {
-                                        FancyConsole.WriteLine(ConsoleColor.Yellow, $"Permissions table ({foundPermissionTablesOrBlocks}) in {docFile.DisplayName} was not updated because an astrerisk or superscript was found");
+                                        insertionEndLine = currentIndex; // [!INCLUDE [permissions-table]... is the end of the insertion block
+                                        parseStatus = (requestUrlsForPermissions?.Length ?? 0) == 0
+                                            ? PermissionsInsertionState.FindHttpRequestHeading
+                                            : PermissionsInsertionState.InsertPermissionBlock;
+                                        break;
+                                    }
+                                }
+                                else if (currentLine.Contains('|') && currentLine.Contains("Permission type", StringComparison.OrdinalIgnoreCase)) // found the permissions table
+                                {
+                                    foundPermissionTablesOrBlocks++;
+                                    if (ignorePermissionTableUpdate)
+                                    {
+                                        FancyConsole.WriteLine(ConsoleColor.Yellow, $"Skipping update of permissions table ({foundPermissionTablesOrBlocks}) in {docFile.DisplayName}");
                                         parseStatus = PermissionsInsertionState.FindNextPermissionBlock;
                                         break;
                                     }
-                                }
-                                else
-                                {
-                                    currentIndex = index - 1;
-                                    insertionEndLine = currentIndex;
-                                    parseStatus = options.BootstrappingOnly || (requestUrlsForPermissions?.Length ?? 0) != 0
-                                        ? PermissionsInsertionState.InsertPermissionBlock
-                                        : PermissionsInsertionState.FindHttpRequestHeading;
-                                    break;
-                                }
-                            }
-                            break;
-                        case PermissionsInsertionState.FindHttpRequestHeading:
-                            if (currentLine.Equals("## HTTP request", StringComparison.OrdinalIgnoreCase) || foundHttpRequestBlocks > 0)
-                                parseStatus = PermissionsInsertionState.FindHttpRequestStartLine;
-                            break;
-                        case PermissionsInsertionState.FindHttpRequestStartLine:
-                            if (!foundAllPermissionTables && currentLine.StartsWith("## ") && !currentLine.Equals("## HTTP request", StringComparison.OrdinalIgnoreCase)) // if we get to another header 2, break
-                            {
-                                FancyConsole.WriteLine(ConsoleColor.Yellow, $"The number of permissions tables does not match the HTTP request blocks in {docFile.DisplayName}");
-                                finishedParsing = true;
-                                break;
-                            }
-                            else if (foundAllPermissionTables && currentLine.StartsWith("## "))
-                            {
-                                finishedParsing = true;
-                                break;
-                            }
 
-                            if (currentLine.Contains("```"))
-                            {
-                                foundHttpRequestBlocks++;
-                                httpRequestStartLine = currentIndex;
-                                parseStatus = PermissionsInsertionState.FindHttpRequestEndLine;
-                            }
-                            break;
-                        case PermissionsInsertionState.FindHttpRequestEndLine:
-                            if (currentLine.Contains("```"))
-                            {
-                                if (foundAllPermissionTables && foundHttpRequestBlocks > foundPermissionTablesOrBlocks)
-                                {
-                                    FancyConsole.WriteLine(ConsoleColor.Yellow, $"The number of HTTP request blocks does not match the number of permissions table(s) in {docFile.DisplayName}");
-                                    finishedParsing = true;
-                                }
-                                else if (!foundAllPermissionTables && foundHttpRequestBlocks == foundPermissionTablesOrBlocks)
-                                {
-                                    httpRequestEndLine = currentIndex;
-                                    parseStatus = PermissionsInsertionState.InsertPermissionBlock;
-                                }
-                                else
-                                {
-                                    parseStatus = PermissionsInsertionState.FindHttpRequestStartLine; // keep searching until we find the correct position of permissions table to update
-                                }
-                            }
-                            break;
-                        case PermissionsInsertionState.InsertPermissionBlock:
-                            try
-                            {
-                                var includeFileMetadata = "---\r\ndescription: \"Automatically generated file. DO NOT MODIFY\"\r\nms.topic: include\r\nms.localizationpriority: medium\r\n---\r\n\r\n";
-                                var permissionFileContents = string.Empty;
-                                if (!isBootstrapped)
-                                {
-                                    var existingPermissionsTable = originalFileContents.Skip(insertionStartLine + 2).Take(insertionEndLine - insertionStartLine - 1);
-                                    permissionFileContents = $"{includeFileMetadata}{ConvertToThreeColumnPermissionsTable(existingPermissionsTable)}";
-                                }
+                                    insertionStartLine = currentIndex;
+                                    parseStatus = PermissionsInsertionState.FindInsertionEndLine;
 
-                                if (!options.BootstrappingOnly)
-                                {
-                                    if ((requestUrlsForPermissions?.Length ?? 0) == 0 && httpRequestStartLine == -1)
+                                    // Find position to add boileplate text
+                                    if (foundPermissionTablesOrBlocks == 1)
                                     {
-                                        finishedParsing = true;
-                                        break;
+                                        boilerplateStartLine = permissionsHeaderIndex;
+                                        for (int index = permissionsHeaderIndex + 1; index < currentIndex; index++)
+                                        {
+                                            // if the line is not empty and is not a sub header, this is the boilerplate start line
+                                            if (!string.IsNullOrWhiteSpace(originalFileContents[index]) && !originalFileContents[index].StartsWith('#'))
+                                            {
+                                                if (boilerplateStartLine == permissionsHeaderIndex)
+                                                    boilerplateStartLine = index;
+                                                boilerplateEndLine = index;
+                                            }
+                                        }
                                     }
-
-                                    // Fetch permissions based on code block annotation
-                                    FancyConsole.WriteLine($"Fetching permissions table ({foundPermissionTablesOrBlocks}) for {docFile.DisplayName}");
-
-                                    var httpRequests = (requestUrlsForPermissions?.Length ?? 0) != 0
-                                        ? requestUrlsForPermissions
-                                        : originalFileContents.Skip(httpRequestStartLine + 1).Take(httpRequestEndLine - httpRequestStartLine - 1).Where(x => !string.IsNullOrWhiteSpace(x));
-                                    var newPermissionFileContents = GetPermissionsMarkdownTableForHttpRequestBlock(permissionsDocument, httpRequests,
-                                        mergePermissions, docFile.DisplayName, foundPermissionTablesOrBlocks); // get from Kibali
-                                    if (!string.IsNullOrWhiteSpace(newPermissionFileContents))
+                                }
+                                else if (currentLine.StartsWith("## ") && foundPermissionTablesOrBlocks > 0) // We have traversed through all permissions tables. Now check if there's a hanging HTTP request block
+                                {
+                                    parseStatus = PermissionsInsertionState.FindHttpRequestStartLine;
+                                    foundAllPermissionTables = true;
+                                }
+                                break;
+                            case PermissionsInsertionState.FindInsertionEndLine: // if we are here, we need to find the end of the permissions table
+                                int numberOfRows = 1;
+                                for (int index = currentIndex; index < originalFileContents.Length; index++)
+                                {
+                                    if (originalFileContents[index].Contains('|'))
                                     {
-                                        permissionFileContents = $"{includeFileMetadata}{newPermissionFileContents}";
-                                        FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"Permissions table ({foundPermissionTablesOrBlocks}) updated for {docFile.DisplayName}");
+                                        numberOfRows++;
+                                        if (numberOfRows > 5)
+                                        {
+                                            FancyConsole.WriteLine(ConsoleColor.Yellow, $"Permissions table ({foundPermissionTablesOrBlocks}) in {docFile.DisplayName} was not updated because extra rows were found");
+                                            parseStatus = PermissionsInsertionState.FindNextPermissionBlock;
+                                            break;
+                                        }
+
+                                        if (originalFileContents[index].Contains("<sup>") || originalFileContents[index].Contains("*"))
+                                        {
+                                            FancyConsole.WriteLine(ConsoleColor.Yellow, $"Permissions table ({foundPermissionTablesOrBlocks}) in {docFile.DisplayName} was not updated because an astrerisk or superscript was found");
+                                            parseStatus = PermissionsInsertionState.FindNextPermissionBlock;
+                                            break;
+                                        }
                                     }
                                     else
                                     {
-                                        FancyConsole.WriteLine($"No permissions data found for '{httpRequests.FirstOrDefault()}' in {docFile.DisplayName}");
+                                        currentIndex = index - 1;
+                                        insertionEndLine = currentIndex;
+                                        parseStatus = options.BootstrappingOnly || (requestUrlsForPermissions?.Length ?? 0) != 0
+                                            ? PermissionsInsertionState.InsertPermissionBlock
+                                            : PermissionsInsertionState.FindHttpRequestHeading;
+                                        break;
                                     }
                                 }
-
-                                if (string.IsNullOrWhiteSpace(permissionFileContents))
+                                break;
+                            case PermissionsInsertionState.FindHttpRequestHeading:
+                                if (currentLine.Equals("## HTTP request", StringComparison.OrdinalIgnoreCase) || foundHttpRequestBlocks > 0)
+                                    parseStatus = PermissionsInsertionState.FindHttpRequestStartLine;
+                                break;
+                            case PermissionsInsertionState.FindHttpRequestStartLine:
+                                if (!foundAllPermissionTables && currentLine.StartsWith("## ") && !currentLine.Equals("## HTTP request", StringComparison.OrdinalIgnoreCase)) // if we get to another header 2, break
                                 {
-                                    parseStatus = PermissionsInsertionState.FindNextPermissionBlock;
+                                    FancyConsole.WriteLine(ConsoleColor.Yellow, $"The number of permissions tables does not match the HTTP request blocks in {docFile.DisplayName}");
+                                    finishedParsing = true;
+                                    break;
+                                }
+                                else if (foundAllPermissionTables && currentLine.StartsWith("## "))
+                                {
+                                    finishedParsing = true;
                                     break;
                                 }
 
-                                // update boilerplate text
-                                if (!isBootstrapped && boilerplateStartLine > -1)
+                                if (currentLine.Contains("```"))
                                 {
-                                    if (foundPermissionTablesOrBlocks == 1)
+                                    foundHttpRequestBlocks++;
+                                    httpRequestStartLine = currentIndex;
+                                    parseStatus = PermissionsInsertionState.FindHttpRequestEndLine;
+                                }
+                                break;
+                            case PermissionsInsertionState.FindHttpRequestEndLine:
+                                if (currentLine.Contains("```"))
+                                {
+                                    if (foundAllPermissionTables && foundHttpRequestBlocks > foundPermissionTablesOrBlocks)
                                     {
-                                        // We do not have a boilerplate text in this case, add new next line
-                                        if (boilerplateStartLine == permissionsHeaderIndex)
+                                        FancyConsole.WriteLine(ConsoleColor.Yellow, $"The number of HTTP request blocks does not match the number of permissions table(s) in {docFile.DisplayName}");
+                                        finishedParsing = true;
+                                    }
+                                    else if (!foundAllPermissionTables && foundHttpRequestBlocks == foundPermissionTablesOrBlocks)
+                                    {
+                                        httpRequestEndLine = currentIndex;
+                                        parseStatus = PermissionsInsertionState.InsertPermissionBlock;
+                                    }
+                                    else
+                                    {
+                                        parseStatus = PermissionsInsertionState.FindHttpRequestStartLine; // keep searching until we find the correct position of permissions table to update
+                                    }
+                                }
+                                break;
+                            case PermissionsInsertionState.InsertPermissionBlock:
+                                try
+                                {
+                                    var includeFileMetadata = "---\r\ndescription: \"Automatically generated file. DO NOT MODIFY\"\r\nms.topic: include\r\nms.localizationpriority: medium\r\n---\r\n\r\n";
+                                    var permissionFileContents = string.Empty;
+                                    if (!isBootstrapped)
+                                    {
+                                        var existingPermissionsTable = originalFileContents.Skip(insertionStartLine + 2).Take(insertionEndLine - insertionStartLine - 1);
+                                        permissionFileContents = $"{includeFileMetadata}{ConvertToThreeColumnPermissionsTable(existingPermissionsTable)}";
+                                    }
+
+                                    if (!options.BootstrappingOnly)
+                                    {
+                                        if ((requestUrlsForPermissions?.Length ?? 0) == 0 && httpRequestStartLine == -1)
                                         {
-                                            // insert a new line to hold boilerplate text
-                                            originalFileContents = FileSplicer(originalFileContents, boilerplateStartLine, Constants.PermissionConstants.DefaultBoilerPlateText).ToArray();
-                                            boilerplateStartLine++;
-                                            insertionStartLine++;
-                                            insertionEndLine++;
+                                            finishedParsing = true;
+                                            break;
+                                        }
+
+                                        // Fetch permissions based on code block annotation
+                                        FancyConsole.WriteLine($"Fetching permissions table ({foundPermissionTablesOrBlocks}) for {docFile.DisplayName}");
+
+                                        var httpRequests = (requestUrlsForPermissions?.Length ?? 0) != 0
+                                            ? requestUrlsForPermissions
+                                            : originalFileContents.Skip(httpRequestStartLine + 1).Take(httpRequestEndLine - httpRequestStartLine - 1).Where(x => !string.IsNullOrWhiteSpace(x));
+                                        var newPermissionFileContents = GetPermissionsMarkdownTableForHttpRequestBlock(permissionsDocument, httpRequests,
+                                            mergePermissions, docFile.DisplayName, foundPermissionTablesOrBlocks); // get from Kibali
+                                        if (!string.IsNullOrWhiteSpace(newPermissionFileContents))
+                                        {
+                                            permissionFileContents = $"{includeFileMetadata}{newPermissionFileContents}";
+                                            FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"Permissions table ({foundPermissionTablesOrBlocks}) updated for {docFile.DisplayName}");
                                         }
                                         else
                                         {
-                                            if (boilerplateEndLine > boilerplateStartLine)
-                                            {
-                                                int extraLinesToRemove = boilerplateEndLine - boilerplateStartLine;
-                                                originalFileContents = originalFileContents.Splice(boilerplateStartLine + 1, extraLinesToRemove).ToArray();
-                                                insertionStartLine -= extraLinesToRemove;
-                                                insertionEndLine -= extraLinesToRemove;
-                                            }
-                                            originalFileContents[boilerplateStartLine] = Constants.PermissionConstants.DefaultBoilerPlateText;
+                                            FancyConsole.WriteLine($"No permissions data found for '{httpRequests.FirstOrDefault()}' in {docFile.DisplayName}");
                                         }
                                     }
-                                    else if (foundPermissionTablesOrBlocks == 2)
+
+                                    if (string.IsNullOrWhiteSpace(permissionFileContents))
                                     {
-                                        originalFileContents[boilerplateStartLine] = Constants.PermissionConstants.MultipleTableBoilerPlateText;
+                                        parseStatus = PermissionsInsertionState.FindNextPermissionBlock;
+                                        break;
                                     }
+
+                                    // update boilerplate text
+                                    if (!isBootstrapped && boilerplateStartLine > -1)
+                                    {
+                                        if (foundPermissionTablesOrBlocks == 1)
+                                        {
+                                            // We do not have a boilerplate text in this case, add new next line
+                                            if (boilerplateStartLine == permissionsHeaderIndex)
+                                            {
+                                                // insert a new line to hold boilerplate text
+                                                originalFileContents = FileSplicer(originalFileContents, boilerplateStartLine, Constants.PermissionConstants.DefaultBoilerPlateText).ToArray();
+                                                boilerplateStartLine++;
+                                                insertionStartLine++;
+                                                insertionEndLine++;
+                                            }
+                                            else
+                                            {
+                                                if (boilerplateEndLine > boilerplateStartLine)
+                                                {
+                                                    int extraLinesToRemove = boilerplateEndLine - boilerplateStartLine;
+                                                    originalFileContents = originalFileContents.Splice(boilerplateStartLine + 1, extraLinesToRemove).ToArray();
+                                                    insertionStartLine -= extraLinesToRemove;
+                                                    insertionEndLine -= extraLinesToRemove;
+                                                }
+                                                originalFileContents[boilerplateStartLine] = Constants.PermissionConstants.DefaultBoilerPlateText;
+                                            }
+                                        }
+                                        else if (foundPermissionTablesOrBlocks == 2)
+                                        {
+                                            originalFileContents[boilerplateStartLine] = Constants.PermissionConstants.MultipleTableBoilerPlateText;
+                                        }
+                                    }
+
+                                    if (!isBootstrapped && boilerplateStartLine == -1)
+                                        FancyConsole.WriteLine(ConsoleColor.Yellow, $"Permissions boilerplate text for {docFile.DisplayName} was not updated");
+
+                                    // create folder and file names
+                                    var permissionsFileRelativePath = Path.Combine("includes", "permissions");
+                                    var docFileName = $"{Path.GetFileNameWithoutExtension(docFile.FullPath)}{(foundPermissionTablesOrBlocks > 1 ? $"-{foundPermissionTablesOrBlocks}" : string.Empty)}";
+                                    var permissionsFileName = $"{docFileName}-permissions.md";
+
+                                    // write permissions to separate Markdown file
+                                    var permissionsDirectory = Path.Combine(Directory.GetParent(Path.GetDirectoryName(docFile.FullPath)).FullName, permissionsFileRelativePath);
+                                    Directory.CreateDirectory(permissionsDirectory); // make sure the '/includes/permissions' directory exists
+                                    var permissionsMarkdownFilePath = Path.Combine(permissionsDirectory, permissionsFileName);
+                                    FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"Writing permissions table to {permissionsMarkdownFilePath}");
+                                    await File.WriteAllTextAsync(permissionsMarkdownFilePath, permissionFileContents);
+
+                                    // insert permissions block text into doc file
+                                    var permissionsBlockText = GeneratePermissionsBlockText(docFileName, Path.Combine(permissionsFileRelativePath, permissionsFileName), requestUrlsForPermissions, mergePermissions);
+                                    IEnumerable<string> updatedFileContents = originalFileContents;
+                                    updatedFileContents = updatedFileContents.Splice(insertionStartLine, insertionEndLine + 1 - insertionStartLine);
+                                    updatedFileContents = FileSplicer(updatedFileContents.ToArray(), insertionStartLine - 1, permissionsBlockText);
+                                    await File.WriteAllLinesAsync(docFile.FullPath, updatedFileContents);
+                                    parseStatus = PermissionsInsertionState.FindNextPermissionBlock;
                                 }
-
-                                if (!isBootstrapped && boilerplateStartLine == -1)
-                                    FancyConsole.WriteLine(ConsoleColor.Yellow, $"Permissions boilerplate text for {docFile.DisplayName} was not updated");
-
-                                // create folder and file names
-                                var permissionsFileRelativePath = Path.Combine("includes", "permissions");
-                                var docFileName = $"{Path.GetFileNameWithoutExtension(docFile.FullPath)}{(foundPermissionTablesOrBlocks > 1 ? $"-{foundPermissionTablesOrBlocks}" : string.Empty)}";
-                                var permissionsFileName = $"{docFileName}-permissions.md";
-
-                                // write permissions to separate Markdown file
-                                var permissionsDirectory = Path.Combine(Directory.GetParent(Path.GetDirectoryName(docFile.FullPath)).FullName, permissionsFileRelativePath);
-                                Directory.CreateDirectory(permissionsDirectory); // make sure the '/includes/permissions' directory exists
-                                var permissionsMarkdownFilePath = Path.Combine(permissionsDirectory, permissionsFileName);
-                                FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, $"Writing permissions table to {permissionsMarkdownFilePath}");
-                                await File.WriteAllTextAsync(permissionsMarkdownFilePath, permissionFileContents);
-
-                                // insert permissions block text into doc file
-                                var permissionsBlockText = GeneratePermissionsBlockText(docFileName, Path.Combine(permissionsFileRelativePath, permissionsFileName), requestUrlsForPermissions, mergePermissions);
-                                IEnumerable<string> updatedFileContents = originalFileContents;
-                                updatedFileContents = updatedFileContents.Splice(insertionStartLine, insertionEndLine + 1 - insertionStartLine);
-                                updatedFileContents = FileSplicer(updatedFileContents.ToArray(), insertionStartLine - 1, permissionsBlockText);
-                                await File.WriteAllLinesAsync(docFile.FullPath, updatedFileContents);
-                                parseStatus = PermissionsInsertionState.FindNextPermissionBlock;
-                            }
-                            catch (Exception ex)
-                            {
-                                FancyConsole.WriteLine(ConsoleColor.Red, $"Error encountered in {docFile.DisplayName}: {ex.Message}");
-                            }
-                            break;
-                        case PermissionsInsertionState.FindNextPermissionBlock:
-                            if (!ignorePermissionTableUpdate)
-                            {
-                                var newFileContents = await File.ReadAllLinesAsync(docFile.FullPath);
-                                currentIndex = newFileContents.Length == originalFileContents.Length 
-                                    ? insertionEndLine
-                                    : codeBlockAnnotationEndLine - (originalFileContents.Length - newFileContents.Length) + 1;
-                                originalFileContents = newFileContents;
-                                insertionStartLine = insertionEndLine = httpRequestStartLine = httpRequestEndLine = codeBlockAnnotationEndLine = - 1;
-                                mergePermissions = false;
-                                requestUrlsForPermissions = null;
-                                foundHttpRequestBlocks = 0;
-                            }
-                            isBootstrapped = ignorePermissionTableUpdate = false;
-                            parseStatus = PermissionsInsertionState.FindInsertionStartLine;
-                            break;
-                        default:
-                            break;
+                                catch (Exception ex)
+                                {
+                                    FancyConsole.WriteLine(ConsoleColor.Red, $"Error encountered in {docFile.DisplayName}: {ex.Message}");
+                                }
+                                break;
+                            case PermissionsInsertionState.FindNextPermissionBlock:
+                                if (!ignorePermissionTableUpdate)
+                                {
+                                    var newFileContents = await File.ReadAllLinesAsync(docFile.FullPath);
+                                    currentIndex = newFileContents.Length == originalFileContents.Length
+                                        ? insertionEndLine
+                                        : codeBlockAnnotationEndLine - (originalFileContents.Length - newFileContents.Length) + 1;
+                                    originalFileContents = newFileContents;
+                                    insertionStartLine = insertionEndLine = httpRequestStartLine = httpRequestEndLine = codeBlockAnnotationEndLine = -1;
+                                    mergePermissions = false;
+                                    requestUrlsForPermissions = null;
+                                    foundHttpRequestBlocks = 0;
+                                }
+                                isBootstrapped = ignorePermissionTableUpdate = false;
+                                parseStatus = PermissionsInsertionState.FindInsertionStartLine;
+                                break;
+                            default:
+                                break;
+                        }
                     }
+                }
+                catch (Exception ex)
+                {
+                    FancyConsole.WriteLine(ConsoleColor.Red, $"Error encountered in {docFile.DisplayName}: {ex.Message}");
                 }
 
                 if (foundPermissionTablesOrBlocks == 0)
