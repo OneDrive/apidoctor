@@ -2645,7 +2645,7 @@ namespace ApiDoctor.ConsoleApp
                 var parseStatus = PermissionsInsertionState.FindPermissionsHeader;
                 int foundPermissionTablesOrBlocks = 0, foundHttpRequestBlocks = 0;
                 bool finishedParsing = false, isBootstrapped = false, ignorePermissionTableUpdate = false,
-                    foundAllPermissionTables = false, mergePermissions = false;
+                    foundAllPermissionTables = false, mergePermissions = false, hasBoilerplateText = false;
                 int insertionStartLine = -1, insertionEndLine = -1, httpRequestStartLine = -1, httpRequestEndLine = -1, boilerplateStartLine = -1,
                     boilerplateEndLine = -1, permissionsHeaderIndex = -1, codeBlockAnnotationEndLine = -1, permissionsBlockLineCount = -1;
                 string[] requestUrlsForPermissions = null;
@@ -2662,99 +2662,89 @@ namespace ApiDoctor.ConsoleApp
                             }
                             break;
                         case PermissionsInsertionState.FindInsertionStartLine:
-                            if (currentLine.Contains("blockType", StringComparison.OrdinalIgnoreCase) && currentLine.Contains("\"ignored\""))
+                            if (foundPermissionTablesOrBlocks == 0 && currentLine.Equals(Constants.PermissionsConstants.DefaultBoilerPlateText, StringComparison.OrdinalIgnoreCase) 
+                                || currentLine.Equals(Constants.PermissionsConstants.MultipleTableBoilerPlateText, StringComparison.OrdinalIgnoreCase))
                             {
-                                ignorePermissionTableUpdate = true;
+                                hasBoilerplateText = true;
+                                boilerplateStartLine = boilerplateEndLine = currentIndex;
+                                break;
                             }
 
                             if (currentLine.Contains("[!INCLUDE [permissions-table](", StringComparison.OrdinalIgnoreCase)) // bootstrapping already took place
                             {
+                                isBootstrapped = true;
                                 foundPermissionTablesOrBlocks++;
                                 insertionEndLine = currentIndex; // [!INCLUDE [permissions-table]... is the end of the insertion block
-                                if (ignorePermissionTableUpdate)
-                                {
-                                    FancyConsole.WriteLine(ConsoleColor.Yellow, $"Skipping update of permissions table ({foundPermissionTablesOrBlocks}) in {docFile.DisplayName}");
-                                    parseStatus = PermissionsInsertionState.FindNextPermissionBlock;
-                                    break;
-                                }
-
-                                isBootstrapped = true;
 
                                 if (!options.BootstrappingOnly)
                                 {
-                                    // find the permissions block start line
-                                    var previousContents = "";
-                                    for (var i = currentIndex - 1; i > 0; i--)
-                                    {
-                                        var lineContents = originalFileContents[i].Trim();
-                                        if (lineContents.EndsWith("-->"))
-                                        {
-                                            codeBlockAnnotationEndLine = i;
-                                        }
-                                        if (lineContents.StartsWith("<!--") && (lineContents[4..].Trim().StartsWith('{') || previousContents.StartsWith('{')))
-                                        {
-                                            insertionStartLine = i;
-                                            parseStatus = PermissionsInsertionState.FindHttpRequestHeading;
-                                            break;
-                                        }
-                                        previousContents = lineContents;
-                                    }
+                                    var annotation = ExtractCodeBlockAnnotationForPermissionsTable(
+                                        docFile.DisplayName, 
+                                        originalFileContents, 
+                                        currentIndex, 
+                                        ref codeBlockAnnotationEndLine, 
+                                        ref insertionStartLine,
+                                        ref foundPermissionTablesOrBlocks,
+                                        ref ignorePermissionTableUpdate);
 
-                                    // Extract HTML comment
-                                    if (codeBlockAnnotationEndLine != -1 && insertionStartLine != -1)
-                                    {
-                                        var htmlComment = insertionStartLine == codeBlockAnnotationEndLine
-                                            ? originalFileContents[insertionStartLine]
-                                            : string.Join(" ", originalFileContents.Skip(insertionStartLine).Take(codeBlockAnnotationEndLine + 1 - insertionStartLine));
-                                        var metadataJsonString = DocFile.StripHtmlCommentTags(htmlComment);
-                                        try
-                                        {
-                                            var annotation = CodeBlockAnnotation.ParseMetadata(metadataJsonString);
-                                            if (annotation.BlockType == CodeBlockType.Permissions)
-                                            {
-                                                requestUrlsForPermissions = annotation?.RequestUrls;
-                                                mergePermissions = annotation?.MergePermissions ?? false;
-                                            }
-                                            else // Something's wrong with the metadata
-                                            {
-                                                ignorePermissionTableUpdate = true;
-                                                parseStatus = PermissionsInsertionState.FindNextPermissionBlock;
-                                                FancyConsole.WriteLine(ConsoleColor.Red, $"The HTML metadata for permissions table({foundPermissionTablesOrBlocks}) in {docFile.DisplayName} is wrong)");
-                                                break;
-                                            }
-                                        }
-                                        catch (Exception ex)
-                                        {
-                                            ignorePermissionTableUpdate = true;
-                                            parseStatus = PermissionsInsertionState.FindNextPermissionBlock;
-                                            FancyConsole.WriteLine(ConsoleColor.Red, $"Unable to parse permissions block metadata in '{docFile.DisplayName}', line: {insertionStartLine + 1}", ex);
-                                            break;
-                                        }
-                                    }
-                                    else
+                                    if (annotation == null)
                                     {
                                         // If we are here, the metadata for the permissions table is missing or incomplete. Aim to add it.
                                         codeBlockAnnotationEndLine = insertionStartLine = currentIndex;
                                         parseStatus = PermissionsInsertionState.FindHttpRequestHeading;
                                         break;
                                     }
+
+                                    if (annotation.BlockType == CodeBlockType.Permissions)
+                                    {
+                                        requestUrlsForPermissions = annotation?.RequestUrls;
+                                        mergePermissions = annotation?.MergePermissions ?? false;
+                                        if (requestUrlsForPermissions != null)
+                                        {
+                                            parseStatus = PermissionsInsertionState.InsertPermissionBlock;
+                                        }
+                                        else
+                                        {
+                                            parseStatus = PermissionsInsertionState.FindHttpRequestHeading;
+                                        }
+                                        break;
+                                    }
+                                    else
+                                    {
+                                        parseStatus = PermissionsInsertionState.FindNextPermissionBlock;
+                                    }
                                 }
                             }
                             else if (currentLine.Contains('|') && currentLine.Contains("Permission type", StringComparison.OrdinalIgnoreCase)) // found the permissions table
                             {
                                 foundPermissionTablesOrBlocks++;
-                                if (ignorePermissionTableUpdate)
+                                var annotation = ExtractCodeBlockAnnotationForPermissionsTable(
+                                        docFile.DisplayName,
+                                        originalFileContents,
+                                        currentIndex,
+                                        ref codeBlockAnnotationEndLine,
+                                        ref insertionStartLine,
+                                        ref foundHttpRequestBlocks,
+                                        ref ignorePermissionTableUpdate);
+
+                                if (annotation?.BlockType == CodeBlockType.Permissions)
                                 {
-                                    FancyConsole.WriteLine(ConsoleColor.Yellow, $"Skipping update of permissions table ({foundPermissionTablesOrBlocks}) in {docFile.DisplayName}");
+                                    requestUrlsForPermissions = annotation?.RequestUrls;
+                                    mergePermissions = annotation?.MergePermissions ?? false;
+                                }
+                                else if (annotation?.BlockType == CodeBlockType.Ignored)
+                                {
                                     parseStatus = PermissionsInsertionState.FindNextPermissionBlock;
                                     break;
                                 }
 
-                                insertionStartLine = currentIndex;
-                                parseStatus = PermissionsInsertionState.FindInsertionEndLine;
+                                if (insertionStartLine == -1)
+                                {
+                                    insertionStartLine = currentIndex;
+                                }
 
                                 // Find position to add boileplate text
-                                if (foundPermissionTablesOrBlocks == 1)
+                                if (foundPermissionTablesOrBlocks == 1 && !hasBoilerplateText)
                                 {
                                     boilerplateStartLine = permissionsHeaderIndex;
                                     for (int index = permissionsHeaderIndex + 1; index < currentIndex; index++)
@@ -2768,12 +2758,15 @@ namespace ApiDoctor.ConsoleApp
                                         }
                                     }
                                 }
+
+                                parseStatus = PermissionsInsertionState.FindInsertionEndLine;
                             }
                             else if (currentLine.StartsWith("## ") && foundPermissionTablesOrBlocks > 0) // We have traversed through all permissions tables. Now check if there's a hanging HTTP request block
                             {
                                 parseStatus = PermissionsInsertionState.FindHttpRequestStartLine;
                                 foundAllPermissionTables = true;
                             }
+
                             break;
                         case PermissionsInsertionState.FindInsertionEndLine: // if we are here, we need to find the end of the permissions table
                             int numberOfRows = 1;
@@ -2895,13 +2888,13 @@ namespace ApiDoctor.ConsoleApp
                             // update boilerplate text
                             if (!isBootstrapped && boilerplateStartLine > -1)
                             {
-                                if (foundPermissionTablesOrBlocks == 1)
+                                if (foundPermissionTablesOrBlocks == 1 && !hasBoilerplateText)
                                 {
                                     // We do not have a boilerplate text in this case, add new next line
                                     if (boilerplateStartLine == permissionsHeaderIndex)
                                     {
                                         // insert a new line to hold boilerplate text
-                                        originalFileContents = FileSplicer(originalFileContents, boilerplateStartLine, Constants.PermissionConstants.DefaultBoilerPlateText).ToArray();
+                                        originalFileContents = FileSplicer(originalFileContents, boilerplateStartLine, Constants.PermissionsConstants.DefaultBoilerPlateText).ToArray();
                                         boilerplateStartLine++;
                                         insertionStartLine++;
                                         insertionEndLine++;
@@ -2915,12 +2908,12 @@ namespace ApiDoctor.ConsoleApp
                                             insertionStartLine -= extraLinesToRemove;
                                             insertionEndLine -= extraLinesToRemove;
                                         }
-                                        originalFileContents[boilerplateStartLine] = Constants.PermissionConstants.DefaultBoilerPlateText;
+                                        originalFileContents[boilerplateStartLine] = Constants.PermissionsConstants.DefaultBoilerPlateText;
                                     }
                                 }
                                 else if (foundPermissionTablesOrBlocks == 2)
                                 {
-                                    originalFileContents[boilerplateStartLine] = Constants.PermissionConstants.MultipleTableBoilerPlateText;
+                                    originalFileContents[boilerplateStartLine] = Constants.PermissionsConstants.MultipleTableBoilerPlateText;
                                 }
                             }
 
@@ -2987,6 +2980,64 @@ namespace ApiDoctor.ConsoleApp
             "Not applicable",
             "Not applicable."
         };
+
+        private static CodeBlockAnnotation ExtractCodeBlockAnnotationForPermissionsTable(string docFileName, string[] originalFileContents, int currentIndex, 
+            ref int codeBlockAnnotationEndLine, ref int insertionStartLine, ref int foundPermissionTablesOrBlocks, ref bool ignorePermissionTableUpdate)
+        {
+            // Check if permissions table has annotations. We expect the first encounter of a non empty line to contain "-->"
+            var previousContents = "";
+            for (var i = currentIndex - 1; i > 0; i--)
+            {
+                var lineContents = originalFileContents[i].Trim();
+                if (!string.IsNullOrWhiteSpace(lineContents) && !lineContents.Contains("-->") && codeBlockAnnotationEndLine == -1)
+                {
+                    break;
+                }
+
+                if (lineContents.Contains("-->"))
+                {
+                    codeBlockAnnotationEndLine = i;
+                }
+
+                if (lineContents.StartsWith("<!--") && (lineContents[4..].Trim().StartsWith('{') || previousContents.StartsWith('{')))
+                {
+                    insertionStartLine = i;
+                    break;
+                }
+                previousContents = lineContents;
+            }
+
+            if (codeBlockAnnotationEndLine != -1 && insertionStartLine != -1)
+            {
+                var htmlComment = insertionStartLine == codeBlockAnnotationEndLine
+                    ? originalFileContents[insertionStartLine]
+                    : string.Join(" ", originalFileContents.Skip(insertionStartLine).Take(codeBlockAnnotationEndLine + 1 - insertionStartLine));
+                
+                var metadataJsonString = DocFile.StripHtmlCommentTags(htmlComment);
+
+                try
+                {
+                    var annotation = CodeBlockAnnotation.ParseMetadata(metadataJsonString);
+                    if (annotation?.BlockType == CodeBlockType.Ignored)
+                    {
+                        ignorePermissionTableUpdate = true;
+                        FancyConsole.WriteLine(ConsoleColor.Yellow, $"Skipping update of permissions table ({foundPermissionTablesOrBlocks}) in {docFileName}");
+                    }
+                    else if (annotation?.BlockType != CodeBlockType.Permissions) // Something's wrong with the metadata
+                    {
+                        ignorePermissionTableUpdate = true;
+                        FancyConsole.WriteLine(ConsoleColor.Red, $"The HTML metadata for permissions table({foundPermissionTablesOrBlocks}) in {docFileName} is wrong)");
+                    }
+                    return annotation;
+                }
+                catch (Exception ex)
+                {
+                    ignorePermissionTableUpdate = true;
+                    FancyConsole.WriteLine(ConsoleColor.Red, $"Unable to parse permissions block metadata in '{docFileName}', line: {insertionStartLine + 1}", ex);
+                }
+            }    
+            return null;
+        }
 
         private static string ConvertToThreeColumnPermissionsTable(IEnumerable<string> tableRows)
         {
