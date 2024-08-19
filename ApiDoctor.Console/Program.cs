@@ -2989,7 +2989,7 @@ namespace ApiDoctor.ConsoleApp
             for (var i = currentIndex - 1; i > 0; i--)
             {
                 var lineContents = originalFileContents[i].Trim();
-                if (!string.IsNullOrWhiteSpace(lineContents) && !lineContents.Contains("-->") && codeBlockAnnotationEndLine == -1)
+                if (!string.IsNullOrWhiteSpace(lineContents) && !lineContents.Contains("-->") && !lineContents.Contains("<!--") && codeBlockAnnotationEndLine == -1)
                 {
                     break;
                 }
