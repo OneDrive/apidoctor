@@ -5,7 +5,7 @@ namespace ApiDoctor.ConsoleApp
 {
     public static class Constants
     {
-        public static class PermissionConstants
+        public static class PermissionsConstants
         {
             public const string DefaultBoilerPlateText = "Choose the permission or permissions marked as least privileged for this API." +
                     " Use a higher privileged permission or permissions [only if your app requires it](/graph/permissions-overview#best-practices-for-using-microsoft-graph-permissions)." +
