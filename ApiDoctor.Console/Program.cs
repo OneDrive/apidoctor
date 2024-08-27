@@ -2662,7 +2662,7 @@ namespace ApiDoctor.ConsoleApp
                             }
                             break;
                         case PermissionsInsertionState.FindInsertionStartLine:
-                            if (foundPermissionTablesOrBlocks == 0 && currentLine.Equals(Constants.PermissionsConstants.DefaultBoilerPlateText, StringComparison.OrdinalIgnoreCase) 
+                            if (foundPermissionTablesOrBlocks == 0 && currentLine.Equals(Constants.PermissionsConstants.DefaultBoilerPlateText, StringComparison.OrdinalIgnoreCase)
                                 || currentLine.Equals(Constants.PermissionsConstants.MultipleTableBoilerPlateText, StringComparison.OrdinalIgnoreCase))
                             {
                                 hasBoilerplateText = true;
@@ -2679,10 +2679,10 @@ namespace ApiDoctor.ConsoleApp
                                 if (!options.BootstrappingOnly)
                                 {
                                     var annotation = ExtractCodeBlockAnnotationForPermissionsTable(
-                                        docFile.DisplayName, 
-                                        originalFileContents, 
-                                        currentIndex, 
-                                        ref codeBlockAnnotationEndLine, 
+                                        docFile.DisplayName,
+                                        originalFileContents,
+                                        currentIndex,
+                                        ref codeBlockAnnotationEndLine,
                                         ref insertionStartLine,
                                         ref foundPermissionTablesOrBlocks,
                                         ref ignorePermissionTableUpdate);
@@ -2981,7 +2981,7 @@ namespace ApiDoctor.ConsoleApp
             "Not applicable."
         };
 
-        private static CodeBlockAnnotation ExtractCodeBlockAnnotationForPermissionsTable(string docFileName, string[] originalFileContents, int currentIndex, 
+        private static CodeBlockAnnotation ExtractCodeBlockAnnotationForPermissionsTable(string docFileName, string[] originalFileContents, int currentIndex,
             ref int codeBlockAnnotationEndLine, ref int insertionStartLine, ref int foundPermissionTablesOrBlocks, ref bool ignorePermissionTableUpdate)
         {
             // Check if permissions table has annotations. We expect the first encounter of a non empty line to contain "-->"
@@ -3012,7 +3012,7 @@ namespace ApiDoctor.ConsoleApp
                 var htmlComment = insertionStartLine == codeBlockAnnotationEndLine
                     ? originalFileContents[insertionStartLine]
                     : string.Join(" ", originalFileContents.Skip(insertionStartLine).Take(codeBlockAnnotationEndLine + 1 - insertionStartLine));
-                
+
                 var metadataJsonString = DocFile.StripHtmlCommentTags(htmlComment);
 
                 try
@@ -3035,7 +3035,7 @@ namespace ApiDoctor.ConsoleApp
                     ignorePermissionTableUpdate = true;
                     FancyConsole.WriteLine(ConsoleColor.Red, $"Unable to parse permissions block metadata in '{docFileName}', line: {insertionStartLine + 1}", ex);
                 }
-            }    
+            }
             return null;
         }
 
@@ -3046,6 +3046,13 @@ namespace ApiDoctor.ConsoleApp
             foreach (string row in tableRows)
             {
                 string[] cells = Regex.Split(row.Trim(), @"\s*\|\s*").Where(static x => !string.IsNullOrWhiteSpace(x)).ToArray();
+                
+                // We already have the 3 column permissions table, abort
+                if (cells.Length == 3)
+                {
+                    return string.Join("\r\n", tableRows);
+                }
+
                 var allPermissions = cells[1].Trim().Split(',', StringSplitOptions.TrimEntries)
                     .Where(x => !string.IsNullOrWhiteSpace(x) && !PermissionKeywordsToIgnore.Contains(x))
                     .ToList();
