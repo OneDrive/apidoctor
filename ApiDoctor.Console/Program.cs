@@ -3043,28 +3043,35 @@ namespace ApiDoctor.ConsoleApp
         {
             var tableString = new StringBuilder("|Permission type|Least privileged permissions|Higher privileged permissions|");
             tableString.Append("\r\n|:---|:---|:---|");
-            foreach (string row in tableRows)
+            try
             {
-                string[] cells = Regex.Split(row.Trim(), @"\s*\|\s*").Where(static x => !string.IsNullOrWhiteSpace(x)).ToArray();
-                
-                // We already have the 3 column permissions table, abort
-                if (cells.Length == 3)
+                foreach (string row in tableRows)
                 {
-                    return string.Join("\r\n", tableRows);
+                    string[] cells = Regex.Split(row.Trim(), @"\s*\|\s*").Where(static x => !string.IsNullOrWhiteSpace(x)).ToArray();
+
+                    // We already have the 3 column permissions table, abort
+                    if (cells.Length == 3)
+                    {
+                        return string.Join("\r\n", tableRows);
+                    }
+
+                    var allPermissions = cells[1].Trim().Split(',', StringSplitOptions.TrimEntries)
+                        .Where(x => !string.IsNullOrWhiteSpace(x) && !PermissionKeywordsToIgnore.Contains(x))
+                        .ToList();
+
+                    var permissionType = cells[0];
+                    var leastPrivilegePermission = allPermissions.Any() ? allPermissions.First().Trim() : "Not supported.";
+                    var higherPrivilegePermissions = !allPermissions.Any()
+                        ? "Not supported."
+                        : allPermissions.Count() == 1
+                            ? "Not available."
+                            : string.Join(", ", allPermissions.Skip(1).Select(x => x.Trim()).ToList());
+                    tableString.Append($"\r\n|{permissionType}|{leastPrivilegePermission}|{higherPrivilegePermissions}|");
                 }
-
-                var allPermissions = cells[1].Trim().Split(',', StringSplitOptions.TrimEntries)
-                    .Where(x => !string.IsNullOrWhiteSpace(x) && !PermissionKeywordsToIgnore.Contains(x))
-                    .ToList();
-
-                var permissionType = cells[0];
-                var leastPrivilegePermission = allPermissions.Any() ? allPermissions.First().Trim() : "Not supported.";
-                var higherPrivilegePermissions = !allPermissions.Any()
-                    ? "Not supported."
-                    : allPermissions.Count() == 1
-                        ? "Not available."
-                        : string.Join(", ", allPermissions.Skip(1).Select(x => x.Trim()).ToList());
-                tableString.Append($"\r\n|{permissionType}|{leastPrivilegePermission}|{higherPrivilegePermissions}|");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error converting table {string.Join(Environment.NewLine, tableRows)}: {ex.Message}");
             }
             return tableString.ToString();
         }
