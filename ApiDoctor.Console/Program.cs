@@ -2846,9 +2846,10 @@ namespace ApiDoctor.ConsoleApp
                         case PermissionsInsertionState.InsertPermissionBlock:
                             var includeFileMetadata = "---\r\ndescription: \"Automatically generated file. DO NOT MODIFY\"\r\nms.topic: include\r\nms.localizationpriority: medium\r\n---\r\n\r\n";
                             var permissionFileContents = string.Empty;
+                            var existingPermissionsTable = originalFileContents.Skip(insertionStartLine + 2).Take(insertionEndLine - insertionStartLine - 1);
+
                             if (!isBootstrapped)
-                            {
-                                var existingPermissionsTable = originalFileContents.Skip(insertionStartLine + 2).Take(insertionEndLine - insertionStartLine - 1);
+                            {                             
                                 permissionFileContents = $"{includeFileMetadata}{ConvertToThreeColumnPermissionsTable(existingPermissionsTable)}";
                             }
 
@@ -2866,8 +2867,14 @@ namespace ApiDoctor.ConsoleApp
                                 var httpRequests = (requestUrlsForPermissions?.Length ?? 0) != 0
                                     ? requestUrlsForPermissions
                                     : originalFileContents.Skip(httpRequestStartLine + 1).Take(httpRequestEndLine - httpRequestStartLine - 1).Where(x => !string.IsNullOrWhiteSpace(x));
+
+                                
+
                                 var newPermissionFileContents = GetPermissionsMarkdownTableForHttpRequestBlock(permissionsDocument, httpRequests,
                                     mergePermissions, docFile.DisplayName, foundPermissionTablesOrBlocks); // get from Kibali
+
+                                CheckForPermissionsAccuracy(newPermissionFileContents.Split(Environment.NewLine), httpRequests, docFile.DisplayName);
+
                                 if (!string.IsNullOrWhiteSpace(newPermissionFileContents))
                                 {
                                     permissionFileContents = $"{includeFileMetadata}{newPermissionFileContents}";
@@ -3037,6 +3044,51 @@ namespace ApiDoctor.ConsoleApp
                 }
             }
             return null;
+        }
+
+        private static void CheckForPermissionsAccuracy(IEnumerable<string> tableRows, IEnumerable<string> httpRequests, string fileName)
+        {
+            try
+            {
+                var methods = new string[] { "PUT", "PATCH", "PUT", "POST", "DELETE" };
+                foreach (var r in httpRequests)
+                {
+                    var method = r.Split(" ").First();
+                    if (methods.Contains(method))
+                    {
+                        foreach (var row in tableRows)
+                        {
+                            string[] cells = Regex.Split(row.Trim(), @"\s*\|\s*").Where(static x => !string.IsNullOrWhiteSpace(x)).ToArray();
+                            if (cells.Length == 3)
+                            {
+                                var permissionType = cells[0];
+
+                                var perms = cells[1].Split(",").ToList();
+                                var higher = cells[2].Split(",");
+                                foreach (var h in higher)
+                                {
+                                    perms.Add(h);
+                                }
+
+                                foreach (var perm in perms)
+                                {
+                                    if (perm.EndsWith("Read") || perm.Contains(".Read."))
+                                    {
+                                        Console.WriteLine($"Incorrect permissions for HTTPRequest {string.Join(" ", httpRequests)}; docFike {fileName}; permissions {string.Join(",", perms.Where(x => x.EndsWith("Read") || x.Contains(".Read.")))}; Scope {permissionType}");
+                                    }
+                                }
+
+                            }
+                        }
+
+                        break;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error checking permissions accuracy: {ex.Message} for {fileName}");
+            }
         }
 
         private static string ConvertToThreeColumnPermissionsTable(IEnumerable<string> tableRows)
