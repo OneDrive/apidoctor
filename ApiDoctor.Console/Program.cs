@@ -2849,7 +2849,7 @@ namespace ApiDoctor.ConsoleApp
                             if (!isBootstrapped)
                             {
                                 var existingPermissionsTable = originalFileContents.Skip(insertionStartLine + 2).Take(insertionEndLine - insertionStartLine - 1);
-                                permissionFileContents = $"{includeFileMetadata}{ConvertToThreeColumnPermissionsTable(existingPermissionsTable)}";
+                                permissionFileContents = $"{includeFileMetadata}{ConvertToThreeColumnPermissionsTable(existingPermissionsTable, docFile.DisplayName)}";
                             }
 
                             if (!options.BootstrappingOnly)
@@ -3039,32 +3039,41 @@ namespace ApiDoctor.ConsoleApp
             return null;
         }
 
-        private static string ConvertToThreeColumnPermissionsTable(IEnumerable<string> tableRows)
+        private static string ConvertToThreeColumnPermissionsTable(IEnumerable<string> tableRows, string fileName)
         {
             var tableString = new StringBuilder("|Permission type|Least privileged permissions|Higher privileged permissions|");
             tableString.Append("\r\n|:---|:---|:---|");
             foreach (string row in tableRows)
             {
-                string[] cells = Regex.Split(row.Trim(), @"\s*\|\s*").Where(static x => !string.IsNullOrWhiteSpace(x)).ToArray();
-                
-                // We already have the 3 column permissions table, abort
-                if (cells.Length == 3)
+                try
                 {
-                    return string.Join("\r\n", tableRows);
+                    string[] cells = Regex.Split(row.Trim(), @"\s*\|\s*").Where(static x => !string.IsNullOrWhiteSpace(x)).ToArray();
+
+                    // We already have the 3 column permissions table, abort
+                    if (cells.Length == 3)
+                    {
+                        return string.Join("\r\n", tableRows);
+                    }
+
+                    var allPermissions = cells[1].Trim().Split(',', StringSplitOptions.TrimEntries)
+                        .Where(x => !string.IsNullOrWhiteSpace(x) && !PermissionKeywordsToIgnore.Contains(x))
+                        .ToList();
+
+                    var permissionType = cells[0];
+                    var leastPrivilegePermission = allPermissions.Any() ? allPermissions.First().Trim() : "Not supported.";
+                    var higherPrivilegePermissions = !allPermissions.Any()
+                        ? "Not supported."
+                        : allPermissions.Count() == 1
+                            ? "Not available."
+                            : string.Join(", ", allPermissions.Skip(1).Select(x => x.Trim()).ToList());
+                    tableString.Append($"\r\n|{permissionType}|{leastPrivilegePermission}|{higherPrivilegePermissions}|");
+                }
+                catch (Exception ex) 
+                {
+                    Console.WriteLine($"Could not convert permissions table in {fileName} to three columns: {ex.Message}");
+                    return string.Join(Environment.NewLine, tableRows);
                 }
 
-                var allPermissions = cells[1].Trim().Split(',', StringSplitOptions.TrimEntries)
-                    .Where(x => !string.IsNullOrWhiteSpace(x) && !PermissionKeywordsToIgnore.Contains(x))
-                    .ToList();
-
-                var permissionType = cells[0];
-                var leastPrivilegePermission = allPermissions.Any() ? allPermissions.First().Trim() : "Not supported.";
-                var higherPrivilegePermissions = !allPermissions.Any()
-                    ? "Not supported."
-                    : allPermissions.Count() == 1
-                        ? "Not available."
-                        : string.Join(", ", allPermissions.Skip(1).Select(x => x.Trim()).ToList());
-                tableString.Append($"\r\n|{permissionType}|{leastPrivilegePermission}|{higherPrivilegePermissions}|");
             }
             return tableString.ToString();
         }
