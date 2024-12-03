@@ -2647,7 +2647,7 @@ namespace ApiDoctor.ConsoleApp
                 bool finishedParsing = false, isBootstrapped = false, ignorePermissionTableUpdate = false,
                     foundAllPermissionTables = false, mergePermissions = false, hasBoilerplateText = false;
                 int insertionStartLine = -1, insertionEndLine = -1, httpRequestStartLine = -1, httpRequestEndLine = -1, boilerplateStartLine = -1,
-                    boilerplateEndLine = -1, permissionsHeaderIndex = -1, codeBlockAnnotationEndLine = -1, permissionsBlockLineCount = -1;
+                    boilerplateEndLine = -1, permissionsHeaderIndex = -1, codeBlockAnnotationEndLine = -1, permissionsBlockLineCount = -1, permissionsTableStartLine = -1;
                 string[] requestUrlsForPermissions = null;
                 for (var currentIndex = 0; currentIndex < originalFileContents.Length && !finishedParsing; currentIndex++)
                 {
@@ -2662,8 +2662,8 @@ namespace ApiDoctor.ConsoleApp
                             }
                             break;
                         case PermissionsInsertionState.FindInsertionStartLine:
-                            if (foundPermissionTablesOrBlocks == 0 && currentLine.Equals(Constants.PermissionsConstants.DefaultBoilerPlateText, StringComparison.OrdinalIgnoreCase)
-                                || currentLine.Equals(Constants.PermissionsConstants.MultipleTableBoilerPlateText, StringComparison.OrdinalIgnoreCase))
+                            if (foundPermissionTablesOrBlocks == 0 && (currentLine.Equals(Constants.PermissionsConstants.DefaultBoilerPlateText, StringComparison.OrdinalIgnoreCase)
+                                || currentLine.Equals(Constants.PermissionsConstants.MultipleTableBoilerPlateText, StringComparison.OrdinalIgnoreCase)))
                             {
                                 hasBoilerplateText = true;
                                 boilerplateStartLine = boilerplateEndLine = currentIndex;
@@ -2674,6 +2674,7 @@ namespace ApiDoctor.ConsoleApp
                             {
                                 isBootstrapped = true;
                                 foundPermissionTablesOrBlocks++;
+                                permissionsTableStartLine = currentIndex;
                                 insertionEndLine = currentIndex; // [!INCLUDE [permissions-table]... is the end of the insertion block
 
                                 if (!options.BootstrappingOnly)
@@ -2717,6 +2718,7 @@ namespace ApiDoctor.ConsoleApp
                             }
                             else if (currentLine.Contains('|') && currentLine.Contains("Permission type", StringComparison.OrdinalIgnoreCase)) // found the permissions table
                             {
+                                permissionsTableStartLine = currentIndex;
                                 foundPermissionTablesOrBlocks++;
                                 var annotation = ExtractCodeBlockAnnotationForPermissionsTable(
                                         docFile.DisplayName,
@@ -2848,7 +2850,7 @@ namespace ApiDoctor.ConsoleApp
                             var permissionFileContents = string.Empty;
                             if (!isBootstrapped)
                             {
-                                var existingPermissionsTable = originalFileContents.Skip(insertionStartLine + 2).Take(insertionEndLine - insertionStartLine - 1);
+                                var existingPermissionsTable = originalFileContents.Skip(permissionsTableStartLine).Take(insertionEndLine - permissionsTableStartLine + 1);
                                 permissionFileContents = $"{includeFileMetadata}{ConvertToThreeColumnPermissionsTable(existingPermissionsTable, docFile.DisplayName)}";
                             }
 
@@ -2950,7 +2952,7 @@ namespace ApiDoctor.ConsoleApp
                                     : insertionStartLine + permissionsBlockLineCount - 1;
                                 originalFileContents = newFileContents;
                                 insertionStartLine = insertionEndLine = httpRequestStartLine = httpRequestEndLine =
-                                    codeBlockAnnotationEndLine = permissionsBlockLineCount = -1;
+                                    codeBlockAnnotationEndLine = permissionsBlockLineCount = permissionsTableStartLine = -1;
                                 mergePermissions = false;
                                 requestUrlsForPermissions = null;
                                 foundHttpRequestBlocks = 0;

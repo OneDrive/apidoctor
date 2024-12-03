@@ -12,7 +12,7 @@ namespace ApiDoctor.ConsoleApp
                     " For details about delegated and application permissions, see [Permission types](/graph/permissions-overview#permission-types). To learn more about these permissions, see the [permissions reference](/graph/permissions-reference).";
             public const string MultipleTableBoilerPlateText = "The following tables show the least privileged permission or permissions required to call this API on each supported resource type." +
                     " Follow [best practices](/graph/permissions-overview#best-practices-for-using-microsoft-graph-permissions) to request least privileged permissions." +
-                    " For details about delegated and application permissions, see [Permission types](/graph/permissions-overview#permission-types). To learn more about these permissions, see the [permissions reference](/graph/permissions-reference).";
+                    " For details about delegated and application permissions, see [Permission types](/graph/permissions-overview#permission-types). To learn more about these permissions, see the [permissions reference](/graph/permissions-reference).";
         }
         public static readonly Regex FunctionParameterRegex = new(@"(?<=\=)[^)]+(?=\))", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
         public static readonly Regex QueryOptionSegementRegex = new(@"(\$.*)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
