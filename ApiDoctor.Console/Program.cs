@@ -3047,7 +3047,7 @@ namespace ApiDoctor.ConsoleApp
             {
                 try
                 {
-                    string[] cells = Regex.Split(row.Trim(), @"\s*\|\s*").Where(static x => !string.IsNullOrWhiteSpace(x)).ToArray();
+                    string[] cells = PipeDelimiterRegex.Split(row.Trim()).Where(static x => !string.IsNullOrWhiteSpace(x)).ToArray();
 
                     // We already have the 3 column permissions table, abort
                     if (cells.Length == 3)
@@ -3202,6 +3202,8 @@ namespace ApiDoctor.ConsoleApp
             FindHttpRequestEndLine,
             FindNextPermissionBlock
         }
+
+        private static readonly Regex PipeDelimiterRegex = new Regex(@"\s*\|\s*", RegexOptions.Compiled);
 
         #endregion
 
