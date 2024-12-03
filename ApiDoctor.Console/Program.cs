@@ -2647,7 +2647,7 @@ namespace ApiDoctor.ConsoleApp
                 bool finishedParsing = false, isBootstrapped = false, ignorePermissionTableUpdate = false,
                     foundAllPermissionTables = false, mergePermissions = false, hasBoilerplateText = false;
                 int insertionStartLine = -1, insertionEndLine = -1, httpRequestStartLine = -1, httpRequestEndLine = -1, boilerplateStartLine = -1,
-                    boilerplateEndLine = -1, permissionsHeaderIndex = -1, codeBlockAnnotationEndLine = -1, permissionsBlockLineCount = -1;
+                    boilerplateEndLine = -1, permissionsHeaderIndex = -1, codeBlockAnnotationEndLine = -1, permissionsBlockLineCount = -1, permissionsTableStartLine = -1;
                 string[] requestUrlsForPermissions = null;
                 for (var currentIndex = 0; currentIndex < originalFileContents.Length && !finishedParsing; currentIndex++)
                 {
@@ -2662,8 +2662,8 @@ namespace ApiDoctor.ConsoleApp
                             }
                             break;
                         case PermissionsInsertionState.FindInsertionStartLine:
-                            if (foundPermissionTablesOrBlocks == 0 && currentLine.Equals(Constants.PermissionsConstants.DefaultBoilerPlateText, StringComparison.OrdinalIgnoreCase)
-                                || currentLine.Equals(Constants.PermissionsConstants.MultipleTableBoilerPlateText, StringComparison.OrdinalIgnoreCase))
+                            if (foundPermissionTablesOrBlocks == 0 && (currentLine.Equals(Constants.PermissionsConstants.DefaultBoilerPlateText, StringComparison.OrdinalIgnoreCase)
+                                || currentLine.Equals(Constants.PermissionsConstants.MultipleTableBoilerPlateText, StringComparison.OrdinalIgnoreCase)))
                             {
                                 hasBoilerplateText = true;
                                 boilerplateStartLine = boilerplateEndLine = currentIndex;
@@ -2674,6 +2674,7 @@ namespace ApiDoctor.ConsoleApp
                             {
                                 isBootstrapped = true;
                                 foundPermissionTablesOrBlocks++;
+                                permissionsTableStartLine = currentIndex;
                                 insertionEndLine = currentIndex; // [!INCLUDE [permissions-table]... is the end of the insertion block
 
                                 if (!options.BootstrappingOnly)
@@ -2717,6 +2718,7 @@ namespace ApiDoctor.ConsoleApp
                             }
                             else if (currentLine.Contains('|') && currentLine.Contains("Permission type", StringComparison.OrdinalIgnoreCase)) // found the permissions table
                             {
+                                permissionsTableStartLine = currentIndex;
                                 foundPermissionTablesOrBlocks++;
                                 var annotation = ExtractCodeBlockAnnotationForPermissionsTable(
                                         docFile.DisplayName,
@@ -2848,8 +2850,8 @@ namespace ApiDoctor.ConsoleApp
                             var permissionFileContents = string.Empty;
                             if (!isBootstrapped)
                             {
-                                var existingPermissionsTable = originalFileContents.Skip(insertionStartLine + 2).Take(insertionEndLine - insertionStartLine - 1);
-                                permissionFileContents = $"{includeFileMetadata}{ConvertToThreeColumnPermissionsTable(existingPermissionsTable)}";
+                                var existingPermissionsTable = originalFileContents.Skip(permissionsTableStartLine).Take(insertionEndLine - permissionsTableStartLine + 1);
+                                permissionFileContents = $"{includeFileMetadata}{ConvertToThreeColumnPermissionsTable(existingPermissionsTable, docFile.DisplayName)}";
                             }
 
                             if (!options.BootstrappingOnly)
@@ -2950,7 +2952,7 @@ namespace ApiDoctor.ConsoleApp
                                     : insertionStartLine + permissionsBlockLineCount - 1;
                                 originalFileContents = newFileContents;
                                 insertionStartLine = insertionEndLine = httpRequestStartLine = httpRequestEndLine =
-                                    codeBlockAnnotationEndLine = permissionsBlockLineCount = -1;
+                                    codeBlockAnnotationEndLine = permissionsBlockLineCount = permissionsTableStartLine = -1;
                                 mergePermissions = false;
                                 requestUrlsForPermissions = null;
                                 foundHttpRequestBlocks = 0;
@@ -3039,32 +3041,41 @@ namespace ApiDoctor.ConsoleApp
             return null;
         }
 
-        private static string ConvertToThreeColumnPermissionsTable(IEnumerable<string> tableRows)
+        private static string ConvertToThreeColumnPermissionsTable(IEnumerable<string> tableRows, string fileName)
         {
             var tableString = new StringBuilder("|Permission type|Least privileged permissions|Higher privileged permissions|");
             tableString.Append("\r\n|:---|:---|:---|");
             foreach (string row in tableRows)
             {
-                string[] cells = Regex.Split(row.Trim(), @"\s*\|\s*").Where(static x => !string.IsNullOrWhiteSpace(x)).ToArray();
-                
-                // We already have the 3 column permissions table, abort
-                if (cells.Length == 3)
+                try
                 {
-                    return string.Join("\r\n", tableRows);
+                    string[] cells = PipeDelimiterRegex.Split(row.Trim()).Where(static x => !string.IsNullOrWhiteSpace(x)).ToArray();
+
+                    // We already have the 3 column permissions table, abort
+                    if (cells.Length == 3)
+                    {
+                        return string.Join("\r\n", tableRows);
+                    }
+
+                    var allPermissions = cells[1].Trim().Split(',', StringSplitOptions.TrimEntries)
+                        .Where(x => !string.IsNullOrWhiteSpace(x) && !PermissionKeywordsToIgnore.Contains(x))
+                        .ToList();
+
+                    var permissionType = cells[0];
+                    var leastPrivilegePermission = allPermissions.Any() ? allPermissions.First().Trim() : "Not supported.";
+                    var higherPrivilegePermissions = !allPermissions.Any()
+                        ? "Not supported."
+                        : allPermissions.Count() == 1
+                            ? "Not available."
+                            : string.Join(", ", allPermissions.Skip(1).Select(x => x.Trim()).ToList());
+                    tableString.Append($"\r\n|{permissionType}|{leastPrivilegePermission}|{higherPrivilegePermissions}|");
+                }
+                catch (Exception ex) 
+                {
+                    Console.WriteLine($"Could not convert permissions table in {fileName} to three columns: {ex.Message}");
+                    return string.Join(Environment.NewLine, tableRows);
                 }
 
-                var allPermissions = cells[1].Trim().Split(',', StringSplitOptions.TrimEntries)
-                    .Where(x => !string.IsNullOrWhiteSpace(x) && !PermissionKeywordsToIgnore.Contains(x))
-                    .ToList();
-
-                var permissionType = cells[0];
-                var leastPrivilegePermission = allPermissions.Any() ? allPermissions.First().Trim() : "Not supported.";
-                var higherPrivilegePermissions = !allPermissions.Any()
-                    ? "Not supported."
-                    : allPermissions.Count() == 1
-                        ? "Not available."
-                        : string.Join(", ", allPermissions.Skip(1).Select(x => x.Trim()).ToList());
-                tableString.Append($"\r\n|{permissionType}|{leastPrivilegePermission}|{higherPrivilegePermissions}|");
             }
             return tableString.ToString();
         }
@@ -3193,6 +3204,8 @@ namespace ApiDoctor.ConsoleApp
             FindHttpRequestEndLine,
             FindNextPermissionBlock
         }
+
+        private static readonly Regex PipeDelimiterRegex = new Regex(@"\s*\|\s*", RegexOptions.Compiled);
 
         #endregion
 
