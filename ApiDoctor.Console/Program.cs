@@ -1954,8 +1954,6 @@ namespace ApiDoctor.ConsoleApp
             }
             var methods = FindTestMethods(options, docset);
 
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
-
             FancyConsole.WriteLine(FancyConsole.ConsoleSuccessColor, "Generating snippets from Snippets API..");
 
             var snippetsPath = string.IsNullOrEmpty(options.TempOutputPath) ?
