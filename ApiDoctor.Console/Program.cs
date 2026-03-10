@@ -2418,7 +2418,7 @@ namespace ApiDoctor.ConsoleApp
         /// and injects or replaces the snippet tab section.
         /// Returns the modified file contents, or null if no changes were made.
         /// </summary>
-        internal static IEnumerable<string> ProcessSnippetInjection(
+        internal static IEnumerable<string>? ProcessSnippetInjection(
             string[] originalFileContents,
             string methodIdentifier,
             string httpRequest,

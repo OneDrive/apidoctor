@@ -39,9 +39,6 @@
     <AssemblyOriginatorKeyFile>35MSSharedLib1024.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
-    <InternalsVisibleTo Include="ApiDoctor.Console.UnitTests" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\ApiDoctor.DocumentationGeneration\ApiDoctor.DocumentationGeneration.csproj" />
     <ProjectReference Include="..\ApiDoctor.Publishing\ApiDoctor.Publishing.csproj" />
     <ProjectReference Include="..\ApiDoctor.Validation\ApiDoctor.Validation.csproj" />
