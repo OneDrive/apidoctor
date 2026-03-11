@@ -2398,6 +2398,7 @@ namespace ApiDoctor.ConsoleApp
         /// <returns>The cleaned up result</returns>
         private static string ReplaceWindowsByLinuxPathSeparators(string original) => original.Replace("\\", "/");
 
+#nullable enable
         /// <summary>
         /// Finds the file the request is located and inserts the code snippet into the file
         /// </summary>
@@ -2537,6 +2538,7 @@ namespace ApiDoctor.ConsoleApp
 
             return null;
         }
+#nullable restore
 
         private enum CodeSnippetInsertionState
         {
