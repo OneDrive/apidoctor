@@ -11,8 +11,9 @@
     <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
     <PackageProjectUrl>https://github.com/onedrive/apidoctor</PackageProjectUrl>
     <RepositoryUrl>https://github.com/onedrive/apidoctor</RepositoryUrl>
-    <PackageLicenseUrl>http://msdn.microsoft.com/en-US/cc300389</PackageLicenseUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReleaseNotes>Check https://github.com/onedrive/apidoctor for details.</PackageReleaseNotes>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <StartupObject>ApiDoctor.ConsoleApp.Program</StartupObject>
@@ -22,6 +23,9 @@
     <SignAssembly>false</SignAssembly>
     <AssemblyOriginatorKeyFile>35MSSharedLib1024.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
+  <ItemGroup>
+    <None Include="..\readme.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ApiDoctor.DocumentationGeneration\ApiDoctor.DocumentationGeneration.csproj" />
     <ProjectReference Include="..\ApiDoctor.Publishing\ApiDoctor.Publishing.csproj" />
