@@ -1,27 +1,54 @@
 name: .NET
 
 on:
-  push:
-    branches: [ master ]
   pull_request:
     branches: [ master ]
 
 jobs:
   build:
-
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v4.2.2
       with:
         submodules: recursive
+
     - name: Setup .NET
       uses: actions/setup-dotnet@v4.3.1
       with:
         dotnet-version: 8.0.x
+
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+        restore-keys: ${{ runner.os }}-nuget-
+
     - name: Restore dependencies
       run: dotnet restore ./ApiDoctor.sln
+
     - name: Build
       run: dotnet build ./ApiDoctor.sln --no-restore
+
     - name: Test
-      run: dotnet test ./ApiDoctor.sln --no-build --verbosity normal
+      run: dotnet test ./ApiDoctor.sln --no-build --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./coverage
+
+    - name: Upload coverage
+      if: matrix.os == 'ubuntu-latest'
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage
+        path: ./coverage
+
+  complete:
+    needs: build
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+    - name: Check build matrix status
+      if: needs.build.result != 'success'
+      run: exit 1
