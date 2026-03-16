@@ -21,11 +21,11 @@ the automated test scenarios, but is required for HTML publishing.
 
 ## Markdown customizations
 
-Markdown scanner provides additional features on top of the Markdown language. For details, see [Markdown customizations](/docs/markdown-customizations.md).
+API Doctor provides additional features on top of the Markdown language. For details, see [Markdown customizations](/docs/markdown-customizations.md).
 
 ## Code blocks
 
-Markdown scanner recognizes fenced code blocks with three back-tick characters.
+API Doctor recognizes fenced code blocks with three back-tick characters.
 These fenced delimiters must be on a line by themselves, otherwise the tool will
 not properly recognize the code block.
 
