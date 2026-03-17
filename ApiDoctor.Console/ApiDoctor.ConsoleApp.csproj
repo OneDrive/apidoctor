@@ -19,6 +19,9 @@
     <StartupObject>ApiDoctor.ConsoleApp.Program</StartupObject>
   </PropertyGroup>
   <PropertyGroup>
+    <MinVerTagPrefix>v</MinVerTagPrefix>
+  </PropertyGroup>
+  <PropertyGroup>
     <DelaySign>false</DelaySign>
     <SignAssembly>false</SignAssembly>
     <AssemblyOriginatorKeyFile>35MSSharedLib1024.snk</AssemblyOriginatorKeyFile>
