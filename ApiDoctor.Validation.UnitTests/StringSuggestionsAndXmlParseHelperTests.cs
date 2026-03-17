@@ -29,6 +29,7 @@ namespace ApiDoctor.Validation.UnitTests
     using System.Collections.Generic;
     using System.Linq;
     using System.Xml.Linq;
+    using ApiDoctor.Validation;
     using ApiDoctor.Validation.OData;
     using NUnit.Framework;
 
@@ -68,7 +69,7 @@ namespace ApiDoctor.Validation.UnitTests
         }
 
         [Test]
-        public void SuggestStringFromCollection_EmptyCollection_ReturnsNullAndMaxScore()
+        public void SuggestStringFromCollection_EmptyCollection_ReturnsMaxScore()
         {
             var result = StringSuggestions.SuggestStringFromCollection(
                 "test",

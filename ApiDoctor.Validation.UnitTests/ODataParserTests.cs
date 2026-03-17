@@ -387,10 +387,8 @@ namespace ApiDoctor.Validation.UnitTests
         [Test]
         public void BuildJsonExample_PrimitiveProperties_ProduceExpectedExampleValues()
         {
-            // NOTE: ODataParser uses static caches (visitedProperties, generatedExamples) keyed on
-            // namespace+typename+propertyname. Each test uses a unique namespace to prevent cache
-            // collisions. Asserting actual values (not just token types) ensures a stale cache hit
-            // would be caught if the keys ever collide.
+            // Asserting actual values (not just token types) ensures the example output is
+            // deterministic and that the correct ODataSimpleTypeExamples entry is used per type.
             var ct = new ComplexType
             {
                 Name = "PrimitivesExample",
@@ -517,9 +515,8 @@ namespace ApiDoctor.Validation.UnitTests
         [Test]
         public void BuildJsonExample_CalledTwiceOnSameType_SecondCallGeneratesFreshResult()
         {
-            // Regression test for the static cache bug: visitedProperties and generatedExamples
-            // were static fields, so a second call on the same type would return stale cached
-            // values rather than re-evaluating the property examples.
+            // Regression: BuildJsonExample must use per-call state so repeated calls on the
+            // same type produce independent, deterministic results rather than sharing state.
             var ct = new ComplexType
             {
                 Name = "CacheRegressionType",
