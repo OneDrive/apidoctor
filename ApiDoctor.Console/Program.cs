@@ -2396,6 +2396,7 @@ namespace ApiDoctor.ConsoleApp
         /// <returns>The cleaned up result</returns>
         private static string ReplaceWindowsByLinuxPathSeparators(string original) => original.Replace("\\", "/");
 
+#nullable enable
         /// <summary>
         /// Finds the file the request is located and inserts the code snippet into the file
         /// </summary>
@@ -2404,7 +2405,25 @@ namespace ApiDoctor.ConsoleApp
         private static void InjectSnippetsIntoFile(MethodDefinition method, string codeSnippets)
         {
             var originalFileContents = File.ReadAllLines(method.SourceFile.FullPath);
-            var httpRequestString = method.Request.Split(Environment.NewLine.ToCharArray()).First();
+            var result = ProcessSnippetInjection(originalFileContents, method.Identifier, method.Request, codeSnippets);
+            if (result != null)
+            {
+                File.WriteAllLines(method.SourceFile.FullPath, result);
+            }
+        }
+
+        /// <summary>
+        /// Core logic for snippet injection. Parses file contents, finds the method's code block,
+        /// and injects or replaces the snippet tab section.
+        /// Returns the modified file contents, or null if no changes were made.
+        /// </summary>
+        internal static IEnumerable<string>? ProcessSnippetInjection(
+            string[] originalFileContents,
+            string methodIdentifier,
+            string httpRequest,
+            string codeSnippets)
+        {
+            var httpRequestString = httpRequest.Split(Environment.NewLine.ToCharArray()).First();
 
             var insertionLine = 0;
             var snippetsTabSectionEndLine = 0;
@@ -2418,7 +2437,7 @@ namespace ApiDoctor.ConsoleApp
                 switch (parseStatus)
                 {
                     case CodeSnippetInsertionState.FindMethodIdentifierLine:
-                        if (currentLine.Contains(method.Identifier))
+                        if (currentLine.Contains(methodIdentifier))
                         {
                             parseStatus = CodeSnippetInsertionState.FindHttpRequestLine;
                         }
@@ -2441,7 +2460,7 @@ namespace ApiDoctor.ConsoleApp
                                 break;
                             }
                             if (originalFileContents[index].Contains("```http")
-                                && HttpParser.TryParseHttpRequest(method.Request, out var request)
+                                && HttpParser.TryParseHttpRequest(httpRequest, out var request)
                                 && request.Method.Equals("GET"))
                             {
                                 originalFileContents[index] = "```msgraph-interactive";
@@ -2508,14 +2527,16 @@ namespace ApiDoctor.ConsoleApp
                 updatedFileContents = updatedFileContents.Splice(insertionLine, snippetsTabSectionEndLine - insertionLine);
                 if (!string.IsNullOrWhiteSpace(codeSnippets))
                 {
-                    if (!string.IsNullOrWhiteSpace(updatedFileContents.ElementAt(insertionLine + 1)))
+                    if (insertionLine + 1 < updatedFileContents.Count() && !string.IsNullOrWhiteSpace(updatedFileContents.ElementAt(insertionLine + 1)))
                         codeSnippets = $"{codeSnippets}\r\n";
                     updatedFileContents = FileSplicer(updatedFileContents.ToArray(), insertionLine, codeSnippets);
                 }
-                // dump the injections
-                File.WriteAllLines(method.SourceFile.FullPath, updatedFileContents);
+                return updatedFileContents;
             }
+
+            return null;
         }
+#nullable restore
 
         private enum CodeSnippetInsertionState
         {

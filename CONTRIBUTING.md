@@ -1,6 +1,6 @@
-# Contribute to Markdown Scanner
+# Contribute to API Doctor
 
-Thank you for your interest in Markdown Scanner!
+Thank you for your interest in API Doctor!
 
 * [Ways to contribute](#ways-to-contribute)
 * [Before we can accept your pull request](#before-we-can-accept-your-pull-request)
@@ -8,7 +8,7 @@ Thank you for your interest in Markdown Scanner!
 
 ## Ways to contribute
 
-You can contribute to Markdown Scanner in these ways:
+You can contribute to API Doctor in these ways:
 
 * Create issues based on bugs you've found when using API Doctor.
 * Create issues based on desired but missing functionality for API Doctor.

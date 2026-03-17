@@ -1,6 +1,6 @@
 # ![API Doctor](ApiDoctor-300.png)
 
-[![Build status](https://ci.appveyor.com/api/projects/status/0k9g6q2radu3xv2l/branch/master?svg=true)](https://ci.appveyor.com/project/OneDrive/apidoctor/branch/master)
+[![Build status](https://github.com/OneDrive/apidoctor/actions/workflows/dotnet.yml/badge.svg)](https://github.com/OneDrive/apidoctor/actions/workflows/dotnet.yml)
 
 The API Doctor documentation test tool makes it easy to validate that the Markdown-based API
 documentation matches a REST service implementation.
