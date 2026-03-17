@@ -1,6 +1,6 @@
 <Project>
   <PropertyGroup>
-    <!-- Central Package Management (CPM) is enabled via external/global configuration.
+    <!-- When Central Package Management (CPM) is enabled in a repo consuming this as a git submodule git restore is broken due to inline versions in csproj files.
          This repository intentionally disables CPM by setting ManagePackageVersionsCentrally
          to false at the root level. -->
     <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
