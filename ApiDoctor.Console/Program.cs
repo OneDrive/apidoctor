@@ -2491,9 +2491,6 @@ namespace ApiDoctor.ConsoleApp
                         if (currentLine.Contains("---"))
                         {
                             snippetsTabSectionEndLine = currentIndex + 1; // exclusive end; always includes the --- line
-                            if (currentIndex + 1 < originalFileContents.Length
-                                && string.IsNullOrWhiteSpace(originalFileContents[currentIndex + 1]))
-                                snippetsTabSectionEndLine++; // also remove trailing blank line
                             parseStatus = CodeSnippetInsertionState.InsertSnippets;
                             finishedParsing = true;
                         }
