@@ -1,6 +1,6 @@
-# Markdown Scanner Accounts configuration file
+# API Doctor Accounts configuration file
 
-To enable automated testing for predefined service accounts with Markdown Scanner
+To enable automated testing for predefined service accounts with API Doctor
 you can confirm an accounts.json file as part of your documentation repo.
 
 Inside the accounts.json file, you can define the parameters for various OAuth2
