@@ -13,8 +13,11 @@
         <Configuration>
           <Format>cobertura</Format>
           <!-- Only measure first-party production assemblies; excludes NuGet dependencies,
-               MarkdownDeep (third-party OSS in OSS/), and all test projects -->
+               MarkdownDeep (third-party OSS in OSS/), and all test projects.
+               Exclude is required alongside Include because [ApiDoctor.*] matches
+               [ApiDoctor.Validation.UnitTests] — Include alone is not sufficient. -->
           <Include>[ApiDoctor.*]*,[apidoc]*,[ObjectGraphMergeUtility]*</Include>
+          <Exclude>[*.UnitTests]*,[*.Tests]*,[MarkdownDeepBenchmark]*</Exclude>
           <!-- Fail the build if total line coverage falls below this percentage -->
           <Threshold>20</Threshold>
           <ThresholdType>Line</ThresholdType>
