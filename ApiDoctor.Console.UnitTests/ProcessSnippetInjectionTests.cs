@@ -207,5 +207,70 @@ namespace ApiDoctor.Console.UnitTests
                 }
             });
         }
+
+        [Test]
+        public void ExistingTabSection_DashesAsLastLine_DoesNotThrow()
+        {
+            // Reproduces the pipeline crash: "---" is the very last line
+            // with no trailing blank line, causing currentIndex + 1 to be
+            // out of bounds at the FindEndOfTabSection check.
+            var fileContents = new[]
+            {
+                "## Delete resource [test-method]",
+                "# [HTTP](#tab/http)",
+                "<!-- { \"blockType\": \"request\", \"name\": \"test-method\" } -->",
+                "```http",
+                "DELETE /me/resource",
+                "```",
+                "# [C#](#tab/csharp)",
+                "[!INCLUDE [old-snippet](old.md)]",
+                "",
+                "---",   // last line — no trailing blank line
+            };
+
+            var newSnippet = "# [Go](#tab/go)\r\n[!INCLUDE [snippet](snippets/go.md)]\r\n\r\n---";
+            Assert.DoesNotThrow(() =>
+            {
+                var result = Program.ProcessSnippetInjection(
+                    fileContents,
+                    "test-method",
+                    "DELETE /me/resource",
+                    newSnippet);
+
+                var resultArray = result?.ToArray();
+                if (resultArray != null)
+                {
+                    var joined = string.Join("\n", resultArray);
+                    Assert.That(joined, Does.Not.Contain("old.md"));
+                    Assert.That(joined, Does.Contain("snippets/go.md"));
+                }
+            });
+        }
+
+        [Test]
+        public void FirstInsertion_CommentOnFirstLine_DoesNotThrow()
+        {
+            // Reproduces a crash when requestStartLine is 0, making
+            // requestStartLine - 1 = -1 (out of bounds).
+            var fileContents = new[]
+            {
+                "<!-- { \"blockType\": \"request\", \"name\": \"test-method\" } -->",
+                "```http",
+                "DELETE /me/resource",
+                "```",
+                "## Next section",
+            };
+
+            Assert.DoesNotThrow(() =>
+            {
+                var result = Program.ProcessSnippetInjection(
+                    fileContents,
+                    "test-method",
+                    "DELETE /me/resource",
+                    SnippetContent);
+
+                result?.ToArray();
+            });
+        }
     }
 }

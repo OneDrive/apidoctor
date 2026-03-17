@@ -2490,9 +2490,10 @@ namespace ApiDoctor.ConsoleApp
                     case CodeSnippetInsertionState.FindEndOfTabSection:
                         if (currentLine.Contains("---"))
                         {
-                            snippetsTabSectionEndLine = currentIndex;
-                            if (string.IsNullOrWhiteSpace(originalFileContents[currentIndex + 1]))
-                                snippetsTabSectionEndLine++;
+                            snippetsTabSectionEndLine = currentIndex + 1; // exclusive end; always includes the --- line
+                            if (currentIndex + 1 < originalFileContents.Length
+                                && string.IsNullOrWhiteSpace(originalFileContents[currentIndex + 1]))
+                                snippetsTabSectionEndLine++; // also remove trailing blank line
                             parseStatus = CodeSnippetInsertionState.InsertSnippets;
                             finishedParsing = true;
                         }
@@ -2529,9 +2530,12 @@ namespace ApiDoctor.ConsoleApp
                 updatedFileContents = updatedFileContents.Splice(insertionLine, snippetsTabSectionEndLine - insertionLine);
                 if (!string.IsNullOrWhiteSpace(codeSnippets))
                 {
-                    if (insertionLine + 1 < updatedFileContents.Count() && !string.IsNullOrWhiteSpace(updatedFileContents.ElementAt(insertionLine + 1)))
+                    var updatedArray = updatedFileContents.ToArray();
+                    if (insertionLine + 1 < updatedArray.Length && !string.IsNullOrWhiteSpace(updatedArray[insertionLine + 1]))
                         codeSnippets = $"{codeSnippets}\r\n";
-                    updatedFileContents = FileSplicer(updatedFileContents.ToArray(), insertionLine, codeSnippets);
+                    // When the splice removed everything up to EOF, insert after the last element
+                    var splicerOffset = insertionLine < updatedArray.Length ? insertionLine : updatedArray.Length - 1;
+                    updatedFileContents = FileSplicer(updatedArray, splicerOffset, codeSnippets);
                 }
                 return updatedFileContents;
             }
