@@ -12,6 +12,8 @@
       <DataCollector friendlyName="XPlat code coverage">
         <Configuration>
           <Format>cobertura</Format>
+          <!-- Exclude test assemblies — only measure production code coverage -->
+          <Exclude>[*.UnitTests]*,[*.Tests]*</Exclude>
           <!-- Fail the build if total line coverage falls below this percentage -->
           <Threshold>20</Threshold>
           <ThresholdType>Line</ThresholdType>
