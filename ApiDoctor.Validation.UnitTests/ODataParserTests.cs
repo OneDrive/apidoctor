@@ -387,6 +387,10 @@ namespace ApiDoctor.Validation.UnitTests
         [Test]
         public void BuildJsonExample_PrimitiveProperties_ProduceExpectedExampleValues()
         {
+            // NOTE: ODataParser uses static caches (visitedProperties, generatedExamples) keyed on
+            // namespace+typename+propertyname. Each test uses a unique namespace to prevent cache
+            // collisions. Asserting actual values (not just token types) ensures a stale cache hit
+            // would be caught if the keys ever collide.
             var ct = new ComplexType
             {
                 Name = "PrimitivesExample",
@@ -403,10 +407,10 @@ namespace ApiDoctor.Validation.UnitTests
             var json = ODataParser.BuildJsonExample(ct, Enumerable.Empty<Schema>());
             var obj = JObject.Parse(json);
 
-            Assert.That(obj["strProp"]?.Type, Is.EqualTo(JTokenType.String));
-            Assert.That(obj["intProp"]?.Type, Is.EqualTo(JTokenType.Integer));
-            Assert.That(obj["boolProp"]?.Type, Is.EqualTo(JTokenType.Boolean));
-            Assert.That(obj["guidProp"]?.Type, Is.EqualTo(JTokenType.String));
+            Assert.That((string)obj["strProp"], Is.EqualTo("string"));
+            Assert.That((int)obj["intProp"], Is.EqualTo(1234));
+            Assert.That((bool)obj["boolProp"], Is.EqualTo(false));
+            Assert.That((string)obj["guidProp"], Is.EqualTo("9F328426-8A81-40D1-8F35-D619AA90A12C"));
         }
 
         [Test]
@@ -548,6 +552,44 @@ namespace ApiDoctor.Validation.UnitTests
             var resources = ODataParser.GenerateResourcesFromSchemas(schemas, issues);
 
             Assert.That(resources.Count, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void GenerateResourcesFromSchemas_EnumTypesNotIncludedAsResources()
+        {
+            // EnumTypes are intentionally excluded from resource generation — they are not
+            // structural types with JSON examples. This test guards against accidentally
+            // adding enum iteration to CreateResourcesFromSchema.
+            var schemas = new List<Schema>
+            {
+                new Schema
+                {
+                    Namespace = "test.generate.enum",
+                    EntityTypes = new List<EntityType>
+                    {
+                        new EntityType
+                        {
+                            Name = "EnumTestEntity",
+                            Namespace = "test.generate.enum",
+                            Properties = new List<Property> { new Property { Name = "id", Type = "Edm.String" } },
+                            NavigationProperties = new List<NavigationProperty>()
+                        }
+                    },
+                    ComplexTypes = new List<ComplexType>(),
+                    Enumerations = new List<EnumType>
+                    {
+                        new EnumType { Name = "StatusType", Members = new List<EnumMember> { new EnumMember { Name = "active", Value = "1" } } },
+                        new EnumType { Name = "PriorityType", Members = new List<EnumMember> { new EnumMember { Name = "high", Value = "0" } } }
+                    }
+                }
+            };
+
+            var issues = new IssueLogger();
+            var resources = ODataParser.GenerateResourcesFromSchemas(schemas, issues);
+
+            // Only the EntityType produces a resource; the two EnumTypes must not appear
+            Assert.That(resources.Count, Is.EqualTo(1));
+            Assert.That(resources[0].Name, Is.EqualTo("EnumTestEntity"));
         }
 
         [Test]

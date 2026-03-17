@@ -227,6 +227,33 @@ namespace ApiDoctor.Validation.UnitTests
         }
 
         [Test]
+        public void CanSubstituteFor_ParameterTypeNull_ReturnsFalse()
+        {
+            // Exercises the null-type guard at ActionOrFunctionBase.cs lines 68-69
+            var f1 = MakeFunction("getThings", true,
+                new List<Parameter> { MakeParam("p1", null) },
+                MakeReturn("Edm.String"));
+            var f2 = MakeFunction("getThings", true,
+                new List<Parameter> { MakeParam("p1", "Edm.String") },
+                MakeReturn("Edm.String"));
+
+            Assert.That(f1.CanSubstituteFor(f2, EmptyEdmx()), Is.False);
+        }
+
+        [Test]
+        public void CanSubstituteFor_OtherParameterTypeNull_ReturnsFalse()
+        {
+            var f1 = MakeFunction("getThings", true,
+                new List<Parameter> { MakeParam("p1", "Edm.String") },
+                MakeReturn("Edm.String"));
+            var f2 = MakeFunction("getThings", true,
+                new List<Parameter> { MakeParam("p1", null) },
+                MakeReturn("Edm.String"));
+
+            Assert.That(f1.CanSubstituteFor(f2, EmptyEdmx()), Is.False);
+        }
+
+        [Test]
         public void CanSubstituteFor_ParameterTypeMismatch_NoInheritance_ReturnsFalse()
         {
             var f1 = MakeFunction("getThings", true,
@@ -329,7 +356,9 @@ namespace ApiDoctor.Validation.UnitTests
             Assert.That(func.IsBound, Is.True);
             Assert.That(func.Parameters.Count, Is.EqualTo(2));
             Assert.That(func.Parameters[0].Name, Is.EqualTo("bindingParameter"));
+            Assert.That(func.Parameters[0].Type, Is.EqualTo("microsoft.graph.DirectoryObject"));
             Assert.That(func.Parameters[1].Name, Is.EqualTo("securityEnabledOnly"));
+            Assert.That(func.Parameters[1].Type, Is.EqualTo("Edm.Boolean"));
             Assert.That(func.ReturnType.Type, Is.EqualTo("Collection(Edm.String)"));
         }
 

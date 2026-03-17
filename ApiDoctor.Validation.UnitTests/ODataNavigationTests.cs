@@ -99,6 +99,12 @@ namespace ApiDoctor.Validation.UnitTests
             Assert.That(result, Is.InstanceOf<ODataCollection>());
             Assert.That(((ODataCollection)result).TypeIdentifier, Is.EqualTo($"{ns}.Attachment"));
             Assert.That(issues.Issues.Any(i => i.IsError), Is.False);
+
+            // Also verify the collection's element type is resolvable in the edmx — catches
+            // cases where the identifier string is correct but the type isn't registered.
+            var element = ((ODataCollection)result).NavigateByEntityTypeKey(edmx, issues);
+            Assert.That(element, Is.InstanceOf<EntityType>());
+            Assert.That(((EntityType)element).Name, Is.EqualTo("Attachment"));
         }
 
         [Test]
