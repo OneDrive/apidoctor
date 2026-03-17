@@ -65,12 +65,3 @@ jobs:
       with:
         name: packages
         path: ./packages
-
-  complete:
-    needs: build
-    runs-on: ubuntu-latest
-    if: always()
-    steps:
-    - name: Check build matrix status
-      if: needs.build.result != 'success'
-      run: exit 1
