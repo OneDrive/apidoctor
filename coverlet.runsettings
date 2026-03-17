@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  Coverlet configuration for XPlat Code Coverage.
+
+  Threshold is a minimum line-coverage percentage enforced on every CI run.
+  Raise this value incrementally as coverage improves — never lower it.
+  Current baseline: ~24% (2026-03-17). Threshold set conservatively at 20%.
+-->
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="XPlat code coverage">
+        <Configuration>
+          <Format>cobertura</Format>
+          <!-- Fail the build if total line coverage falls below this percentage -->
+          <Threshold>20</Threshold>
+          <ThresholdType>Line</ThresholdType>
+          <!-- Total = aggregate across all files; prevents one well-tested file masking gaps -->
+          <ThresholdStat>Total</ThresholdStat>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>

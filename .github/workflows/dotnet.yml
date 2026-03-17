@@ -46,14 +46,27 @@ jobs:
 
     - name: Test with coverage
       if: matrix.os == 'ubuntu-latest'
-      run: dotnet test ./ApiDoctor.sln --no-build --configuration Release --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./coverage
+      run: dotnet test ./ApiDoctor.sln --no-build --configuration Release --verbosity normal --collect:"XPlat Code Coverage" --settings coverlet.runsettings --results-directory ./coverage
 
-    - name: Upload coverage
+    - name: Generate coverage report
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        dotnet tool install --global dotnet-reportgenerator-globaltool --version 5.3.11
+        reportgenerator \
+          -reports:"./coverage/**/coverage.cobertura.xml" \
+          -targetdir:"./coverage/report" \
+          -reporttypes:"MarkdownSummaryGithub;Html"
+
+    - name: Post coverage summary
+      if: matrix.os == 'ubuntu-latest'
+      run: cat ./coverage/report/SummaryGithub.md >> $GITHUB_STEP_SUMMARY
+
+    - name: Upload coverage report
       if: matrix.os == 'ubuntu-latest'
       uses: actions/upload-artifact@v4
       with:
-        name: coverage
-        path: ./coverage
+        name: coverage-report
+        path: ./coverage/report
 
     - name: Pack
       if: matrix.os == 'ubuntu-latest'
