@@ -8,20 +8,60 @@ on:
 
 jobs:
   build:
-
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      NUGET_PACKAGES: ${{ github.workspace }}/.nuget/packages
 
     steps:
     - uses: actions/checkout@v6.0.2
       with:
         submodules: recursive
+        fetch-depth: 0
+
     - name: Setup .NET
       uses: actions/setup-dotnet@v4.3.1
       with:
         dotnet-version: 8.0.x
+
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ${{ github.workspace }}/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+        restore-keys: ${{ runner.os }}-nuget-
+
     - name: Restore dependencies
       run: dotnet restore ./ApiDoctor.sln
+
     - name: Build
-      run: dotnet build ./ApiDoctor.sln --no-restore
+      run: dotnet build ./ApiDoctor.sln --no-restore --configuration Release
+
     - name: Test
-      run: dotnet test ./ApiDoctor.sln --no-build --verbosity normal
+      if: matrix.os != 'ubuntu-latest'
+      run: dotnet test ./ApiDoctor.sln --no-build --configuration Release --verbosity normal
+
+    - name: Test with coverage
+      if: matrix.os == 'ubuntu-latest'
+      run: dotnet test ./ApiDoctor.sln --no-build --configuration Release --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./coverage
+
+    - name: Upload coverage
+      if: matrix.os == 'ubuntu-latest'
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage
+        path: ./coverage
+
+    - name: Pack
+      if: matrix.os == 'ubuntu-latest'
+      run: dotnet pack ./ApiDoctor.Console/ApiDoctor.ConsoleApp.csproj --no-build --configuration Release --output ./packages
+
+    - name: Upload package
+      if: matrix.os == 'ubuntu-latest'
+      uses: actions/upload-artifact@v4
+      with:
+        name: packages
+        path: ./packages

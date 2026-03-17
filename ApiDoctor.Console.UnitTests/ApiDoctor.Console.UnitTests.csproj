@@ -2,6 +2,8 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <OutputType>Library</OutputType>
+    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
+    <RestorePackages>true</RestorePackages>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
   <PropertyGroup>
@@ -12,15 +14,12 @@
     <SignAssembly>false</SignAssembly>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ApiDoctor.DocumentationGeneration\ApiDoctor.DocumentationGeneration.csproj" />
-    <ProjectReference Include="..\ApiDoctor.Validation.UnitTests\ApiDoctor.Validation.UnitTests.csproj" />
-    <ProjectReference Include="..\ApiDoctor.Validation\ApiDoctor.Validation.csproj" />
-    <ProjectReference Include="..\OSS\markdowndeep\MarkdownDeep\MarkdownDeep.csproj" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="..\ApiDoctor.Console\35MSSharedLib1024.snk">
       <Link>35MSSharedLib1024.snk</Link>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ApiDoctor.Console\ApiDoctor.ConsoleApp.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
@@ -30,8 +29,5 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
   </ItemGroup>
 </Project>
