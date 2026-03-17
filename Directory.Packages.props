@@ -1,5 +1,8 @@
 <Project>
   <PropertyGroup>
+    <!-- Central Package Management (CPM) is enabled via external/global configuration.
+         This repository intentionally disables CPM by setting ManagePackageVersionsCentrally
+         to false at the root level. -->
     <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
   </PropertyGroup>
 </Project>
