@@ -64,8 +64,6 @@ namespace ApiDoctor.Validation.OData
             { "Edm.Guid", "9F328426-8A81-40D1-8F35-D619AA90A12C" }
         };
 
-        private static readonly HashSet<string> visitedProperties = new ();
-        private static readonly Dictionary<string, object> generatedExamples = new ();
 
         #region Static EDMX -> EntityFramework methods 
         public static EntityFramework DeserializeEntityFramework(string metadataContent)
@@ -229,11 +227,13 @@ namespace ApiDoctor.Validation.OData
 
         public static string BuildJsonExample(ComplexType ct, IEnumerable<Schema> otherSchema, MetadataValidationConfigs metadataValidationConfigs = null)
         {
-            Dictionary<string, object> dict = BuildDictionaryExample(ct, otherSchema, metadataValidationConfigs);
+            var visited = new HashSet<string>();
+            var cache = new Dictionary<string, object>();
+            Dictionary<string, object> dict = BuildDictionaryExample(ct, otherSchema, metadataValidationConfigs, visited, cache);
             return JsonConvert.SerializeObject(dict, Newtonsoft.Json.Formatting.Indented);
         }
 
-        private static Dictionary<string, object> BuildDictionaryExample(ComplexType ct, IEnumerable<Schema> otherSchema, MetadataValidationConfigs metadataValidationConfigs = null)
+        private static Dictionary<string, object> BuildDictionaryExample(ComplexType ct, IEnumerable<Schema> otherSchema, MetadataValidationConfigs metadataValidationConfigs, HashSet<string> visited, Dictionary<string, object> cache)
         {
             Dictionary<string, object> propertyExamples = new Dictionary<string, object>();
 
@@ -252,18 +252,18 @@ namespace ApiDoctor.Validation.OData
             {
                 string propertyHash = ct.Namespace + ct.Name + property.Name;
 
-                if (visitedProperties.Contains(propertyHash))
+                if (visited.Contains(propertyHash))
                 {
-                    if (generatedExamples.TryGetValue(propertyHash, out object preGeneratedExample))
+                    if (cache.TryGetValue(propertyHash, out object preGeneratedExample))
                     {
                         propertyExamples.Add(property.Name, preGeneratedExample);
                     }
                 }
                 else
                 {
-                    visitedProperties.Add(propertyHash);
-                    var generatedExample = ExampleOfType(property.Type, otherSchema);
-                    generatedExamples.Add(propertyHash, generatedExample);
+                    visited.Add(propertyHash);
+                    var generatedExample = ExampleOfType(property.Type, otherSchema, visited, cache);
+                    cache.Add(propertyHash, generatedExample);
 
                     propertyExamples.Add(property.Name, generatedExample);
                 }
@@ -291,21 +291,21 @@ namespace ApiDoctor.Validation.OData
 
         public static readonly string CollectionPrefix = "Collection(";
 		
-        private static object ExampleOfType(string typeIdentifier, IEnumerable<Schema> otherSchemas)
+        private static object ExampleOfType(string typeIdentifier, IEnumerable<Schema> otherSchemas, HashSet<string> visited, Dictionary<string, object> cache)
         {
             if (typeIdentifier.StartsWith(CollectionPrefix) && typeIdentifier.EndsWith(")"))
             {
                 var arrayTypeIdentifier = typeIdentifier.Substring(CollectionPrefix.Length);
                 arrayTypeIdentifier = arrayTypeIdentifier.Substring(0, arrayTypeIdentifier.Length - 1);
 
-                var obj = ObjectExampleForType(arrayTypeIdentifier, otherSchemas);
+                var obj = ObjectExampleForType(arrayTypeIdentifier, otherSchemas, visited, cache);
                 return new object[] { obj, obj };
             }
 
-            return ObjectExampleForType(typeIdentifier, otherSchemas);
+            return ObjectExampleForType(typeIdentifier, otherSchemas, visited, cache);
         }
 
-        private static object ObjectExampleForType(string typeIdentifier, IEnumerable<Schema> otherSchemas)
+        private static object ObjectExampleForType(string typeIdentifier, IEnumerable<Schema> otherSchemas, HashSet<string> visited, Dictionary<string, object> cache)
         {
             if (ODataSimpleTypeExamples.ContainsKey(typeIdentifier))
                 return ODataSimpleTypeExamples[typeIdentifier];
@@ -329,7 +329,7 @@ namespace ApiDoctor.Validation.OData
                 return new { datatype = typeIdentifier };
             }
             else
-                return BuildDictionaryExample(matchingType, otherSchemas);
+                return BuildDictionaryExample(matchingType, otherSchemas, null, visited, cache);
         }
 
         #endregion

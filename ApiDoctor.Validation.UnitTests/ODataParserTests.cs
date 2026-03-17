@@ -514,6 +514,64 @@ namespace ApiDoctor.Validation.UnitTests
             Assert.That(obj.ContainsKey("@odata.type"), Is.True);
         }
 
+        [Test]
+        public void BuildJsonExample_CalledTwiceOnSameType_SecondCallGeneratesFreshResult()
+        {
+            // Regression test for the static cache bug: visitedProperties and generatedExamples
+            // were static fields, so a second call on the same type would return stale cached
+            // values rather than re-evaluating the property examples.
+            var ct = new ComplexType
+            {
+                Name = "CacheRegressionType",
+                Namespace = "test.cacheregression",
+                Properties = new List<Property>
+                {
+                    new Property { Name = "value", Type = "Edm.Int32" },
+                }
+            };
+
+            var json1 = ODataParser.BuildJsonExample(ct, Enumerable.Empty<Schema>());
+            var json2 = ODataParser.BuildJsonExample(ct, Enumerable.Empty<Schema>());
+            var obj1 = JObject.Parse(json1);
+            var obj2 = JObject.Parse(json2);
+
+            // Both calls must produce the correct value, not a missing/null result
+            // that would occur if the second call hit a broken cache path.
+            Assert.That((int)obj1["value"], Is.EqualTo(1234));
+            Assert.That((int)obj2["value"], Is.EqualTo(1234));
+        }
+
+        [Test]
+        public void BuildJsonExample_CircularTypeReference_DoesNotStackOverflow()
+        {
+            // The recursion guard (visited set) must prevent infinite recursion when a type
+            // has a property that references itself.
+            var schemas = new List<Schema>
+            {
+                new Schema
+                {
+                    Namespace = "test.circular",
+                    ComplexTypes = new List<ComplexType>
+                    {
+                        new ComplexType
+                        {
+                            Name = "TreeNode",
+                            Namespace = "test.circular",
+                            Properties = new List<Property>
+                            {
+                                new Property { Name = "value", Type = "Edm.String" },
+                                new Property { Name = "child", Type = "test.circular.TreeNode" },
+                            }
+                        }
+                    },
+                    EntityTypes = new List<EntityType>()
+                }
+            };
+
+            var ct = schemas[0].ComplexTypes[0];
+            Assert.That(() => ODataParser.BuildJsonExample(ct, schemas), Throws.Nothing);
+        }
+
         #endregion
 
         #region GenerateResourcesFromSchemas
