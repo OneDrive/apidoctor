@@ -34,7 +34,7 @@ namespace ApiDoctor.Validation.UnitTests
     public class YamlParserTests
     {
         private static readonly string yamlWithMultiLineArray = @"title: ""Define the /me as singleton""
-description: ""These are things I had to add in the docs to make sure the Markdown-Scanner""
+description: ""These are things I had to add in the docs to make sure the API Doctor""
 ms.localizationpriority: medium
 author: """"
 ms.prod: """"
@@ -46,7 +46,7 @@ toc.keywords:
 
         // Missing closing double-quote on title property
         private static readonly string malformedYaml = @"title: ""Define the /me as singleton
-description: ""These are things I had to add in the docs to make sure the Markdown-Scanner""
+description: ""These are things I had to add in the docs to make sure the API Doctor""
 ms.localizationpriority: medium
 author: """"
 ms.prod: """"
