@@ -13,6 +13,8 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
+    env:
+      NUGET_PACKAGES: ${{ github.workspace }}/.nuget/packages
 
     steps:
     - uses: actions/checkout@v4.2.2
@@ -28,7 +30,7 @@ jobs:
     - name: Cache NuGet packages
       uses: actions/cache@v4
       with:
-        path: ~/.nuget/packages
+        path: ${{ github.workspace }}/.nuget/packages
         key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
         restore-keys: ${{ runner.os }}-nuget-
 
@@ -36,15 +38,15 @@ jobs:
       run: dotnet restore ./ApiDoctor.sln
 
     - name: Build
-      run: dotnet build ./ApiDoctor.sln --no-restore
+      run: dotnet build ./ApiDoctor.sln --no-restore --configuration Release
 
     - name: Test
       if: matrix.os != 'ubuntu-latest'
-      run: dotnet test ./ApiDoctor.sln --no-build --verbosity normal
+      run: dotnet test ./ApiDoctor.sln --no-build --configuration Release --verbosity normal
 
     - name: Test with coverage
       if: matrix.os == 'ubuntu-latest'
-      run: dotnet test ./ApiDoctor.sln --no-build --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./coverage
+      run: dotnet test ./ApiDoctor.sln --no-build --configuration Release --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./coverage
 
     - name: Upload coverage
       if: matrix.os == 'ubuntu-latest'
@@ -55,7 +57,7 @@ jobs:
 
     - name: Pack
       if: matrix.os == 'ubuntu-latest'
-      run: dotnet pack ./ApiDoctor.Console/ApiDoctor.ConsoleApp.csproj --configuration Release --output ./packages
+      run: dotnet pack ./ApiDoctor.Console/ApiDoctor.ConsoleApp.csproj --no-build --configuration Release --output ./packages
 
     - name: Upload package
       if: matrix.os == 'ubuntu-latest'
