@@ -12,8 +12,9 @@
       <DataCollector friendlyName="XPlat code coverage">
         <Configuration>
           <Format>cobertura</Format>
-          <!-- Exclude test assemblies — only measure production code coverage -->
-          <Exclude>[*.UnitTests]*,[*.Tests]*</Exclude>
+          <!-- Only measure first-party production assemblies; excludes NuGet dependencies,
+               MarkdownDeep (third-party OSS in OSS/), and all test projects -->
+          <Include>[ApiDoctor.*]*,[apidoc]*,[ObjectGraphMergeUtility]*</Include>
           <!-- Fail the build if total line coverage falls below this percentage -->
           <Threshold>20</Threshold>
           <ThresholdType>Line</ThresholdType>
