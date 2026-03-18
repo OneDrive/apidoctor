@@ -50,7 +50,7 @@ jobs:
 
     - name: Upload coverage
       if: matrix.os == 'ubuntu-latest'
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: coverage
         path: ./coverage
@@ -61,7 +61,7 @@ jobs:
 
     - name: Upload package
       if: matrix.os == 'ubuntu-latest'
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: packages
         path: ./packages
