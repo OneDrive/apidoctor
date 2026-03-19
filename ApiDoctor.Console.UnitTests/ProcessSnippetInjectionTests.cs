@@ -311,11 +311,17 @@ namespace ApiDoctor.Console.UnitTests
             // New snippet should be present
             Assert.That(joined, Does.Contain("new-js.md"));
 
+            // Normalize to per-line strings so ordering checks are accurate even if
+            // the injected snippet was inserted as a single multi-line string.
+            var normalizedLines = joined
+                .Split(new[] { "\r\n", "\n" }, StringSplitOptions.None)
+                .ToArray();
+
             // "### Response" must come AFTER the tab terminator "---", not before the snippet tabs.
             // Search from the code block area to avoid matching YAML frontmatter "---".
-            var codeBlockIndex = Array.FindIndex(resultArray, l => l.Contains("```"));
-            var tabTerminatorIndex = Array.FindIndex(resultArray, codeBlockIndex, l => l.Trim() == "---");
-            var responseIndex = Array.FindIndex(resultArray, l => l.TrimStart().StartsWith("### Response"));
+            var codeBlockIndex = Array.FindIndex(normalizedLines, l => l.Contains("```"));
+            var tabTerminatorIndex = Array.FindIndex(normalizedLines, codeBlockIndex, l => l.Trim() == "---");
+            var responseIndex = Array.FindIndex(normalizedLines, l => l.TrimStart().StartsWith("### Response"));
             Assert.That(responseIndex, Is.GreaterThan(tabTerminatorIndex),
                 "### Response header must remain after the tab section terminator");
         }
