@@ -248,10 +248,11 @@ namespace ApiDoctor.Console.UnitTests
         }
 
         [Test]
-        public void FirstInsertion_CommentOnFirstLine_DoesNotThrow()
+        public void CommentOnFirstLine_ReturnsNull()
         {
-            // Reproduces a crash when requestStartLine is 0, making
-            // requestStartLine - 1 = -1 (out of bounds).
+            // The backward scan loop uses `index > 0` so it never checks
+            // index 0. When the comment is on the first line, the scan
+            // doesn't find it and the method returns null (no injection).
             var fileContents = new[]
             {
                 "<!-- { \"blockType\": \"request\", \"name\": \"test-method\" } -->",
@@ -261,16 +262,68 @@ namespace ApiDoctor.Console.UnitTests
                 "## Next section",
             };
 
-            Assert.DoesNotThrow(() =>
-            {
-                var result = Program.ProcessSnippetInjection(
-                    fileContents,
-                    "test-method",
-                    "DELETE /me/resource",
-                    SnippetContent);
+            var result = Program.ProcessSnippetInjection(
+                fileContents,
+                "test-method",
+                "DELETE /me/resource",
+                SnippetContent);
 
-                result?.ToArray();
-            });
+            Assert.That(result, Is.Null);
+        }
+
+        [Test]
+        public void ExistingTabSection_DoesNotDisplaceFollowingHeader()
+        {
+            // Reproduces an issue where "### Response" was displaced from after
+            // the tab terminator to before the snippet tabs, breaking the document.
+            var fileContents = new[]
+            {
+                "### Request",
+                "The following example shows a request.",
+                "# [HTTP](#tab/http)",
+                "<!-- { \"blockType\": \"request\", \"name\": \"test-method\" } -->",
+                "```http",
+                "DELETE /me/resource",
+                "```",
+                "",
+                "# [JavaScript](#tab/javascript)",
+                "[!INCLUDE [sample-code](old-js.md)]",
+                "[!INCLUDE [sdk-documentation](sdk-doc.md)]",
+                "",
+                "---",
+                "",
+                "### Response",
+                "",
+                "The following example shows the response.",
+            };
+
+            var newSnippet = "# [JavaScript](#tab/javascript)\r\n[!INCLUDE [sample-code](new-js.md)]\r\n\r\n---";
+            var result = Program.ProcessSnippetInjection(
+                fileContents,
+                "test-method",
+                "DELETE /me/resource",
+                newSnippet);
+
+            Assert.That(result, Is.Not.Null);
+            var resultArray = result.ToArray();
+            var joined = string.Join("\n", resultArray);
+
+            // New snippet should be present
+            Assert.That(joined, Does.Contain("new-js.md"));
+
+            // Normalize to per-line strings so ordering checks are accurate even if
+            // the injected snippet was inserted as a single multi-line string.
+            var normalizedLines = joined
+                .Split(new[] { "\r\n", "\n" }, StringSplitOptions.None)
+                .ToArray();
+
+            // "### Response" must come AFTER the tab terminator "---", not before the snippet tabs.
+            // Search from the code block area to avoid matching YAML frontmatter "---".
+            var codeBlockIndex = Array.FindIndex(normalizedLines, l => l.Contains("```"));
+            var tabTerminatorIndex = Array.FindIndex(normalizedLines, codeBlockIndex, l => l.Trim() == "---");
+            var responseIndex = Array.FindIndex(normalizedLines, l => l.TrimStart().StartsWith("### Response"));
+            Assert.That(responseIndex, Is.GreaterThan(tabTerminatorIndex),
+                "### Response header must remain after the tab section terminator");
         }
     }
 }
