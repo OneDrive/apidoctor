@@ -35,7 +35,7 @@
     <ProjectReference Include="..\ApiDoctor.Validation\ApiDoctor.Validation.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="MinVer" Version="6.0.0">
+    <PackageReference Include="MinVer" Version="7.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
