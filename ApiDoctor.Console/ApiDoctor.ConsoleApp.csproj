@@ -41,7 +41,7 @@
     </PackageReference>
     <PackageReference Include="CommandLineParser" Version="2.9.1" />
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
-    <PackageReference Include="Microsoft.Graph.Kibali" Version="0.26.0" />
+    <PackageReference Include="Microsoft.Graph.Kibali" Version="0.27.0" />
     <PackageReference Include="System.Data.DataSetExtensions" Version="4.5.0" />
   </ItemGroup>
 </Project>
